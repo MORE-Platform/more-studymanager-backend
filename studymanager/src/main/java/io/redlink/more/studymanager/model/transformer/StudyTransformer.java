@@ -1,8 +1,8 @@
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.mmb.api.v1.studymanager.model.StatusChangeDTO;
-import io.redlink.more.mmb.api.v1.studymanager.model.StudyDTO;
-import io.redlink.more.mmb.api.v1.studymanager.model.StudyStatusDTO;
+import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
+import io.redlink.more.studymanager.api.v1.model.StudyDTO;
+import io.redlink.more.studymanager.api.v1.model.StudyStatusDTO;
 import io.redlink.more.studymanager.model.Study;
 
 import java.sql.Date;

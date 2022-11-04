@@ -1,7 +1,7 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
-import io.redlink.more.mmb.api.v1.studymanager.model.ComponentFactoryDTO;
-import io.redlink.more.mmb.api.v1.studymanager.webservices.ComponentsApi;
+import io.redlink.more.studymanager.api.v1.model.ComponentFactoryDTO;
+import io.redlink.more.studymanager.api.v1.webservices.ComponentsApi;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.factory.ComponentFactory;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;

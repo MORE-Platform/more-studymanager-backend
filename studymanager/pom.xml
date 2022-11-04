@@ -181,8 +181,8 @@
                             </configOptions>
                             <inputSpec>${project.basedir}/src/main/resources/openapi/StudyManagerAPI.yaml</inputSpec>
                             <output>${project.build.directory}/generated-sources/study-manager</output>
-                            <apiPackage>io.redlink.more.mmb.api.v1.studymanager.webservices</apiPackage>
-                            <modelPackage>io.redlink.more.mmb.api.v1.studymanager.model</modelPackage>
+                            <apiPackage>io.redlink.more.studymanager.api.v1.webservices</apiPackage>
+                            <modelPackage>io.redlink.more.studymanager.api.v1.model</modelPackage>
                         </configuration>
                     </execution>
                     <execution>
@@ -217,13 +217,13 @@
                     <generatorName>spring</generatorName>
                     <library>spring-boot</library>
 
-                    <packageName>io.redlink.more.mmb.api.v1</packageName>
+                    <packageName>io.redlink.more.studymanager.api.v1</packageName>
 
                     <generateApis>true</generateApis>
-                    <apiPackage>io.redlink.more.mmb.api.v1.webservices</apiPackage>
+                    <apiPackage>io.redlink.more.studymanager.api.v1.webservices</apiPackage>
 
                     <generateModels>true</generateModels>
-                    <modelPackage>io.redlink.more.mmb.api.v1.model</modelPackage>
+                    <modelPackage>io.redlink.more.studymanager.api.v1.model</modelPackage>
                     <modelNameSuffix>DTO</modelNameSuffix>
 
                     <generateApiTests>false</generateApiTests>

@@ -1,7 +1,7 @@
 package io.redlink.more.studymanager.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.redlink.more.mmb.api.v1.studymanager.model.StudyDTO;
+import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.controller.studymanager.StudyApiV1Controller;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.service.StudyService;
