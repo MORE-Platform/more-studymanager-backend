@@ -1,0 +1,27 @@
+_id: req_wrk_f8835dc90c89495f9f7c5391ce7e13334179e0fb
+type: Request
+parentId: fld_7a92eda90ce14a2d99ac2c6ee841bf96
+modified: 1667561573375
+created: 1667561236523
+url: "{{ base_url }}/studies/{{ studyId }}"
+name: /studies/{studyId}
+description: ""
+method: DELETE
+body: {}
+parameters: []
+headers: []
+authentication:
+  clientId: "{{ oauth2ClientId }}"
+  grantType: implicit
+  scope: read write
+  type: oauth2
+  redirectUrl: "{{ oauth2RedirectUrl }}"
+  authorizationUrl: https://auth.more.redlink.io/authorize
+metaSortKey: -1667561417279
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

@@ -1,0 +1,32 @@
+_id: req_wrk_f8835dc90c89495f9f7c5391ce7e13335e358c3f
+type: Request
+parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
+modified: 1667561236513
+created: 1667561236513
+url: "{{ base_url }}/studies/{{ studyId }}/interventions/{{ interventionId
+  }}/actions"
+name: /studies/{studyId}/interventions/{interventionId}/actions
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: "null"
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  clientId: "{{ oauth2ClientId }}"
+  grantType: implicit
+  scope: read write
+  type: oauth2
+  redirectUrl: "{{ oauth2RedirectUrl }}"
+  authorizationUrl: https://auth.more.redlink.io/authorize
+metaSortKey: -1667561236513
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global
