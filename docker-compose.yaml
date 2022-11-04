@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:14-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: more
+      POSTGRES_USER: more
+      POSTGRES_PASSWORD: more
+    volumes:
+      - type: volume
+        source: postgres-data
+        target: /var/lib/postgresql/data
+
+  # ElasticSearch
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.3.2
+    restart: always
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --silent --fail -m 5 http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 640M
+        reservations:
+          memory: 512M
+    environment:
+      discovery.type: "single-node"
+      cluster.name: "more-cluster"
+      bootstrap.memory_lock: "true"
+      ES_JAVA_OPTS: "-Xms256m -Xmx512m"
+      xpack.security.enabled: "false"
+    volumes:
+      - type: volume
+        source: elastic-data
+        target: /usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.3.2
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elastic:9200
+
+volumes:
+  postgres-data:
+  elastic-data:

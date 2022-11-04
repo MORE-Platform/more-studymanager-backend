@@ -1,0 +1,39 @@
+openapi: 3.0.3
+info:
+  version: '1.0.0'
+  title: Configurator API
+security:
+  - ApiKeyAuth: []
+paths:
+  /external/webhook/{webhookId}:
+    post:
+      tags:
+        - webhook
+      operationId: handleWebhook
+      description: Handle Webhook
+      parameters:
+        - name: webhookId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook handled successfully
+        '404':
+          description: WebhookId does not exist or API key is wrong
+        '500':
+          description: Internal Error
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY

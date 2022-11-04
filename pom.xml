@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.4</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <groupId>io.redlink.more</groupId>
+    <artifactId>studymanager-parent</artifactId>
+    <version>1.0.${revision}${sha1}${changelist}</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>studymanager</module>
+        <module>studymanager-core</module>
+    </modules>
+
+    <name>MORE MMB Backend</name>
+    <description>Management &amp; Monitoring Backend</description>
+
+    <url>https://github.com/MORE-Platform/more-mmb-backend</url>
+    <inceptionYear>2022</inceptionYear>
+
+    <organization>
+        <name>Redlink GmbH</name>
+        <url>https://redlink.at/</url>
+    </organization>
+
+    <properties>
+        <revision>0</revision>
+        <changelist>-SNAPSHOT</changelist>
+        <sha1/>
+
+        <java.version>17</java.version>
+        <testcontainers.version>1.17.3</testcontainers.version>
+
+        <docker.namespace>more-project</docker.namespace>
+
+        <start-class>io.redlink.more.mmb.backend.MoreMmbBackendApplication</start-class>
+    </properties>
+
+    <scm>
+        <connection>https://github.com/MORE-Platform/more-mmb-backend.git</connection>
+        <developerConnection>git@github.com:MORE-Platform/more-mmb-backend.git</developerConnection>
+        <url>https://github.com/MORE-Platform/more-mmb-backend</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.google.cloud.tools</groupId>
+                    <artifactId>jib-maven-plugin</artifactId>
+                    <version>3.3.0</version>
+                    <configuration>
+                        <from>
+                            <image>eclipse-temurin:${java.version}-jre</image>
+                            <platforms>
+                                <platform>
+                                    <architecture>amd64</architecture>
+                                    <os>linux</os>
+                                </platform>
+                                <platform>
+                                    <architecture>arm64</architecture>
+                                    <os>linux</os>
+                                </platform>
+                            </platforms>
+                        </from>
+                        <to>
+                            <image>${docker.namespace}/more-backend:${project.version}</image>
+                        </to>
+                        <container>
+                            <user>nobody:root</user>
+                            <ports>
+                                <port>8080</port>
+                            </ports>
+                            <labels>
+                                <org.opencontainers.image.title>${project.name}</org.opencontainers.image.title>
+                                <org.opencontainers.image.description>${project.description}</org.opencontainers.image.description>
+                                <org.opencontainers.image.url>${project.url}</org.opencontainers.image.url>
+                                <org.opencontainers.image.source>${project.scm.url}</org.opencontainers.image.source>
+                                <org.opencontainers.image.version>${project.version}</org.opencontainers.image.version>
+                                <org.opencontainers.image.created>${maven.build.timestamp}</org.opencontainers.image.created>
+                                <!-- org.opencontainers.image.licenses/ -->
+                            </labels>
+                            <environment>
+                                <POSTGRES_HOST>postgres</POSTGRES_HOST>
+                                <ELASTIC_HOST>elastic</ELASTIC_HOST>
+                            </environment>
+                        </container>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>co.elastic.clients</groupId>
+                <artifactId>elasticsearch-java</artifactId>
+                <version>8.4.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.firebase</groupId>
+                <artifactId>firebase-admin</artifactId>
+                <version>9.0.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.reflections</groupId>
+                <artifactId>reflections</artifactId>
+                <version>0.10.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vladmihalcea</groupId>
+                <artifactId>hibernate-types-52</artifactId>
+                <version>2.2.2</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.json</groupId>
+                <artifactId>jakarta.json-api</artifactId>
+                <version>2.1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>31.1-jre</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sf.biweekly</groupId>
+                <artifactId>biweekly</artifactId>
+                <version>0.6.6</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>

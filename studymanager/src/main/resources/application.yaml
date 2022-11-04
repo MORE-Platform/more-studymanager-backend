@@ -1,0 +1,16 @@
+spring:
+  main:
+    banner-mode: off
+  application:
+    name: "More Studymanager"
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DBNAME:more}
+    username: ${POSTGRES_USER:more}
+    password: ${POSTGRES_PASSWORD:more}
+    name: ${POSTGRES_DBNAME:more}
+
+elastic:
+  host: ${ELASTIC_HOST:localhost}
+  port: ${ELASTIC_PORT:9200}
+  number_of_shards: 3
