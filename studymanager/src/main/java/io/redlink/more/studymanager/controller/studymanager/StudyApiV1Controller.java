@@ -1,8 +1,8 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
-import io.redlink.more.mmb.api.v1.studymanager.model.StatusChangeDTO;
-import io.redlink.more.mmb.api.v1.studymanager.model.StudyDTO;
-import io.redlink.more.mmb.api.v1.studymanager.webservices.StudiesApi;
+import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
+import io.redlink.more.studymanager.api.v1.model.StudyDTO;
+import io.redlink.more.studymanager.api.v1.webservices.StudiesApi;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.transformer.StudyTransformer;
 import io.redlink.more.studymanager.service.StudyService;
@@ -53,16 +53,24 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<StudyDTO> updateStudy(Long studyId, StudyDTO studyDTO) {
-        return null;
+        return ResponseEntity.ok(
+            StudyTransformer.toStudyDTO_V1(
+                    service.updateStudy(
+                        StudyTransformer.fromStudyDTO_V1(studyDTO)
+                )
+            )
+        );
     }
 
     @Override
     public ResponseEntity<Void> deleteStudy(Long studyId) {
-        return null;
+        service.deleteStudy(studyId);
+        return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<Void> setStatus(Long studyId, StatusChangeDTO statusChangeDTO) {
-        return null;
+        service.setStatus(studyId, StudyTransformer.fromStatusChangeDTO_V1(statusChangeDTO));
+        return ResponseEntity.ok().build();
     }
 }

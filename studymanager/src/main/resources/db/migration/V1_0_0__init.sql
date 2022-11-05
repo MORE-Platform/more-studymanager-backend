@@ -7,10 +7,10 @@ CREATE TABLE studies (
     participant_info TEXT,
     consent_info TEXT,
     status study_state  NOT NULL DEFAULT 'draft',
-    start_date TIMESTAMP,
-    end_date TIMESTAMP,
-    planned_start_date TIMESTAMP,
-    planned_end_date TIMESTAMP,
+    start_date DATE,
+    end_date DATE,
+    planned_start_date DATE,
+    planned_end_date DATE,
     created TIMESTAMP NOT NULL DEFAULT now(),
     modified TIMESTAMP NOT NULL DEFAULT now()
 );
