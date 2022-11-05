@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333d718002b
 type: Request
 parentId: fld_7a92eda90ce14a2d99ac2c6ee841bf96
-modified: 1667561583247
+modified: 1667680571548
 created: 1667561236525
 url: "{{ base_url }}/studies"
 name: /studies
@@ -9,7 +9,15 @@ description: ""
 method: POST
 body:
   mimeType: application/json
-  text: "null"
+  text: |-
+    {
+      "title": "My study",
+      "purpose": "Some purpose",
+      "participantInfo": "Some public info",
+      "consentInfo": "Some consent",
+      "plannedStart": "2022-12-05",
+      "plannedEnd": "2022-12-31"
+    }
 parameters: []
 headers:
   - name: Content-Type
@@ -21,6 +29,7 @@ authentication:
   type: oauth2
   redirectUrl: "{{ oauth2RedirectUrl }}"
   authorizationUrl: https://auth.more.redlink.io/authorize
+  disabled: true
 metaSortKey: -1667561417479
 isPrivate: false
 settingStoreCookies: true
