@@ -1,6 +1,7 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.Study;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -14,7 +15,7 @@ import java.util.List;
 @Component
 public class StudyRepository {
 
-    private static final String INSERT_STUDY = "INSERT INTO studies (title) VALUES (:title)";
+    private static final String INSERT_STUDY = "INSERT INTO studies (title,purpose,participant_info,consent_info,planned_start_date,planned_end_date) VALUES (:title,:purpose,:participant_info,:consent_info,:planned_start_date,:planned_end_date)";
     private static final String GET_STUDY_BY_ID = "SELECT * FROM studies WHERE study_id = ?";
     private static final String LIST_STUDIES_ORDER_BY_MODIFIED_DESC = "SELECT * FROM studies ORDER BY modified DESC";
     private static final String UPDATE_STUDY =
@@ -41,7 +42,11 @@ public class StudyRepository {
     }
 
     public Study getById(long id) {
-        return template.queryForObject(GET_STUDY_BY_ID, getStudyRowMapper(), id);
+        try {
+            return template.queryForObject(GET_STUDY_BY_ID, getStudyRowMapper(), id);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     public List<Study> listStudyOrderByModifiedDesc() {
