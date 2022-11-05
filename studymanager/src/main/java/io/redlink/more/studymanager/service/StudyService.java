@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.StudyRepository;
@@ -31,14 +32,22 @@ public class StudyService {
     }
 
     public Study updateStudy(Study study) {
-        return null;
+        return studyRepository.update(study);
     }
 
     public void deleteStudy(Long studyId) {
-
+        studyRepository.deleteById(studyId);
     }
 
-    public void setStatus(Study.Status status) {
-        //set status and start/end if necessary
+    public void setStatus(Long studyId, Study.Status status) {
+        Study study = getStudy(studyId);
+        //TODO maybe check other status changed that are forbidden
+        if(study.getStudyState().equals(Study.Status.CLOSED)) {
+            throw BadRequestException.StateChange(Study.Status.CLOSED, status);
+        }
+        if(study.getStudyState().equals(status)) {
+            throw BadRequestException.StateChange(study.getStudyState(), status);
+        }
+        studyRepository.setStateById(studyId, status);
     }
 }

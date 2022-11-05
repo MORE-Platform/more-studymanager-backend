@@ -4,8 +4,10 @@ import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyStatusDTO;
 import io.redlink.more.studymanager.model.Study;
+import org.threeten.bp.ZoneOffset;
 
 import java.sql.Date;
+import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 
 public class StudyTransformer {
@@ -37,8 +39,8 @@ public class StudyTransformer {
                 .end(study.getEndDate() != null ? study.getEndDate().toLocalDate() : null)
                 .plannedStart(study.getPlannedStartDate().toLocalDate())
                 .plannedEnd(study.getPlannedEndDate().toLocalDate())
-                .created(study.getCreated().toLocalDate().atTime(OffsetTime.now()))
-                .modified(study.getModified().toLocalDate().atTime(OffsetTime.now()));
+                .created(study.getCreated().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()))
+                .modified(study.getModified().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()));
     }
 
     public static Study.Status fromStatusChangeDTO_V1(StatusChangeDTO statusChangeDTO) {

@@ -1,6 +1,7 @@
 package io.redlink.more.studymanager.model;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 
 public class Study {
     private Long studyId;
@@ -13,8 +14,8 @@ public class Study {
     private Date endDate;
     private Date plannedStartDate;
     private Date plannedEndDate;
-    private Date created;
-    private Date modified;
+    private Timestamp created;
+    private Timestamp modified;
 
     public enum Status {
         DRAFT("draft"),
@@ -123,20 +124,20 @@ public class Study {
         return this;
     }
 
-    public Date getCreated() {
+    public Timestamp getCreated() {
         return created;
     }
 
-    public Study setCreated(Date created) {
+    public Study setCreated(Timestamp created) {
         this.created = created;
         return this;
     }
 
-    public Date getModified() {
+    public Timestamp getModified() {
         return modified;
     }
 
-    public Study setModified(Date modified) {
+    public Study setModified(Timestamp modified) {
         this.modified = modified;
         return this;
     }
