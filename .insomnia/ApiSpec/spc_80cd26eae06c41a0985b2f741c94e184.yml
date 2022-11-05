@@ -1,14 +1,17 @@
 _id: spc_80cd26eae06c41a0985b2f741c94e184
 type: ApiSpec
 parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1667561236528
+modified: 1667680496934
 created: 1667561146607
-fileName: more-api.yaml
+fileName: More Studymanager API
 contents: |
   openapi: 3.0.2
   info:
     version: 1.0.0
     title: Configurator API
+  servers:
+    - url: https://localhost:8080/api/v1
+      description: Local Test Server
   security:
     - OAuth:
         - read
@@ -804,8 +807,8 @@ contents: |
             type: string
           properties:
             type: object
-          schedule:
-            $ref: './TimeRange.yaml/#/components/schemas/TimeRange'
+          #schedule:
+          #  $ref: './TimeRange.yaml/#/components/schemas/TimeRange'
           created:
             type: string
             format: date-time
@@ -828,8 +831,8 @@ contents: |
             type: string
           purpose:
             type: string
-          schedule:
-            $ref: './TimeRange.yaml/#/components/schemas/TimeRange'
+          #schedule:
+          #  $ref: './TimeRange.yaml/#/components/schemas/TimeRange'
           trigger:
             $ref: '#/components/schemas/Trigger'
           actions:
