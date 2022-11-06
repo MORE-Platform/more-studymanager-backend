@@ -1,9 +1,11 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e13337266d1c0
 type: Request
-parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1667561236526
+parentId: fld_663066df36c74ff9b0c69a2aabe4d759
+modified: 1667758416722
 created: 1667561236526
-url: "{{ base_url }}/components/{{ componentType }}"
+url: "{{ _.base_url }}/components/{% prompt 'component type', 'one of
+  \\'observation\\', \\'action\\', or \\'trigger\\'', 'observation', '', false,
+  true %}"
 name: /components/{componentType}
 description: ""
 method: GET
@@ -17,7 +19,8 @@ authentication:
   type: oauth2
   redirectUrl: "{{ oauth2RedirectUrl }}"
   authorizationUrl: https://auth.more.redlink.io/authorize
-metaSortKey: -1667561236526
+  disabled: true
+metaSortKey: -1667561236575
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true
