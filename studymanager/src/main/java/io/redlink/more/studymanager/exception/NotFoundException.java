@@ -11,4 +11,8 @@ public class NotFoundException extends RuntimeException {
     public static NotFoundException Study(long id) {
         return new NotFoundException("Study", id);
     }
+
+    public static NotFoundException StudyGroup(long studyId, int studyGroupId) {
+        return new NotFoundException("StudyGroup", studyId + "/" + studyGroupId);
+    }
 }

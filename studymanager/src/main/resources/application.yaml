@@ -10,6 +10,8 @@ spring:
     password: ${POSTGRES_PASSWORD:more}
     name: ${POSTGRES_DBNAME:more}
 
+server.error.include-message: always
+
 elastic:
   host: ${ELASTIC_HOST:localhost}
   port: ${ELASTIC_PORT:9200}

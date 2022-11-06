@@ -10,6 +10,10 @@ public class BadRequestException extends RuntimeException {
         super(cause);
     }
 
+    public BadRequestException(Throwable cause) {
+        super(cause);
+    }
+
     public static BadRequestException StateChange(Study.Status before, Study.Status after) {
         return new BadRequestException(String.format("StateChange not allowed: %s -> %s", before, after));
     }

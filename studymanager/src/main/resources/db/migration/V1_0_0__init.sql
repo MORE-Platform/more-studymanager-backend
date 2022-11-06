@@ -19,7 +19,7 @@ CREATE TABLE study_groups (
     study_id BIGINT NOT NULL,
     study_group_id INT NOT NULL,
     title VARCHAR,
-    description TEXT,
+    purpose TEXT,
     created TIMESTAMP NOT NULL DEFAULT now(),
     modified TIMESTAMP NOT NULL DEFAULT now(),
 

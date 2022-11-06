@@ -18,7 +18,7 @@ public class StudyTransformer {
         //NOTE: status, start, end, created and modified are never set directly but by status update
         //TODO some assertions? which throws validation exception
         return new Study()
-                .setStudyId(studyDTO.getStudyId() != null ? studyDTO.getStudyId() : null)
+                .setStudyId(studyDTO.getStudyId())
                 .setTitle(studyDTO.getTitle())
                 .setPurpose(studyDTO.getPurpose())
                 .setParticipantInfo(studyDTO.getParticipantInfo())
