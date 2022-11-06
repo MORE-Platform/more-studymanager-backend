@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.redlink.more</groupId>
+        <artifactId>studymanager-parent</artifactId>
+        <version>1.0.${revision}${sha1}${changelist}</version>
+    </parent>
+
+    <artifactId>studymanager-observation</artifactId>
+    <version>1.0.${revision}${sha1}${changelist}</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.redlink.more</groupId>
+            <artifactId>studymanager-core</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-maven-plugin</artifactId>
+            <version>3.3.0</version>
+            <configuration>
+                <skip>true</skip>
+            </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

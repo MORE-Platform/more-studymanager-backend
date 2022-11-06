@@ -11,4 +11,19 @@ public abstract class Observation<C extends ObservationProperties> extends Compo
         super(properties);
         this.sdk = sdk;
     }
+
+    @Override
+    protected C validate(C properties) throws ConfigurationValidationException {
+        return properties;
+    }
+
+    @Override
+    protected void activate() {
+        // no action
+    }
+
+    @Override
+    protected void deactivate() {
+        // no action
+    }
 }

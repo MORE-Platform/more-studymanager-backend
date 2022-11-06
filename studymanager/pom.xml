@@ -17,6 +17,11 @@
             <artifactId>studymanager-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.redlink.more</groupId>
+            <artifactId>studymanager-observation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Security -->
         <dependency>
             <groupId>org.springframework.security</groupId>

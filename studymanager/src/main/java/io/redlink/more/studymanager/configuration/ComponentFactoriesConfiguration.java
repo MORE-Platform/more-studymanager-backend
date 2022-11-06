@@ -20,7 +20,7 @@ public class ComponentFactoriesConfiguration implements BeanFactoryAware {
     private final Reflections reflections;
 
     public ComponentFactoriesConfiguration() {
-        this.reflections = new Reflections("io.redlink.more.mmb.plugin");
+        this.reflections = new Reflections("io.redlink.more.studymanager.component");
     }
 
     @Override

@@ -17,6 +17,7 @@
     <modules>
         <module>studymanager</module>
         <module>studymanager-core</module>
+        <module>studymanager-observation</module>
     </modules>
 
     <name>MORE MMB Backend</name>

@@ -19,16 +19,16 @@ import java.util.Map;
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ComponentApiV1Controller implements ComponentsApi {
 
-    private final Map<String, ObservationFactory> measurementFactories;
+    private final Map<String, ObservationFactory> observationFactories;
     private final Map<String, TriggerFactory> triggertFactories;
     private final Map<String, ActionFactory> actionFactories;
 
     public ComponentApiV1Controller(
-            Map<String, ObservationFactory> measurementFactories,
+            Map<String, ObservationFactory> observationFactories,
             Map<String, TriggerFactory> triggertFactories,
             Map<String, ActionFactory> actionFactories
     ) {
-        this.measurementFactories = measurementFactories;
+        this.observationFactories = observationFactories;
         this.triggertFactories = triggertFactories;
         this.actionFactories = actionFactories;
     }
@@ -36,7 +36,7 @@ public class ComponentApiV1Controller implements ComponentsApi {
     @Override
     public ResponseEntity<List<ComponentFactoryDTO>> listComponents(String componentType) {
         return switch (componentType) {
-            case "measurement" -> ResponseEntity.ok(measurementFactories.values().stream().map(this::toComponentDTO).toList());
+            case "observation" -> ResponseEntity.ok(observationFactories.values().stream().map(this::toComponentDTO).toList());
             case "trigger" -> ResponseEntity.ok(triggertFactories.values().stream().map(this::toComponentDTO).toList());
             case "action" -> ResponseEntity.ok(actionFactories.values().stream().map(this::toComponentDTO).toList());
             default -> ResponseEntity.notFound().build();
@@ -46,7 +46,7 @@ public class ComponentApiV1Controller implements ComponentsApi {
     @Override
     public ResponseEntity<String> getWebComponentScript(String componentType, String componentId) {
         return switch (componentType) {
-            case "measurement" -> getWebComponentScript(measurementFactories, componentId);
+            case "measurement" -> getWebComponentScript(observationFactories, componentId);
             case "trigger" -> getWebComponentScript(triggertFactories, componentId);
             case "action" -> getWebComponentScript(actionFactories, componentId);
             default -> ResponseEntity.notFound().build();
