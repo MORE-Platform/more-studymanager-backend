@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333448eee67
 type: Request
 parentId: fld_7a92eda90ce14a2d99ac2c6ee841bf96
-modified: 1667680578004
+modified: 1667761021272
 created: 1667561236523
 url: "{{ base_url }}/studies/{{ studyId }}/status"
 name: /studies/{studyId}/status
@@ -11,7 +11,7 @@ body:
   mimeType: application/json
   text: |-
     {
-    	"status": "active"
+    	"status": "closed"
     }
 parameters: []
 headers:

@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e13330a67aba0
 type: Request
-parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1667561236521
+parentId: fld_d5825806feed4c8cafde3fdd04176f82
+modified: 1667771483493
 created: 1667561236521
 url: "{{ base_url }}/studies/{{ studyId }}/studyGroups/{{ studyGroupId }}"
 name: /studies/{studyId}/studyGroups/{studyGroupId}
@@ -9,7 +9,13 @@ description: ""
 method: PUT
 body:
   mimeType: application/json
-  text: "null"
+  text: |-
+    {
+      "studyId": "{{ _.studyId }}",
+    	"studyGroupId": "{{ _.studyGroupId }}",
+    	"title": "My Group Refreshed",
+      "purpose": "Some Purpose Refreshed"
+    }
 parameters: []
 headers:
   - name: Content-Type
@@ -21,7 +27,8 @@ authentication:
   type: oauth2
   redirectUrl: "{{ oauth2RedirectUrl }}"
   authorizationUrl: https://auth.more.redlink.io/authorize
-metaSortKey: -1667561236521
+  disabled: true
+metaSortKey: -1667561236494.25
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true
