@@ -760,7 +760,7 @@ components:
         alias:
           type: string
         studyGroupId:
-          type: string
+          $ref: '#/components/schemas/Id'
         registrationToken:
           type: string
           readOnly: true
