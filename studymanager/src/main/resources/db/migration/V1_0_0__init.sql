@@ -55,7 +55,6 @@ CREATE TABLE interventions (
      intervention_id INT NOT NULL,
      title VARCHAR,
      purpose TEXT,
-     participant_info TEXT,
      study_group_id INT,
      schedule JSONB,
      created TIMESTAMP NOT NULL DEFAULT now(),
