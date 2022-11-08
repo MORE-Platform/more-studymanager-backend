@@ -27,7 +27,9 @@ public class ParticipantService {
                 .setStudyId(insertedParticipant.getStudyId())
                 .setParticipantId(insertedParticipant.getParticipantId())
                 .setToken(participant.getRegistrationToken()));
-        return insertedParticipant;
+        return insertedParticipant.setRegistrationToken(registrationTokenRepository
+                .getByIds(insertedParticipant.getStudyId(),
+                        insertedParticipant.getParticipantId()).getToken());
     }
 
     public List<Participant> listParticipants(Long studyId) {
@@ -43,7 +45,6 @@ public class ParticipantService {
     }
 
     public void deleteParticipant(Long studyId, Integer participantId) {
-        registrationTokenRepository.deleteToken(studyId, participantId);
         participantRepository.deleteParticipant(studyId, participantId);
     }
 

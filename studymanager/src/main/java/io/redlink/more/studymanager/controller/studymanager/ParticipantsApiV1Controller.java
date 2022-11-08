@@ -64,7 +64,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
         Participant participant = service.updateParticipant(ParticipantTransformer.fromParticipantDTO_V1(participantDTO)
                 .setParticipantId(participantId)
                 .setStudyId(studyId));
-        return ResponseEntity.status(HttpStatus.CREATED).body(
+        return ResponseEntity.status(HttpStatus.OK).body(
                 ParticipantTransformer.toParticipantDTO_V1(participant)
         );
     }

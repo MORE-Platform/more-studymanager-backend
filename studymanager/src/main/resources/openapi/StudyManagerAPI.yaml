@@ -780,6 +780,7 @@ components:
       enum:
         - new
         - registered
+      default: new
 
     Observation:
       type: object

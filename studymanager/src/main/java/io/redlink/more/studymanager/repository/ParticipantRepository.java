@@ -25,7 +25,7 @@ public class ParticipantRepository {
             "UPDATE participants SET alias = :alias, study_group_id = :study_group_id, modified = now() WHERE study_id = :study_id AND participant_id = :participant_id";
     private static final String SET_NEW_STATUS = "UPDATE participants SET status='new' WHERE study_id = ? AND participant_id = ?";
     private static final String SET_ACCEPTED_STATUS = "UPDATE participants SET status='accepted' WHERE study_id = ? AND participant_id = ?";
-
+    private static final String DELETE_ALL = "DELETE FROM participants";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -71,6 +71,10 @@ public class ParticipantRepository {
             case NEW -> SET_NEW_STATUS;
             case ACCEPTED -> SET_ACCEPTED_STATUS;
         };
+    }
+
+    public void clear() {
+        template.update(DELETE_ALL);
     }
 
     private static MapSqlParameterSource toParams(Participant participant) {
