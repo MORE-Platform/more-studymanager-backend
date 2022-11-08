@@ -4,6 +4,7 @@ import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ParticipantsApi;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
+import io.redlink.more.studymanager.model.transformer.StudyGroupTransformer;
 import io.redlink.more.studymanager.model.transformer.StudyTransformer;
 import io.redlink.more.studymanager.service.ParticipantService;
 import org.slf4j.Logger;
@@ -39,13 +40,16 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     }
 
     @Override
-    public ResponseEntity<Void> deleteParticipant(Long studyId, Long participantId) {
-        return null;
+    public ResponseEntity<Void> deleteParticipant(Long studyId, Integer participantId) {
+        service.deleteParticipant(studyId, participantId);
+        return ResponseEntity.noContent().build();
     }
 
     @Override
-    public ResponseEntity<ParticipantDTO> getParticipant(Long studyId, Long participantId) {
-        return null;
+    public ResponseEntity<ParticipantDTO> getParticipant(Long studyId, Integer participantId) {
+        return ResponseEntity.ok(
+                ParticipantTransformer.toParticipantDTO_V1(service.getParticipant(studyId, participantId))
+        );
     }
 
     @Override
@@ -56,7 +60,12 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     }
 
     @Override
-    public ResponseEntity<ParticipantDTO> updateParticipant(Long studyId, Long participantId, ParticipantDTO participantDTO) {
-        return null;
+    public ResponseEntity<ParticipantDTO> updateParticipant(Long studyId, Integer participantId, ParticipantDTO participantDTO) {
+        Participant participant = service.updateParticipant(ParticipantTransformer.fromParticipantDTO_V1(participantDTO)
+                .setParticipantId(participantId)
+                .setStudyId(studyId));
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ParticipantTransformer.toParticipantDTO_V1(participant)
+        );
     }
 }

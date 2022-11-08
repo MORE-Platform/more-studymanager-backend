@@ -1,5 +1,4 @@
 package io.redlink.more.studymanager.model;
-
 import java.sql.Timestamp;
 
 public class Participant {
@@ -7,6 +6,7 @@ public class Participant {
     private Integer participantId;
     private String alias;
     private Integer studyGroupId;
+    private Status status;
     private Timestamp created;
     private Timestamp modified;
 
@@ -14,6 +14,30 @@ public class Participant {
 
     public Long getStudyId() {
         return this.studyId;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public enum Status {
+        NEW("new"),
+        ACCEPTED("accepted");
+
+        private final String value;
+
+        Status(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+
+    public Participant setStatus(Status status) {
+        this.status = status;
+        return this;
     }
 
     public Participant setStudyId(Long studyId) {

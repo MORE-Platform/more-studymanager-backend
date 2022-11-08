@@ -16,6 +16,7 @@ public class RegistrationTokenRepository {
     private final NamedParameterJdbcTemplate namedTemplate;
     private static final String INSERT_REGISTRATION_TOKEN = "INSERT INTO registration_tokens(study_id,participant_id,token) VALUES (:study_id,:participant_id,:token)";
     private static final String GET_TOKEN_BY_IDS = "SELECT * FROM registration_tokens WHERE study_id=? AND participant_id=?";
+    private static final String DELETE_TOKEN_BY_IDS = "DELETE FROM registration_tokens WHERE study_id=? AND participant_id=?";
 
     public RegistrationTokenRepository(JdbcTemplate template) {
         this.template = template;
@@ -37,6 +38,10 @@ public class RegistrationTokenRepository {
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
+    }
+
+    public void deleteToken(Long studyId, Integer participantId) {
+        template.update(DELETE_TOKEN_BY_IDS, studyId, participantId);
     }
 
     private static RowMapper<RegistrationToken> getRegistrationTokenRowMapper() {

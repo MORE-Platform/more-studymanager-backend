@@ -37,4 +37,18 @@ public class ParticipantService {
         ).toList();
     }
 
+    public Participant getParticipant(Long studyId, Integer participantId) {
+        return participantRepository.getByIds(studyId, participantId)
+                .setRegistrationToken(registrationTokenRepository.getByIds(studyId, participantId).getToken());
+    }
+
+    public void deleteParticipant(Long studyId, Integer participantId) {
+        registrationTokenRepository.deleteToken(studyId, participantId);
+        participantRepository.deleteParticipant(studyId, participantId);
+    }
+
+    public Participant updateParticipant(Participant participant) {
+        return participantRepository.update(participant);
+    }
+
 }

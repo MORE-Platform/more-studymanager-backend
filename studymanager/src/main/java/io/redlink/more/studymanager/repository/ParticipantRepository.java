@@ -20,6 +20,12 @@ public class ParticipantRepository {
     private static final String INSERT_PARTICIPANT = "INSERT INTO participants(study_id,participant_id,alias,study_group_id) VALUES (:study_id,(SELECT COALESCE(MAX(participant_id),0)+1 FROM participants WHERE study_id = :study_id),:alias,:study_group_id)";
     private static final String GET_PARTICIPANT_BY_IDS = "SELECT * FROM participants WHERE study_id = ? AND participant_id = ?";
     private static final String LIST_PARTICIPANTS_BY_STUDY = "SELECT * FROM participants WHERE study_id = ?";
+    private static final String DELETE_PARTICIPANT = "DELETE FROM participants WHERE study_id=? AND participant_id=?";
+    private static final String UPDATE_PARTICIPANT =
+            "UPDATE participants SET alias = :alias, study_group_id = :study_group_id, modified = now() WHERE study_id = :study_id AND participant_id = :participant_id";
+    private static final String SET_NEW_STATUS = "UPDATE participants SET status='new' WHERE study_id = ? AND participant_id = ?";
+    private static final String SET_ACCEPTED_STATUS = "UPDATE participants SET status='accepted' WHERE study_id = ? AND participant_id = ?";
+
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -31,7 +37,7 @@ public class ParticipantRepository {
     public Participant insert(Participant participant) {
         final KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
-            namedTemplate.update(INSERT_PARTICIPANT, toParams(participant), keyHolder, new String[] {"participant_id"});
+            namedTemplate.update(INSERT_PARTICIPANT, toParams(participant), keyHolder, new String[]{"participant_id"});
         } catch (DataIntegrityViolationException e) {
             throw new BadRequestException("Study " + participant.getStudyId() + " does not exist");
         }
@@ -50,6 +56,23 @@ public class ParticipantRepository {
         return template.query(LIST_PARTICIPANTS_BY_STUDY, getParticipantRowMapper(), studyId);
     }
 
+    public void deleteParticipant(Long studyId, Integer participantId) {
+        template.update(DELETE_PARTICIPANT, studyId, participantId);
+    }
+
+    public Participant update(Participant participant) {
+        namedTemplate.update(UPDATE_PARTICIPANT, toParams(participant).addValue("participant_id", participant.getParticipantId()));
+        template.update(getStatus(participant.getStatus()), participant.getStudyId(), participant.getParticipantId());
+        return getByIds(participant.getStudyId(), participant.getParticipantId());
+    }
+
+    private String getStatus(Participant.Status status) {
+        return switch (status) {
+            case NEW -> SET_NEW_STATUS;
+            case ACCEPTED -> SET_ACCEPTED_STATUS;
+        };
+    }
+
     private static MapSqlParameterSource toParams(Participant participant) {
         return new MapSqlParameterSource()
                 .addValue("study_id", participant.getStudyId())
@@ -64,6 +87,7 @@ public class ParticipantRepository {
                 .setAlias(rs.getString("alias"))
                 .setStudyGroupId(rs.getInt("study_group_id"))
                 .setCreated(rs.getTimestamp("created"))
-                .setModified(rs.getTimestamp("modified"));
+                .setModified(rs.getTimestamp("modified"))
+                .setStatus(Participant.Status.valueOf(rs.getString("status").toUpperCase()));
     }
 }
