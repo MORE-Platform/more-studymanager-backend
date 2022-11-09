@@ -12,8 +12,8 @@ jobs:
         image: postgres:15-alpine
         env:
           POSTGRES_DB: more
-          POSTGRES_USER: more-mmb
-          POSTGRES_PASSWORD: more-mmb
+          POSTGRES_USER: more
+          POSTGRES_PASSWORD: more
         ports:
           - 5432:5432
     steps:
