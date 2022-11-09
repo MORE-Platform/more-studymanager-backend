@@ -48,8 +48,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
     public ResponseEntity<ObservationDTO> updateObservation(Long studyId, Integer observationId, ObservationDTO observationDTO) {
         return ResponseEntity.ok(
                 ObservationTransformer.toObservationDTO_V1(
-                        service.updateObservation(studyId, observationId,
-                                ObservationTransformer.fromObservationDTO_V1(observationDTO))
+                        service.updateObservation(ObservationTransformer.fromObservationDTO_V1(observationDTO))
                 )
         );
     }

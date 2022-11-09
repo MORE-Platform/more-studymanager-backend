@@ -27,7 +27,7 @@ public class ObservationService {
         return repository.listObservations(studyId);
     }
 
-    public Observation updateObservation(Long studyId, Integer observationId, Observation observation) {
-        return null;
+    public Observation updateObservation(Observation observation) {
+        return repository.updateObservation(observation);
     }
 }

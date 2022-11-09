@@ -20,6 +20,7 @@ public class ObservationRepository {
     private final String GET_OBSERVATION_BY_IDS = "SELECT * FROM observations WHERE study_id = ? AND observation_id = ?";
     private final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
     private final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = ?";
+    private final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, type=:type, study_group_id=:study_group_id, properties=:properties, schedule=:schedule, modified=now() WHERE study_id=:study_id AND observation_id=:observation_id";
     private final String DELETE_ALL = "DELETE FROM observations";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -49,6 +50,12 @@ public class ObservationRepository {
 
     public List<Observation> listObservations(Long studyId) {
         return template.query(LIST_OBSERVATIONS, getObservationRowMapper(), studyId);
+    }
+
+    public Observation updateObservation(Observation observation) {
+        namedTemplate.update(UPDATE_OBSERVATION,
+                toParams(observation).addValue("observation_id", observation.getObservationId()));
+        return getByIds(observation.getStudyId(), observation.getObservationId());
     }
 
     public void clear() {

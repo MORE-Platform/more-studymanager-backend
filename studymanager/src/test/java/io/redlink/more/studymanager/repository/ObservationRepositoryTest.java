@@ -3,6 +3,7 @@ package io.redlink.more.studymanager.repository;
 import io.redlink.more.studymanager.ApplicationTest;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,26 +24,44 @@ class ObservationRepositoryTest extends ApplicationTest {
     @Autowired
     private StudyRepository studyRepository;
 
+    @Autowired
+    private StudyGroupRepository studyGroupRepository;
+
     @BeforeEach
     void deleteAll() {
         observationRepository.clear();
         studyRepository.clear();
+        studyGroupRepository.clear();
     }
 
     @Test
     @DisplayName("Observation is inserted in database and returned")
     public void testInsertListUpdateDelete() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
+        Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
+
 
         Observation observation = new Observation()
                 .setStudyId(studyId)
                 .setType("accelerometer")
-                .setTitle("some title");
+                .setTitle("some title")
+                .setStudyGroupId(studyGroupId);
 
         Observation observationResponse = observationRepository.insert(observation);
 
         assertThat(observationResponse.getObservationId()).isNotNull();
         assertThat(observationResponse.getTitle()).isEqualTo(observation.getTitle());
+
+        Integer oldId = observationResponse.getObservationId();
+
+        observationResponse.setType("gps")
+                .setTitle("some new title");
+
+        Observation compareObservationResponse = observationRepository.updateObservation(observationResponse);
+
+        assertThat(compareObservationResponse.getTitle()).isEqualTo(observationResponse.getTitle());
+        assertThat(compareObservationResponse.getType()).isEqualTo(observationResponse.getType());
+        assertThat(compareObservationResponse.getObservationId()).isEqualTo(oldId);
 
         Observation observationResponse2 = observationRepository.insert(new Observation()
                 .setStudyId(studyId)
