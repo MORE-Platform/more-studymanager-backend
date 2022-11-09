@@ -15,10 +15,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Testcontainers
 @ContextConfiguration(initializers = {ApplicationTest.DatabaseConfigInitializer.class})
-class ApplicationTest {
+public class ApplicationTest {
 
 	@Container
-	static final PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:14-alpine");
+	static final PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-alpine");
 
 	@Test
 	void contextLoads() {
