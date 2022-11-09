@@ -23,13 +23,11 @@ public class ParticipantService {
     public Participant createParticipant(Participant participant) {
         participant.setRegistrationToken(RandomTokenGenerator.generate());
         Participant insertedParticipant = participantRepository.insert(participant);
-        registrationTokenRepository.insert(new RegistrationToken()
+        RegistrationToken token = registrationTokenRepository.insert(new RegistrationToken()
                 .setStudyId(insertedParticipant.getStudyId())
                 .setParticipantId(insertedParticipant.getParticipantId())
                 .setToken(participant.getRegistrationToken()));
-        return insertedParticipant.setRegistrationToken(registrationTokenRepository
-                .getByIds(insertedParticipant.getStudyId(),
-                        insertedParticipant.getParticipantId()).getToken());
+        return insertedParticipant.setRegistrationToken(token.getToken());
     }
 
     public List<Participant> listParticipants(Long studyId) {

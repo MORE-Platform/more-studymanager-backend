@@ -1,7 +1,9 @@
 package io.redlink.more.studymanager.repository;
 
+import io.redlink.more.studymanager.ApplicationTest;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,55 +17,57 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Testcontainers
 @ActiveProfiles("test-containers-flyway")
-class ParticipantRepositoryTest {
+class ParticipantRepositoryTest extends ApplicationTest {
     @Autowired
     private ParticipantRepository participantRepository;
 
     @Autowired
     private StudyRepository studyRepository;
 
+    @Autowired StudyGroupRepository studyGroupRepository;
+
     @BeforeEach
     void deleteAll() {
         participantRepository.clear();
+        studyRepository.clear();
         studyRepository.clear();
     }
 
     @Test
     @DisplayName("Participant is inserted and returned")
     public void testInsert() {
+        Long studyId = studyRepository.insert(new Study()).getStudyId();
+        Integer studyGroupId = studyGroupRepository.insert(new StudyGroup()
+                .setStudyId(studyId)).getStudyGroupId();
+
         Participant participant = new Participant()
-                .setAlias("participant x");
+                .setAlias("participant x")
+                .setStudyGroupId(studyGroupId)
+                .setStudyId(studyId);
 
         Participant participantResponse = participantRepository.insert(participant);
 
-        assertThat(participantResponse.getStudyId()).isNotNull();
         assertThat(participantResponse.getAlias()).isEqualTo(participant.getAlias());
         assertThat(participantResponse.getStatus()).isEqualTo(Participant.Status.NEW);
-    }
-    @Test
-    @DisplayName("Participant is updated in database and returned")
-    public void testUpdate() throws InterruptedException {
-        Participant insert = new Participant()
-                .setAlias("participant x");
+        assertThat(participantResponse.getParticipantId()).isNotNull();
 
-        Participant inserted = participantRepository.insert(insert);
-
-        Participant update = new Participant()
-                .setStudyId(inserted.getStudyId())
-                .setAlias("new participant x");
+        Participant update = participantResponse.setAlias("new participant x")
+                .setStatus(Participant.Status.REGISTERED);
 
         Participant updated = participantRepository.update(update);
 
-        Participant queried = participantRepository.getByIds(inserted.getStudyId(), inserted.getParticipantId());
+        Participant queried = participantRepository.getByIds(participantResponse.getStudyId(), participantResponse.getParticipantId());
 
         assertThat(queried.getAlias()).isEqualTo(updated.getAlias());
         assertThat(queried.getStudyId()).isEqualTo(updated.getStudyId());
         assertThat(queried.getCreated()).isEqualTo(updated.getCreated());
+        assertThat(queried.getStatus()).isEqualTo(updated.getStatus());
 
         assertThat(update.getAlias()).isEqualTo(updated.getAlias());
-        assertThat(inserted.getStudyId()).isEqualTo(updated.getStudyId());
-        assertThat(inserted.getCreated()).isEqualTo(updated.getCreated());
-        assertThat(inserted.getModified().getTime()).isLessThan(updated.getModified().getTime());
+        assertThat(participantResponse.getStudyId()).isEqualTo(updated.getStudyId());
+        assertThat(participantResponse.getCreated()).isEqualTo(updated.getCreated());
+        assertThat(participantResponse.getModified().getTime()).isLessThan(updated.getModified().getTime());
+        assertThat(participantResponse.getStatus()).isEqualTo(updated.getStatus());
     }
 
     @Test
@@ -78,11 +82,6 @@ class ParticipantRepositoryTest {
         Participant s3 = participantRepository.insert(new Participant()
                 .setStudyId(studyId));
 
-        Participant participantCompare = new Participant()
-                .setStudyId(studyId)
-                .setParticipantId(1)
-                .setStatus(Participant.Status.NEW);
-
         assertThat(participantRepository.listParticipants(studyId).size()).isEqualTo(3);
         participantRepository.deleteParticipant(studyId, s1.getParticipantId());
         assertThat(participantRepository.listParticipants(studyId).size()).isEqualTo(2);
@@ -92,7 +91,6 @@ class ParticipantRepositoryTest {
         assertThat(participantRepository.listParticipants(studyId).size()).isEqualTo(1);
         participantRepository.deleteParticipant(studyId, s3.getParticipantId());
         assertThat(participantRepository.listParticipants(studyId).size()).isEqualTo(0);
-        assertThat(participantRepository.insert(new Participant().setStudyId(studyId))).isEqualTo(participantCompare);
     }
 
     @Test
@@ -109,10 +107,10 @@ class ParticipantRepositoryTest {
         participantRepository.update(new Participant().
                 setStudyId(studyId)
                 .setParticipantId(participant.getParticipantId())
-                .setStatus(Participant.Status.ACCEPTED));
+                .setStatus(Participant.Status.REGISTERED));
 
         participant = participantRepository.getByIds(studyId, participant.getParticipantId());
-        assertThat(participant.getStatus()).isEqualTo(Participant.Status.ACCEPTED);
+        assertThat(participant.getStatus()).isEqualTo(Participant.Status.REGISTERED);
     }
 
 }

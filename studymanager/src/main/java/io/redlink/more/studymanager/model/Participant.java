@@ -22,7 +22,7 @@ public class Participant {
 
     public enum Status {
         NEW("new"),
-        ACCEPTED("accepted");
+        REGISTERED("registered");
 
         private final String value;
 

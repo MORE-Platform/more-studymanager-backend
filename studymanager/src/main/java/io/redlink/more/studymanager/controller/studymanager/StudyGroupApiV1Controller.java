@@ -44,14 +44,14 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
     }
 
     @Override
-    public ResponseEntity<StudyGroupDTO> getStudyGroup(Long studyId, Long studyGroupId) {
+    public ResponseEntity<StudyGroupDTO> getStudyGroup(Long studyId, Integer studyGroupId) {
         return ResponseEntity.ok(
-                StudyGroupTransformer.toStudyGroupDTO_V1(service.getStudyGroup(studyId, studyGroupId.intValue()))
+                StudyGroupTransformer.toStudyGroupDTO_V1(service.getStudyGroup(studyId, studyGroupId))
         );
     }
 
     @Override
-    public ResponseEntity<StudyGroupDTO> updateStudyGroup(Long studyId, Long studyGroupId, StudyGroupDTO studyGroupDTO) {
+    public ResponseEntity<StudyGroupDTO> updateStudyGroup(Long studyId, Integer studyGroupId, StudyGroupDTO studyGroupDTO) {
         return ResponseEntity.ok(
                 StudyGroupTransformer.toStudyGroupDTO_V1(
                         service.updateStudyGroup(
@@ -62,7 +62,7 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
     }
 
     @Override
-    public ResponseEntity<Void> deleteStudyGroup(Long studyId, Long studyGroupId) {
+    public ResponseEntity<Void> deleteStudyGroup(Long studyId, Integer studyGroupId) {
         service.deleteStudyGroup(studyId, studyGroupId.intValue());
         return ResponseEntity.noContent().build();
     }
