@@ -20,11 +20,11 @@ public class ObservationService {
     }
 
     public void deleteObservation(Long studyId, Integer observationId) {
-
+        repository.deleteObservation(studyId, observationId);
     }
 
     public List<Observation> listObservations(Long studyId) {
-        return null;
+        return repository.listObservations(studyId);
     }
 
     public Observation updateObservation(Long studyId, Integer observationId, Observation observation) {

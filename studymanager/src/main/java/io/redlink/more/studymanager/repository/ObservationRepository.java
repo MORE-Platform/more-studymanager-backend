@@ -11,11 +11,15 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class ObservationRepository {
 
     private final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties,:schedule)";
     private final String GET_OBSERVATION_BY_IDS = "SELECT * FROM observations WHERE study_id = ? AND observation_id = ?";
+    private final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
+    private final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = ?";
     private final String DELETE_ALL = "DELETE FROM observations";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -36,7 +40,15 @@ public class ObservationRepository {
     }
 
     private Observation getByIds(Long studyId, Integer observationId) {
-        return template.queryForObject(GET_OBSERVATION_BY_IDS, getStudyGroupRowMapper(), studyId, observationId);
+        return template.queryForObject(GET_OBSERVATION_BY_IDS, getObservationRowMapper(), studyId, observationId);
+    }
+
+    public void deleteObservation(Long studyId, Integer observationId) {
+        template.update(DELETE_BY_IDS, studyId, observationId);
+    }
+
+    public List<Observation> listObservations(Long studyId) {
+        return template.query(LIST_OBSERVATIONS, getObservationRowMapper(), studyId);
     }
 
     public void clear() {
@@ -55,7 +67,7 @@ public class ObservationRepository {
                 .addValue("schedule", observation.getSchedule());
     }
 
-    private static RowMapper<Observation> getStudyGroupRowMapper() {
+    private static RowMapper<Observation> getObservationRowMapper() {
         return (rs, rowNum) -> new Observation()
                 .setStudyId(rs.getLong("study_id"))
                 .setObservationId(rs.getInt("observation_id"))

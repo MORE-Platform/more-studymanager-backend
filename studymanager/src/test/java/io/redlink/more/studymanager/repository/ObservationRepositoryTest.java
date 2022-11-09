@@ -31,7 +31,7 @@ class ObservationRepositoryTest extends ApplicationTest {
 
     @Test
     @DisplayName("Observation is inserted in database and returned")
-    public void testInsert() {
+    public void testInsertListUpdateDelete() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
 
         Observation observation = new Observation()
@@ -43,5 +43,16 @@ class ObservationRepositoryTest extends ApplicationTest {
 
         assertThat(observationResponse.getObservationId()).isNotNull();
         assertThat(observationResponse.getTitle()).isEqualTo(observation.getTitle());
+
+        Observation observationResponse2 = observationRepository.insert(new Observation()
+                .setStudyId(studyId)
+                .setType("gps")
+                .setType("new Title"));
+
+        assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(2);
+        observationRepository.deleteObservation(studyId, observationResponse.getObservationId());
+        assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(1);
+        observationRepository.deleteObservation(studyId, observationResponse2.getObservationId());
+        assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(0);
     }
 }
