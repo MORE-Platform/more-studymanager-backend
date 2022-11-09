@@ -15,7 +15,7 @@ public class ObservationTransformer {
                 .setParticipantInfo(dto.getParticipantInfo())
                 .setType(dto.getType())
                 .setStudyGroupId(dto.getStudyGroupId())
-                .setProperties(null)
+                .setProperties(dto.getProperties())
                 .setSchedule(null);
     }
 

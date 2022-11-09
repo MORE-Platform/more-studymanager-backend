@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public class ObservationService {
         return repository.listObservations(studyId);
     }
 
-    public Observation updateObservation(Observation observation) {
+    public Observation updateObservation(Observation observation) throws JsonProcessingException {
         return repository.updateObservation(observation);
     }
 }
