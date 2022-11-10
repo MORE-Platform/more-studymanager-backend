@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.repository;
 
-import io.redlink.more.studymanager.ApplicationTest;
 import io.redlink.more.studymanager.model.Study;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -9,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class StudyRepositoryTest extends ApplicationTest {
+class StudyRepositoryTest {
     @Autowired
     private StudyRepository studyRepository;
 

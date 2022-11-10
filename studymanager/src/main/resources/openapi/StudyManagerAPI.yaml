@@ -775,7 +775,7 @@ components:
         alias:
           type: string
         studyGroupId:
-          type: string
+          $ref: '#/components/schemas/Id'
         registrationToken:
           type: string
           readOnly: true
@@ -794,7 +794,11 @@ components:
       type: string
       enum:
         - new
-        - registered
+        - active
+        - abandoned
+        - kicked_out
+        - locked
+      default: new
 
     Observation:
       type: object
@@ -952,7 +956,7 @@ components:
       in: path
       schema:
         type: integer
-        format: int64
+        format: int32
       required: true
     ObservationId:
       name: observationId
