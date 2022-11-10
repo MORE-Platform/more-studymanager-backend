@@ -63,7 +63,7 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
 
     @Override
     public ResponseEntity<Void> deleteStudyGroup(Long studyId, Integer studyGroupId) {
-        service.deleteStudyGroup(studyId, studyGroupId.intValue());
+        service.deleteStudyGroup(studyId, studyGroupId);
         return ResponseEntity.noContent().build();
     }
 }

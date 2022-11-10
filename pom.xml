@@ -41,13 +41,13 @@
 
         <docker.namespace>more-project</docker.namespace>
 
-        <start-class>io.redlink.more.mmb.backend.MoreMmbBackendApplication</start-class>
+        <start-class>io.redlink.more.studymanager.Application</start-class>
     </properties>
 
     <scm>
-        <connection>https://github.com/MORE-Platform/more-mmb-backend.git</connection>
-        <developerConnection>git@github.com:MORE-Platform/more-mmb-backend.git</developerConnection>
-        <url>https://github.com/MORE-Platform/more-mmb-backend</url>
+        <connection>https://github.com/MORE-Platform/more-studymanager-backend.git</connection>
+        <developerConnection>git@github.com:MORE-Platform/more-studymanager-backend.git</developerConnection>
+        <url>https://github.com/MORE-Platform/more-studymanager-backend</url>
         <tag>HEAD</tag>
     </scm>
 
