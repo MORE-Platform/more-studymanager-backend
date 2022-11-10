@@ -30,8 +30,6 @@ class ObservationRepositoryTest extends ApplicationTest {
     @BeforeEach
     void deleteAll() {
         observationRepository.clear();
-        studyRepository.clear();
-        studyGroupRepository.clear();
     }
 
     @Test
