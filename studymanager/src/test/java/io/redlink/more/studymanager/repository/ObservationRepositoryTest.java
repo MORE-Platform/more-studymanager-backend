@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.redlink.more.studymanager.ApplicationTest;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Study;
@@ -37,7 +36,7 @@ class ObservationRepositoryTest extends ApplicationTest {
 
     @Test
     @DisplayName("Observation is inserted in database and returned")
-    public void testInsertListUpdateDelete() throws JsonProcessingException {
+    public void testInsertListUpdateDelete() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
 

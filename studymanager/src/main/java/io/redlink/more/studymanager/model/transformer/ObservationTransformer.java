@@ -16,7 +16,7 @@ public class ObservationTransformer {
                 .setType(dto.getType())
                 .setStudyGroupId(dto.getStudyGroupId())
                 .setProperties(dto.getProperties())
-                .setSchedule(null);
+                .setSchedule(dto.getSchedule());
     }
 
     public static ObservationDTO toObservationDTO_V1(Observation observation) {
@@ -29,7 +29,7 @@ public class ObservationTransformer {
                 .type(observation.getType())
                 .studyGroupId(observation.getStudyGroupId())
                 .properties(observation.getProperties())
-                .schedule(null)
+                .schedule(observation.getSchedule())
                 .created(observation.getCreated().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()))
                 .modified(observation.getModified().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()));
     }

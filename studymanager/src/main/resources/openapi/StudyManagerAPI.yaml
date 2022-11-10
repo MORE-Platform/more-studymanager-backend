@@ -801,7 +801,7 @@ components:
         properties:
           type: object
         schedule:
-          $ref: './TimeRange.yaml/#/components/schemas/TimeRange'
+          type: object
         created:
           type: string
           format: date-time

@@ -46,7 +46,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
     }
 
     @Override
-    public ResponseEntity<ObservationDTO> updateObservation(Long studyId, Integer observationId, ObservationDTO observationDTO) throws JsonProcessingException {
+    public ResponseEntity<ObservationDTO> updateObservation(Long studyId, Integer observationId, ObservationDTO observationDTO) {
         return ResponseEntity.ok(
                 ObservationTransformer.toObservationDTO_V1(
                         service.updateObservation(ObservationTransformer.fromObservationDTO_V1(observationDTO))

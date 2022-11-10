@@ -28,7 +28,7 @@ public class ObservationService {
         return repository.listObservations(studyId);
     }
 
-    public Observation updateObservation(Observation observation) throws JsonProcessingException {
+    public Observation updateObservation(Observation observation) {
         return repository.updateObservation(observation);
     }
 }

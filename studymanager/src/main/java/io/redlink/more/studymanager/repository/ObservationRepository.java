@@ -18,11 +18,11 @@ import java.util.List;
 @Component
 public class ObservationRepository {
 
-    private final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule)";
+    private final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb)";
     private final String GET_OBSERVATION_BY_IDS = "SELECT * FROM observations WHERE study_id = ? AND observation_id = ?";
     private final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
     private final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = ?";
-    private final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, type=:type, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule, modified=now() WHERE study_id=:study_id AND observation_id=:observation_id";
+    private final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, type=:type, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now() WHERE study_id=:study_id AND observation_id=:observation_id";
     private final String DELETE_ALL = "DELETE FROM observations";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -55,10 +55,14 @@ public class ObservationRepository {
         return template.query(LIST_OBSERVATIONS, getObservationRowMapper(), studyId);
     }
 
-    public Observation updateObservation(Observation observation) throws JsonProcessingException {
-        namedTemplate.update(UPDATE_OBSERVATION,
-                toParams(observation).addValue("observation_id", observation.getObservationId()));
-        return getByIds(observation.getStudyId(), observation.getObservationId());
+    public Observation updateObservation(Observation observation) {
+        try {
+            namedTemplate.update(UPDATE_OBSERVATION,
+                    toParams(observation).addValue("observation_id", observation.getObservationId()));
+            return getByIds(observation.getStudyId(), observation.getObservationId());
+        } catch (JsonProcessingException e) {
+            return null;
+        }
     }
 
     public void clear() {
@@ -74,7 +78,7 @@ public class ObservationRepository {
                 .addValue("type", observation.getType())
                 .addValue("study_group_id", observation.getStudyGroupId())
                 .addValue("properties", mapper.writeValueAsString(observation.getProperties()))
-                .addValue("schedule", observation.getSchedule());
+                .addValue("schedule", mapper.writeValueAsString(observation.getSchedule()));
     }
 
     private static RowMapper<Observation> getObservationRowMapper() {
@@ -89,7 +93,7 @@ public class ObservationRepository {
                         .setType(rs.getString("type"))
                         .setStudyGroupId(rs.getInt("study_group_id"))
                         .setProperties(mapper.readValue(rs.getString("properties"), Object.class))
-                        .setSchedule(rs.getObject("schedule"))
+                        .setSchedule(mapper.readValue(rs.getString("schedule"), Object.class))
                         .setCreated(rs.getTimestamp("created"))
                         .setModified(rs.getTimestamp("modified"));
             } catch (JsonProcessingException e) {
