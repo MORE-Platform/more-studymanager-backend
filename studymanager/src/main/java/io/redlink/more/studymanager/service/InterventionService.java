@@ -22,4 +22,8 @@ public class InterventionService {
         return repository.listInterventions(studyId);
     }
 
+    public Intervention getIntervention(Long studyId, Integer interventionId) {
+        return repository.getByIds(studyId, interventionId);
+    }
+
 }

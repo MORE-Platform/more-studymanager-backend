@@ -60,25 +60,5 @@ class InterventionRepositoryTest extends ApplicationTest {
         interventionRepository.insert(intervention2);
 
         assertThat(interventionRepository.listInterventions(studyId).size()).isEqualTo(2);
-
-        Integer oldId = interventionResponse.getInterventionId();
-
-        /* Intervention compareInterventionResponse = interventionRepository.updateIntervention(interventionResponse);
-
-        assertThat(compareInterventionResponse.getTitle()).isEqualTo(interventionResponse.getTitle());
-        assertThat(compareInterventionResponse.getType()).isEqualTo(interventionResponse.getType());
-        assertThat(compareInterventionResponse.getInterventionId()).isEqualTo(oldId);
-        assertThat(compareInterventionResponse.getSchedule()).isNotEqualTo(intervention.getSchedule());
-
-        Intervention interventionResponse2 = interventionRepository.insert(new Intervention()
-                .setStudyId(studyId)
-                .setType("gps")
-                .setType("new Title"));
-
-        assertThat((interventionRepository.listInterventions(studyId)).size()).isEqualTo(2);
-        interventionRepository.deleteIntervention(studyId, interventionResponse.getInterventionId());
-        assertThat((interventionRepository.listInterventions(studyId)).size()).isEqualTo(1);
-        interventionRepository.deleteIntervention(studyId, interventionResponse2.getInterventionId());
-        assertThat((interventionRepository.listInterventions(studyId)).size()).isEqualTo(0); */
     }
 }

@@ -19,9 +19,9 @@ import java.util.List;
 public class InterventionRepository {
 
     private static final String INSERT_INTERVENTION = "INSERT INTO interventions(study_id,intervention_id,title,purpose,study_group_id,schedule) VALUES (:study_id,(SELECT COALESCE(MAX(intervention_id),0)+1 FROM interventions WHERE study_id = :study_id),:title,:purpose,:study_group_id,:schedule::jsonb)";
-    private static final String GET_INTERVENTION_BY_ID = "SELECT * FROM interventions WHERE study_id = ? AND intervention_id = ?";
+    private static final String GET_INTERVENTION_BY_IDS = "SELECT * FROM interventions WHERE study_id = ? AND intervention_id = ?";
     private static final String LIST_INTERVENTIONS = "SELECT * FROM interventions WHERE study_id = ?";
-    private static ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper();
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -44,8 +44,8 @@ public class InterventionRepository {
         return template.query(LIST_INTERVENTIONS, getInterventionRowMapper(), studyId);
     }
 
-    private Intervention getByIds(Long studyId, Integer interventionId) {
-        return template.queryForObject(GET_INTERVENTION_BY_ID, getInterventionRowMapper(), studyId, interventionId);
+    public Intervention getByIds(Long studyId, Integer interventionId) {
+        return template.queryForObject(GET_INTERVENTION_BY_IDS, getInterventionRowMapper(), studyId, interventionId);
     }
 
     private static MapSqlParameterSource toParams(Intervention intervention) {
