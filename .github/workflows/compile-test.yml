@@ -7,15 +7,6 @@ jobs:
   Compile-and-Test:
     name: Compile and Test
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: more
-          POSTGRES_USER: more
-          POSTGRES_PASSWORD: more
-        ports:
-          - 5432:5432
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 17
@@ -56,7 +47,7 @@ jobs:
       - name: Build JIB container and publish to GitHub Packages
         run: ./mvnw -B -U
           --no-transfer-progress
-          clean verify jib:build
+          clean deploy
           -Drevision=${{github.run_number}}
           -Dchangelist=
           -Dsha1=.${GITHUB_SHA:0:7}

@@ -2,12 +2,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.4</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
 
     <groupId>io.redlink.more</groupId>
     <artifactId>studymanager-parent</artifactId>
@@ -20,10 +14,10 @@
         <module>studymanager-observation</module>
     </modules>
 
-    <name>MORE MMB Backend</name>
-    <description>Management &amp; Monitoring Backend</description>
+    <name>MORE Study Manager</name>
+    <description>MORE Study Manager Backend</description>
 
-    <url>https://github.com/MORE-Platform/more-mmb-backend</url>
+    <url>https://github.com/MORE-Platform/more-studymanager-backend</url>
     <inceptionYear>2022</inceptionYear>
 
     <organization>
@@ -36,7 +30,11 @@
         <changelist>-SNAPSHOT</changelist>
         <sha1/>
 
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
         <java.version>17</java.version>
+        <spring-boot.version>2.7.4</spring-boot.version>
         <testcontainers.version>1.17.3</testcontainers.version>
 
         <docker.namespace>more-project</docker.namespace>
@@ -55,25 +53,84 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.0.0-M5</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.10.1</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <release>${java.version}</release>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>3.0.0</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.0.0</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+                <plugin>
                     <groupId>com.google.cloud.tools</groupId>
                     <artifactId>jib-maven-plugin</artifactId>
                     <version>3.3.0</version>
+                    <executions>
+                        <execution>
+                            <id>jib-deploy</id>
+                            <phase>deploy</phase>
+                            <goals><goal>build</goal></goals>
+                            <configuration>
+                                <from>
+                                    <platforms>
+                                        <platform>
+                                            <architecture>amd64</architecture>
+                                            <os>linux</os>
+                                        </platform>
+                                        <platform>
+                                            <architecture>arm64</architecture>
+                                            <os>linux</os>
+                                        </platform>
+                                    </platforms>
+                                </from>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>jib-install</id>
+                            <phase>install</phase>
+                            <goals><goal>dockerBuild</goal></goals>
+                        </execution>
+                        <execution>
+                            <id>jib-package</id>
+                            <phase>package</phase>
+                            <goals><goal>buildTar</goal></goals>
+                        </execution>
+                    </executions>
                     <configuration>
                         <from>
                             <image>eclipse-temurin:${java.version}-jre</image>
-                            <platforms>
-                                <platform>
-                                    <architecture>amd64</architecture>
-                                    <os>linux</os>
-                                </platform>
-                                <platform>
-                                    <architecture>arm64</architecture>
-                                    <os>linux</os>
-                                </platform>
-                            </platforms>
                         </from>
                         <to>
-                            <image>${docker.namespace}/more-backend:${project.version}</image>
+                            <image>${docker.namespace}/more-study-manager-backend:${project.version}</image>
                         </to>
                         <container>
                             <user>nobody:root</user>
@@ -94,6 +151,10 @@
                                 <ELASTIC_HOST>elastic</ELASTIC_HOST>
                             </environment>
                         </container>
+                        <outputPaths>
+                            <tar>${build.directory}/${artifactId}-${version}.docker.tar</tar>
+                            <imageJson>${build.directory}/${artifactId}-${version}.json</imageJson>
+                        </outputPaths>
                     </configuration>
                 </plugin>
             </plugins>
@@ -102,6 +163,14 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
