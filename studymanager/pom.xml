@@ -10,7 +10,8 @@
     </parent>
 
     <artifactId>studymanager</artifactId>
-    <version>1.0.${revision}${sha1}${changelist}</version>
+    <name>More Study Manager - Application</name>
+
     <dependencies>
         <dependency>
             <groupId>io.redlink.more</groupId>
@@ -151,10 +152,6 @@
             <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
