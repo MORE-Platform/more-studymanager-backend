@@ -17,8 +17,7 @@ public class ParticipantTransformer {
                 .setStudyId(participantDTO.getStudyId())
                 .setParticipantId(participantDTO.getParticipantId())
                 .setAlias(participantDTO.getAlias())
-                .setStudyGroupId(participantDTO.getStudyGroupId())
-                .setStatus(Participant.Status.valueOf(participantDTO.getStatus().getValue().toUpperCase()));
+                .setStudyGroupId(participantDTO.getStudyGroupId());
     }
 
     public static ParticipantDTO toParticipantDTO_V1(Participant participant) {

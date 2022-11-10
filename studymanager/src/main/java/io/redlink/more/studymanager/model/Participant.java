@@ -22,7 +22,10 @@ public class Participant {
 
     public enum Status {
         NEW("new"),
-        REGISTERED("registered");
+        ACTIVE("active"),
+        ABANDONED("abandoned"),
+        KICKED_OUT("kicked_out"),
+        LOCKED("locked");
 
         private final String value;
 

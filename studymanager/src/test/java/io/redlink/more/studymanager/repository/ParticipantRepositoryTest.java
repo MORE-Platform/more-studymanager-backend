@@ -24,13 +24,12 @@ class ParticipantRepositoryTest extends ApplicationTest {
     @Autowired
     private StudyRepository studyRepository;
 
-    @Autowired StudyGroupRepository studyGroupRepository;
+    @Autowired
+    private StudyGroupRepository studyGroupRepository;
 
     @BeforeEach
     void deleteAll() {
         participantRepository.clear();
-        studyRepository.clear();
-        studyRepository.clear();
     }
 
     @Test
@@ -43,7 +42,8 @@ class ParticipantRepositoryTest extends ApplicationTest {
         Participant participant = new Participant()
                 .setAlias("participant x")
                 .setStudyGroupId(studyGroupId)
-                .setStudyId(studyId);
+                .setStudyId(studyId)
+                .setRegistrationToken("TEST123");
 
         Participant participantResponse = participantRepository.insert(participant);
 
@@ -51,8 +51,7 @@ class ParticipantRepositoryTest extends ApplicationTest {
         assertThat(participantResponse.getStatus()).isEqualTo(Participant.Status.NEW);
         assertThat(participantResponse.getParticipantId()).isNotNull();
 
-        Participant update = participantResponse.setAlias("new participant x")
-                .setStatus(Participant.Status.REGISTERED);
+        Participant update = participantResponse.setAlias("new participant x");
 
         Participant updated = participantRepository.update(update);
 
@@ -67,7 +66,6 @@ class ParticipantRepositoryTest extends ApplicationTest {
         assertThat(participantResponse.getStudyId()).isEqualTo(updated.getStudyId());
         assertThat(participantResponse.getCreated()).isEqualTo(updated.getCreated());
         assertThat(participantResponse.getModified().getTime()).isLessThan(updated.getModified().getTime());
-        assertThat(participantResponse.getStatus()).isEqualTo(updated.getStatus());
     }
 
     @Test
@@ -76,11 +74,14 @@ class ParticipantRepositoryTest extends ApplicationTest {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
 
         Participant s1 = participantRepository.insert(new Participant()
-                .setStudyId(studyId));
+                .setStudyId(studyId)
+                .setRegistrationToken("TEST123"));
         Participant s2 = participantRepository.insert(new Participant()
-                .setStudyId(studyId));
+                .setStudyId(studyId)
+                .setRegistrationToken("TEST456"));
         Participant s3 = participantRepository.insert(new Participant()
-                .setStudyId(studyId));
+                .setStudyId(studyId)
+                .setRegistrationToken("TEST789"));
 
         assertThat(participantRepository.listParticipants(studyId).size()).isEqualTo(3);
         participantRepository.deleteParticipant(studyId, s1.getParticipantId());
@@ -98,19 +99,16 @@ class ParticipantRepositoryTest extends ApplicationTest {
     public void testSetState() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
 
-        Participant participant = participantRepository.insert(new Participant().setStudyId(studyId));
+        Participant participant = participantRepository.insert(new Participant().setStudyId(studyId).setRegistrationToken("TEST123"));
         assertThat(participant.getStatus()).isEqualTo(Participant.Status.NEW);
 
         participant = participantRepository.getByIds(studyId, participant.getParticipantId());
         assertThat(participant.getStatus()).isEqualTo(Participant.Status.NEW);
 
-        participantRepository.update(new Participant().
-                setStudyId(studyId)
-                .setParticipantId(participant.getParticipantId())
-                .setStatus(Participant.Status.REGISTERED));
+        participantRepository.setStatusByIds(studyId, participant.getParticipantId(), Participant.Status.ACTIVE);
 
         participant = participantRepository.getByIds(studyId, participant.getParticipantId());
-        assertThat(participant.getStatus()).isEqualTo(Participant.Status.REGISTERED);
+        assertThat(participant.getStatus()).isEqualTo(Participant.Status.ACTIVE);
     }
 
 }

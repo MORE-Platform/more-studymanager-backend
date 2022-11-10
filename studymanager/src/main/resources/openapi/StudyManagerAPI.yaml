@@ -779,7 +779,10 @@ components:
       type: string
       enum:
         - new
-        - registered
+        - active
+        - abandoned
+        - kicked_out
+        - locked
       default: new
 
     Observation:

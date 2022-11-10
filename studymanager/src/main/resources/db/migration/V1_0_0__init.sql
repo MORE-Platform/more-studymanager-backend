@@ -97,7 +97,7 @@ CREATE TABLE actions (
 
 CREATE INDEX actions_study_id ON actions(study_id);
 
-CREATE TYPE participant_status AS ENUM ('new', 'registered');
+CREATE TYPE participant_status AS ENUM ('new', 'active', 'abandoned', 'kicked_out', 'locked');
 
 CREATE TABLE participants (
     study_id BIGINT NOT NULL,

@@ -1,10 +1,8 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.Participant;
-import io.redlink.more.studymanager.model.RegistrationToken;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
-import io.redlink.more.studymanager.repository.RegistrationTokenRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,15 +19,13 @@ public class ParticipantServiceTest {
 
     @Mock
     ParticipantRepository participantRepository;
-    @Mock
-    RegistrationTokenRepository registrationTokenRepository;
     @InjectMocks
     ParticipantService participantService;
 
 
 
     @Test
-    @DisplayName("When the study is saved it should return the study with id.")
+    @DisplayName("When the participant is saved it should return the participant with id.")
     public void testSaveStudy() {
         String token = RandomTokenGenerator.generate();
 
@@ -40,8 +36,6 @@ public class ParticipantServiceTest {
 
         when(participantRepository.insert(any(Participant.class)))
                 .thenReturn(new Participant().setParticipantId(1).setStudyId(1L).setAlias("participant x").setRegistrationToken(token));
-        when(registrationTokenRepository.insert(any(RegistrationToken.class)))
-                .thenReturn(new RegistrationToken().setStudyId(1L).setParticipantId(1).setToken(token));
 
         Participant participantResponse = participantService.createParticipant(participant);
 
