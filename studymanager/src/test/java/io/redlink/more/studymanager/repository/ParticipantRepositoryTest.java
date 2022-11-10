@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.repository;
 
-import io.redlink.more.studymanager.ApplicationTest;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyGroup;
@@ -17,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Testcontainers
 @ActiveProfiles("test-containers-flyway")
-class ParticipantRepositoryTest extends ApplicationTest {
+class ParticipantRepositoryTest {
     @Autowired
     private ParticipantRepository participantRepository;
 
