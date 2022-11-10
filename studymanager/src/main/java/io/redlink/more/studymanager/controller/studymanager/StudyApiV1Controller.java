@@ -5,6 +5,7 @@ import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.api.v1.webservices.StudiesApi;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.transformer.StudyTransformer;
+import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +25,11 @@ public class StudyApiV1Controller implements StudiesApi {
 
     private final StudyService service;
 
-    public StudyApiV1Controller(StudyService service) {
+    private final OAuth2AuthenticationService authService;
+
+    public StudyApiV1Controller(StudyService service, OAuth2AuthenticationService authService) {
         this.service = service;
+        this.authService = authService;
     }
 
     @Override
