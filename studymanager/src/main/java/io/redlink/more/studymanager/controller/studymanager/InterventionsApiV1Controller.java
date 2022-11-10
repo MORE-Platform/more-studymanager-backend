@@ -5,6 +5,7 @@ import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.api.v1.webservices.InterventionsApi;
 import io.redlink.more.studymanager.model.transformer.InterventionTransformer;
+import io.redlink.more.studymanager.model.transformer.StudyTransformer;
 import io.redlink.more.studymanager.service.InterventionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -71,7 +72,9 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     public ResponseEntity<List<InterventionDTO>> listInterventions(Long studyId) {
-        return null;
+        return ResponseEntity.status(HttpStatus.OK).body(
+                service.listInterventions(studyId).stream().map(InterventionTransformer::toInterventionDTO_V1).toList()
+        );
     }
 
     @Override

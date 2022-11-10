@@ -13,11 +13,14 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class InterventionRepository {
 
     private static final String INSERT_INTERVENTION = "INSERT INTO interventions(study_id,intervention_id,title,purpose,study_group_id,schedule) VALUES (:study_id,(SELECT COALESCE(MAX(intervention_id),0)+1 FROM interventions WHERE study_id = :study_id),:title,:purpose,:study_group_id,:schedule::jsonb)";
     private static final String GET_INTERVENTION_BY_ID = "SELECT * FROM interventions WHERE study_id = ? AND intervention_id = ?";
+    private static final String LIST_INTERVENTIONS = "SELECT * FROM interventions WHERE study_id = ?";
     private static ObjectMapper mapper = new ObjectMapper();
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -35,6 +38,10 @@ public class InterventionRepository {
             throw new BadRequestException("Study " + intervention.getStudyId() + " does not exist");
         }
         return getByIds(intervention.getStudyId(), keyHolder.getKey().intValue());
+    }
+
+    public List<Intervention> listInterventions(Long studyId) {
+        return template.query(LIST_INTERVENTIONS, getInterventionRowMapper(), studyId);
     }
 
     private Intervention getByIds(Long studyId, Integer interventionId) {
@@ -59,7 +66,7 @@ public class InterventionRepository {
             try {
                 return new Intervention()
                         .setStudyId(rs.getLong("study_id"))
-                        .setInterventionId(rs.getInt("participant_id"))
+                        .setInterventionId(rs.getInt("intervention_id"))
                         .setTitle(rs.getString("title"))
                         .setPurpose(rs.getString("purpose"))
                         .setSchedule(mapper.readValue(rs.getString("schedule"), Object.class))

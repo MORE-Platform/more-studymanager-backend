@@ -4,6 +4,8 @@ import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.repository.InterventionRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class InterventionService {
 
@@ -14,6 +16,10 @@ public class InterventionService {
     }
     public Intervention addIntervention(Intervention intervention) {
         return repository.insert(intervention);
+    }
+
+    public List<Intervention> listInterventions(Long studyId) {
+        return repository.listInterventions(studyId);
     }
 
 }

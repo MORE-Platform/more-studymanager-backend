@@ -45,11 +45,21 @@ class InterventionRepositoryTest extends ApplicationTest {
                 .setStudyGroupId(studyGroupId)
                 .setSchedule("{\"testSchedule\": \"testValue\"}");
 
+        Intervention intervention2 = new Intervention()
+                .setStudyId(studyId)
+                .setTitle("some other title")
+                .setStudyGroupId(studyGroupId)
+                .setSchedule("{\"testSchedule\": \"testValue\"}");
+
         Intervention interventionResponse = interventionRepository.insert(intervention);
 
         assertThat(interventionResponse.getInterventionId()).isNotNull();
         assertThat(interventionResponse.getTitle()).isEqualTo(intervention.getTitle());
         assertThat(interventionResponse.getSchedule()).isEqualTo(intervention.getSchedule());
+
+        interventionRepository.insert(intervention2);
+
+        assertThat(interventionRepository.listInterventions(studyId).size()).isEqualTo(2);
 
         Integer oldId = interventionResponse.getInterventionId();
 
