@@ -829,7 +829,7 @@ components:
         purpose:
           type: string
         schedule:
-          $ref: './TimeRange.yaml/#/components/schemas/TimeRange'
+          type: object
         trigger:
           $ref: '#/components/schemas/Trigger'
         actions:
