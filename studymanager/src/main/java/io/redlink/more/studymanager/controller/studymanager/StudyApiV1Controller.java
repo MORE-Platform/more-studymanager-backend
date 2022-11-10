@@ -35,7 +35,7 @@ public class StudyApiV1Controller implements StudiesApi {
     @Override
     public ResponseEntity<StudyDTO> createStudy(StudyDTO studyDTO) {
         Study study = service.createStudy(StudyTransformer.fromStudyDTO_V1(studyDTO));
-        LOGGER.debug("Study created: {}", study);
+        LOGGER.debug("{} created a study {}", authService.getCurrentUser(), study);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 StudyTransformer.toStudyDTO_V1(study)
         );

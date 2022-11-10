@@ -16,9 +16,9 @@ import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
 
 public class OAuth2AuthenticationService {
 
-    private static final Map<String, MoreUser.Roles> ROLE_MAPPING = Map.of(
-            "study-access", MoreUser.Roles.STUDY_VIEWER,
-            "study-creator", MoreUser.Roles.STUDY_CREATOR
+    private static final Map<String, MoreUser.Role> ROLE_MAPPING = Map.of(
+            "study-access", MoreUser.Role.STUDY_VIEWER,
+            "study-creator", MoreUser.Role.STUDY_CREATOR
     );
 
     private Authentication getAuthentication() {
@@ -52,11 +52,11 @@ public class OAuth2AuthenticationService {
                 null,
                 null,
                 null,
-                EnumSet.noneOf(MoreUser.Roles.class)
+                EnumSet.noneOf(MoreUser.Role.class)
         );
     }
 
-    private static Set<MoreUser.Roles> mapToRoles(List<String> roles) {
+    private static Set<MoreUser.Role> mapToRoles(List<String> roles) {
         return roles.stream()
                 .map(ROLE_MAPPING::get)
                 .filter(Objects::nonNull)

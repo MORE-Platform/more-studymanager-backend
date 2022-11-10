@@ -9,20 +9,20 @@ public record MoreUser(
         String fullName,
         String email,
         String institution,
-        Set<Roles> roles
+        Set<Role> roles
 ) {
 
-    public enum Roles {
+    public enum Role {
         STUDY_VIEWER,
         STUDY_CREATOR
     }
 
     boolean canViewStudies() {
-        return roles.contains(Roles.STUDY_VIEWER);
+        return roles.contains(Role.STUDY_VIEWER);
     }
 
     boolean canCreateStudies() {
-        return roles.contains(Roles.STUDY_CREATOR);
+        return roles.contains(Role.STUDY_CREATOR);
     }
 
 }

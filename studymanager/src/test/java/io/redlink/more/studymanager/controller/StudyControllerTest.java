@@ -2,10 +2,15 @@ package io.redlink.more.studymanager.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
-import io.redlink.more.studymanager.api.v1.model.StudyStatusDTO;
 import io.redlink.more.studymanager.controller.studymanager.StudyApiV1Controller;
+import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyService;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.util.EnumSet;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +19,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.time.LocalDate;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -34,15 +35,27 @@ class StudyControllerTest {
     @MockBean
     StudyService studyService;
 
+    @MockBean
+    OAuth2AuthenticationService authService;
+
     @Autowired
     ObjectMapper mapper;
 
     @Autowired
     private MockMvc mvc;
 
+    private final MoreUser moreUser = new MoreUser(
+            UUID.randomUUID().toString(),
+            "More", "User",
+            "More User",
+            "more@example.com",
+            "The Hospital",
+            EnumSet.allOf(MoreUser.Role.class));
+
     @Test
     @DisplayName("Create study should create and then return the study with id and status set.")
     void testCreateStudy() throws Exception {
+        when(authService.getCurrentUser()).thenReturn(moreUser);
         when(studyService.createStudy(any(Study.class))).thenAnswer(invocationOnMock -> new Study()
                 .setTitle(((Study)invocationOnMock.getArgument(0)).getTitle())
                 .setStudyId(1L)
