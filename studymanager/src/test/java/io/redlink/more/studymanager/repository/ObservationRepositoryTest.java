@@ -35,7 +35,7 @@ class ObservationRepositoryTest extends ApplicationTest {
     }
 
     @Test
-    @DisplayName("Observation is inserted in database and returned")
+    @DisplayName("Observations are inserted, updated, listed and deleted from database")
     public void testInsertListUpdateDelete() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
