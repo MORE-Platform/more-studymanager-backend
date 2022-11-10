@@ -65,32 +65,6 @@ class InterventionControllerTest {
                 .andExpect(jsonPath("$.interventionId").value(interventionRequest.getInterventionId()))
                 .andExpect(jsonPath("$.schedule").value(interventionRequest.getSchedule()));
     }
-
-/*     @Test
-    @DisplayName("Update intervention should return similar values")
-    void testUpdateStudy() throws Exception {
-        when(interventionService.updateIntervention(any(Intervention.class))).thenAnswer(invocationOnMock -> {
-            return ((Intervention)invocationOnMock.getArgument(0))
-                    .setTitle("title")
-                    .setCreated(new Timestamp(0))
-                    .setModified(new Timestamp(0));
-        });
-
-        InterventionDTO interventionRequest = new InterventionDTO()
-                .studyId(1L)
-                .title("a different title")
-                .interventionId(1);
-
-        mvc.perform(put("/api/v1/studies/1/interventions/1")
-                        .content(mapper.writeValueAsString(interventionRequest))
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("title"))
-                .andExpect(jsonPath("$.studyId").value(interventionRequest.getStudyId()))
-                .andExpect(jsonPath("$.modified").exists())
-                .andExpect(jsonPath("$.created").exists());
-    } */
 }
 
 
