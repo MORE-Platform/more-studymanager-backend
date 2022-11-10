@@ -5,10 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
-import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -35,6 +31,8 @@ public class WebSecurityConfiguration {
 
         // Enable OAuth2
         http.oauth2Login();
+        // Enable OAuth2 client_credentials flow (insomnia)
+        http.oauth2ResourceServer().jwt();
 
         return http.build();
     }
