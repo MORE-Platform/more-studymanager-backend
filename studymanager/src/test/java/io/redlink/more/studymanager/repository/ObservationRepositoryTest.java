@@ -45,23 +45,27 @@ class ObservationRepositoryTest extends ApplicationTest {
                 .setStudyId(studyId)
                 .setType("accelerometer")
                 .setTitle("some title")
-                .setStudyGroupId(studyGroupId);
+                .setStudyGroupId(studyGroupId)
+                .setProperties("{\"testProperty\": \"testValue\"}");
 
         Observation observationResponse = observationRepository.insert(observation);
 
         assertThat(observationResponse.getObservationId()).isNotNull();
         assertThat(observationResponse.getTitle()).isEqualTo(observation.getTitle());
+        assertThat(observationResponse.getProperties()).isEqualTo(observation.getProperties());
 
         Integer oldId = observationResponse.getObservationId();
 
         observationResponse.setType("gps")
-                .setTitle("some new title");
+                .setTitle("some new title")
+                .setSchedule("{\"testSchedule\": \"testTime\"}");
 
         Observation compareObservationResponse = observationRepository.updateObservation(observationResponse);
 
         assertThat(compareObservationResponse.getTitle()).isEqualTo(observationResponse.getTitle());
         assertThat(compareObservationResponse.getType()).isEqualTo(observationResponse.getType());
         assertThat(compareObservationResponse.getObservationId()).isEqualTo(oldId);
+        assertThat(compareObservationResponse.getSchedule()).isNotEqualTo(observation.getSchedule());
 
         Observation observationResponse2 = observationRepository.insert(new Observation()
                 .setStudyId(studyId)

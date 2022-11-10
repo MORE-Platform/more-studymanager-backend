@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Observation;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -44,7 +45,11 @@ public class ObservationRepository {
     }
 
     private Observation getByIds(Long studyId, Integer observationId) {
-        return template.queryForObject(GET_OBSERVATION_BY_IDS, getObservationRowMapper(), studyId, observationId);
+        try {
+            return template.queryForObject(GET_OBSERVATION_BY_IDS, getObservationRowMapper(), studyId, observationId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new BadRequestException("Observation " + observationId + " or study " + studyId + " does not exist");
+        }
     }
 
     public void deleteObservation(Long studyId, Integer observationId) {

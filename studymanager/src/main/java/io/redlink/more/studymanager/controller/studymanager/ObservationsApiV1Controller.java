@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ObservationsApi;
 import io.redlink.more.studymanager.model.Observation;
@@ -47,10 +46,9 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     public ResponseEntity<ObservationDTO> updateObservation(Long studyId, Integer observationId, ObservationDTO observationDTO) {
-        return ResponseEntity.ok(
-                ObservationTransformer.toObservationDTO_V1(
-                        service.updateObservation(ObservationTransformer.fromObservationDTO_V1(observationDTO))
-                )
+        Observation observation = service.updateObservation(ObservationTransformer.fromObservationDTO_V1(observationDTO.studyId(studyId).observationId(observationId)));
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ObservationTransformer.toObservationDTO_V1(observation)
         );
     }
 }
