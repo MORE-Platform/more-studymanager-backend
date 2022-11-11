@@ -3,9 +3,7 @@ type: Request
 parentId: fld_663066df36c74ff9b0c69a2aabe4d759
 modified: 1667805638879
 created: 1667561236526
-url: "{{ base_url }}/components/{% prompt 'Component Id', 'one of
-  \\'observation\\', \\'action\\', \\'trigger\\'', 'observation', '', false,
-  true %}"
+url: "{{ base_url }}/components/{{ componentType }}"
 name: /components/{componentType}
 description: ""
 method: GET
