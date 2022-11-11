@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e133359c2ed5d
 type: Request
-parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1667561236519
+parentId: fld_96610131475c47f49e19ab6e25398dce
+modified: 1668204762348
 created: 1667561236519
 url: "{{ base_url }}/studies/{{ studyId }}/participants/{{ participantId }}"
 name: /studies/{studyId}/participants/{participantId}
@@ -9,7 +9,10 @@ description: ""
 method: PUT
 body:
   mimeType: application/json
-  text: "null"
+  text: |-
+    {
+        "alias": "some other"
+      },  
 parameters: []
 headers:
   - name: Content-Type
@@ -21,7 +24,8 @@ authentication:
   type: oauth2
   redirectUrl: "{{ oauth2RedirectUrl }}"
   authorizationUrl: https://auth.more.redlink.io/authorize
-metaSortKey: -1667561236519
+  disabled: true
+metaSortKey: -1667561236538.75
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true
