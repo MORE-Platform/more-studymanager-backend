@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest({UserApiV1Controller.class})
 @AutoConfigureMockMvc(addFilters = false)
-class UserApiV1ControllerTest {
+class UserControllerTest {
 
     @MockBean
     OAuth2AuthenticationService authService;

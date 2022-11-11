@@ -1,8 +1,7 @@
-package io.redlink.more.studymanager.controller;
+package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
-import io.redlink.more.studymanager.controller.studymanager.StudyApiV1Controller;
 import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
@@ -57,10 +56,10 @@ class StudyControllerTest {
     void testCreateStudy() throws Exception {
         when(authService.getCurrentUser()).thenReturn(moreUser);
         when(studyService.createStudy(any(Study.class))).thenAnswer(invocationOnMock -> new Study()
-                .setTitle(((Study)invocationOnMock.getArgument(0)).getTitle())
+                .setTitle(((Study) invocationOnMock.getArgument(0)).getTitle())
                 .setStudyId(1L)
-                .setPlannedStartDate(((Study)invocationOnMock.getArgument(0)).getPlannedStartDate())
-                .setPlannedEndDate(((Study)invocationOnMock.getArgument(0)).getPlannedEndDate())
+                .setPlannedStartDate(((Study) invocationOnMock.getArgument(0)).getPlannedStartDate())
+                .setPlannedEndDate(((Study) invocationOnMock.getArgument(0)).getPlannedEndDate())
                 .setStudyState(Study.Status.DRAFT)
                 .setCreated(new Timestamp(System.currentTimeMillis()))
                 .setModified(new Timestamp(System.currentTimeMillis())));
@@ -71,8 +70,8 @@ class StudyControllerTest {
                 .plannedEnd(LocalDate.now());
 
         mvc.perform(post("/api/v1/studies")
-                .content(mapper.writeValueAsString(studyRequest))
-                .contentType(MediaType.APPLICATION_JSON))
+                        .content(mapper.writeValueAsString(studyRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value(studyRequest.getTitle()))
@@ -83,12 +82,11 @@ class StudyControllerTest {
     @Test
     @DisplayName("Update study should return similar values")
     void testUpdateStudy() throws Exception {
-        when(studyService.updateStudy(any(Study.class))).thenAnswer(invocationOnMock -> {
-            return ((Study)invocationOnMock.getArgument(0))
-                    .setStudyState(Study.Status.DRAFT)
-                    .setCreated(new Timestamp(0))
-                    .setModified(new Timestamp(0));
-        });
+        when(studyService.updateStudy(any(Study.class))).thenAnswer(invocationOnMock ->
+                invocationOnMock.getArgument(0, Study.class)
+                        .setStudyState(Study.Status.DRAFT)
+                        .setCreated(new Timestamp(0))
+                        .setModified(new Timestamp(0)));
 
         StudyDTO studyRequest = new StudyDTO()
                 .studyId(1L)
