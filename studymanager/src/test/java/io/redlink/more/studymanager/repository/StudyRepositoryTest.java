@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.repository;
 
-import io.redlink.more.studymanager.ApplicationTest;
 import io.redlink.more.studymanager.model.Study;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Testcontainers
 @ActiveProfiles("test-containers-flyway")
-class StudyRepositoryTest extends ApplicationTest {
+class StudyRepositoryTest {
     @Autowired
     private StudyRepository studyRepository;
 

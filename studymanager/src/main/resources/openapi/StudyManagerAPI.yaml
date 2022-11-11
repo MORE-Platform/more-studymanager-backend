@@ -514,6 +514,27 @@ paths:
           description: not found
 
   /studies/{studyId}/interventions/{interventionId}:
+    put:
+      tags:
+        - interventions
+      description: update intervention
+      operationId: updateIntervention
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - $ref: '#/components/parameters/InterventionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Intervention'
+      responses:
+        '200':
+          description: intervention successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Intervention'
     get:
       tags:
         - interventions
@@ -531,6 +552,23 @@ paths:
                 $ref: '#/components/schemas/Intervention'
         '404':
           description: not found
+
+    delete:
+      tags:
+        - interventions
+      description: Delete intervention
+      operationId: deleteIntervention
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - $ref: '#/components/parameters/InterventionId'
+      responses:
+        '204':
+          description: Successfully deleted intervention
+        '404':
+          description: not found
+        '500':
+          description: Error
+
   /studies/{studyId}/interventions/{interventionId}/trigger:
     parameters:
       - $ref: '#/components/parameters/StudyId'
@@ -760,7 +798,7 @@ components:
         alias:
           type: string
         studyGroupId:
-          type: string
+          $ref: '#/components/schemas/Id'
         registrationToken:
           type: string
           readOnly: true
@@ -779,7 +817,11 @@ components:
       type: string
       enum:
         - new
-        - registered
+        - active
+        - abandoned
+        - kicked_out
+        - locked
+      default: new
 
     Observation:
       type: object
@@ -825,7 +867,7 @@ components:
         purpose:
           type: string
         schedule:
-          $ref: './TimeRange.yaml/#/components/schemas/TimeRange'
+          type: object
         trigger:
           $ref: '#/components/schemas/Trigger'
         actions:
@@ -909,7 +951,7 @@ components:
       in: path
       schema:
         type: integer
-        format: int64
+        format: int32
       required: true
     ObservationId:
       name: observationId
