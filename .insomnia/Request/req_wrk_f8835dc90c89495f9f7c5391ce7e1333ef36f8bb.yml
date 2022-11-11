@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333ef36f8bb
 type: Request
 parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1667561236518
+modified: 1668205295169
 created: 1667561236518
 url: "{{ base_url }}/studies/{{ studyId }}/observations"
 name: /studies/{studyId}/observations
@@ -21,7 +21,8 @@ authentication:
   type: oauth2
   redirectUrl: "{{ oauth2RedirectUrl }}"
   authorizationUrl: https://auth.more.redlink.io/authorize
-metaSortKey: -1667561236518
+  disabled: true
+metaSortKey: 500
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true
