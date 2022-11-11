@@ -57,6 +57,16 @@ class InterventionRepositoryTest extends ApplicationTest {
         assertThat(interventionResponse.getTitle()).isEqualTo(intervention.getTitle());
         assertThat(interventionResponse.getSchedule()).isEqualTo(intervention.getSchedule());
 
+        interventionResponse = interventionRepository.updateIntervention(new Intervention()
+                .setStudyId(studyId)
+                .setInterventionId(interventionResponse.getInterventionId())
+                .setTitle("some new title")
+                .setStudyGroupId(studyGroupId)
+                .setSchedule("{\"testSchedule\": \"new testValue\"}"));
+
+        assertThat(interventionResponse.getTitle()).isEqualTo("some new title");
+        assertThat(interventionResponse.getSchedule()).isEqualTo("{\"testSchedule\": \"new testValue\"}");
+
         int intervention2Id = interventionRepository.insert(intervention2).getInterventionId();
 
         assertThat(interventionRepository.listInterventions(studyId).size()).isEqualTo(2);

@@ -91,6 +91,15 @@ public class InterventionsApiV1Controller implements InterventionsApi {
     }
 
     @Override
+    public ResponseEntity<InterventionDTO> updateIntervention(Long studyId, Integer interventionId, InterventionDTO interventionDTO) {
+        return ResponseEntity.ok(
+                InterventionTransformer.toInterventionDTO_V1(
+                        service.updateIntervention(InterventionTransformer.fromInterventionDTO_V1(
+                                        interventionDTO.studyId(studyId).interventionId(interventionId))))
+        );
+    }
+
+    @Override
     public ResponseEntity<TriggerDTO> updateTrigger(Long studyId, Integer interventionId, TriggerDTO triggerDTO) {
         // TODO in MORE-260
         return null;

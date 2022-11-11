@@ -30,4 +30,8 @@ public class InterventionService {
         repository.deleteByIds(studyId, interventionId);
     }
 
+    public Intervention updateIntervention(Intervention intervention) {
+        return repository.updateIntervention(intervention);
+    }
+
 }

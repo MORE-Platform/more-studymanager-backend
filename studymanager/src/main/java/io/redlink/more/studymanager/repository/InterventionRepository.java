@@ -23,6 +23,7 @@ public class InterventionRepository {
     private static final String LIST_INTERVENTIONS = "SELECT * FROM interventions WHERE study_id = ?";
     private static final String DELETE_INTERVENTION_BY_IDS = "DELETE FROM interventions WHERE study_id = ? AND intervention_id = ?";
     private static final String DELETE_ALL = "DELETE FROM interventions";
+    private static final String UPDATE_INTERVENTION = "UPDATE interventions SET title=:title, purpose=:purpose, schedule=:schedule::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id";
     private static final ObjectMapper mapper = new ObjectMapper();
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -52,6 +53,11 @@ public class InterventionRepository {
 
     public void deleteByIds(Long studyId, Integer interventionId) {
         template.update(DELETE_INTERVENTION_BY_IDS, studyId, interventionId);
+    }
+
+    public Intervention updateIntervention(Intervention intervention) {
+        namedTemplate.update(UPDATE_INTERVENTION, toParams(intervention).addValue("intervention_id", intervention.getInterventionId()));
+        return getByIds(intervention.getStudyId(), intervention.getInterventionId());
     }
 
     public void clear() {
