@@ -29,7 +29,7 @@ class InterventionRepositoryTest extends ApplicationTest {
 
     @BeforeEach
     void deleteAll() {
-        // interventionRepository.clear();
+        interventionRepository.clear();
     }
 
     @Test
@@ -57,8 +57,15 @@ class InterventionRepositoryTest extends ApplicationTest {
         assertThat(interventionResponse.getTitle()).isEqualTo(intervention.getTitle());
         assertThat(interventionResponse.getSchedule()).isEqualTo(intervention.getSchedule());
 
-        interventionRepository.insert(intervention2);
+        int intervention2Id = interventionRepository.insert(intervention2).getInterventionId();
 
         assertThat(interventionRepository.listInterventions(studyId).size()).isEqualTo(2);
+
+        interventionRepository.deleteByIds(interventionResponse.getStudyId(), interventionResponse.getInterventionId());
+
+        interventionResponse = interventionRepository.getByIds(intervention2.getStudyId(), intervention2Id);
+
+        assertThat(interventionResponse.getInterventionId()).isEqualTo(intervention2Id);
+        assertThat(interventionRepository.listInterventions(studyId).size()).isEqualTo(1);
     }
 }

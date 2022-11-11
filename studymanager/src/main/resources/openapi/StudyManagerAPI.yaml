@@ -531,6 +531,23 @@ paths:
                 $ref: '#/components/schemas/Intervention'
         '404':
           description: not found
+
+    delete:
+      tags:
+        - interventions
+      description: Delete intervention
+      operationId: deleteIntervention
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - $ref: '#/components/parameters/InterventionId'
+      responses:
+        '204':
+          description: Successfully deleted intervention
+        '404':
+          description: not found
+        '500':
+          description: Error
+
   /studies/{studyId}/interventions/{interventionId}/trigger:
     parameters:
       - $ref: '#/components/parameters/StudyId'

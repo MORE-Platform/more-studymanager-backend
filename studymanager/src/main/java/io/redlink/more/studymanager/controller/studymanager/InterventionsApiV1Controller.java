@@ -47,6 +47,12 @@ public class InterventionsApiV1Controller implements InterventionsApi {
     }
 
     @Override
+    public ResponseEntity<Void> deleteIntervention(Long studyId, Integer interventionId) {
+        service.deleteIntervention(studyId, interventionId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
     public ResponseEntity<ActionDTO> getAction(Long studyId, Integer interventionId, Integer actionId) {
         // TODO in MORE-261
         return null;

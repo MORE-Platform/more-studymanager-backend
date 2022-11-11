@@ -26,4 +26,8 @@ public class InterventionService {
         return repository.getByIds(studyId, interventionId);
     }
 
+    public void deleteIntervention(Long studyId, Integer interventionId) {
+        repository.deleteByIds(studyId, interventionId);
+    }
+
 }
