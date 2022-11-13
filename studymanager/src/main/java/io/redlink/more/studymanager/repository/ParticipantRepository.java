@@ -12,7 +12,11 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
+
+import static io.redlink.more.studymanager.utils.RepositoryUtils.getValidNullableIntegerValue;
 
 @Component
 public class ParticipantRepository {
@@ -99,7 +103,7 @@ public class ParticipantRepository {
                 .setStudyId(rs.getLong("study_id"))
                 .setParticipantId(rs.getInt("participant_id"))
                 .setAlias(rs.getString("alias"))
-                .setStudyGroupId(rs.getInt("study_group_id"))
+                .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
                 .setCreated(rs.getTimestamp("created"))
                 .setModified(rs.getTimestamp("modified"))
                 .setStatus(Participant.Status.valueOf(rs.getString("status").toUpperCase()))
