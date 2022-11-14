@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -18,14 +19,14 @@ public class WebSecurityConfiguration {
     @Bean
     protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // Basics
-        http.csrf();
+        http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
         http.cors().disable();
 
         // Restricted Paths
         http.authorizeRequests()
                 .antMatchers("/api", "/api/v1/me").permitAll()
                 .antMatchers("/api/v1/**").authenticated()
-                .anyRequest().permitAll();
+                .anyRequest().denyAll();
 
         // API-Calls should not be redirected to the login page, but answered with a 401
         http.exceptionHandling()
