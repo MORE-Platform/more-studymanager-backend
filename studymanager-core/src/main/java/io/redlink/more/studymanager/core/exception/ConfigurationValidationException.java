@@ -2,7 +2,7 @@ package io.redlink.more.studymanager.core.exception;
 
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
-public class ConfigurationValidationException extends Exception {
+public class ConfigurationValidationException extends RuntimeException {
     private final ConfigurationValidationReport report;
     public ConfigurationValidationException(ConfigurationValidationReport report) {
         this.report = report;

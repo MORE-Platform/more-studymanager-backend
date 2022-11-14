@@ -22,8 +22,6 @@ public class ParticipantServiceTest {
     @InjectMocks
     ParticipantService participantService;
 
-
-
     @Test
     @DisplayName("When the participant is saved it should return the participant with id.")
     public void testSaveStudy() {
