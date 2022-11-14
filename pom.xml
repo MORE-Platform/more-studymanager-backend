@@ -152,8 +152,8 @@
                             </environment>
                         </container>
                         <outputPaths>
-                            <tar>${build.directory}/${artifactId}-${version}.docker.tar</tar>
-                            <imageJson>${build.directory}/${artifactId}-${version}.json</imageJson>
+                            <tar>${project.build.directory}/${project.artifactId}-${project.version}.docker.tar</tar>
+                            <imageJson>${project.build.directory}/${project.artifactId}-${project.version}.json</imageJson>
                         </outputPaths>
                     </configuration>
                 </plugin>
