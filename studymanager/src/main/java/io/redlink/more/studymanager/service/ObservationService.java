@@ -1,23 +1,34 @@
 package io.redlink.more.studymanager.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.factory.ObservationFactory;
+import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
+import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ObservationService {
 
     private final ObservationRepository repository;
 
-    public ObservationService(ObservationRepository repository) {
+    private final MorePlatformSDK sdk;
+
+    private final Map<String, ObservationFactory> observationFactories;
+
+    public ObservationService(ObservationRepository repository, MorePlatformSDK sdk, Map<String, ObservationFactory> observationFactories) {
         this.repository = repository;
+        this.sdk = sdk;
+        this.observationFactories = observationFactories;
     }
 
     public Observation addObservation(Observation observation) {
-        return repository.insert(observation);
+        return repository.insert(validate(observation));
     }
 
     public void deleteObservation(Long studyId, Integer observationId) {
@@ -29,6 +40,18 @@ public class ObservationService {
     }
 
     public Observation updateObservation(Observation observation) {
-        return repository.updateObservation(observation);
+        return repository.updateObservation(validate(observation));
+    }
+
+    private Observation validate(Observation observation) {
+        if(!observationFactories.containsKey(observation.getType())) {
+            throw NotFoundException.ObservationFactory(observation.getType());
+        }
+        try {
+            observationFactories.get(observation.getType()).create(sdk, observation.getProperties());
+        } catch (ConfigurationValidationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        return observation;
     }
 }

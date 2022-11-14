@@ -48,6 +48,7 @@ class ObservationControllerTest {
                         .setPurpose(((Observation)invocationOnMock.getArgument(0)).getPurpose())
                         .setParticipantInfo(((Observation)invocationOnMock.getArgument(0)).getParticipantInfo())
                         .setType(((Observation)invocationOnMock.getArgument(0)).getType())
+                        .setProperties(((Observation)invocationOnMock.getArgument(0)).getProperties())
                         .setStudyGroupId(((Observation)invocationOnMock.getArgument(0)).getStudyGroupId())
                         .setCreated(new Timestamp(System.currentTimeMillis()))
                         .setModified(new Timestamp(System.currentTimeMillis())));
@@ -59,6 +60,7 @@ class ObservationControllerTest {
                 .purpose("some purpose")
                 .participantInfo("info")
                 .type("accelerometer")
+                .properties("{\"name\":\"value\"}")
                 .studyGroupId(1);
 
         mvc.perform(post("/api/v1/studies/1/observations")
@@ -68,7 +70,8 @@ class ObservationControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value(observationRequest.getTitle()))
                 .andExpect(jsonPath("$.observationId").value(observationRequest.getObservationId()))
-                .andExpect(jsonPath("$.type").value(observationRequest.getType()));
+                .andExpect(jsonPath("$.type").value(observationRequest.getType()))
+                .andExpect(jsonPath("$.properties.name").value("value"));
     }
 
     @Test

@@ -1,5 +1,7 @@
 package io.redlink.more.studymanager.model;
 
+import io.redlink.more.studymanager.core.properties.ObservationProperties;
+
 import java.sql.Timestamp;
 
 public class Observation {
@@ -10,7 +12,7 @@ public class Observation {
     private String participantInfo;
     private String type;
     private Integer studyGroupId;
-    private Object properties;
+    private ObservationProperties properties;
     private Object schedule;
     private Timestamp created;
     private Timestamp modified;
@@ -79,11 +81,11 @@ public class Observation {
         return this;
     }
 
-    public Object getProperties() {
+    public ObservationProperties getProperties() {
         return properties;
     }
 
-    public Observation setProperties(Object properties) {
+    public Observation setProperties(ObservationProperties properties) {
         this.properties = properties;
         return this;
     }

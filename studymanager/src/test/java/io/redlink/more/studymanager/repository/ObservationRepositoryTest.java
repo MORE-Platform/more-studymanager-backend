@@ -1,6 +1,7 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.ApplicationTest;
+import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyGroup;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,16 +38,17 @@ class ObservationRepositoryTest extends ApplicationTest {
     @Test
     @DisplayName("Observations are inserted, updated, listed and deleted from database")
     public void testInsertListUpdateDelete() {
+        String type = "accelerometer";
         Long studyId = studyRepository.insert(new Study()).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
 
 
         Observation observation = new Observation()
                 .setStudyId(studyId)
-                .setType("accelerometer")
+                .setType(type)
                 .setTitle("some title")
                 .setStudyGroupId(studyGroupId)
-                .setProperties("{\"testProperty\": \"testValue\"}");
+                .setProperties(new ObservationProperties(Map.of("testProperty", "testValue")));
 
         Observation observationResponse = observationRepository.insert(observation);
 
@@ -54,14 +58,14 @@ class ObservationRepositoryTest extends ApplicationTest {
 
         Integer oldId = observationResponse.getObservationId();
 
-        observationResponse.setType("gps")
+        observationResponse.setType("new type")
                 .setTitle("some new title")
                 .setSchedule("{\"testSchedule\": \"testTime\"}");
 
         Observation compareObservationResponse = observationRepository.updateObservation(observationResponse);
 
         assertThat(compareObservationResponse.getTitle()).isEqualTo(observationResponse.getTitle());
-        assertThat(compareObservationResponse.getType()).isEqualTo(observationResponse.getType());
+        assertThat(compareObservationResponse.getType()).isEqualTo(type);
         assertThat(compareObservationResponse.getObservationId()).isEqualTo(oldId);
         assertThat(compareObservationResponse.getSchedule()).isNotEqualTo(observation.getSchedule());
 
