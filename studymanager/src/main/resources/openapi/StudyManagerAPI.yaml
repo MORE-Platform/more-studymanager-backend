@@ -697,6 +697,21 @@ paths:
           description: action deleted successfully
         '400':
           description: bad request
+
+  /users/me:
+    get:
+      tags:
+        - users
+      description: retrieve the current user
+      operationId: getCurrentUser
+      responses:
+        default:
+          description: "user-info/profile of the current user"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+
 components:
   schemas:
     ComponentFactory:
@@ -931,6 +946,34 @@ components:
     IdReference:
       type: integer
       format: int32
+
+    UserInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          readOnly: true
+        institution:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformPermission'
+          uniqueItems: true
+          readOnly: true
+      readOnly: true
+
+    PlatformPermission:
+      type: string
+      enum:
+        - READ_STUDIES
+        - CREATE_STUDIES
+
 
   parameters:
     StudyId:

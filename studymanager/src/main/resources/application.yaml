@@ -4,6 +4,28 @@ spring:
   application:
     name: "More Studymanager"
 
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: ${OAUTH2_CLIENT_ID:oauth2-pkce-client}
+            client-secret: ${OAUTH2_CLIENT_SECRET:}
+            provider: keycloak
+            scope:
+              - openid
+              - profile
+              - roles
+            authorization-grant-type: authorization_code
+        provider:
+          keycloak:
+            issuer-uri: ${OAUTH2_SERVER:https://auth.more.redlink.io/realms/Auth-Client-Test}
+            user-name-attribute: preferred_username
+      # This enables the client_credentials grant/flow
+      resourceserver:
+        jwt:
+          issuer-uri: ${spring.security.oauth2.client.provider.keycloak.issuer-uri}
+
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DBNAME:more}
     username: ${POSTGRES_USER:more}

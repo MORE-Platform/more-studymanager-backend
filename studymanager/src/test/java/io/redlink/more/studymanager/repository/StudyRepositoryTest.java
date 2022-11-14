@@ -11,7 +11,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest
 @Testcontainers
 @ActiveProfiles("test-containers-flyway")
 class StudyRepositoryTest {
@@ -25,7 +25,7 @@ class StudyRepositoryTest {
 
     @Test
     @DisplayName("Study is inserted in database and returned")
-    public void testInsert() {
+    void testInsert() {
         Study study = new Study()
                 .setTitle("some title");
 
@@ -37,7 +37,7 @@ class StudyRepositoryTest {
     }
     @Test
     @DisplayName("Study is updated in database and returned")
-    public void testUpdate() throws InterruptedException {
+    void testUpdate() {
         Study insert = new Study()
                 .setTitle("some title");
 
@@ -63,25 +63,25 @@ class StudyRepositoryTest {
 
     @Test
     @DisplayName("Studies are deleted and listed correctly")
-    public void testListAndDelete() {
+    void testListAndDelete() {
         Study s1 = studyRepository.insert(new Study());
         Study s2 = studyRepository.insert(new Study());
         Study s3 = studyRepository.insert(new Study());
 
-        assertThat(studyRepository.listStudyOrderByModifiedDesc().size()).isEqualTo(3);
+        assertThat(studyRepository.listStudyOrderByModifiedDesc()).hasSize(3);
         studyRepository.deleteById(s1.getStudyId());
-        assertThat(studyRepository.listStudyOrderByModifiedDesc().size()).isEqualTo(2);
+        assertThat(studyRepository.listStudyOrderByModifiedDesc()).hasSize(2);
         studyRepository.deleteById(s2.getStudyId());
-        assertThat(studyRepository.listStudyOrderByModifiedDesc().size()).isEqualTo(1);
+        assertThat(studyRepository.listStudyOrderByModifiedDesc()).hasSize(1);
         studyRepository.deleteById(s2.getStudyId());
-        assertThat(studyRepository.listStudyOrderByModifiedDesc().size()).isEqualTo(1);
+        assertThat(studyRepository.listStudyOrderByModifiedDesc()).hasSize(1);
         studyRepository.deleteById(s3.getStudyId());
-        assertThat(studyRepository.listStudyOrderByModifiedDesc().size()).isEqualTo(0);
+        assertThat(studyRepository.listStudyOrderByModifiedDesc()).isEmpty();
     }
 
     @Test
     @DisplayName("Study states are set correctly")
-    public void testSetState() {
+    void testSetState() {
         Study study = studyRepository.insert(new Study());
         assertThat(study.getStudyState()).isEqualTo(Study.Status.DRAFT);
         assertThat(study.getStartDate()).isNull();
