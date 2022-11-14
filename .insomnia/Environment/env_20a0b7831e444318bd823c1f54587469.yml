@@ -1,0 +1,30 @@
+_id: env_20a0b7831e444318bd823c1f54587469
+type: Environment
+parentId: env_8c9c17e9a9b6ea0973e901c89057867aecf00f5a
+modified: 1668205553163
+created: 1668175580651
+name: Remote Test Server
+data:
+  base_url: https://studymanager.platform-test.more.redlink.io/api/v1
+  studyId: "{% response 'body',
+    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333d718002b',
+    'b64::JC5zdHVkeUlk::46b', 'never', 60 %}"
+  studyGroupId: "{% response 'body',
+    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333607c78a1',
+    'b64::JC5zdHVkeUdyb3VwSWQ=::46b', 'never', 60 %}"
+  participantId: "{% response 'body',
+    'req_wrk_f8835dc90c89495f9f7c5391ce7e13339a96ef8b',
+    'b64::JC5pbnRlcnZlbnRpb25JZA==::46b', 'never', 60 %}"
+  interventionId: "{% response 'body',
+    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333d3f2774a',
+    'b64::JC5bMF0ucGFydGljaXBhbnRJZA==::46b', 'never', 60 %}"
+dataPropertyOrder:
+  "&":
+    - base_url
+    - studyId
+    - studyGroupId
+    - participantId
+    - interventionId
+color: null
+isPrivate: false
+metaSortKey: 1667561236576

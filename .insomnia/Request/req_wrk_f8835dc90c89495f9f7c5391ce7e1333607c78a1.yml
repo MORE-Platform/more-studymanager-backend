@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333607c78a1
 type: Request
 parentId: fld_d5825806feed4c8cafde3fdd04176f82
-modified: 1667771506160
+modified: 1668204435810
 created: 1667561236523
 url: "{{ base_url }}/studies/{{ studyId }}/studyGroups"
 name: /studies/{studyId}/studyGroups
@@ -12,7 +12,7 @@ body:
   text: |-
     {
     	"studyId": "{{ _.studyId }}",
-      "title": "My Group",
+      "title": "My Study Group 2",
       "purpose": "Some Purpose"
     }
 parameters: []

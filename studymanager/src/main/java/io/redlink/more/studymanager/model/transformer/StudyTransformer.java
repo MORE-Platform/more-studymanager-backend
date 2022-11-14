@@ -23,8 +23,8 @@ public class StudyTransformer {
                 .setPurpose(studyDTO.getPurpose())
                 .setParticipantInfo(studyDTO.getParticipantInfo())
                 .setConsentInfo(studyDTO.getConsentInfo())
-                .setPlannedStartDate(Date.valueOf(studyDTO.getPlannedStart()))
-                .setPlannedEndDate(Date.valueOf(studyDTO.getPlannedEnd()));
+                .setPlannedStartDate(studyDTO.getPlannedStart() != null ? Date.valueOf(studyDTO.getPlannedStart()): null)
+                .setPlannedEndDate(studyDTO.getPlannedEnd() != null ? Date.valueOf(studyDTO.getPlannedEnd()): null);
     }
 
     public static StudyDTO toStudyDTO_V1(Study study) {
@@ -37,8 +37,8 @@ public class StudyTransformer {
                 .status(StudyStatusDTO.fromValue(study.getStudyState().getValue()))
                 .start(study.getStartDate() != null ? study.getStartDate().toLocalDate() : null)
                 .end(study.getEndDate() != null ? study.getEndDate().toLocalDate() : null)
-                .plannedStart(study.getPlannedStartDate().toLocalDate())
-                .plannedEnd(study.getPlannedEndDate().toLocalDate())
+                .plannedStart(study.getPlannedStartDate() != null ? study.getPlannedStartDate().toLocalDate() : null)
+                .plannedEnd(study.getPlannedEndDate() != null ? study.getPlannedEndDate().toLocalDate(): null)
                 .created(study.getCreated().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()))
                 .modified(study.getModified().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()));
     }

@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333d3f2774a
 type: Request
-parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1667805729912
+parentId: fld_96610131475c47f49e19ab6e25398dce
+modified: 1668204735318
 created: 1667561236520
 url: "{{ base_url }}/studies/{{ studyId }}/participants"
 name: /studies/{studyId}/participants
@@ -11,7 +11,12 @@ body:
   mimeType: application/json
   text: |-
     [
-      null
+      {
+        "alias": "p1"
+      },  
+    	{
+        "alias": "p2"
+      }
     ]
 parameters: []
 headers:

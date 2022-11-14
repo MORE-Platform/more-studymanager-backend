@@ -3,9 +3,8 @@ type: Request
 parentId: fld_663066df36c74ff9b0c69a2aabe4d759
 modified: 1667806190917
 created: 1667561236525
-url: "{{ base_url }}/components/observation/{% response 'body',
-  'req_wrk_f8835dc90c89495f9f7c5391ce7e13337266d1c0',
-  'b64::JC5bMF0uY29tcG9uZW50SWQ=::46b', 'never', 60 %}/web-component.js"
+url: "{{ base_url }}/components/{{ componentType }}/{{ componentId
+  }}/web-component.js"
 name: /components/{componentType}/{componentId}/web-component.js
 description: ""
 method: GET

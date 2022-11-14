@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e13339a96ef8b
 type: Request
-parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1667561236516
+parentId: fld_ac178bbd6a794d82875032a46e60b2ec
+modified: 1668205462410
 created: 1667561236516
 url: "{{ base_url }}/studies/{{ studyId }}/interventions"
 name: /studies/{studyId}/interventions
@@ -9,7 +9,11 @@ description: ""
 method: POST
 body:
   mimeType: application/json
-  text: "null"
+  text: |-
+    {
+      "title": "My intervention",
+      "purpose": "some purpose"
+    }
 parameters: []
 headers:
   - name: Content-Type

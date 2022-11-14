@@ -110,4 +110,13 @@ class ParticipantRepositoryTest {
         assertThat(participant.getStatus()).isEqualTo(Participant.Status.ACTIVE);
     }
 
+    @Test
+    @DisplayName("Participants study group must be undefined")
+    public void testUndefinedStudyGroup() {
+        Long studyId = studyRepository.insert(new Study()).getStudyId();
+        Participant participant = participantRepository
+                .insert(new Participant().setStudyId(studyId).setRegistrationToken("abc"));
+        assertThat(participant.getStudyGroupId()).isNull();
+    }
+
 }
