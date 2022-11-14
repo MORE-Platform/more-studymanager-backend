@@ -32,7 +32,9 @@ spring:
     password: ${POSTGRES_PASSWORD:more}
     name: ${POSTGRES_DBNAME:more}
 
-server.error.include-message: always
+server:
+  forward-headers-strategy: framework
+  error.include-message: always
 
 elastic:
   host: ${ELASTIC_HOST:localhost}
