@@ -32,11 +32,35 @@ spring:
     password: ${POSTGRES_PASSWORD:more}
     name: ${POSTGRES_DBNAME:more}
 
+  session:
+    store-type: redis
+
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+
 server:
   forward-headers-strategy: framework
-  error.include-message: always
+  error:
+    include-exception: true
+    include-message: always
 
 elastic:
   host: ${ELASTIC_HOST:localhost}
   port: ${ELASTIC_PORT:9200}
   number_of_shards: 3
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+      group:
+        liveness:
+          show-components: always
+          include:
+            - ping
+            - diskSpace
+        readiness:
+          show-components: always

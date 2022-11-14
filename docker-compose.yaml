@@ -1,6 +1,11 @@
 services:
   postgres:
     image: postgres:15-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 1s
+      retries: 5
     ports:
       - "5432:5432"
     environment:
@@ -11,6 +16,16 @@ services:
       - type: volume
         source: postgres-data
         target: /var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: [ 'CMD-SHELL', '[ "$(redis-cli ping)" = "PONG" ]' ]
+      interval: 10s
+      timeout: 1s
+      retries: 5
+    ports:
+      - "6379:6379"
 
   # ElasticSearch
   elastic:
