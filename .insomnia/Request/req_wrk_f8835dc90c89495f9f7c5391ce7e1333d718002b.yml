@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333d718002b
 type: Request
 parentId: fld_7a92eda90ce14a2d99ac2c6ee841bf96
-modified: 1667771317376
+modified: 1668204898313
 created: 1667561236525
 url: "{{ base_url }}/studies"
 name: /studies
@@ -11,8 +11,8 @@ body:
   mimeType: application/json
   text: |-
     {
-      "title": "My study 123",
-      "purpose": "Some purpose",
+      "title": "Ein neue Teststudie",
+      "purpose": "Eine Teststudie",
       "participantInfo": "Some public info",
       "consentInfo": "Some consent",
       "plannedStart": "2022-12-05",
