@@ -4,6 +4,10 @@ import io.redlink.more.studymanager.properties.MoreAuthProperties;
 import io.redlink.more.studymanager.repository.UserRepository;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -12,8 +16,15 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
+import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
+import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
@@ -91,6 +102,65 @@ public class WebSecurityConfiguration {
         oidcLogoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}/");
         return oidcLogoutSuccessHandler;
     }
+
+    @Bean
+    protected GrantedAuthoritiesMapper userAuthoritiesMapper() {
+        return authorities -> {
+            final Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
+
+            authorities.forEach(authority -> {
+                if (authority instanceof OidcUserAuthority oidcUserAuthority) {
+                    final OidcIdToken idToken = oidcUserAuthority.getIdToken();
+                    final OidcUserInfo userInfo = oidcUserAuthority.getUserInfo();
+
+                    // Is the profile complete?
+                    if (validateProfile(userInfo)) {
+                        mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_FULL_PROFILE"));
+                    }
+
+                    // Has the mail been validated?
+                    if (Boolean.TRUE.equals(idToken.getEmailVerified())) {
+                        mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_EMAIL"));
+                    }
+
+                    // Can the user access (edit) studies?
+                    if (hasRole(idToken, "study-access")) {
+                        mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_STUDY_EDIT"));
+                    }
+                    // Can the user create (new) studies?
+                    if (hasRole(idToken, "study-creator")) {
+                        mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_STUDY_CREATE"));
+                    }
+
+                    // Keep the original Granted Authority
+                    mappedAuthorities.add(oidcUserAuthority);
+                } else if (authority instanceof OAuth2UserAuthority oauth2UserAuthority) {
+                    final Map<String, Object> userAttributes = oauth2UserAuthority.getAttributes();
+
+                    // Map the attributes found in userAttributes
+                    // to one or more GrantedAuthority's and add it to mappedAuthorities
+                    mappedAuthorities.add(oauth2UserAuthority);
+                }
+            });
+
+            return Set.copyOf(mappedAuthorities);
+        };
+    }
+
+    private boolean validateProfile(OidcUserInfo userInfo) {
+        return StringUtils.isNoneBlank(
+                userInfo.getFullName(),
+                userInfo.getEmail(),
+                userInfo.getClaimAsString("org")
+        );
+    }
+
+    private boolean hasRole(OidcIdToken idToken, String role) {
+        var roles = idToken.getClaimAsStringList("roles");
+
+        return roles != null && roles.contains(role);
+    }
+
 
     @Bean
     protected OAuth2AuthenticationService oAuth2AuthenticationService() {
