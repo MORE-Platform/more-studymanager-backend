@@ -68,7 +68,7 @@
         <!-- Persistence -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <artifactId>spring-boot-starter-data-jdbc</artifactId>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -268,7 +268,7 @@
                         <sourceFolder>src</sourceFolder>
                         <documentationProvider>source</documentationProvider>
                         <interfaceOnly>true</interfaceOnly>
-                        <useTags>false</useTags><!-- TODO: set this to true -->
+                        <useTags>false</useTags>
                         <openApiNullable>false</openApiNullable>
                         <skipDefaultInterface>true</skipDefaultInterface>
                     </configOptions>
