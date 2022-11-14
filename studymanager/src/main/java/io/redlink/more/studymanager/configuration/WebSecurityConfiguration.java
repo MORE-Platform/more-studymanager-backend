@@ -26,6 +26,7 @@ public class WebSecurityConfiguration {
         http.authorizeRequests()
                 .antMatchers("/api", "/api/v1/me").permitAll()
                 .antMatchers("/api/v1/**").authenticated()
+                .antMatchers("/actuator/**").hasIpAddress("127.0.0.1/8")
                 .anyRequest().denyAll();
 
         // API-Calls should not be redirected to the login page, but answered with a 401
