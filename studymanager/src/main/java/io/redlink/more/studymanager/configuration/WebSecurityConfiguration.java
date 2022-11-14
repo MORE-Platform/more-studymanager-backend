@@ -6,8 +6,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.context.annotation.RequestScope;
@@ -15,6 +18,12 @@ import org.springframework.web.context.annotation.RequestScope;
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfiguration {
+
+    final ClientRegistrationRepository clientRegistrationRepository;
+
+    public WebSecurityConfiguration(ClientRegistrationRepository clientRegistrationRepository) {
+        this.clientRegistrationRepository = clientRegistrationRepository;
+    }
 
     @Bean
     protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -36,6 +45,7 @@ public class WebSecurityConfiguration {
 
         // Logout Config
         http.logout()
+                .logoutSuccessHandler(oidcLogoutSuccessHandler())
                 .logoutSuccessUrl("/");
 
         // Enable OAuth2
@@ -46,6 +56,13 @@ public class WebSecurityConfiguration {
         http.oauth2ResourceServer().jwt();
 
         return http.build();
+    }
+
+    private LogoutSuccessHandler oidcLogoutSuccessHandler() {
+        OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler =
+                new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+        oidcLogoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}/");
+        return oidcLogoutSuccessHandler;
     }
 
     @Bean
