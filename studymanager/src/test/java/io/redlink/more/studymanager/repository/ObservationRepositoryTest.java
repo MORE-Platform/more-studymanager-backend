@@ -17,10 +17,10 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest
 @Testcontainers
 @ActiveProfiles("test-containers-flyway")
-class ObservationRepositoryTest extends ApplicationTest {
+class ObservationRepositoryTest {
     @Autowired
     private ObservationRepository observationRepository;
 

@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("test-containers-flyway")
-class InterventionRepositoryTest extends ApplicationTest {
+class InterventionRepositoryTest {
     @Autowired
     private InterventionRepository interventionRepository;
 
