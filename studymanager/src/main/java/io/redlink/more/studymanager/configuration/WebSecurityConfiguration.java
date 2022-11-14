@@ -26,6 +26,7 @@ public class WebSecurityConfiguration {
         http.authorizeRequests()
                 .antMatchers("/api", "/api/v1/me").permitAll()
                 .antMatchers("/api/v1/**").authenticated()
+                .antMatchers("/login/init").authenticated()
                 .antMatchers("/actuator/**").hasIpAddress("127.0.0.1/8")
                 .anyRequest().denyAll();
 
@@ -40,7 +41,7 @@ public class WebSecurityConfiguration {
         // Enable OAuth2
         http.oauth2Login()
                 // register oauth2-provider under this baseurl to simplify routing
-                .authorizationEndpoint().baseUri("/login");
+                .authorizationEndpoint().baseUri("/login/oauth");
         // Enable OAuth2 client_credentials flow (insomnia)
         http.oauth2ResourceServer().jwt();
 
