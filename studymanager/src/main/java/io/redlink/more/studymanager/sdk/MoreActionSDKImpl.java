@@ -1,12 +1,23 @@
 package io.redlink.more.studymanager.sdk;
 
-import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
+import io.redlink.more.studymanager.core.component.Action;
+import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-@Component("MorePlatformSDKImpl")
-public class MorePlatformSDKImpl implements MorePlatformSDK {
+@Component("MoreActionSDKImpl")
+public class MoreActionSDKImpl implements MoreActionSDK {
+    @Override
+    public void setAction(Action action) {
+
+    }
+
+    @Override
+    public void sendPushNotification(String message) {
+
+    }
+
     @Override
     public <T> void setValue(String name, T value) {
 
