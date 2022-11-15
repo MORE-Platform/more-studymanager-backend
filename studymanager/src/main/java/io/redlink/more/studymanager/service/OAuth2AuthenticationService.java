@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
 
 public class OAuth2AuthenticationService {
@@ -29,8 +30,9 @@ public class OAuth2AuthenticationService {
     private StandardClaimAccessor getClaimAccessor() {
         return Optional.ofNullable(getAuthentication())
                 .map(Authentication::getPrincipal)
-                .filter(StandardClaimAccessor.class::isInstance)
-                .map(StandardClaimAccessor.class::cast)
+                .filter(ClaimAccessor.class::isInstance)
+                .map(ClaimAccessor.class::cast)
+                .map(DelegatingClaimAccessor::new)
                 .orElse(null);
     }
 
@@ -65,4 +67,10 @@ public class OAuth2AuthenticationService {
                 .collect(Collectors.toUnmodifiableSet());
     }
 
+    private record DelegatingClaimAccessor(ClaimAccessor delegate) implements StandardClaimAccessor {
+        @Override
+            public Map<String, Object> getClaims() {
+                return delegate.getClaims();
+            }
+        }
 }
