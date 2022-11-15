@@ -2,8 +2,12 @@ package io.redlink.more.studymanager.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.Intervention;
+import io.redlink.more.studymanager.utils.MapperUtils;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -24,6 +28,8 @@ public class InterventionRepository {
     private static final String DELETE_INTERVENTION_BY_IDS = "DELETE FROM interventions WHERE study_id = ? AND intervention_id = ?";
     private static final String DELETE_ALL = "DELETE FROM interventions";
     private static final String UPDATE_INTERVENTION = "UPDATE interventions SET title=:title, purpose=:purpose, schedule=:schedule::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id";
+    private static final String CREATE_ACTION = "INSERT INTO actions(study_id,intervention_id,action_id,type,properties) VALUES (:study_id,:intervention_id,(SELECT COALESCE(MAX(action_id),0)+1 FROM actions WHERE study_id = :study_id AND intervention_id=:intervention_id),:type,:properties::jsonb)";
+    private static final String GET_ACTION_BY_IDS = "SELECT * FROM actions WHERE study_id=? AND intervention_id=? AND action_id=?";
     private static final ObjectMapper mapper = new ObjectMapper();
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -60,10 +66,35 @@ public class InterventionRepository {
         return getByIds(intervention.getStudyId(), intervention.getInterventionId());
     }
 
+    public Action createAction(Long studyId, Integer interventionId, Action action) {
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
+        try {
+            namedTemplate.update(CREATE_ACTION, actionToParams(studyId, interventionId, action), keyHolder, new String[] { "intervention_id" });
+        } catch (DataIntegrityViolationException e) {
+            throw new BadRequestException("Intervention " + interventionId + " does not exist on study " + studyId);
+        }
+        return getActionByIds(studyId, interventionId, keyHolder.getKey().intValue());
+    }
+
+    public Action getActionByIds(Long studyId, Integer interventionId, Integer actionId) {
+        return template.queryForObject(GET_ACTION_BY_IDS, getActionRowMapper(), studyId, interventionId, actionId);
+    }
+
     public void clear() {
         template.update(DELETE_ALL);
     }
 
+    private static MapSqlParameterSource actionToParams(Long studyId, Integer interventionId, Action action) {
+        try {
+            return new MapSqlParameterSource()
+                    .addValue("study_id", studyId)
+                    .addValue("intervention_id", interventionId)
+                    .addValue("type", action.getType())
+                    .addValue("properties", mapper.writeValueAsString(action.getProperties()));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
     private static MapSqlParameterSource toParams(Intervention intervention) {
         try {
             return new MapSqlParameterSource()
@@ -77,21 +108,28 @@ public class InterventionRepository {
         }
     }
 
+    private static RowMapper<Action> getActionRowMapper() {
+        return (rs, rowNum) -> {
+            return new Action()
+                    .setActionId(rs.getInt("action_id"))
+                    .setType(rs.getString("type"))
+                    .setProperties(MapperUtils.readValue(rs.getObject("properties"), ActionProperties.class))
+                    .setModified(rs.getTimestamp("modified").toInstant())
+                    .setCreated(rs.getTimestamp("created").toInstant());
+        };
+    }
+
     private static RowMapper<Intervention> getInterventionRowMapper() {
         return (rs, rowNum) -> {
-            try {
-                return new Intervention()
-                        .setStudyId(rs.getLong("study_id"))
-                        .setInterventionId(rs.getInt("intervention_id"))
-                        .setTitle(rs.getString("title"))
-                        .setPurpose(rs.getString("purpose"))
-                        .setSchedule(mapper.readValue(rs.getString("schedule"), Object.class))
-                        .setStudyGroupId(rs.getInt("study_group_id"))
-                        .setCreated(rs.getTimestamp("created").toInstant())
-                        .setModified(rs.getTimestamp("modified").toInstant());
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            return new Intervention()
+                    .setStudyId(rs.getLong("study_id"))
+                    .setInterventionId(rs.getInt("intervention_id"))
+                    .setTitle(rs.getString("title"))
+                    .setPurpose(rs.getString("purpose"))
+                    .setSchedule(MapperUtils.readValue(rs.getString("schedule"), Object.class))
+                    .setStudyGroupId(rs.getInt("study_group_id"))
+                    .setCreated(rs.getTimestamp("created").toInstant())
+                    .setModified(rs.getTimestamp("modified").toInstant());
         };
     }
 

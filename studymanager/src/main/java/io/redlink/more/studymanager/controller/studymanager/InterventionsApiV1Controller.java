@@ -4,6 +4,7 @@ import io.redlink.more.studymanager.api.v1.model.ActionDTO;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.api.v1.webservices.InterventionsApi;
+import io.redlink.more.studymanager.model.transformer.ActionTransformer;
 import io.redlink.more.studymanager.model.transformer.InterventionTransformer;
 import io.redlink.more.studymanager.service.InterventionService;
 import org.springframework.http.HttpStatus;
@@ -36,8 +37,10 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     public ResponseEntity<ActionDTO> createAction(Long studyId, Integer interventionId, ActionDTO actionDTO) {
-        // TODO in MORE-261
-        return null;
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ActionTransformer.toActionDTO_V1(service.createAction(studyId, interventionId,
+                        ActionTransformer.fromActionDTO_V1(actionDTO)))
+        );
     }
 
     @Override

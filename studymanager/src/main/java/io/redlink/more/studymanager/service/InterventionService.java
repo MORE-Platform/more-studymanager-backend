@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.repository.InterventionRepository;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,10 @@ public class InterventionService {
 
     public Intervention updateIntervention(Intervention intervention) {
         return repository.updateIntervention(intervention);
+    }
+
+    public Action createAction(Long studyId, Integer interventionId, Action action) {
+        return repository.createAction(studyId, interventionId, action);
     }
 
 }
