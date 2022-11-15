@@ -2,9 +2,15 @@ package io.redlink.more.studymanager.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
+import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
+import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.controller.studymanager.InterventionsApiV1Controller;
+import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Intervention;
+import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.service.InterventionService;
+import io.redlink.more.studymanager.utils.MapperUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +20,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZoneOffset;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -102,6 +110,30 @@ class InterventionControllerTest {
                 .andExpect(jsonPath("$.schedule").value("\\\"schedule\\\": \\\"some new schedule\\\""))
                 .andExpect(jsonPath("$.modified").exists())
                 .andExpect(jsonPath("$.created").exists());
+    }
+
+    @Test
+    @DisplayName("A trigger can be updated")
+    void testUpdateAndGetTrigger() throws Exception {
+        when(interventionService.updateTrigger(any(Long.class), any(Integer.class), any(Trigger.class))).thenAnswer(invocationOnMock -> {
+            return ((Trigger)invocationOnMock.getArgument(0))
+                    .setType("my-type")
+                    .setProperties(MapperUtils.readValue("{\"name\": \"value\"}", TriggerProperties.class))
+                    .setCreated(Instant.now())
+                    .setModified(Instant.now());
+        });
+
+        TriggerDTO triggerRequest = new TriggerDTO()
+                .properties("{\"name\": \"value\"}")
+                .type("my-type");
+
+        mvc.perform(put("/api/v1/studies/1/interventions/1/trigger")
+                        .content(mapper.writeValueAsString(triggerRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value(triggerRequest.getType()))
+                .andExpect(jsonPath("$.properties.name").value("value"));
     }
 }
 

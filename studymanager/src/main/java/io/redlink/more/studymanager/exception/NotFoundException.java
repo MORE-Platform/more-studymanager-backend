@@ -24,4 +24,8 @@ public class NotFoundException extends RuntimeException {
     public static NotFoundException ObservationFactory(String type) {
         return new NotFoundException("Observation Factory '" + type + "'");
     }
+
+    public static NotFoundException TriggerFactory(String type) {
+        return new NotFoundException("Trigger Factory '" + type + "'");
+    }
 }
