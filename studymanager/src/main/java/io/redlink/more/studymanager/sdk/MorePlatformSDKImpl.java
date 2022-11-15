@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-@Component
+@Component("MorePlatformSDKImpl")
 public class MorePlatformSDKImpl implements MorePlatformSDK {
     @Override
     public <T> void setValue(String name, T value) {

@@ -11,7 +11,7 @@ public class TriggerTransformer {
     public static Trigger fromTriggerDTO_V1(TriggerDTO dto) {
         return new Trigger()
                 .setType(dto.getType())
-                .setProperties(MapperUtils.readValue(dto.getProperties(), TriggerProperties.class));
+                .setProperties(MapperUtils.MAPPER.convertValue(dto.getProperties(), TriggerProperties.class));
     }
 
     public static TriggerDTO toTriggerDTO_V1(Trigger trigger) {

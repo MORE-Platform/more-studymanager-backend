@@ -7,6 +7,7 @@ import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.repository.ObservationRepository;
+import io.redlink.more.studymanager.sdk.MorePlatformSDKImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class ObservationService {
 
     private final Map<String, ObservationFactory> observationFactories;
 
-    public ObservationService(ObservationRepository repository, MorePlatformSDK sdk, Map<String, ObservationFactory> observationFactories) {
+    public ObservationService(ObservationRepository repository, MorePlatformSDKImpl sdk, Map<String, ObservationFactory> observationFactories) {
         this.repository = repository;
         this.sdk = sdk;
         this.observationFactories = observationFactories;

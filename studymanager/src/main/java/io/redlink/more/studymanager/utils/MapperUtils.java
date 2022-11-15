@@ -15,4 +15,12 @@ public class MapperUtils {
             throw new BadRequestException(e);
         }
     }
+
+    public static String writeValueAsString(Object o) {
+        try {
+            return MAPPER.writeValueAsString(o);
+        } catch (JsonProcessingException e) {
+            throw new BadRequestException(e);
+        }
+    }
 }

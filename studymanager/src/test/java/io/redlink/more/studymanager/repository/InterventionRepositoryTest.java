@@ -6,7 +6,6 @@ import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyGroup;
 import io.redlink.more.studymanager.model.Trigger;
-import io.redlink.more.studymanager.utils.MapperUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -92,7 +93,7 @@ class InterventionRepositoryTest extends ApplicationTest {
 
         Trigger trigger = new Trigger()
                 .setType("my-type")
-                .setProperties(MapperUtils.readValue("{\"property\": \"testProperty\"}", TriggerProperties.class));
+                .setProperties(new TriggerProperties(Map.of("property", "value")));
 
         Trigger triggerResponse = interventionRepository.updateTrigger(studyId, interventionId, trigger);
 

@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.sql.Timestamp;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -60,7 +61,7 @@ class ObservationControllerTest {
                 .purpose("some purpose")
                 .participantInfo("info")
                 .type("accelerometer")
-                .properties("{\"name\":\"value\"}")
+                .properties(Map.of("name", "value"))
                 .studyGroupId(1);
 
         mvc.perform(post("/api/v1/studies/1/observations")
@@ -77,12 +78,10 @@ class ObservationControllerTest {
     @Test
     @DisplayName("Update observation should return similar values")
     void testUpdateStudy() throws Exception {
-        when(observationService.updateObservation(any(Observation.class))).thenAnswer(invocationOnMock -> {
-            return ((Observation)invocationOnMock.getArgument(0))
-                    .setTitle("title")
-                    .setCreated(new Timestamp(0))
-                    .setModified(new Timestamp(0));
-        });
+        when(observationService.updateObservation(any(Observation.class))).thenAnswer(invocationOnMock -> ((Observation)invocationOnMock.getArgument(0))
+                .setTitle("title")
+                .setCreated(new Timestamp(0))
+                .setModified(new Timestamp(0)));
 
         ObservationDTO observationRequest = new ObservationDTO()
                 .studyId(1L)

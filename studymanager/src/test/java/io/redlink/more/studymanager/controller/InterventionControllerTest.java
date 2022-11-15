@@ -2,12 +2,10 @@ package io.redlink.more.studymanager.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
-import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
 import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.controller.studymanager.InterventionsApiV1Controller;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Intervention;
-import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.service.InterventionService;
 import io.redlink.more.studymanager.utils.MapperUtils;
@@ -20,9 +18,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -77,7 +74,7 @@ class InterventionControllerTest {
 
     @Test
     @DisplayName("Update intervention should return similar values")
-    void testUpdateStudy() throws Exception {
+    void testUpdateIntervention() throws Exception {
         when(interventionService.updateIntervention(any(Intervention.class))).thenAnswer(invocationOnMock ->
                 ((Intervention)invocationOnMock.getArgument(0))
                 .setStudyId(1L)
@@ -115,20 +112,18 @@ class InterventionControllerTest {
     @Test
     @DisplayName("A trigger can be updated")
     void testUpdateAndGetTrigger() throws Exception {
-        when(interventionService.updateTrigger(any(Long.class), any(Integer.class), any(Trigger.class))).thenAnswer(invocationOnMock -> {
-            return ((Trigger)invocationOnMock.getArgument(0))
-                    .setType("my-type")
-                    .setProperties(MapperUtils.readValue("{\"name\": \"value\"}", TriggerProperties.class))
-                    .setCreated(Instant.now())
-                    .setModified(Instant.now());
-        });
+        when(interventionService.updateTrigger(any(Long.class), any(Integer.class), any(Trigger.class))).thenAnswer(invocationOnMock -> ((Trigger)invocationOnMock.getArgument(2))
+                .setType("my-type")
+                .setProperties(MapperUtils.MAPPER.convertValue(Map.of("name", "value"), TriggerProperties.class))
+                .setCreated(Instant.now())
+                .setModified(Instant.now()));
 
         TriggerDTO triggerRequest = new TriggerDTO()
-                .properties("{\"name\": \"value\"}")
+                .properties(Map.of("name", "value"))
                 .type("my-type");
 
         mvc.perform(put("/api/v1/studies/1/interventions/1/trigger")
-                        .content(mapper.writeValueAsString(triggerRequest))
+                        .content(MapperUtils.MAPPER.writeValueAsString(triggerRequest))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())

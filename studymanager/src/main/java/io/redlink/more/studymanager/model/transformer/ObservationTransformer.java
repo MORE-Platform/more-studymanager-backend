@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.model.transformer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.model.Observation;
@@ -18,7 +17,7 @@ public class ObservationTransformer {
                 .setParticipantInfo(dto.getParticipantInfo())
                 .setType(dto.getType())
                 .setStudyGroupId(dto.getStudyGroupId())
-                .setProperties(MapperUtils.readValue(dto.getProperties(), ObservationProperties.class))
+                .setProperties(MapperUtils.MAPPER.convertValue(dto.getProperties(), ObservationProperties.class))
                 .setSchedule(dto.getSchedule());
     }
 

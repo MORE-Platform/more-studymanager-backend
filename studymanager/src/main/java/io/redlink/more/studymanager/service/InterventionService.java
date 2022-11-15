@@ -2,13 +2,13 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
-import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.repository.InterventionRepository;
+import io.redlink.more.studymanager.sdk.MoreTriggerSDKImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class InterventionService {
 
     private final Map<String, TriggerFactory> triggerFactories;
 
-    public InterventionService(InterventionRepository repository, MoreTriggerSDK sdk, Map<String, TriggerFactory> triggerFactories) {
+    public InterventionService(InterventionRepository repository, MoreTriggerSDKImpl sdk, Map<String, TriggerFactory> triggerFactories) {
         this.repository = repository;
         this.sdk = sdk;
         this.triggerFactories = triggerFactories;

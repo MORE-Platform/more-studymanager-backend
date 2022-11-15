@@ -1,7 +1,5 @@
 package io.redlink.more.studymanager.repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Intervention;
@@ -29,7 +27,6 @@ public class InterventionRepository {
     private static final String UPDATE_INTERVENTION = "UPDATE interventions SET title=:title, purpose=:purpose, schedule=:schedule::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id";
     private static final String UPSERT_TRIGGER = "INSERT INTO triggers(study_id,intervention_id,type,properties) VALUES(:study_id,:intervention_id,:type,:properties::jsonb) ON CONFLICT ON CONSTRAINT triggers_pkey DO UPDATE SET type=:type, properties=:properties::jsonb, modified = now()";
     private static final String GET_TRIGGER_BY_IDS = "SELECT * FROM triggers WHERE study_id = ? AND intervention_id = ?";
-    private static final ObjectMapper mapper = new ObjectMapper();
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -79,54 +76,40 @@ public class InterventionRepository {
     }
 
     private static MapSqlParameterSource interventionToParams(Intervention intervention) {
-        try {
-            return new MapSqlParameterSource()
-                    .addValue("study_id", intervention.getStudyId())
-                    .addValue("title", intervention.getTitle())
-                    .addValue("purpose", intervention.getPurpose())
-                    .addValue("study_group_id", intervention.getStudyGroupId())
-                    .addValue("schedule", mapper.writeValueAsString(intervention.getSchedule()));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return new MapSqlParameterSource()
+                .addValue("study_id", intervention.getStudyId())
+                .addValue("title", intervention.getTitle())
+                .addValue("purpose", intervention.getPurpose())
+                .addValue("study_group_id", intervention.getStudyGroupId())
+                .addValue("schedule", MapperUtils.writeValueAsString(intervention.getSchedule()));
     }
 
     private static MapSqlParameterSource triggerToParams(Long studyId, Integer interventionId, Trigger trigger) {
-        try {
-            return new MapSqlParameterSource()
+        return new MapSqlParameterSource()
                     .addValue("study_id", studyId)
                     .addValue("intervention_id", interventionId)
                     .addValue("type", trigger.getType())
-                    .addValue("properties", mapper.writeValueAsString(trigger.getProperties()));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+                    .addValue("properties", MapperUtils.writeValueAsString(trigger.getProperties()));
     }
 
     private static RowMapper<Trigger> getTriggerRowMapper() {
         return (rs, rowNum) -> new Trigger()
-                .setProperties(MapperUtils.readValue(rs.getString("properties"), TriggerProperties.class))
+                .setProperties(MapperUtils.readValue(rs.getObject("properties").toString(), TriggerProperties.class))
                 .setType(rs.getString("type"))
                 .setCreated(rs.getTimestamp("created").toInstant())
                 .setModified(rs.getTimestamp("modified").toInstant());
     }
 
     private static RowMapper<Intervention> getInterventionRowMapper() {
-        return (rs, rowNum) -> {
-            try {
-                return new Intervention()
-                        .setStudyId(rs.getLong("study_id"))
-                        .setInterventionId(rs.getInt("intervention_id"))
-                        .setTitle(rs.getString("title"))
-                        .setPurpose(rs.getString("purpose"))
-                        .setSchedule(mapper.readValue(rs.getString("schedule"), Object.class))
-                        .setStudyGroupId(rs.getInt("study_group_id"))
-                        .setCreated(rs.getTimestamp("created").toInstant())
-                        .setModified(rs.getTimestamp("modified").toInstant());
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        };
+        return (rs, rowNum) -> new Intervention()
+                .setStudyId(rs.getLong("study_id"))
+                .setInterventionId(rs.getInt("intervention_id"))
+                .setTitle(rs.getString("title"))
+                .setPurpose(rs.getString("purpose"))
+                .setSchedule(MapperUtils.readValue(rs.getString("schedule"), Object.class))
+                .setStudyGroupId(rs.getInt("study_group_id"))
+                .setCreated(rs.getTimestamp("created").toInstant())
+                .setModified(rs.getTimestamp("modified").toInstant());
     }
 
 }
