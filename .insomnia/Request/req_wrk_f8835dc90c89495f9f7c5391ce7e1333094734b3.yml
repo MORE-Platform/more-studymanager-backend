@@ -3,7 +3,7 @@ type: Request
 parentId: fld_663066df36c74ff9b0c69a2aabe4d759
 modified: 1667806190917
 created: 1667561236525
-url: "{{ base_url }}/components/{{ componentType }}/{{ componentId
+url: "{{ api_base }}/components/{{ componentType }}/{{ componentId
   }}/web-component.js"
 name: /components/{componentType}/{componentId}/web-component.js
 description: ""
@@ -12,13 +12,15 @@ body: {}
 parameters: []
 headers: []
 authentication:
-  clientId: "{{ oauth2ClientId }}"
-  grantType: implicit
-  scope: read write
+  clientId: "{{ _.auth.clientId }}"
+  grantType: authorization_code
+  scope: "{{ _.auth.scopes }}"
   type: oauth2
-  redirectUrl: "{{ oauth2RedirectUrl }}"
-  authorizationUrl: https://auth.more.redlink.io/authorize
-  disabled: true
+  redirectUrl: "{{ _.auth.redirectUrl }}"
+  authorizationUrl: "{{ _.auth.authorizaionUrl }}"
+  disabled: false
+  accessTokenUrl: "{{ _.auth.tokenUrl }}"
+  clientSecret: "{{ _.auth.clientSecret }}"
 metaSortKey: -1667561236525
 isPrivate: false
 settingStoreCookies: true

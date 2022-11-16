@@ -3,7 +3,7 @@ type: Request
 parentId: fld_ac178bbd6a794d82875032a46e60b2ec
 modified: 1668205468458
 created: 1667561236516
-url: "{{ base_url }}/studies/{{ studyId }}/interventions"
+url: "{{ api_base }}/studies/{{ studyId }}/interventions"
 name: /studies/{studyId}/interventions
 description: ""
 method: GET
@@ -11,13 +11,15 @@ body: {}
 parameters: []
 headers: []
 authentication:
-  clientId: "{{ oauth2ClientId }}"
-  grantType: implicit
-  scope: read write
+  clientId: "{{ _.auth.clientId }}"
+  grantType: authorization_code
+  scope: "{{ _.auth.scopes }}"
   type: oauth2
-  redirectUrl: "{{ oauth2RedirectUrl }}"
-  authorizationUrl: https://auth.more.redlink.io/authorize
-  disabled: true
+  redirectUrl: "{{ _.auth.redirectUrl }}"
+  authorizationUrl: "{{ _.auth.authorizaionUrl }}"
+  disabled: false
+  accessTokenUrl: "{{ _.auth.tokenUrl }}"
+  clientSecret: "{{ _.auth.clientSecret }}"
 metaSortKey: -1667561236466
 isPrivate: false
 settingStoreCookies: true
