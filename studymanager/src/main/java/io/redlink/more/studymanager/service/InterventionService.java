@@ -51,6 +51,14 @@ public class InterventionService {
         return repository.createAction(studyId, interventionId, validateAction(action));
     }
 
+    public Action getActionByIds(Long studyId, Integer interventionId, Integer actionId) {
+        return repository.getActionByIds(studyId, interventionId, actionId);
+    }
+
+    public List<Action> listActions(Long studyId, Integer interventionId) {
+        return repository.listActions(studyId, interventionId);
+    }
+
     private Action validateAction(Action action) {
         if(!actionFactories.containsKey(action.getType())) {
             throw NotFoundException.ActionFactory(action.getType());

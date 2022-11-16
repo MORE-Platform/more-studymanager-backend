@@ -57,8 +57,9 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     public ResponseEntity<ActionDTO> getAction(Long studyId, Integer interventionId, Integer actionId) {
-        // TODO in MORE-261
-        return null;
+        return ResponseEntity.ok(
+                ActionTransformer.toActionDTO_V1(service.getActionByIds(studyId, interventionId, actionId))
+        );
     }
 
     @Override
@@ -76,8 +77,9 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     public ResponseEntity<List<ActionDTO>> listActions(Long studyId, Integer interventionId) {
-        // TODO in MORE-261
-        return null;
+        return ResponseEntity.ok(
+                service.listActions(studyId, interventionId).stream().map(ActionTransformer::toActionDTO_V1).toList()
+        );
     }
 
     @Override

@@ -1,6 +1,8 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.ApplicationTest;
+import io.redlink.more.studymanager.core.properties.ActionProperties;
+import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyGroup;
@@ -11,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -77,5 +81,30 @@ class InterventionRepositoryTest {
 
         assertThat(interventionResponse.getInterventionId()).isEqualTo(intervention2Id);
         assertThat(interventionRepository.listInterventions(studyId).size()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Test insert, list and update for actions")
+    void testInsertListUpdateForActions() {
+        Long studyId = studyRepository.insert(new Study()).getStudyId();
+        Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
+        Integer interventionId = interventionRepository.insert(new Intervention()
+                .setStudyId(studyId).setStudyGroupId(studyGroupId)).getInterventionId();
+        Action actionResponse = interventionRepository.createAction(studyId, interventionId, new Action()
+                .setType("some-type")
+                .setProperties(new ActionProperties(Map.of("property", "value"))));
+
+        assertThat(actionResponse.getActionId()).isEqualTo(1);
+        assertThat(actionResponse.getType()).isEqualTo("some-type");
+        assertThat(actionResponse.getProperties()).isEqualTo(new ActionProperties(Map.of("property", "value")));
+        assertThat(actionResponse.getCreated()).isNotNull();
+        assertThat(actionResponse.getModified()).isNotNull();
+
+        interventionRepository.createAction(studyId, interventionId, new Action().setType(""));
+        interventionRepository.createAction(studyId, interventionId, new Action().setType(""));
+        interventionRepository.createAction(studyId, interventionId, new Action().setType(""));
+
+        assertThat(interventionRepository.listActions(studyId, interventionId).size()).isEqualTo(4);
+
     }
 }
