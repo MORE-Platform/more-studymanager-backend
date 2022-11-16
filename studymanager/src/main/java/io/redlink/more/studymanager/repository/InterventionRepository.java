@@ -1,7 +1,5 @@
 package io.redlink.more.studymanager.repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
@@ -9,7 +7,6 @@ import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import io.redlink.more.studymanager.model.Trigger;
-import io.redlink.more.studymanager.utils.MapperUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -34,7 +31,6 @@ public class InterventionRepository {
     private static final String GET_ACTION_BY_IDS = "SELECT * FROM actions WHERE study_id=? AND intervention_id=? AND action_id=?";
     private static final String LIST_ACTIONS = "SELECT * FROM actions WHERE study_id = ? AND intervention_id = ?";
     private static final String DELETE_ACTION_BY_ID = "DELETE FROM actions WHERE study_id = ? AND intervention_id = ? AND action_id = ?";
-    private static final ObjectMapper mapper = new ObjectMapper();
     private static final String UPDATE_ACTION = "UPDATE actions SET properties=:properties::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id AND action_id=:action_id";
     private static final String UPSERT_TRIGGER = "INSERT INTO triggers(study_id,intervention_id,type,properties) VALUES(:study_id,:intervention_id,:type,:properties::jsonb) ON CONFLICT ON CONSTRAINT triggers_pkey DO UPDATE SET type=:type, properties=:properties::jsonb, modified = now()";
     private static final String GET_TRIGGER_BY_IDS = "SELECT * FROM triggers WHERE study_id = ? AND intervention_id = ?";
@@ -132,15 +128,11 @@ public class InterventionRepository {
     }
 
     private static MapSqlParameterSource actionToParams(Long studyId, Integer interventionId, Action action) {
-        try {
-            return new MapSqlParameterSource()
-                    .addValue("study_id", studyId)
-                    .addValue("intervention_id", interventionId)
-                    .addValue("type", action.getType())
-                    .addValue("properties", mapper.writeValueAsString(action.getProperties()));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return new MapSqlParameterSource()
+                .addValue("study_id", studyId)
+                .addValue("intervention_id", interventionId)
+                .addValue("type", action.getType())
+                .addValue("properties", MapperUtils.writeValueAsString(action.getProperties()));
     }
 
     private static RowMapper<Trigger> getTriggerRowMapper() {
@@ -152,14 +144,12 @@ public class InterventionRepository {
     }
 
     private static RowMapper<Action> getActionRowMapper() {
-        return (rs, rowNum) -> {
-            return new Action()
-                    .setActionId(rs.getInt("action_id"))
-                    .setType(rs.getString("type"))
-                    .setProperties(MapperUtils.readValue(rs.getObject("properties"), ActionProperties.class))
-                    .setModified(rs.getTimestamp("modified").toInstant())
-                    .setCreated(rs.getTimestamp("created").toInstant());
-        };
+        return (rs, rowNum) -> new Action()
+                .setActionId(rs.getInt("action_id"))
+                .setType(rs.getString("type"))
+                .setProperties(MapperUtils.readValue(rs.getObject("properties"), ActionProperties.class))
+                .setModified(rs.getTimestamp("modified").toInstant())
+                .setCreated(rs.getTimestamp("created").toInstant());
     }
 
     private static RowMapper<Intervention> getInterventionRowMapper() {
