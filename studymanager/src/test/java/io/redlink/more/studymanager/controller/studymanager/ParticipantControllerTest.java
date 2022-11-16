@@ -1,10 +1,10 @@
-package io.redlink.more.studymanager.controller;
+package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
-import io.redlink.more.studymanager.controller.studymanager.ParticipantsApiV1Controller;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.service.ParticipantService;
+import java.sql.Timestamp;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +13,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.sql.Timestamp;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -58,7 +56,7 @@ class ParticipantControllerTest {
                 .alias("participant x")
                 .studyGroupId(1);
 
-        ParticipantDTO[] participantDTOS = new ParticipantDTO[] { participantRequest };
+        ParticipantDTO[] participantDTOS = new ParticipantDTO[]{participantRequest};
 
         mvc.perform(post("/api/v1/studies/{studyId}/participants", studyId)
                         .content(mapper.writeValueAsString(participantDTOS))
@@ -75,13 +73,12 @@ class ParticipantControllerTest {
     @Test
     @DisplayName("Update participant should return similar values")
     void testUpdateStudy() throws Exception {
-        when(participantService.updateParticipant(any(Participant.class))).thenAnswer(invocationOnMock -> {
-            return ((Participant)invocationOnMock.getArgument(0))
-                    .setStatus(Participant.Status.NEW)
-                    .setAlias("person x")
-                    .setCreated(new Timestamp(0))
-                    .setModified(new Timestamp(0));
-        });
+        when(participantService.updateParticipant(any(Participant.class))).thenAnswer(invocationOnMock ->
+                invocationOnMock.getArgument(0, Participant.class)
+                        .setStatus(Participant.Status.NEW)
+                        .setAlias("person x")
+                        .setCreated(new Timestamp(0))
+                        .setModified(new Timestamp(0)));
 
         ParticipantDTO participantRequest = new ParticipantDTO()
                 .studyId(1L)

@@ -18,10 +18,10 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest
 @Testcontainers
 @ActiveProfiles("test-containers-flyway")
-class InterventionRepositoryTest extends ApplicationTest {
+class InterventionRepositoryTest {
     @Autowired
     private InterventionRepository interventionRepository;
 
@@ -38,7 +38,7 @@ class InterventionRepositoryTest extends ApplicationTest {
 
     @Test
     @DisplayName("Interventions are inserted, updated, listed and deleted from database")
-    public void testInsertListUpdateDelete() {
+    void testInsertListUpdateDelete() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
 

@@ -13,7 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest
 @Testcontainers
 @ActiveProfiles("test-containers-flyway")
 class ParticipantRepositoryTest {
@@ -33,7 +33,7 @@ class ParticipantRepositoryTest {
 
     @Test
     @DisplayName("Participant is inserted and returned")
-    public void testInsert() {
+    void testInsert() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup()
                 .setStudyId(studyId)).getStudyGroupId();
@@ -69,7 +69,7 @@ class ParticipantRepositoryTest {
 
     @Test
     @DisplayName("Studies are deleted and listed correctly")
-    public void testListAndDelete() {
+    void testListAndDelete() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
 
         Participant s1 = participantRepository.insert(new Participant()
@@ -82,20 +82,20 @@ class ParticipantRepositoryTest {
                 .setStudyId(studyId)
                 .setRegistrationToken("TEST789"));
 
-        assertThat(participantRepository.listParticipants(studyId).size()).isEqualTo(3);
+        assertThat(participantRepository.listParticipants(studyId)).hasSize(3);
         participantRepository.deleteParticipant(studyId, s1.getParticipantId());
-        assertThat(participantRepository.listParticipants(studyId).size()).isEqualTo(2);
+        assertThat(participantRepository.listParticipants(studyId)).hasSize(2);
         participantRepository.deleteParticipant(studyId, s2.getParticipantId());
-        assertThat(participantRepository.listParticipants(studyId).size()).isEqualTo(1);
+        assertThat(participantRepository.listParticipants(studyId)).hasSize(1);
         participantRepository.deleteParticipant(studyId, s2.getParticipantId());
-        assertThat(participantRepository.listParticipants(studyId).size()).isEqualTo(1);
+        assertThat(participantRepository.listParticipants(studyId)).hasSize(1);
         participantRepository.deleteParticipant(studyId, s3.getParticipantId());
-        assertThat(participantRepository.listParticipants(studyId).size()).isEqualTo(0);
+        assertThat(participantRepository.listParticipants(studyId)).isEmpty();
     }
 
     @Test
     @DisplayName("Participant states are set correctly")
-    public void testSetState() {
+    void testSetState() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
 
         Participant participant = participantRepository.insert(new Participant().setStudyId(studyId).setRegistrationToken("TEST123"));
