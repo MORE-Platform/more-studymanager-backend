@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.repository;
 
-import io.redlink.more.studymanager.ApplicationTest;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.Intervention;
@@ -90,21 +89,36 @@ class InterventionRepositoryTest {
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
         Integer interventionId = interventionRepository.insert(new Intervention()
                 .setStudyId(studyId).setStudyGroupId(studyGroupId)).getInterventionId();
-        Action actionResponse = interventionRepository.createAction(studyId, interventionId, new Action()
+        Action actionResponse1 = interventionRepository.createAction(studyId, interventionId, new Action()
                 .setType("some-type")
                 .setProperties(new ActionProperties(Map.of("property", "value"))));
 
-        assertThat(actionResponse.getActionId()).isEqualTo(1);
-        assertThat(actionResponse.getType()).isEqualTo("some-type");
-        assertThat(actionResponse.getProperties()).isEqualTo(new ActionProperties(Map.of("property", "value")));
-        assertThat(actionResponse.getCreated()).isNotNull();
-        assertThat(actionResponse.getModified()).isNotNull();
+        assertThat(actionResponse1.getActionId()).isEqualTo(1);
+        assertThat(actionResponse1.getType()).isEqualTo("some-type");
+        assertThat(actionResponse1.getProperties()).isEqualTo(new ActionProperties(Map.of("property", "value")));
+        assertThat(actionResponse1.getCreated()).isNotNull();
+        assertThat(actionResponse1.getModified()).isNotNull();
 
-        interventionRepository.createAction(studyId, interventionId, new Action().setType(""));
-        interventionRepository.createAction(studyId, interventionId, new Action().setType(""));
-        interventionRepository.createAction(studyId, interventionId, new Action().setType(""));
+        Action actionResponse2 = interventionRepository.createAction(studyId, interventionId, new Action().setType(""));
+        Action actionResponse3 = interventionRepository.createAction(studyId, interventionId, new Action().setType(""));
+        Action actionResponse4 = interventionRepository.createAction(studyId, interventionId, new Action().setType(""));
 
         assertThat(interventionRepository.listActions(studyId, interventionId).size()).isEqualTo(4);
+
+        actionResponse1 = interventionRepository.updateAction(studyId, interventionId, actionResponse1.getActionId(),
+                new Action().setProperties(new ActionProperties(Map.of("property", "new value"))));
+
+        assertThat(actionResponse1.getActionId()).isEqualTo(1);
+        assertThat(actionResponse1.getProperties()).isEqualTo(new ActionProperties(Map.of("property", "new value")));
+
+        interventionRepository.deleteActionByIds(studyId, interventionId, actionResponse1.getActionId());
+        assertThat(interventionRepository.listActions(studyId, interventionId).size()).isEqualTo(3);
+        interventionRepository.deleteActionByIds(studyId, interventionId, actionResponse2.getActionId());
+        assertThat(interventionRepository.listActions(studyId, interventionId).size()).isEqualTo(2);
+        interventionRepository.deleteActionByIds(studyId, interventionId, actionResponse3.getActionId());
+        assertThat(interventionRepository.listActions(studyId, interventionId).size()).isEqualTo(1);
+        interventionRepository.deleteActionByIds(studyId, interventionId, actionResponse4.getActionId());
+        assertThat(interventionRepository.listActions(studyId, interventionId).size()).isEqualTo(0);
 
     }
 }

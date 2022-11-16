@@ -1,8 +1,9 @@
-package io.redlink.more.studymanager.controller;
+package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.redlink.more.studymanager.api.v1.model.ActionDTO;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
-import io.redlink.more.studymanager.controller.studymanager.InterventionsApiV1Controller;
+import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.service.InterventionService;
 import org.junit.jupiter.api.DisplayName;
@@ -15,14 +16,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest({InterventionsApiV1Controller.class})
 @AutoConfigureMockMvc(addFilters = false)
@@ -102,6 +103,33 @@ class InterventionControllerTest {
                 .andExpect(jsonPath("$.schedule").value("\\\"schedule\\\": \\\"some new schedule\\\""))
                 .andExpect(jsonPath("$.modified").exists())
                 .andExpect(jsonPath("$.created").exists());
+    }
+
+    @Test
+    @DisplayName("Creating an Action should return the Action with Id and timestamps set")
+    void testPostAndPutOfAction() throws Exception {
+        when(interventionService.createAction(any(Long.class), any(Integer.class), any(Action.class)))
+                .thenAnswer(invocationOnMock -> new Action()
+                        .setActionId(((Action)invocationOnMock.getArgument(2)).getActionId())
+                        .setType(((Action)invocationOnMock.getArgument(2)).getType())
+                        .setProperties(((Action) invocationOnMock.getArgument(2)).getProperties())
+                        .setCreated(Instant.now())
+                        .setModified(Instant.now()));
+
+        ActionDTO actionRequest = new ActionDTO()
+                .actionId(1)
+                .type("my-type")
+                .properties(Map.of("property", "value"));
+
+        // no type for action yet, bad request
+        mvc.perform(post("/api/v1/studies/1/interventions/1/actions")
+                        .content(mapper.writeValueAsString(actionRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(""))
+                .andReturn();
+
     }
 }
 
