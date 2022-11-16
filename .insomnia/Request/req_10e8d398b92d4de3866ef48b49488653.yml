@@ -1,10 +1,10 @@
-_id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333a18aa91c
+_id: req_10e8d398b92d4de3866ef48b49488653
 type: Request
-parentId: fld_7a92eda90ce14a2d99ac2c6ee841bf96
-modified: 1668610125984
-created: 1667561236525
-url: "{{ api_base }}/studies"
-name: /studies
+parentId: fld_1733bb12995049f4bdde934b38ebc1f9
+modified: 1668610310766
+created: 1668607351353
+url: "{{ api_base }}/users/me"
+name: /users/me
 description: ""
 method: GET
 body: {}
@@ -20,7 +20,7 @@ authentication:
   disabled: false
   accessTokenUrl: "{{ _.auth.tokenUrl }}"
   clientSecret: "{{ _.auth.clientSecret }}"
-metaSortKey: -1667561417429
+metaSortKey: 575
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true
