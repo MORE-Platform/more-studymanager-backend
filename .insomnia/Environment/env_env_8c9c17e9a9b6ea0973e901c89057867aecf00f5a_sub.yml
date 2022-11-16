@@ -1,30 +1,14 @@
 _id: env_env_8c9c17e9a9b6ea0973e901c89057867aecf00f5a_sub
 type: Environment
 parentId: env_8c9c17e9a9b6ea0973e901c89057867aecf00f5a
-modified: 1668205558515
+modified: 1668606204635
 created: 1667561236526
 name: Local Test Server
 data:
-  base_url: http://localhost:8080/api/v1
-  studyId: "{% response 'body',
-    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333d718002b',
-    'b64::JC5zdHVkeUlk::46b', 'never', 60 %}"
-  studyGroupId: "{% response 'body',
-    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333607c78a1',
-    'b64::JC5zdHVkeUdyb3VwSWQ=::46b', 'never', 60 %}"
-  participantId: "{% response 'body',
-    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333d3f2774a',
-    'b64::JC5bMF0ucGFydGljaXBhbnRJZA==::46b', 'never', 60 %}"
-  interventionId: "{% response 'body',
-    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333d3f2774a',
-    'b64::JC5bMF0ucGFydGljaXBhbnRJZA==::46b', 'never', 60 %}"
+  base_url: http://localhost:8080
 dataPropertyOrder:
   "&":
     - base_url
-    - studyId
-    - studyGroupId
-    - participantId
-    - interventionId
-color: null
+color: "#00b800"
 isPrivate: false
 metaSortKey: 1667561236526
