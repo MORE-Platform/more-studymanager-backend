@@ -1,12 +1,49 @@
 _id: env_8c9c17e9a9b6ea0973e901c89057867aecf00f5a
 type: Environment
 parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1668175552485
+modified: 1668606206805
 created: 1667561146615
 name: Base environment
 data:
-  base_url: "{{ scheme }}://{{ host }}{{ base_path }}"
-dataPropertyOrder: {}
+  base_url: http://localhost:8080
+  api_base: "{{ _.base_url }}/api/v1"
+  auth:
+    issuerUrl: https://auth.more.redlink.io/realms/Auth-Client-Test
+    authorizaionUrl: "{{ _.auth.issuerUrl }}/protocol/openid-connect/auth"
+    tokenUrl: "{{ _.auth.issuerUrl }}/protocol/openid-connect/token"
+    clientId: oauth2-pkce-client
+    clientSecret: ""
+    redirectUrl: "{{ _.base_url }}/"
+    scopes: openid profile
+  studyId: "{% response 'body',
+    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333d718002b',
+    'b64::JC5zdHVkeUlk::46b', 'never', 60 %}"
+  studyGroupId: "{% response 'body',
+    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333607c78a1',
+    'b64::JC5zdHVkeUdyb3VwSWQ=::46b', 'never', 60 %}"
+  participantId: "{% response 'body',
+    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333d3f2774a',
+    'b64::JC5bMF0ucGFydGljaXBhbnRJZA==::46b', 'never', 60 %}"
+  interventionId: "{% response 'body',
+    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333d3f2774a',
+    'b64::JC5bMF0ucGFydGljaXBhbnRJZA==::46b', 'never', 60 %}"
+dataPropertyOrder:
+  "&":
+    - base_url
+    - api_base
+    - auth
+    - studyId
+    - studyGroupId
+    - participantId
+    - interventionId
+  "&~|auth":
+    - issuerUrl
+    - authorizaionUrl
+    - tokenUrl
+    - clientId
+    - clientSecret
+    - redirectUrl
+    - scopes
 color: null
 isPrivate: false
 metaSortKey: 1667561146615
