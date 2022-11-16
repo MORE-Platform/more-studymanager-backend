@@ -24,19 +24,19 @@ public class InterventionService {
     private final InterventionRepository repository;
 
     private final Map<String, ActionFactory> actionFactories;
+    private final Map<String, TriggerFactory> triggerFactories;
 
     private final MoreActionSDK actionSDK;
 
     private final MoreTriggerSDK triggerSDK;
 
-    private final Map<String, TriggerFactory> triggerFactories;
 
     public InterventionService(InterventionRepository repository, MoreTriggerSDKImpl triggerSDK, MoreActionSDKImpl actionSDK, Map<String, TriggerFactory> triggerFactories, Map<String, ActionFactory> actionFactories) {
         this.repository = repository;
         this.actionFactories = actionFactories;
+        this.triggerFactories = triggerFactories;
         this.actionSDK = actionSDK;
         this.triggerSDK = triggerSDK;
-        this.triggerFactories = triggerFactories;
     }
     public Intervention addIntervention(Intervention intervention) {
         return repository.insert(intervention);
