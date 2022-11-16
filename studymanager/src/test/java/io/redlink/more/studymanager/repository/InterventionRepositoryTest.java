@@ -2,9 +2,12 @@ package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.ApplicationTest;
+import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.Trigger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -120,5 +123,25 @@ class InterventionRepositoryTest {
         interventionRepository.deleteActionByIds(studyId, interventionId, actionResponse4.getActionId());
         assertThat(interventionRepository.listActions(studyId, interventionId).size()).isEqualTo(0);
 
+    }
+
+    @Test
+    @DisplayName("Triggers can be updated")
+    public void testUpdateTrigger() {
+        Long studyId = studyRepository.insert(new Study()).getStudyId();
+        Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
+        Integer interventionId = interventionRepository.insert(new Intervention().setStudyId(studyId)
+                        .setStudyGroupId(studyGroupId)).getInterventionId();
+
+        Trigger trigger = new Trigger()
+                .setType("my-type")
+                .setProperties(new TriggerProperties(Map.of("property", "value")));
+
+        Trigger triggerResponse = interventionRepository.updateTrigger(studyId, interventionId, trigger);
+
+        assertThat(triggerResponse.getType()).isEqualTo(trigger.getType());
+        assertThat(triggerResponse.getProperties()).isEqualTo(trigger.getProperties());
+        assertThat(triggerResponse.getCreated()).isNotNull();
+        assertThat(triggerResponse.getModified()).isNotNull();
     }
 }

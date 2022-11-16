@@ -28,4 +28,8 @@ public class NotFoundException extends RuntimeException {
     public static NotFoundException ActionFactory(String type) {
         return new NotFoundException("Action Factory '" + type + "'");
     }
+
+    public static NotFoundException TriggerFactory(String type) {
+        return new NotFoundException("Trigger Factory '" + type + "'");
+    }
 }

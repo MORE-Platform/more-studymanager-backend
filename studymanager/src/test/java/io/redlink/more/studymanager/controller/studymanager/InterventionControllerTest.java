@@ -3,9 +3,14 @@ package io.redlink.more.studymanager.controller.studymanager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ActionDTO;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
+import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
+import io.redlink.more.studymanager.controller.studymanager.InterventionsApiV1Controller;
+import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.Intervention;
+import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.service.InterventionService;
+import io.redlink.more.studymanager.utils.MapperUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,7 +75,7 @@ class InterventionControllerTest {
 
     @Test
     @DisplayName("Update intervention should return similar values")
-    void testUpdateStudy() throws Exception {
+    void testUpdateIntervention() throws Exception {
         when(interventionService.updateIntervention(any(Intervention.class))).thenAnswer(invocationOnMock ->
                 ((Intervention)invocationOnMock.getArgument(0))
                 .setStudyId(1L)
@@ -103,6 +108,28 @@ class InterventionControllerTest {
                 .andExpect(jsonPath("$.schedule").value("\\\"schedule\\\": \\\"some new schedule\\\""))
                 .andExpect(jsonPath("$.modified").exists())
                 .andExpect(jsonPath("$.created").exists());
+    }
+
+    @Test
+    @DisplayName("A trigger can be updated")
+    void testUpdateAndGetTrigger() throws Exception {
+        when(interventionService.updateTrigger(any(Long.class), any(Integer.class), any(Trigger.class))).thenAnswer(invocationOnMock -> ((Trigger)invocationOnMock.getArgument(2))
+                .setType("my-type")
+                .setProperties(MapperUtils.MAPPER.convertValue(Map.of("name", "value"), TriggerProperties.class))
+                .setCreated(Instant.now())
+                .setModified(Instant.now()));
+
+        TriggerDTO triggerRequest = new TriggerDTO()
+                .properties(Map.of("name", "value"))
+                .type("my-type");
+
+        mvc.perform(put("/api/v1/studies/1/interventions/1/trigger")
+                        .content(MapperUtils.MAPPER.writeValueAsString(triggerRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value(triggerRequest.getType()))
+                .andExpect(jsonPath("$.properties.name").value("value"));
     }
 
     @Test

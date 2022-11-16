@@ -7,6 +7,11 @@ import io.redlink.more.studymanager.core.validation.ConfigurationValidationRepor
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.core.factory.TriggerFactory;
+import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
+import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.exception.NotFoundException;
+import io.redlink.more.studymanager.model.Trigger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +33,8 @@ public class InterventionServiceTest {
     @Mock
     MoreActionSDK sdk;
 
+    @Mock
+    Map<String, TriggerFactory> triggerFactories;
     @InjectMocks
     InterventionService interventionService;
 
@@ -52,5 +59,18 @@ public class InterventionServiceTest {
         Assertions.assertThrows(BadRequestException.class, () -> {
             interventionService.createAction(1L, 1, new Action().setType("my-action"));
         });
+    }
+
+    @Test
+    public void testTriggerValidation() {
+        NotFoundException notFoundException = Assertions.assertThrows(NotFoundException.class, () -> interventionService.updateTrigger(1L, 1, new Trigger().setType("my-trigger")));
+        Assertions.assertEquals("Trigger Factory 'my-trigger' cannot be found", notFoundException.getMessage());
+
+        TriggerFactory factory = mock(TriggerFactory.class);
+        when(factory.create(any(), any())).thenThrow(new ConfigurationValidationException(ConfigurationValidationReport.VALID.error("My error")));
+        when(triggerFactories.get("my-trigger")).thenReturn(factory);
+        when(triggerFactories.containsKey("my-trigger")).thenReturn(true);
+
+        Assertions.assertThrows(BadRequestException.class, () -> interventionService.updateTrigger(1L, 1, new Trigger().setType("my-trigger")));
     }
 }

@@ -6,9 +6,16 @@ import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.factory.TriggerFactory;
+import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
+import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Intervention;
+import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.repository.InterventionRepository;
 import io.redlink.more.studymanager.sdk.MoreActionSDKImpl;
+import io.redlink.more.studymanager.sdk.MoreTriggerSDKImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,12 +27,19 @@ public class InterventionService {
     private final InterventionRepository repository;
 
     private final Map<String, ActionFactory> actionFactories;
-    private final MoreActionSDK sdk;
 
-    public InterventionService(InterventionRepository repository, Map<String, ActionFactory> actionFactories, MoreActionSDKImpl sdk) {
+    private final MoreActionSDK actionSDK;
+
+    private final MoreTriggerSDK triggerSDK;
+
+    private final Map<String, TriggerFactory> triggerFactories;
+
+    public InterventionService(InterventionRepository repository, MoreTriggerSDKImpl triggerSDK, MoreActionSDKImpl actionSDK, Map<String, TriggerFactory> triggerFactories, Map<String, ActionFactory> actionFactories) {
         this.repository = repository;
         this.actionFactories = actionFactories;
-        this.sdk = sdk;
+        this.actionSDK = actionSDK;
+        this.triggerSDK = triggerSDK;
+        this.triggerFactories = triggerFactories;
     }
     public Intervention addIntervention(Intervention intervention) {
         return repository.insert(intervention);
@@ -79,4 +93,23 @@ public class InterventionService {
         return action;
     }
 
+    public Trigger updateTrigger(Long studyId, Integer interventionId, Trigger trigger) {
+        return repository.updateTrigger(studyId, interventionId, validateTrigger(trigger));
+    }
+
+    private Trigger validateTrigger(Trigger trigger) {
+        if(!triggerFactories.containsKey(trigger.getType())) {
+            throw NotFoundException.TriggerFactory(trigger.getType());
+        }
+        try {
+            triggerFactories.get(trigger.getType()).create(sdk, trigger.getProperties());
+        } catch (ConfigurationValidationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        return trigger;
+    }
+
+    public Trigger getTriggerByIds(Long studyId, Integer interventionId) {
+        return repository.getTriggerByIds(studyId, interventionId);
+    }
 }
