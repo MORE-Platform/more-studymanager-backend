@@ -6,11 +6,8 @@ import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Action;
-import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
-import io.redlink.more.studymanager.exception.BadRequestException;
-import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.repository.InterventionRepository;
@@ -86,7 +83,7 @@ public class InterventionService {
             throw NotFoundException.ActionFactory(action.getType());
         }
         try {
-            actionFactories.get(action.getType()).create(sdk, action.getProperties());
+            actionFactories.get(action.getType()).create(actionSDK, action.getProperties());
         } catch (ConfigurationValidationException e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -102,7 +99,7 @@ public class InterventionService {
             throw NotFoundException.TriggerFactory(trigger.getType());
         }
         try {
-            triggerFactories.get(trigger.getType()).create(sdk, trigger.getProperties());
+            triggerFactories.get(trigger.getType()).create(triggerSDK, trigger.getProperties());
         } catch (ConfigurationValidationException e) {
             throw new BadRequestException(e.getMessage());
         }
