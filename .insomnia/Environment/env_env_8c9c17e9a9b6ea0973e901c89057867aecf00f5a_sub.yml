@@ -12,14 +12,15 @@ data:
   studyGroupId: "{% response 'body',
     'req_wrk_f8835dc90c89495f9f7c5391ce7e1333607c78a1',
     'b64::JC5zdHVkeUdyb3VwSWQ=::46b', 'never', 60 %}"
-  "auth":
-    "tokenUrl": "https://auth.more.redlink.io/realms/Auth-Client-Test/protocol/openid-connect/token",
-    "clientId": "insomnia",
-    "clientSecret": "{% prompt 'Insomnia Client Secret', 'Client Secret', '', 'oauth_client_secret', true, true %}"
+  participantId: "{% response 'body',
+    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333d3f2774a',
+    'b64::JC5bMF0ucGFydGljaXBhbnRJZA==::46b', 'never', 60 %}"
+  interventionId: "{% response 'body',
+    'req_wrk_f8835dc90c89495f9f7c5391ce7e1333d3f2774a',
+    'b64::JC5bMF0ucGFydGljaXBhbnRJZA==::46b', 'never', 60 %}"
 dataPropertyOrder:
   "&":
     - base_url
-    - auth
     - studyId
     - studyGroupId
     - participantId

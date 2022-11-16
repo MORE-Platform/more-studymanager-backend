@@ -11,13 +11,13 @@ body: {}
 parameters: []
 headers: []
 authentication:
-  clientId: "{{ _.auth.clientId }}"
-  grantType: client_credentials
-  scope: openid
+  clientId: "{{ oauth2ClientId }}"
+  grantType: implicit
+  scope: read write
   type: oauth2
-  disabled: false
-  accessTokenUrl: "{{ _.auth.tokenUrl }}"
-  clientSecret: "{{ _.auth.clientSecret }}"
+  redirectUrl: "{{ oauth2RedirectUrl }}"
+  authorizationUrl: https://auth.more.redlink.io/authorize
+  disabled: true
 metaSortKey: -1667561236575
 isPrivate: false
 settingStoreCookies: true

@@ -24,13 +24,13 @@ headers:
   - name: Content-Type
     value: application/json
 authentication:
-  clientId: "{{ _.auth.clientId }}"
-  grantType: client_credentials
-  scope: openid
+  clientId: "{{ oauth2ClientId }}"
+  grantType: implicit
+  scope: read write
   type: oauth2
-  disabled: false
-  accessTokenUrl: "{{ _.auth.tokenUrl }}"
-  clientSecret: "{{ _.auth.clientSecret }}"
+  redirectUrl: "{{ oauth2RedirectUrl }}"
+  authorizationUrl: https://auth.more.redlink.io/authorize
+  disabled: true
 metaSortKey: -1667561417416.5
 isPrivate: false
 settingStoreCookies: true
