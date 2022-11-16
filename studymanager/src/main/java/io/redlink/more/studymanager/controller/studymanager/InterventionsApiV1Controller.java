@@ -5,6 +5,7 @@ import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.api.v1.webservices.InterventionsApi;
 import io.redlink.more.studymanager.model.transformer.InterventionTransformer;
+import io.redlink.more.studymanager.model.transformer.TriggerTransformer;
 import io.redlink.more.studymanager.service.InterventionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -67,8 +68,9 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     public ResponseEntity<TriggerDTO> getTrigger(Long studyId, Integer interventionId) {
-        // TODO in MORE-260
-        return null;
+        return ResponseEntity.ok(
+          TriggerTransformer.toTriggerDTO_V1(service.getTriggerByIds(studyId, interventionId))
+        );
     }
 
     @Override
@@ -101,7 +103,10 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     public ResponseEntity<TriggerDTO> updateTrigger(Long studyId, Integer interventionId, TriggerDTO triggerDTO) {
-        // TODO in MORE-260
-        return null;
+        return ResponseEntity.ok(
+                TriggerTransformer.toTriggerDTO_V1(
+                        service.updateTrigger(studyId, interventionId, TriggerTransformer.fromTriggerDTO_V1(
+                                triggerDTO)))
+        );
     }
 }
