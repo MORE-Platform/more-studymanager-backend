@@ -1,10 +1,12 @@
 package io.redlink.more.studymanager.repository;
 
+import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.Intervention;
-import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import io.redlink.more.studymanager.model.Trigger;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -25,6 +27,11 @@ public class InterventionRepository {
     private static final String DELETE_INTERVENTION_BY_IDS = "DELETE FROM interventions WHERE study_id = ? AND intervention_id = ?";
     private static final String DELETE_ALL = "DELETE FROM interventions";
     private static final String UPDATE_INTERVENTION = "UPDATE interventions SET title=:title, purpose=:purpose, schedule=:schedule::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id";
+    private static final String CREATE_ACTION = "INSERT INTO actions(study_id,intervention_id,action_id,type,properties) VALUES (:study_id,:intervention_id,(SELECT COALESCE(MAX(action_id),0)+1 FROM actions WHERE study_id = :study_id AND intervention_id=:intervention_id),:type,:properties::jsonb)";
+    private static final String GET_ACTION_BY_IDS = "SELECT * FROM actions WHERE study_id=? AND intervention_id=? AND action_id=?";
+    private static final String LIST_ACTIONS = "SELECT * FROM actions WHERE study_id = ? AND intervention_id = ?";
+    private static final String DELETE_ACTION_BY_ID = "DELETE FROM actions WHERE study_id = ? AND intervention_id = ? AND action_id = ?";
+    private static final String UPDATE_ACTION = "UPDATE actions SET properties=:properties::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id AND action_id=:action_id";
     private static final String UPSERT_TRIGGER = "INSERT INTO triggers(study_id,intervention_id,type,properties) VALUES(:study_id,:intervention_id,:type,:properties::jsonb) ON CONFLICT ON CONSTRAINT triggers_pkey DO UPDATE SET type=:type, properties=:properties::jsonb, modified = now()";
     private static final String GET_TRIGGER_BY_IDS = "SELECT * FROM triggers WHERE study_id = ? AND intervention_id = ?";
     private final JdbcTemplate template;
@@ -71,6 +78,34 @@ public class InterventionRepository {
         return template.queryForObject(GET_TRIGGER_BY_IDS, getTriggerRowMapper(), studyId, interventionId);
     }
 
+    public Action createAction(Long studyId, Integer interventionId, Action action) {
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
+        try {
+            namedTemplate.update(CREATE_ACTION, actionToParams(studyId, interventionId, action), keyHolder, new String[] { "action_id" });
+        } catch (DataIntegrityViolationException e) {
+            throw new BadRequestException("Intervention " + interventionId + " does not exist on study " + studyId);
+        }
+        return getActionByIds(studyId, interventionId, keyHolder.getKey().intValue());
+    }
+
+    public Action getActionByIds(Long studyId, Integer interventionId, Integer actionId) {
+        return template.queryForObject(GET_ACTION_BY_IDS, getActionRowMapper(), studyId, interventionId, actionId);
+    }
+
+    public List<Action> listActions(Long studyId, Integer interventionId) {
+        return template.query(LIST_ACTIONS, getActionRowMapper(), studyId, interventionId);
+    }
+
+    public void deleteActionByIds(Long studyId, Integer interventionId, Integer actionId) {
+        template.update(DELETE_ACTION_BY_ID, studyId, interventionId, actionId);
+    }
+
+    public Action updateAction(Long studyId, Integer interventionId, Integer actionId, Action action) {
+        namedTemplate.update(UPDATE_ACTION, actionToParams(studyId, interventionId, action)
+                .addValue("action_id", actionId));
+        return getActionByIds(studyId, interventionId, actionId);
+    }
+
     public void clear() {
         template.update(DELETE_ALL);
     }
@@ -86,10 +121,18 @@ public class InterventionRepository {
 
     private static MapSqlParameterSource triggerToParams(Long studyId, Integer interventionId, Trigger trigger) {
         return new MapSqlParameterSource()
-                    .addValue("study_id", studyId)
-                    .addValue("intervention_id", interventionId)
-                    .addValue("type", trigger.getType())
-                    .addValue("properties", MapperUtils.writeValueAsString(trigger.getProperties()));
+                .addValue("study_id", studyId)
+                .addValue("intervention_id", interventionId)
+                .addValue("type", trigger.getType())
+                .addValue("properties", MapperUtils.writeValueAsString(trigger.getProperties()));
+    }
+
+    private static MapSqlParameterSource actionToParams(Long studyId, Integer interventionId, Action action) {
+        return new MapSqlParameterSource()
+                .addValue("study_id", studyId)
+                .addValue("intervention_id", interventionId)
+                .addValue("type", action.getType())
+                .addValue("properties", MapperUtils.writeValueAsString(action.getProperties()));
     }
 
     private static RowMapper<Trigger> getTriggerRowMapper() {
@@ -98,6 +141,15 @@ public class InterventionRepository {
                 .setType(rs.getString("type"))
                 .setCreated(rs.getTimestamp("created").toInstant())
                 .setModified(rs.getTimestamp("modified").toInstant());
+    }
+
+    private static RowMapper<Action> getActionRowMapper() {
+        return (rs, rowNum) -> new Action()
+                .setActionId(rs.getInt("action_id"))
+                .setType(rs.getString("type"))
+                .setProperties(MapperUtils.readValue(rs.getObject("properties"), ActionProperties.class))
+                .setModified(rs.getTimestamp("modified").toInstant())
+                .setCreated(rs.getTimestamp("created").toInstant());
     }
 
     private static RowMapper<Intervention> getInterventionRowMapper() {
@@ -110,6 +162,6 @@ public class InterventionRepository {
                 .setStudyGroupId(rs.getInt("study_group_id"))
                 .setCreated(rs.getTimestamp("created").toInstant())
                 .setModified(rs.getTimestamp("modified").toInstant());
-    }
+        }
 
 }

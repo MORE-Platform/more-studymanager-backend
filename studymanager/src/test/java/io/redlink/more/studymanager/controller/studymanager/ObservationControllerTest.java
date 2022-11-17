@@ -1,8 +1,7 @@
-package io.redlink.more.studymanager.controller;
+package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
-import io.redlink.more.studymanager.controller.studymanager.ObservationsApiV1Controller;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.service.ObservationService;
 import org.junit.jupiter.api.DisplayName;
