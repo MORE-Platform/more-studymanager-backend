@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.service.ParticipantService;
+
 import java.sql.Timestamp;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +70,38 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$[0].status").value("new"))
                 .andExpect(jsonPath("$[0].studyGroupId").value(participantRequest.getStudyGroupId()))
                 .andExpect(jsonPath("$[0].registrationToken").exists());
+    }
+
+    @Test
+    @DisplayName("Participants can be created from csv")
+    void testCreateFromCSV() throws Exception {
+        String participant1 = "Participant1";
+        String participant2 = "Participant2";
+        when(participantService.createParticipant(any(Participant.class))).thenAnswer(invocationOnMock -> new Participant()
+                        .setStudyId(1L)
+                        .setParticipantId(1)
+                        .setAlias(participant1)
+                        .setStudyGroupId(1)
+                        .setStatus(Participant.Status.NEW)
+                        .setCreated(new Timestamp(System.currentTimeMillis()))
+                        .setModified(new Timestamp(System.currentTimeMillis()))
+                        .setRegistrationToken("TEST123"))
+                .thenAnswer(invocationOnMock -> new Participant()
+                        .setStudyId(1L)
+                        .setParticipantId(1)
+                        .setAlias(participant2)
+                        .setStudyGroupId(1)
+                        .setStatus(Participant.Status.NEW)
+                        .setCreated(new Timestamp(System.currentTimeMillis()))
+                        .setModified(new Timestamp(System.currentTimeMillis()))
+                        .setRegistrationToken("TEST123"));
+
+        String csv = "Participants\n%s\n%s".formatted(participant1, participant2);
+        mvc.perform(post("/api/v1/studies/{studyId}/participants", 1L)
+                        .content(csv)
+                        .contentType(new MediaType("text", "csv")))
+                .andDo(print())
+                .andExpect(status().isCreated());
     }
 
     @Test

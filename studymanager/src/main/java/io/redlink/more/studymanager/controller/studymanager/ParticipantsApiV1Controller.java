@@ -4,8 +4,6 @@ import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ParticipantsApi;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
-import io.redlink.more.studymanager.model.transformer.StudyGroupTransformer;
-import io.redlink.more.studymanager.model.transformer.StudyTransformer;
 import io.redlink.more.studymanager.service.ParticipantService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
