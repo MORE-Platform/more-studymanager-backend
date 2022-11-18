@@ -1,14 +1,18 @@
 _id: env_env_8c9c17e9a9b6ea0973e901c89057867aecf00f5a_sub
 type: Environment
 parentId: env_8c9c17e9a9b6ea0973e901c89057867aecf00f5a
-modified: 1668771246044
+modified: 1668771734382
 created: 1667561236526
 name: Local Test Server
 data:
   base_url: http://localhost:8080
+  interventionId: "{% response 'body',
+    'req_wrk_f8835dc90c89495f9f7c5391ce7e13339a96ef8b',
+    'b64::JC5pbnRlcnZlbnRpb25JZA==::46b', 'never', 60 %}"
 dataPropertyOrder:
   "&":
     - base_url
+    - interventionId
 color: "#00b800"
 isPrivate: false
 metaSortKey: 1667561236526

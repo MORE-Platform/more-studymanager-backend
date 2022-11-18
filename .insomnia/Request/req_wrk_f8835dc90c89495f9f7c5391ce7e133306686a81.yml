@@ -1,16 +1,22 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e133306686a81
 type: Request
-parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1668205309552
+parentId: fld_3ac4baaaecc44efeab366bf07b4656e8
+modified: 1668771897536
 created: 1667561236514
-url: "{{ base_url }}/studies/{{ studyId }}/interventions/{{ interventionId
+url: "{{ _.api_base }}/studies/{{ studyId }}/interventions/{{ interventionId
   }}/trigger"
 name: /studies/{studyId}/interventions/{interventionId}/trigger
 description: ""
 method: PUT
 body:
   mimeType: application/json
-  text: "null"
+  text: |-
+    {
+    	"type": "my-trigger",
+    	"properties": {
+    		"triggerProperty": "property"
+    	}
+    }
 parameters: []
 headers:
   - name: Content-Type
@@ -25,7 +31,7 @@ authentication:
   disabled: false
   accessTokenUrl: "{{ _.auth.tokenUrl }}"
   clientSecret: "{{ _.auth.clientSecret }}"
-metaSortKey: 825
+metaSortKey: 618.75
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true

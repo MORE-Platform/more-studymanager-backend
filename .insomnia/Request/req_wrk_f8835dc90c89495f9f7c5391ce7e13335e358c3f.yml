@@ -1,16 +1,22 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e13335e358c3f
 type: Request
-parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1668205295169
+parentId: fld_cb2aee86404440a2a911b8e9618b8b35
+modified: 1668771900882
 created: 1667561236513
-url: "{{ base_url }}/studies/{{ studyId }}/interventions/{{ interventionId
+url: "{{ _.api_base }}/studies/{{ studyId }}/interventions/{{ _.interventionId
   }}/actions"
 name: /studies/{studyId}/interventions/{interventionId}/actions
 description: ""
 method: POST
 body:
   mimeType: application/json
-  text: "null"
+  text: |-
+    {
+    	"type": "my-type",
+    	"properties": {
+    		"actionProperty": "some property"
+    	}
+    }
 parameters: []
 headers:
   - name: Content-Type
@@ -25,7 +31,7 @@ authentication:
   disabled: false
   accessTokenUrl: "{{ _.auth.tokenUrl }}"
   clientSecret: "{{ _.auth.clientSecret }}"
-metaSortKey: 900
+metaSortKey: 800
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true

@@ -1,9 +1,9 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333ca52bd3a
 type: Request
-parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1668205480568
+parentId: fld_3ac4baaaecc44efeab366bf07b4656e8
+modified: 1668771849351
 created: 1667561236515
-url: "{{ base_url }}/studies/{{ studyId }}/interventions/{{ interventionId
+url: "{{ _.api_base }}/studies/{{ studyId }}/interventions/{{ interventionId
   }}/trigger"
 name: /studies/{studyId}/interventions/{interventionId}/trigger
 description: ""
@@ -21,7 +21,7 @@ authentication:
   disabled: false
   accessTokenUrl: "{{ _.auth.tokenUrl }}"
   clientSecret: "{{ _.auth.clientSecret }}"
-metaSortKey: 837.5
+metaSortKey: 568.75
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true
