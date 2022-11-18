@@ -1,5 +1,11 @@
 package io.redlink.more.studymanager.controller.converter;
 
+import com.google.common.io.Files;
+import com.opencsv.CSVWriter;
+import com.opencsv.bean.StatefulBeanToCsv;
+import com.opencsv.bean.StatefulBeanToCsvBuilder;
+import com.opencsv.exceptions.CsvDataTypeMismatchException;
+import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +17,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -38,7 +44,17 @@ public class CSVConverter extends AbstractHttpMessageConverter<List<ParticipantD
 
     @Override
     protected void writeInternal(List<ParticipantDTO> participantDTOS, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
+        OutputStream outputStream = outputMessage.getBody();
+        final Writer writer = new OutputStreamWriter(outputStream);
+        writer.write("ALIAS;PARTICIPANTID;STUDYID");
+        participantDTOS.forEach(p -> {
+            try {
+                writer.write("%s;%s;%s;\n".formatted(p.getAlias(), p.getParticipantId().toString(), p.getStudyId().toString()));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
+        });
     }
 
 }

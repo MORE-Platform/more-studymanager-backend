@@ -324,6 +324,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Participant'
+            text/csv:
+              schema:
+                type: string
+                description: csv
         '404':
           description: Not found
 
