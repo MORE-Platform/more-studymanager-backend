@@ -1,23 +1,27 @@
-_id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333d718002b
+_id: req_b7c800b038804ce9a7ca7001be558af3
 type: Request
-parentId: fld_7a92eda90ce14a2d99ac2c6ee841bf96
-modified: 1668685833117
-created: 1667561236525
-url: "{{ api_base }}/studies"
-name: /studies
+parentId: fld_96610131475c47f49e19ab6e25398dce
+modified: 1668758299253
+created: 1668757182532
+url: "{{ _.api_base }}/studies/{{ studyId }}/participants"
+name: put /studies/{studyId}/participants
 description: ""
-method: POST
+method: PUT
 body:
   mimeType: application/json
   text: |-
-    {
-      "title": "Ein neue Teststudie",
-      "purpose": "Eine Teststudie",
-      "participantInfo": "Some public info",
-      "consentInfo": "Some consent",
-      "plannedStart": "2022-12-05",
-      "plannedEnd": "2022-12-31"
-    }
+    [
+      {
+        "alias": "part 1",
+    		"participantId": 1,
+    		"studyGroupId": 1
+      },  
+    	{
+        "alias": "part 2",
+    		"participantId": 2,
+    		"studyGroupId": 1
+      }
+    ]
 parameters: []
 headers:
   - name: Content-Type
@@ -32,11 +36,11 @@ authentication:
   disabled: false
   accessTokenUrl: "{{ _.auth.tokenUrl }}"
   clientSecret: "{{ _.auth.clientSecret }}"
-metaSortKey: -1667561417479
+metaSortKey: -1667561236597.5
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true
-settingDisableRenderRequestBody: false
+settingDisableRenderRequestBody: true
 settingEncodeUrl: true
 settingRebuildPath: true
 settingFollowRedirects: global
