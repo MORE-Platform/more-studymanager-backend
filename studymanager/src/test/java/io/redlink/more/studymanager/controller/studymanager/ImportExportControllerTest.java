@@ -38,7 +38,7 @@ public class ImportExportControllerTest {
     @DisplayName("Participants should be exported in csv format as a Resource")
     void testExportParticipants() throws Exception {
 
-        String csv = "STUDYID;TITLE;PARTICIPANTID;ALIAS;TOKEN\n1;Study;1;SomeAlias;SomeToken";
+        String csv = "STUDYID;TITLE;PARTICIPANTID;ALIAS;REGISTRATIONTOKEN\n1;Study;1;SomeAlias;SomeToken";
 
         when(importExportService.exportParticipants(any(Long.class)))
                 .thenAnswer(invocationOnMock -> new ByteArrayResource(csv.getBytes(StandardCharsets.UTF_8)));
@@ -47,8 +47,6 @@ public class ImportExportControllerTest {
                         .contentType("text/csv"))
                 .andDo(print())
                 .andReturn();
-
-        result.getResponse().getContentAsString();
         assertThat(result.getResponse().getContentAsString()).isEqualTo(csv);
     }
 }
