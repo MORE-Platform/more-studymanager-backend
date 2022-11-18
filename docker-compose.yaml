@@ -20,7 +20,7 @@ services:
   redis:
     image: redis:7-alpine
     healthcheck:
-      test: [ 'CMD-SHELL', '[ "$(redis-cli ping)" = "PONG" ]' ]
+      test: [ 'CMD-SHELL', '[ "$$(redis-cli ping)" = "PONG" ]' ]
       interval: 10s
       timeout: 1s
       retries: 5
