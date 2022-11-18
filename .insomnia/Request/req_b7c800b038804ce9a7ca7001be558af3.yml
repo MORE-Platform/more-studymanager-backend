@@ -1,0 +1,46 @@
+_id: req_b7c800b038804ce9a7ca7001be558af3
+type: Request
+parentId: fld_96610131475c47f49e19ab6e25398dce
+modified: 1668758299253
+created: 1668757182532
+url: "{{ _.api_base }}/studies/{{ studyId }}/participants"
+name: put /studies/{studyId}/participants
+description: ""
+method: PUT
+body:
+  mimeType: application/json
+  text: |-
+    [
+      {
+        "alias": "part 1",
+    		"participantId": 1,
+    		"studyGroupId": 1
+      },  
+    	{
+        "alias": "part 2",
+    		"participantId": 2,
+    		"studyGroupId": 1
+      }
+    ]
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  clientId: "{{ _.auth.clientId }}"
+  grantType: authorization_code
+  scope: "{{ _.auth.scopes }}"
+  type: oauth2
+  redirectUrl: "{{ _.auth.redirectUrl }}"
+  authorizationUrl: "{{ _.auth.authorizaionUrl }}"
+  disabled: false
+  accessTokenUrl: "{{ _.auth.tokenUrl }}"
+  clientSecret: "{{ _.auth.clientSecret }}"
+metaSortKey: -1667561236597.5
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: true
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global
