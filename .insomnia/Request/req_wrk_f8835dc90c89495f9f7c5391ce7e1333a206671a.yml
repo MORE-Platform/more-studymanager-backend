@@ -1,15 +1,24 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333a206671a
 type: Request
-parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1668205295169
+parentId: fld_f8bcdf8c9e774fb9b5098233f6261885
+modified: 1668771788854
 created: 1667561236517
-url: "{{ api_base }}/studies/{{ studyId }}/observations/{{ observationId }}"
+url: "{{ _.api_base }}/studies/{{ studyId }}/observations/{{ observationId }}"
 name: /studies/{studyId}/observations/{observationId}
 description: ""
 method: PUT
 body:
   mimeType: application/json
-  text: "null"
+  text: |-
+    {
+      "studyGroupId": 1,
+      "title": "accelerometer smartphone",
+      "purpose": "my purpose",
+      "participantInfo": "this is a smartphone accelerometer",
+      "type": "acc-mobile-observation",
+      "properties": {},
+      "schedule": {}
+    }
 parameters: []
 headers:
   - name: Content-Type
@@ -24,7 +33,7 @@ authentication:
   disabled: false
   accessTokenUrl: "{{ _.auth.tokenUrl }}"
   clientSecret: "{{ _.auth.clientSecret }}"
-metaSortKey: 800
+metaSortKey: 350
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true

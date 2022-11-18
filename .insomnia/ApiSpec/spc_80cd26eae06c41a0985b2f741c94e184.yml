@@ -1,7 +1,7 @@
 _id: spc_80cd26eae06c41a0985b2f741c94e184
 type: ApiSpec
 parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1668605650849
+modified: 1668771176062
 created: 1667561146607
 fileName: More Studymanager API
 contents: |
@@ -9,13 +9,13 @@ contents: |
   info:
     version: 1.0.0
     title: Configurator API
+  security:
+    - OAuth:
+        - read
+        - write
   servers:
-    - url: http://localhost:8080/api/v1
+    - url: https://localhost:8080/api/v1
       description: Local Test Server
-  #security:
-  #  - OAuth:
-  #      - read
-  #      - write
   paths:
     /components/{componentType}:
       get:
@@ -315,6 +315,33 @@ contents: |
                     $ref: '#/components/schemas/Participant'
           '500':
             description: Error
+      put:
+        tags:
+          - participants
+        description: Update participants for study
+        operationId: updateParticipantList
+        parameters:
+          - $ref: '#/components/parameters/StudyId'
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Participant'
+          required: true
+        responses:
+          '201':
+            description: updated participants
+            content:
+              application/json:
+                schema:
+                  type: array
+                  description: list all participants
+                  items:
+                    $ref: '#/components/schemas/Participant'
+          '500':
+            description: Error
       get:
         tags:
           - participants
@@ -521,6 +548,27 @@ contents: |
             description: not found
 
     /studies/{studyId}/interventions/{interventionId}:
+      put:
+        tags:
+          - interventions
+        description: update intervention
+        operationId: updateIntervention
+        parameters:
+          - $ref: '#/components/parameters/StudyId'
+          - $ref: '#/components/parameters/InterventionId'
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Intervention'
+        responses:
+          '200':
+            description: intervention successfully updated
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Intervention'
       get:
         tags:
           - interventions
@@ -538,6 +586,23 @@ contents: |
                   $ref: '#/components/schemas/Intervention'
           '404':
             description: not found
+
+      delete:
+        tags:
+          - interventions
+        description: Delete intervention
+        operationId: deleteIntervention
+        parameters:
+          - $ref: '#/components/parameters/StudyId'
+          - $ref: '#/components/parameters/InterventionId'
+        responses:
+          '204':
+            description: Successfully deleted intervention
+          '404':
+            description: not found
+          '500':
+            description: Error
+
     /studies/{studyId}/interventions/{interventionId}/trigger:
       parameters:
         - $ref: '#/components/parameters/StudyId'
@@ -666,6 +731,21 @@ contents: |
             description: action deleted successfully
           '400':
             description: bad request
+
+    /users/me:
+      get:
+        tags:
+          - users
+        description: retrieve the current user
+        operationId: getCurrentUser
+        responses:
+          default:
+            description: "user-info/profile of the current user"
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/UserInfo'
+
   components:
     schemas:
       ComponentFactory:
@@ -767,7 +847,7 @@ contents: |
           alias:
             type: string
           studyGroupId:
-            type: string
+            $ref: '#/components/schemas/Id'
           registrationToken:
             type: string
             readOnly: true
@@ -786,7 +866,11 @@ contents: |
         type: string
         enum:
           - new
-          - registered
+          - active
+          - abandoned
+          - kicked_out
+          - locked
+        default: new
 
       Observation:
         type: object
@@ -807,8 +891,8 @@ contents: |
             type: string
           properties:
             type: object
-          #schedule:
-          #  $ref: './TimeRange.yaml/#/components/schemas/TimeRange'
+          schedule:
+            type: object
           created:
             type: string
             format: date-time
@@ -831,8 +915,8 @@ contents: |
             type: string
           purpose:
             type: string
-          #schedule:
-          #  $ref: './TimeRange.yaml/#/components/schemas/TimeRange'
+          schedule:
+            type: object
           trigger:
             $ref: '#/components/schemas/Trigger'
           actions:
@@ -897,6 +981,34 @@ contents: |
         type: integer
         format: int32
 
+      UserInfo:
+        type: object
+        properties:
+          name:
+            type: string
+            readOnly: true
+          institution:
+            type: string
+            readOnly: true
+          email:
+            type: string
+            format: email
+            readOnly: true
+          permissions:
+            type: array
+            items:
+              $ref: '#/components/schemas/PlatformPermission'
+            uniqueItems: true
+            readOnly: true
+        readOnly: true
+
+      PlatformPermission:
+        type: string
+        enum:
+          - READ_STUDIES
+          - CREATE_STUDIES
+
+
     parameters:
       StudyId:
         name: studyId
@@ -909,14 +1021,14 @@ contents: |
         in: path
         schema:
           type: integer
-          format: int64
+          format: int32
         required: true
       ParticipantId:
         name: participantId
         in: path
         schema:
           type: integer
-          format: int64
+          format: int32
         required: true
       ObservationId:
         name: observationId
@@ -940,13 +1052,13 @@ contents: |
           format: int32
         required: true
 
-  #  securitySchemes:
-  #    OAuth:
-  #      type: oauth2
-  #      flows:
-  #        implicit:
-  #          authorizationUrl: https://auth.more.redlink.io/authorize #TODO
-  #          scopes:
-  #            read: read studies
-  #            write: write studies
+    securitySchemes:
+      OAuth:
+        type: oauth2
+        flows:
+          implicit:
+            authorizationUrl: https://auth.more.redlink.io/authorize #TODO
+            scopes:
+              read: read studies
+              write: write studies
 contentType: yaml

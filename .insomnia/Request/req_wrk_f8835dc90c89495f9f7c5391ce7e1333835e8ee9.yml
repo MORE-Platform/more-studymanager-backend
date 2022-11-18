@@ -1,9 +1,9 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333835e8ee9
 type: Request
 parentId: fld_d5825806feed4c8cafde3fdd04176f82
-modified: 1667771403096
+modified: 1668771346747
 created: 1667561236521
-url: "{{ api_base }}/studies/{{ studyId }}/studyGroups/{{ studyGroupId }}"
+url: "{{ _.api_base }}/studies/{{ studyId }}/studyGroups/{{ studyGroupId }}"
 name: /studies/{studyId}/studyGroups/{studyGroupId}
 description: ""
 method: GET

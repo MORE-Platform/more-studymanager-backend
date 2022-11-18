@@ -1,9 +1,9 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e13337266d1c0
 type: Request
 parentId: fld_663066df36c74ff9b0c69a2aabe4d759
-modified: 1667805638879
+modified: 1668771408164
 created: 1667561236526
-url: "{{ api_base }}/components/{{ componentType }}"
+url: "{{ _.api_base }}/components/{{ componentType }}"
 name: /components/{componentType}
 description: ""
 method: GET

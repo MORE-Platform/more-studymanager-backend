@@ -1,9 +1,9 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e133358978999
 type: Request
-parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1668205295169
+parentId: fld_cb2aee86404440a2a911b8e9618b8b35
+modified: 1668771770755
 created: 1667561236510
-url: "{{ api_base }}/studies/{{ studyId }}/interventions/{{ interventionId
+url: "{{ _.api_base }}/studies/{{ studyId }}/interventions/{{ interventionId
   }}/actions/{{ actionId }}"
 name: /studies/{studyId}/interventions/{interventionId}/actions/{actionId}
 description: ""
@@ -21,7 +21,7 @@ authentication:
   disabled: false
   accessTokenUrl: "{{ _.auth.tokenUrl }}"
   clientSecret: "{{ _.auth.clientSecret }}"
-metaSortKey: 1200
+metaSortKey: 843.75
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true

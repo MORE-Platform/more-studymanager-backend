@@ -2,11 +2,10 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ParticipantsApi;
+import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.service.ParticipantService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ParticipantsApiV1Controller implements ParticipantsApi {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ParticipantsApiV1Controller.class);
     private final ParticipantService service;
 
     public ParticipantsApiV1Controller(ParticipantService service) {
@@ -31,7 +28,19 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
         List<Participant> participants = participantDTO.stream().map(participant -> service.createParticipant(
                 ParticipantTransformer.fromParticipantDTO_V1(participant.studyId(studyId))))
                 .toList();
-        LOGGER.debug("Participants created: {}", participants);
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                participants.stream().map(ParticipantTransformer::toParticipantDTO_V1).toList()
+        );
+    }
+
+    @Override
+    public ResponseEntity<List<ParticipantDTO>> updateParticipantList(Long studyId, List<ParticipantDTO> participantDTO) {
+        if(participantDTO.stream().anyMatch(p -> p.getParticipantId() == null)) {
+            throw new NotFoundException("Participant without id");
+        }
+        List<Participant> participants = participantDTO.stream().map(participant -> service.updateParticipant(
+                        ParticipantTransformer.fromParticipantDTO_V1(participant.studyId(studyId))))
+                .toList();
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 participants.stream().map(ParticipantTransformer::toParticipantDTO_V1).toList()
         );

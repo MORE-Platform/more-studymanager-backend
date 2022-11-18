@@ -1,60 +1,56 @@
 package io.redlink.more.studymanager.controller.converter;
-
-import com.google.common.io.Files;
-import com.opencsv.CSVWriter;
-import com.opencsv.bean.StatefulBeanToCsv;
-import com.opencsv.bean.StatefulBeanToCsvBuilder;
-import com.opencsv.exceptions.CsvDataTypeMismatchException;
-import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.AbstractHttpMessageConverter;
+import org.springframework.http.converter.AbstractGenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.stereotype.Component;
-
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-
 @Component
-public class CSVConverter extends AbstractHttpMessageConverter<List<ParticipantDTO>> {
-    public final static MediaType TEXT_CSV_TYPE = new MediaType("text", "csv");
-
+public class CSVConverter extends AbstractGenericHttpMessageConverter<List<ParticipantDTO>> {
+    public static final MediaType TEXT_CSV_TYPE = new MediaType("text", "csv");
     @Autowired
     public CSVConverter() {
-        super(StandardCharsets.UTF_8, TEXT_CSV_TYPE);
+        super(TEXT_CSV_TYPE);
+        setDefaultCharset(StandardCharsets.UTF_8);
     }
-
     @Override
     protected boolean supports(Class<?> clazz) {
-        return true;
+        return List.class.isAssignableFrom(clazz);
     }
-
+    @Override
+    public boolean canWrite(Type type, Class<?> clazz, MediaType mediaType) {
+        return false;
+    }
+    @Override
+    protected void writeInternal(List<ParticipantDTO> participantDTOS, Type type, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
+        throw new HttpMessageNotWritableException("Writing not supported");
+    }
     @Override
     protected List<ParticipantDTO> readInternal(Class<? extends List<ParticipantDTO>> clazz, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
-        List<String> participants = IOUtils.readLines(inputMessage.getBody(), inputMessage.getHeaders().getContentType().getCharset());
-        participants.remove(0);
-        return participants.stream().map(s -> new ParticipantDTO().alias(s)).toList();
+        return readParticipantsDTO(inputMessage);
     }
-
     @Override
-    protected void writeInternal(List<ParticipantDTO> participantDTOS, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
-        OutputStream outputStream = outputMessage.getBody();
-        final Writer writer = new OutputStreamWriter(outputStream);
-        writer.write("ALIAS;PARTICIPANTID;STUDYID");
-        participantDTOS.forEach(p -> {
-            try {
-                writer.write("%s;%s;%s;\n".formatted(p.getAlias(), p.getParticipantId().toString(), p.getStudyId().toString()));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-        });
+    public List<ParticipantDTO> read(Type type, Class<?> contextClass, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
+        return readParticipantsDTO(inputMessage);
     }
-
+    private List<ParticipantDTO> readParticipantsDTO(HttpInputMessage inputMessage) throws IOException {
+        var charset = Optional.ofNullable(inputMessage.getHeaders().getContentType())
+                .map(MediaType::getCharset)
+                .or(() -> Optional.ofNullable(this.getDefaultCharset()))
+                .orElse(StandardCharsets.UTF_8);
+        return IOUtils.readLines(inputMessage.getBody(), charset)
+                .stream()
+                .skip(1)
+                .map(alias -> new ParticipantDTO().alias(alias))
+                .toList();
+    }
 }

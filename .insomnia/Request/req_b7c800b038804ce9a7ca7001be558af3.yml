@@ -1,21 +1,27 @@
-_id: req_wrk_f8835dc90c89495f9f7c5391ce7e13330a67aba0
+_id: req_b7c800b038804ce9a7ca7001be558af3
 type: Request
-parentId: fld_d5825806feed4c8cafde3fdd04176f82
-modified: 1668771354116
-created: 1667561236521
-url: "{{ _.api_base }}/studies/{{ studyId }}/studyGroups/{{ studyGroupId }}"
-name: /studies/{studyId}/studyGroups/{studyGroupId}
+parentId: fld_96610131475c47f49e19ab6e25398dce
+modified: 1668771454504
+created: 1668757182532
+url: "{{ _.api_base }}/studies/{{ studyId }}/participants"
+name: put /studies/{studyId}/participants
 description: ""
 method: PUT
 body:
   mimeType: application/json
   text: |-
-    {
-      "studyId": "{{ _.studyId }}",
-    	"studyGroupId": "{{ _.studyGroupId }}",
-    	"title": "My Group Refreshed",
-      "purpose": "Some Purpose Refreshed"
-    }
+    [
+      {
+        "alias": "part 1",
+    		"participantId": 1,
+    		"studyGroupId": 1
+      },  
+    	{
+        "alias": "part 2",
+    		"participantId": 2,
+    		"studyGroupId": 1
+      }
+    ]
 parameters: []
 headers:
   - name: Content-Type
@@ -30,11 +36,11 @@ authentication:
   disabled: false
   accessTokenUrl: "{{ _.auth.tokenUrl }}"
   clientSecret: "{{ _.auth.clientSecret }}"
-metaSortKey: -1667561236494.25
+metaSortKey: -1667561236597.5
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true
-settingDisableRenderRequestBody: false
+settingDisableRenderRequestBody: true
 settingEncodeUrl: true
 settingRebuildPath: true
 settingFollowRedirects: global

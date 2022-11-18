@@ -1,9 +1,9 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333d718002b
 type: Request
 parentId: fld_7a92eda90ce14a2d99ac2c6ee841bf96
-modified: 1668608177202
+modified: 1668771815674
 created: 1667561236525
-url: "{{ api_base }}/studies"
+url: "{{ _.api_base }}/studies"
 name: /studies
 description: ""
 method: POST
