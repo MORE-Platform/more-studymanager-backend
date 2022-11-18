@@ -1,54 +1,56 @@
 package io.redlink.more.studymanager.controller.converter;
-
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.AbstractHttpMessageConverter;
+import org.springframework.http.converter.AbstractGenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-
 @Component
-public class CSVConverter extends AbstractHttpMessageConverter<List<ParticipantDTO>> {
-    public final static MediaType TEXT_CSV_TYPE = new MediaType("text", "csv");
-
+public class CSVConverter extends AbstractGenericHttpMessageConverter<List<ParticipantDTO>> {
+    public static final MediaType TEXT_CSV_TYPE = new MediaType("text", "csv");
     @Autowired
     public CSVConverter() {
-        super(StandardCharsets.UTF_8, TEXT_CSV_TYPE);
+        super(TEXT_CSV_TYPE);
+        setDefaultCharset(StandardCharsets.UTF_8);
     }
-
     @Override
     protected boolean supports(Class<?> clazz) {
         return List.class.isAssignableFrom(clazz);
     }
-
+    @Override
+    public boolean canWrite(Type type, Class<?> clazz, MediaType mediaType) {
+        return false;
+    }
+    @Override
+    protected void writeInternal(List<ParticipantDTO> participantDTOS, Type type, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
+        throw new HttpMessageNotWritableException("Writing not supported");
+    }
     @Override
     protected List<ParticipantDTO> readInternal(Class<? extends List<ParticipantDTO>> clazz, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
-        return IOUtils.readLines(inputMessage.getBody(), getCharset(inputMessage))
+        return readParticipantsDTO(inputMessage);
+    }
+    @Override
+    public List<ParticipantDTO> read(Type type, Class<?> contextClass, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
+        return readParticipantsDTO(inputMessage);
+    }
+    private List<ParticipantDTO> readParticipantsDTO(HttpInputMessage inputMessage) throws IOException {
+        var charset = Optional.ofNullable(inputMessage.getHeaders().getContentType())
+                .map(MediaType::getCharset)
+                .or(() -> Optional.ofNullable(this.getDefaultCharset()))
+                .orElse(StandardCharsets.UTF_8);
+        return IOUtils.readLines(inputMessage.getBody(), charset)
                 .stream()
                 .skip(1)
-                .map(s -> new ParticipantDTO().alias(s))
+                .map(alias -> new ParticipantDTO().alias(alias))
                 .toList();
     }
-
-    private Charset getCharset(HttpInputMessage inputMessage) {
-        if(inputMessage.getHeaders().getContentType() != null
-                && inputMessage.getHeaders().getContentType().getCharset() != null)
-            return inputMessage.getHeaders().getContentType().getCharset();
-        return Charset.defaultCharset();
-    }
-
-    @Override
-    protected void writeInternal(List<ParticipantDTO> participantDTOS, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
-
-    }
-
 }
