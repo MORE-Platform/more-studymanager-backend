@@ -1,9 +1,9 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333094734b3
 type: Request
 parentId: fld_663066df36c74ff9b0c69a2aabe4d759
-modified: 1667806190917
+modified: 1668771414247
 created: 1667561236525
-url: "{{ api_base }}/components/{{ componentType }}/{{ componentId
+url: "{{ _.api_base }}/components/{{ componentType }}/{{ componentId
   }}/web-component.js"
 name: /components/{componentType}/{componentId}/web-component.js
 description: ""

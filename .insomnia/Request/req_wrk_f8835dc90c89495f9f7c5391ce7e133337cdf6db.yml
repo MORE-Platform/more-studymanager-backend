@@ -3,7 +3,7 @@ type: Request
 parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
 modified: 1668205295169
 created: 1667561236511
-url: "{{ api_base }}/studies/{{ studyId }}/interventions/{{ interventionId
+url: "{{ base_url }}/studies/{{ studyId }}/interventions/{{ interventionId
   }}/actions/{{ actionId }}"
 name: /studies/{studyId}/interventions/{interventionId}/actions/{actionId}
 description: ""

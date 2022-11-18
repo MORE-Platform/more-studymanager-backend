@@ -1,9 +1,9 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333448eee67
 type: Request
 parentId: fld_7a92eda90ce14a2d99ac2c6ee841bf96
-modified: 1668166904074
+modified: 1668771313363
 created: 1667561236523
-url: "{{ api_base }}/studies/{{ studyId }}/status"
+url: "{{ _.api_base }}/studies/{{ studyId }}/status"
 name: /studies/{studyId}/status
 description: ""
 method: PUT

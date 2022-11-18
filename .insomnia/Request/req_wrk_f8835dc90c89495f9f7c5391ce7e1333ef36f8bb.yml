@@ -1,15 +1,24 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333ef36f8bb
 type: Request
-parentId: wrk_f8835dc90c89495f9f7c5391ce7e1333
-modified: 1668610579573
+parentId: fld_f8bcdf8c9e774fb9b5098233f6261885
+modified: 1668771421022
 created: 1667561236518
-url: "{{ api_base }}/studies/{{ studyId }}/observations"
+url: "{{ base_url }}/studies/{{ studyId }}/observations"
 name: /studies/{studyId}/observations
 description: ""
 method: POST
 body:
   mimeType: application/json
-  text: "null"
+  text: |-
+    {
+      "studyGroupId": 1,
+      "title": "accelerometer",
+      "purpose": "my purpose",
+      "participantInfo": "this is a smartphone accelerometer",
+      "type": "acc-mobile-observation",
+      "properties": {},
+      "schedule": {}
+    }
 parameters: []
 headers:
   - name: Content-Type

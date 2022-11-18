@@ -3,7 +3,7 @@ type: Request
 parentId: fld_ac178bbd6a794d82875032a46e60b2ec
 modified: 1668205468458
 created: 1667561236516
-url: "{{ api_base }}/studies/{{ studyId }}/interventions"
+url: "{{ base_url }}/studies/{{ studyId }}/interventions"
 name: /studies/{studyId}/interventions
 description: ""
 method: GET

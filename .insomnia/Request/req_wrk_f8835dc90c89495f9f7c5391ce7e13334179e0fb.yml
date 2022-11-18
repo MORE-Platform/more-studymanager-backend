@@ -1,9 +1,9 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e13334179e0fb
 type: Request
 parentId: fld_7a92eda90ce14a2d99ac2c6ee841bf96
-modified: 1667680559979
+modified: 1668771319362
 created: 1667561236523
-url: "{{ api_base }}/studies/{{ studyId }}"
+url: "{{ _.api_base }}/studies/{{ studyId }}"
 name: /studies/{studyId}
 description: ""
 method: DELETE
