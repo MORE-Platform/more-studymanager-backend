@@ -12,6 +12,7 @@ import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -26,14 +27,23 @@ public class CSVConverter extends AbstractHttpMessageConverter<List<ParticipantD
 
     @Override
     protected boolean supports(Class<?> clazz) {
-        return true;
+        return List.class.isAssignableFrom(clazz);
     }
 
     @Override
     protected List<ParticipantDTO> readInternal(Class<? extends List<ParticipantDTO>> clazz, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
-        List<String> participants = IOUtils.readLines(inputMessage.getBody(), inputMessage.getHeaders().getContentType().getCharset());
-        participants.remove(0);
-        return participants.stream().map(s -> new ParticipantDTO().alias(s)).toList();
+        return IOUtils.readLines(inputMessage.getBody(), getCharset(inputMessage))
+                .stream()
+                .skip(1)
+                .map(s -> new ParticipantDTO().alias(s))
+                .toList();
+    }
+
+    private Charset getCharset(HttpInputMessage inputMessage) {
+        if(inputMessage.getHeaders().getContentType() != null
+                && inputMessage.getHeaders().getContentType().getCharset() != null)
+            return inputMessage.getHeaders().getContentType().getCharset();
+        return Charset.defaultCharset();
     }
 
     @Override
