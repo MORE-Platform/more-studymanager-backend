@@ -13,9 +13,8 @@ import java.util.List;
 @Service
 public class ImportExportService {
 
-    ParticipantRepository participantRepository;
-    StudyRepository studyRepository;
-
+    private final ParticipantRepository participantRepository;
+    private final StudyRepository studyRepository;
     public ImportExportService(ParticipantRepository participantRepository, StudyRepository studyRepository) {
         this.participantRepository = participantRepository;
         this.studyRepository = studyRepository;
