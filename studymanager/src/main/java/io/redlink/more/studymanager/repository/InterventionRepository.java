@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static io.redlink.more.studymanager.utils.RepositoryUtils.getValidNullableIntegerValue;
+
 @Component
 public class InterventionRepository {
 
@@ -26,7 +28,7 @@ public class InterventionRepository {
     private static final String LIST_INTERVENTIONS = "SELECT * FROM interventions WHERE study_id = ?";
     private static final String DELETE_INTERVENTION_BY_IDS = "DELETE FROM interventions WHERE study_id = ? AND intervention_id = ?";
     private static final String DELETE_ALL = "DELETE FROM interventions";
-    private static final String UPDATE_INTERVENTION = "UPDATE interventions SET title=:title, purpose=:purpose, schedule=:schedule::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id";
+    private static final String UPDATE_INTERVENTION = "UPDATE interventions SET title=:title, study_group_id=:study_group_id, purpose=:purpose, schedule=:schedule::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id";
     private static final String CREATE_ACTION = "INSERT INTO actions(study_id,intervention_id,action_id,type,properties) VALUES (:study_id,:intervention_id,(SELECT COALESCE(MAX(action_id),0)+1 FROM actions WHERE study_id = :study_id AND intervention_id=:intervention_id),:type,:properties::jsonb)";
     private static final String GET_ACTION_BY_IDS = "SELECT * FROM actions WHERE study_id=? AND intervention_id=? AND action_id=?";
     private static final String LIST_ACTIONS = "SELECT * FROM actions WHERE study_id = ? AND intervention_id = ?";
@@ -47,7 +49,7 @@ public class InterventionRepository {
         try {
             namedTemplate.update(INSERT_INTERVENTION, interventionToParams(intervention), keyHolder, new String[] { "intervention_id" });
         } catch (DataIntegrityViolationException e) {
-            throw new BadRequestException("Study " + intervention.getStudyId() + " does not exist");
+            throw new BadRequestException("Study group " + intervention.getStudyGroupId() + " does not exist on study " + intervention.getStudyId());
         }
         return getByIds(intervention.getStudyId(), keyHolder.getKey().intValue());
     }
@@ -159,7 +161,7 @@ public class InterventionRepository {
                 .setTitle(rs.getString("title"))
                 .setPurpose(rs.getString("purpose"))
                 .setSchedule(MapperUtils.readValue(rs.getString("schedule"), Object.class))
-                .setStudyGroupId(rs.getInt("study_group_id"))
+                .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
                 .setCreated(rs.getTimestamp("created").toInstant())
                 .setModified(rs.getTimestamp("modified").toInstant());
         }

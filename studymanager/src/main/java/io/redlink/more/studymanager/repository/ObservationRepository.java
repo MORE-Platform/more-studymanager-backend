@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static io.redlink.more.studymanager.utils.RepositoryUtils.getValidNullableIntegerValue;
+
 @Component
 public class ObservationRepository {
 
@@ -97,7 +99,7 @@ public class ObservationRepository {
                         .setPurpose(rs.getString("purpose"))
                         .setParticipantInfo(rs.getString("participant_info"))
                         .setType(rs.getString("type"))
-                        .setStudyGroupId(rs.getInt("study_group_id"))
+                        .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
                         .setProperties(mapper.readValue(rs.getString("properties"), ObservationProperties.class))
                         .setSchedule(mapper.readValue(rs.getString("schedule"), Object.class))
                         .setCreated(rs.getTimestamp("created"))
