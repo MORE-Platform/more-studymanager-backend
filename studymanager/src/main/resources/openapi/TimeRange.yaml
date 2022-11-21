@@ -35,18 +35,18 @@ components:
           type: number
         byday:
           description: days on which to repeat
-          type: array
-          items:
-            $ref: '#/components/schemas/Weekday'
+          oneOf:
+            - $ref: '#/components/schemas/Weekday'
+            - $ref: '#/components/schemas/FirstWeekDay'
+            - $ref: '#/components/schemas/SecondWeekDay'
+            - $ref: '#/components/schemas/ThirdWeekDay'
+            - $ref: '#/components/schemas/FourthWeekDay'
+            - $ref: '#/components/schemas/LastWeekDay'
         bymonth:
-          type: array
-          items:
-            $ref: '#/components/schemas/MonthNum'
+          $ref: '#/components/schemas/MonthNum'
         bymonthday:
-          description: days of the month on which to repeat
-          type: array
-          items:
-            $ref: '#/components/schemas/MonthDayNum'
+          description: day of the month on which to repeat
+          $ref: '#/components/schemas/MonthDayNum'
 
 
     Frequency:
@@ -61,6 +61,7 @@ components:
         - YEARLY
 
     Weekday:
+      description: days of the week
       type: string
       enum:
         - MO
@@ -80,4 +81,64 @@ components:
       type: integer
       minimum: 1
       maximum: 12
+
+    FirstWeekDay:
+      description: first occurrence of week day, e.g. first monday
+      type: string
+      enum:
+        - 1MO
+        - 1TU
+        - 1WE
+        - 1TH
+        - 1FR
+        - 1SA
+        - 1SU
+
+    SecondWeekDay:
+      description: second occurrence of week day, e.g. second monday
+      type: string
+      enum:
+        - 2MO
+        - 2TU
+        - 2WE
+        - 2TH
+        - 2FR
+        - 2SA
+        - 2SU
+
+    ThirdWeekDay:
+      description: third occurrence of week day, e.g. third monday
+      type: string
+      enum:
+        - 3MO
+        - 3TU
+        - 3WE
+        - 3TH
+        - 3FR
+        - 3SA
+        - 3SU
+
+    FourthWeekDay:
+      description: fourth occurrence of week day, e.g. fourth monday
+      type: string
+      enum:
+        - 4MO
+        - 4TU
+        - 4WE
+        - 4TH
+        - 4FR
+        - 4SA
+        - 4SU
+
+    LastWeekDay:
+      description: last occurrence of week day, e.g. last monday
+      type: string
+      enum:
+        - -1MO
+        - -1TU
+        - -1WE
+        - -1TH
+        - -1FR
+        - -1SA
+        - -1SU
 
