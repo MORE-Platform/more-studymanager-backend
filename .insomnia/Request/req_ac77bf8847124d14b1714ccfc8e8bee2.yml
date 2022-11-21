@@ -1,34 +1,34 @@
-_id: req_wrk_f8835dc90c89495f9f7c5391ce7e13339a96ef8b
+_id: req_ac77bf8847124d14b1714ccfc8e8bee2
 type: Request
 parentId: fld_ac178bbd6a794d82875032a46e60b2ec
-modified: 1669027176296
-created: 1667561236516
-url: "{{ _.api_base }}/studies/{{ studyId }}/interventions"
-name: /studies/{studyId}/interventions
+modified: 1669027179261
+created: 1669027120569
+url: "{{ _.api_base }}/studies/{{studyId}}/interventions/{{interventionId}}"
+name: /studies/{studyId}/interventions/{interventionId}
 description: ""
-method: POST
+method: PUT
 body:
   mimeType: application/json
   text: |-
     {
       "title": "My intervention",
-      "purpose": "some purpose"
+      "purpose": "some purpose",
+    	"studyGroupId": 1
     }
 parameters: []
 headers:
   - name: Content-Type
     value: application/json
 authentication:
-  clientId: "{{ _.auth.clientId }}"
-  grantType: authorization_code
-  scope: "{{ _.auth.scopes }}"
   type: oauth2
-  redirectUrl: "{{ _.auth.redirectUrl }}"
+  grantType: authorization_code
   authorizationUrl: "{{ _.auth.authorizaionUrl }}"
-  disabled: false
   accessTokenUrl: "{{ _.auth.tokenUrl }}"
+  clientId: "{{ _.auth.clientId }}"
   clientSecret: "{{ _.auth.clientSecret }}"
-metaSortKey: -1667561236516
+  redirectUrl: "{{ _.auth.redirectUrl }}"
+  scope: "{{ _.auth.scopes }}"
+metaSortKey: -1667561236560.1875
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true

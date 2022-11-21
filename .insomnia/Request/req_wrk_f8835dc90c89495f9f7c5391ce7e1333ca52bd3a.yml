@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333ca52bd3a
 type: Request
 parentId: fld_3ac4baaaecc44efeab366bf07b4656e8
-modified: 1668771849351
+modified: 1668777535738
 created: 1667561236515
 url: "{{ _.api_base }}/studies/{{ studyId }}/interventions/{{ interventionId
   }}/trigger"
