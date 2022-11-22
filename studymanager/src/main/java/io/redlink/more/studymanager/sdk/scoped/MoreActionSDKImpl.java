@@ -19,11 +19,6 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
     }
 
     @Override
-    public void setAction(Action action) {
-
-    }
-
-    @Override
     public void sendPushNotification(String message) {
 
     }
