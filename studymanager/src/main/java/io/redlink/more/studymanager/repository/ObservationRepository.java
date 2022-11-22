@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Observation;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -101,7 +102,7 @@ public class ObservationRepository {
                         .setType(rs.getString("type"))
                         .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
                         .setProperties(mapper.readValue(rs.getString("properties"), ObservationProperties.class))
-                        .setSchedule(mapper.readValue(rs.getString("schedule"), Object.class))
+                        .setSchedule(mapper.readValue(rs.getString("schedule"), Event.class))
                         .setCreated(rs.getTimestamp("created"))
                         .setModified(rs.getTimestamp("modified"));
             } catch (JsonProcessingException e) {

@@ -8,6 +8,7 @@ import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.controller.studymanager.InterventionsApiV1Controller;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.service.InterventionService;
@@ -22,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -84,6 +86,9 @@ class InterventionControllerTest {
                 .setStudyGroupId(1)
                 .setPurpose("some updated purpose")
                 .setTitle("a title")
+                .setSchedule(new Event()
+                        .setDateStart(Instant.now())
+                        .setDateEnd(Instant.now()))
                 .setCreated(Instant.now())
                 .setModified(Instant.now()));
 
@@ -93,7 +98,9 @@ class InterventionControllerTest {
                 .studyGroupId(1)
                 .purpose("some purpose")
                 .title("a title")
-                .schedule(new EventDTO());
+                .schedule(new EventDTO()
+                        .dtstart(Instant.now().atOffset(ZoneOffset.UTC))
+                        .dtend(Instant.now().atOffset(ZoneOffset.UTC)));
 
         mvc.perform(put("/api/v1/studies/1/interventions/1")
                         .content(mapper.writeValueAsString(interventionRequest))
@@ -105,7 +112,7 @@ class InterventionControllerTest {
                 .andExpect(jsonPath("$.studyGroupId").value(interventionRequest.getStudyGroupId()))
                 .andExpect(jsonPath("$.title").value(interventionRequest.getTitle()))
                 .andExpect(jsonPath("$.purpose").value("some updated purpose"))
-                // .andExpect(jsonPath("$.schedule").value("\\\"schedule\\\": \\\"some new schedule\\\""))
+                .andExpect(jsonPath("$.schedule.dtstart").exists())
                 .andExpect(jsonPath("$.modified").exists())
                 .andExpect(jsonPath("$.created").exists());
     }

@@ -27,9 +27,9 @@ components:
           type: string
           format: date-time
         count:
-          type: number
+          type: integer
         interval:
-          type: number
+          type: integer
         byday:
           description: day on which to repeat
           $ref: '#/components/schemas/Weekday'
@@ -41,7 +41,7 @@ components:
           $ref: '#/components/schemas/MonthDayNum'
         bysetpos:
           description: repeat on the first, second, third...
-          type: number
+          type: integer
 
 
     Frequency:

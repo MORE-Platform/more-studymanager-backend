@@ -4,6 +4,7 @@ import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import io.redlink.more.studymanager.model.Trigger;
@@ -160,7 +161,7 @@ public class InterventionRepository {
                 .setInterventionId(rs.getInt("intervention_id"))
                 .setTitle(rs.getString("title"))
                 .setPurpose(rs.getString("purpose"))
-                .setSchedule(MapperUtils.readValue(rs.getString("schedule"), Object.class))
+                .setSchedule(MapperUtils.readValue(rs.getString("schedule"), Event.class))
                 .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
                 .setCreated(rs.getTimestamp("created").toInstant())
                 .setModified(rs.getTimestamp("modified").toInstant());

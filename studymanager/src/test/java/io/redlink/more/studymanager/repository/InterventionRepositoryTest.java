@@ -1,13 +1,9 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.core.properties.ActionProperties;
-import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.ApplicationTest;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
-import io.redlink.more.studymanager.model.Intervention;
-import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.StudyGroup;
-import io.redlink.more.studymanager.model.Trigger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,13 +47,13 @@ class InterventionRepositoryTest {
                 .setStudyId(studyId)
                 .setTitle("some title")
                 .setStudyGroupId(studyGroupId)
-                .setSchedule("{\"testSchedule\": \"testValue\"}");
+                .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)));
 
         Intervention intervention2 = new Intervention()
                 .setStudyId(studyId)
                 .setTitle("some other title")
                 .setStudyGroupId(studyGroupId)
-                .setSchedule("{\"testSchedule\": \"testValue\"}");
+                .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)));
 
         Intervention interventionResponse = interventionRepository.insert(intervention);
 
@@ -68,10 +66,9 @@ class InterventionRepositoryTest {
                 .setInterventionId(interventionResponse.getInterventionId())
                 .setTitle("some new title")
                 .setStudyGroupId(studyGroupId)
-                .setSchedule("{\"testSchedule\": \"new testValue\"}"));
+                .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60))));
 
         assertThat(interventionResponse.getTitle()).isEqualTo("some new title");
-        assertThat(interventionResponse.getSchedule()).isEqualTo("{\"testSchedule\": \"new testValue\"}");
 
         int intervention2Id = interventionRepository.insert(intervention2).getInterventionId();
 

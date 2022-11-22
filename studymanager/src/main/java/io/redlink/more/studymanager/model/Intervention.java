@@ -9,7 +9,7 @@ public class Intervention {
     private String title;
     private String purpose;
     private Integer studyGroupId;
-    private Object schedule;
+    private Event schedule;
     private Instant created;
     private Instant modified;
 
@@ -58,11 +58,11 @@ public class Intervention {
         return this;
     }
 
-    public Object getSchedule() {
+    public Event getSchedule() {
         return schedule;
     }
 
-    public Intervention setSchedule(Object schedule) {
+    public Intervention setSchedule(Event schedule) {
         this.schedule = schedule;
         return this;
     }

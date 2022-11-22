@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.ApplicationTest;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
+import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyGroup;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Instant;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +62,7 @@ class ObservationRepositoryTest {
 
         observationResponse.setType("new type")
                 .setTitle("some new title")
-                .setSchedule("{\"testSchedule\": \"testTime\"}");
+                .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)));
 
         Observation compareObservationResponse = observationRepository.updateObservation(observationResponse);
 
