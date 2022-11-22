@@ -31,9 +31,6 @@ public class ObservationServiceTest {
     @Mock
     Map<String, ObservationFactory> observationFactories;
 
-    @Mock
-    MorePlatformSDK sdk;
-
     @InjectMocks
     ObservationService observationService;
 

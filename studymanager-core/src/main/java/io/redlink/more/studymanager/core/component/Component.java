@@ -7,12 +7,10 @@ public abstract class Component<C extends ComponentProperties> {
     protected final ComponentProperties properties;
 
     Component(C properties) throws ConfigurationValidationException {
-        this.properties = this.validate(properties);
+        this.properties = properties;
     }
 
-    protected abstract C validate(C properties) throws ConfigurationValidationException;
+    public abstract void activate();
 
-    protected abstract void activate();
-
-    protected abstract void deactivate();
+    public abstract void deactivate();
 }

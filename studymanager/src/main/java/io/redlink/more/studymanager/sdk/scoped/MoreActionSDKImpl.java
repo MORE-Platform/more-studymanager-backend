@@ -1,14 +1,14 @@
-package io.redlink.more.studymanager.sdk;
+package io.redlink.more.studymanager.sdk.scoped;
 
 import io.redlink.more.studymanager.core.component.Action;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
-import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
-import org.springframework.stereotype.Component;
+import io.redlink.more.studymanager.sdk.MoreSDK;
 
-import java.util.Optional;
-
-@Component("MoreActionSDKImpl")
 public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreActionSDK {
+
+    public MoreActionSDKImpl(MoreSDK sdk, long studyId, Integer studyGroupId, Integer participantId) {
+        super(sdk, studyId, studyGroupId, participantId);
+    }
 
     @Override
     public void setAction(Action action) {

@@ -1,14 +1,16 @@
-package io.redlink.more.studymanager.sdk;
+package io.redlink.more.studymanager.sdk.scoped;
 
 import io.redlink.more.studymanager.core.component.Trigger;
-import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
-import org.springframework.stereotype.Component;
+import io.redlink.more.studymanager.sdk.MoreSDK;
 
 import java.util.Optional;
-@Component("MoreTriggerSDKImpl")
 public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTriggerSDK {
+
+    public MoreTriggerSDKImpl(MoreSDK sdk, long studyId, Integer studyGroupId) {
+        super(sdk, studyId, studyGroupId, null);
+    }
 
     @Override
     public void setTrigger(Trigger trigger) {
