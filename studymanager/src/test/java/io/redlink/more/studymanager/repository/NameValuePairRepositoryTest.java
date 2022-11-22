@@ -7,6 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.Serializable;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -35,6 +37,12 @@ public class NameValuePairRepositoryTest {
         });
         nvpairs.removeValue("i1", "n1");
         assertFalse(nvpairs.getValue("i1", "n1", String.class).isPresent());
+    }
+
+    @Test
+    public void testMoreComplexObject() {
+        nvpairs.setValue("i2", "complex", new SampleObject("v1"));
+        assertThat(nvpairs.getValue("i2", "complex", SampleObject.class).get().getValue()).isEqualTo("v1");
     }
 
 }

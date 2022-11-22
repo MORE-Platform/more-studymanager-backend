@@ -4,6 +4,7 @@ import org.checkerframework.checker.nullness.Opt;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.SerializationUtils;
 
 import java.io.Serializable;
 import java.util.Optional;
@@ -22,12 +23,14 @@ public class NameValuePairRepository {
     }
 
     public <T extends Serializable> void setValue(String issuer, String name, T value) {
-        this.template.update(UPSERT, issuer, name, value);
+        this.template.update(UPSERT, issuer, name, SerializationUtils.serialize(value));
     }
 
     public <T extends Serializable> Optional<T> getValue(String issuer, String name, Class<T> tClass) {
         try {
-            return Optional.ofNullable(this.template.queryForObject(READ, (rs, rowNum) -> tClass.cast(rs.getObject("value")), issuer, name));
+            return Optional.ofNullable(this.template.queryForObject(READ,
+                    (rs, rowNum) -> tClass.cast(SerializationUtils.deserialize(rs.getBytes("value"))),
+                    issuer, name));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
