@@ -12,9 +12,7 @@ public class ActionTransformer {
         return new Action()
                 .setActionId(dto.getActionId())
                 .setType(dto.getType())
-                .setProperties(MapperUtils.readValue(dto.getProperties(), ActionProperties.class))
-                .setCreated(dto.getCreated().toInstant())
-                .setModified(dto.getModified().toInstant());
+                .setProperties(MapperUtils.readValue(dto.getProperties(), ActionProperties.class));
     }
 
     public static ActionDTO toActionDTO_V1(Action action) {
