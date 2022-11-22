@@ -1,11 +1,13 @@
 package io.redlink.more.studymanager.sdk;
 
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
 @Component("MorePlatformSDKImpl")
+@Primary
 public class MorePlatformSDKImpl implements MorePlatformSDK {
     @Override
     public <T> void setValue(String name, T value) {
