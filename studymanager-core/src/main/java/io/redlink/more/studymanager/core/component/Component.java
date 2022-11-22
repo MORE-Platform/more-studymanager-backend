@@ -4,7 +4,7 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.properties.ComponentProperties;
 
 public abstract class Component<C extends ComponentProperties> {
-    protected final ComponentProperties properties;
+    protected final C properties;
 
     Component(C properties) throws ConfigurationValidationException {
         this.properties = properties;

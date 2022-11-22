@@ -1,7 +1,8 @@
 package io.redlink.more.studymanager.core.component;
 
-import io.redlink.more.studymanager.core.Parameters;
+import io.redlink.more.studymanager.core.io.Parameters;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.io.TriggerResult;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 
@@ -14,7 +15,7 @@ public abstract class Trigger<C extends TriggerProperties> extends Component<C> 
         this.sdk = sdk;
     }
 
-    public abstract Parameters execute(Parameters parameters);
+    public abstract TriggerResult execute(Parameters parameters);
 
 
 }

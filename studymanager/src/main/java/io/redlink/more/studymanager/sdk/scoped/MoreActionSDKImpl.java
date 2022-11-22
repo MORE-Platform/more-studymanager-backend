@@ -6,8 +6,16 @@ import io.redlink.more.studymanager.sdk.MoreSDK;
 
 public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreActionSDK {
 
-    public MoreActionSDKImpl(MoreSDK sdk, long studyId, Integer studyGroupId, Integer participantId) {
-        super(sdk, studyId, studyGroupId, participantId);
+    private final int interventionId;
+    private final int actionId;
+
+    protected final int participantId;
+
+    public MoreActionSDKImpl(MoreSDK sdk, long studyId, Integer studyGroupId, int interventionId, int actionId, int participantId) {
+        super(sdk, studyId, studyGroupId);
+        this.interventionId = interventionId;
+        this.actionId = actionId;
+        this.participantId = participantId;
     }
 
     @Override

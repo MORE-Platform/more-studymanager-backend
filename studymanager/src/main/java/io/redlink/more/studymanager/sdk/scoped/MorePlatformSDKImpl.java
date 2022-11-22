@@ -10,14 +10,11 @@ public class MorePlatformSDKImpl implements MorePlatformSDK {
     protected final long studyId;
 
     protected final Integer studyGroupId;
-
-    protected final Integer participantId;
     protected final MoreSDK sdk;
 
-    public MorePlatformSDKImpl(MoreSDK sdk, long studyId, Integer studyGroupId, Integer participantId) {
+    MorePlatformSDKImpl(MoreSDK sdk, long studyId, Integer studyGroupId) {
         this.studyId = studyId;
         this.studyGroupId = studyGroupId;
-        this.participantId = participantId;
         this.sdk = sdk;
     }
 

@@ -12,6 +12,7 @@
         <module>studymanager</module>
         <module>studymanager-core</module>
         <module>studymanager-observation</module>
+        <module>studymanager-intervention</module>
     </modules>
 
     <name>MORE Study Manager</name>

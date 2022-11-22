@@ -94,7 +94,7 @@ public class InterventionService {
                 .map(intervention -> {
                     Trigger trigger = getTriggerByIds(intervention.getStudyId(), intervention.getInterventionId());
                     return factory(trigger).create(
-                            sdk.scopedTriggerSDK(intervention.getStudyId(), intervention.getStudyGroupId()),
+                            sdk.scopedTriggerSDK(intervention.getStudyId(), intervention.getStudyGroupId(), intervention.getInterventionId()),
                             trigger.getProperties()
                     );
                 }).toList();

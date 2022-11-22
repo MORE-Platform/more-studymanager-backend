@@ -5,6 +5,7 @@ import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.repository.NameValuePairRepository;
 import io.redlink.more.studymanager.sdk.scoped.MoreActionSDKImpl;
+import io.redlink.more.studymanager.sdk.scoped.MoreObservationSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MorePlatformSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreTriggerSDKImpl;
 import org.springframework.stereotype.Component;
@@ -33,15 +34,15 @@ public class MoreSDK {
         nvpairs.removeValue(issuer, name);
     }
 
-    public MoreActionSDK scopedActionSDK(Long studyId, int studyGroupId, int participantId) {
-        return new MoreActionSDKImpl(this, studyId, studyGroupId, participantId);
+    public MoreActionSDK scopedActionSDK(Long studyId, int studyGroupId, int interventionId, int actionId, int participantId) {
+        return new MoreActionSDKImpl(this, studyId, studyGroupId, interventionId, actionId, participantId);
     }
 
-    public MorePlatformSDK scopedPlatformSDK(Long studyId, int studyGroupId) {
-        return new MorePlatformSDKImpl(this, studyId, studyGroupId, null);
+    public MorePlatformSDK scopedPlatformSDK(Long studyId, int studyGroupId, int observationId) {
+        return new MoreObservationSDKImpl(this, studyId, studyGroupId, observationId);
     }
 
-    public MoreTriggerSDK scopedTriggerSDK(Long studyId, int studyGroupId) {
-        return new MoreTriggerSDKImpl(this, studyId, studyGroupId);
+    public MoreTriggerSDK scopedTriggerSDK(Long studyId, Integer studyGroupId, int interventionId) {
+        return new MoreTriggerSDKImpl(this, studyId, studyGroupId, interventionId);
     }
 }

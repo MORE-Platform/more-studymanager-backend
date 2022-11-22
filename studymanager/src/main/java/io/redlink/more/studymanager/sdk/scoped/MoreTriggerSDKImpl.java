@@ -1,20 +1,18 @@
 package io.redlink.more.studymanager.sdk.scoped;
 
-import io.redlink.more.studymanager.core.component.Trigger;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
 import io.redlink.more.studymanager.sdk.MoreSDK;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.Optional;
 public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTriggerSDK {
 
-    public MoreTriggerSDKImpl(MoreSDK sdk, long studyId, Integer studyGroupId) {
-        super(sdk, studyId, studyGroupId, null);
-    }
+    private final int interventionId;
 
-    @Override
-    public void setTrigger(Trigger trigger) {
-
+    public MoreTriggerSDKImpl(MoreSDK sdk, long studyId, Integer studyGroupId, int interventionId) {
+        super(sdk, studyId, studyGroupId);
+        this.interventionId = interventionId;
     }
 
     @Override
@@ -29,11 +27,11 @@ public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTrigg
 
     @Override
     public Optional<String> addWebhook() {
-        return Optional.empty();
+        throw new NotImplementedException();
     }
 
     @Override
     public void removeWebhook() {
-
+        throw new NotImplementedException();
     }
 }
