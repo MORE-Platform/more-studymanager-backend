@@ -42,7 +42,7 @@ public class ObservationServiceTest {
         Assertions.assertEquals("Observation Factory 'my-observation' cannot be found", notFoundException.getMessage());
 
         ObservationFactory factory = mock(ObservationFactory.class);
-        when(factory.create(any(), any())).thenThrow(new ConfigurationValidationException(ConfigurationValidationReport.VALID.error("My error")));
+        when(factory.validate(any())).thenThrow(new ConfigurationValidationException(ConfigurationValidationReport.VALID.error("My error")));
         when(observationFactories.get("my-observation")).thenReturn(factory);
         when(observationFactories.containsKey("my-observation")).thenReturn(true);
 
