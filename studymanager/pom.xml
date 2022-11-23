@@ -23,6 +23,11 @@
             <artifactId>studymanager-observation</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.redlink.more</groupId>
+            <artifactId>studymanager-intervention</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Web -->
         <dependency>
