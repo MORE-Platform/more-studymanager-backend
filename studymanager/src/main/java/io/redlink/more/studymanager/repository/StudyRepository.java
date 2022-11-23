@@ -30,12 +30,14 @@ public class StudyRepository {
     private static final String SET_CLOSED_STATE_BY_ID = "UPDATE studies SET status = 'closed', end_date = now(), modified = now() WHERE study_id = ?";
 
     private static final String INSERT_STUDY_ACL = "INSERT INTO study_acl (study_id,user_id,user_role,created,creator_id) VALUES (:study_id,:user_id,:user_role,:created,:creator_id)";
-    private static final String DELETE_BY_IDS = "DELETE FROM study_acl WHERE study_id = :study_id AND user_id = :user_id";
+    private static final String DELETE_BY_IDS = "DELETE FROM study_acl WHERE study_id = :study_id AND user_id = :user_id ";
     private static final String GET_STUDY_ACL_BY_IDS = "SELECT * FROM study_acl WHERE study_id = :study_id AND user_id = :user_id";
     private static final String UPDATE_STUDY_ACL = "UPDATE study_acl SET user_role = :user_role, created = :created, creator_id = :creator_id WHERE study_id = :study_id AND user_id = :user_id";
     private static final String SET_USER_ROLE_BY_ID = "UPDATE study_acl SET user_role = :user_role WHERE study_id = :study_id AND user_id = :user_id";
-
-
+    private static final String LIST_USERS_BY_STUDYID = "SELECT * FROM study_acl, users LEFT JOIN  user_id ON study_acl.user_id = users.user_id WHERE study_acl.study_id = :study_id";
+    private static final String LIST_USERS_BY_STUDYID_AND_ROLE = "SELECT * FROM study_acl, users LEFT JOIN user_id ON study_acl.user_id = users.user_id WHERE study_acl.study_id = :study_id AND study_acl.user_role = :user_role";
+    private static final String LIST_STUDIES_BY_USER = "SELECT * FROM study_acl, studies LEFT JOIN study_id ON study_acl.study_id = studies.study_id WHERE study_acl.user_id = ?";
+    private static final String LIST_STUDIES_BY_USER_AND_ROLE = "SELECT * FROM study_acl, studies LEFT JOIN study_id ON study_acl.study_id = studies.study_id WHERE study_acl.user_id = ? AND study_acl.user_role = ?";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -78,6 +80,29 @@ public class StudyRepository {
     public Study update(Study study) {
         namedTemplate.update(UPDATE_STUDY, studyToParams(study).addValue("study_id", study.getStudyId()));
         return getById(study.getStudyId());
+    }
+
+    public Study_ACL update(Study_ACL study_acl){
+        namedTemplate.update(UPDATE_STUDY_ACL, studyAclToParams(study_acl).addValue("study_id", study_acl.study_id()).addValue("user_id", study_acl.user_id()));
+        return getByIds(study_acl.study_id(), study_acl.user_id());
+    }
+
+    public List<Study_ACL> listUsersByStudyId(long studyId){
+        return template.query(LIST_USERS_BY_STUDYID, getStudyAclRowMapper(), studyId);
+    }
+    public List<Study_ACL> listUsersByStudyIdAndRole(long studyId, String user_role){
+        return template.query(LIST_USERS_BY_STUDYID_AND_ROLE, getStudyAclRowMapper(), studyId, user_role);
+    }
+
+    public List<Study_ACL> listStudiesByUserId(long user_id){
+        return template.query(LIST_STUDIES_BY_USER, getStudyAclRowMapper(), user_id);
+    }
+    public List<Study_ACL> listStudiesByUserIdAndRole(long user_id, String role){
+        return template.query(LIST_STUDIES_BY_USER_AND_ROLE, getStudyAclRowMapper(), user_id, role);
+    }
+
+    public Study_ACL setRoleById(long studyId, String userId){
+        return template.queryForObject(SET_USER_ROLE_BY_ID, getStudyAclRowMapper(), studyId, userId);
     }
 
     public void deleteById(long id) {

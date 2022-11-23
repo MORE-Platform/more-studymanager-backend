@@ -10,3 +10,8 @@ public record Study_ACL(
         String creator_id
 ) {
 }
+
+
+// User deleted -> corresponding acl also deleted?
+// User role remove -> same as set back to default? (no role is not possible)
+// Role = Enum?

@@ -3,8 +3,8 @@ CREATE TABLE users(
     name        VARCHAR,
     institution VARCHAR,
     email       VARCHAR,
-    inserted    TIMESTAMP,
-    updated     TIMESTAMP,
+    inserted    TIMESTAMP NOT NULL DEFAULT now(),
+    updated     TIMESTAMP NOT NULL DEFAULT now(),
 
     PRIMARY KEY (user_id)
 );

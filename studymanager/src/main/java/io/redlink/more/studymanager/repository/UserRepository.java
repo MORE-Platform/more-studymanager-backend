@@ -11,10 +11,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserRepository {
 
-    private static final String INSERT_USER = "INSERT INTO users (user_id,name,institution,email,inserted,updated) VALUES (:user_id,:name,:institution,:email,now(),now()) ON CONFLICT (user_id) DO UPDATE SET user_id = :user_id, name = :name, institution = :institution, email = :email, inserted = now(), updated = now()";
+    private static final String INSERT_USER = "INSERT INTO users (user_id,name,institution,email) VALUES (:user_id,:name,:institution,:email) ON CONFLICT (user_id) DO UPDATE SET user_id = :user_id, name = :name, institution = :institution, email = :email";
     private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE user_id = ?";
     private static final String UPDATE_USER = "UPDATE users SET name = :name, institution = :institution, email = :email, updated = now() WHERE user_id = :user_id";
     private static final String DELETE_BY_ID = "DELETE FROM users WHERE user_id = ?";
+    private static final String CLEAR_USERS = "DELETE FROM users";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -66,8 +67,13 @@ public class UserRepository {
                 rs.getString("institution"),
                 rs.getString("email"),
                 rs.getTimestamp("inserted"),
-                rs.getTimestamp("upadted")
+                rs.getTimestamp("updated")
 
         );
+    }
+
+    // for testing purpose only
+    protected void clear() {
+        template.execute(CLEAR_USERS);
     }
 }
