@@ -1,18 +1,19 @@
 package io.redlink.more.studymanager.model;
 
 import java.time.Instant;
+import java.util.List;
 
-public class RRule {
+public class RecurrenceRule {
     private String freq;
     private Instant until;
     private Integer count;
     private Integer interval;
-    private String byDay;
+    private List<String> byDay;
     private Integer byMonth;
     private Integer byMonthDay;
     private Integer bySetPos;
 
-    public RRule setFreq(String freq) {
+    public RecurrenceRule setFreq(String freq) {
         this.freq = freq;
         return this;
     }
@@ -25,7 +26,7 @@ public class RRule {
         return until;
     }
 
-    public RRule setUntil(Instant until) {
+    public RecurrenceRule setUntil(Instant until) {
         this.until = until;
         return this;
     }
@@ -34,7 +35,7 @@ public class RRule {
         return count;
     }
 
-    public RRule setCount(Integer count) {
+    public RecurrenceRule setCount(Integer count) {
         this.count = count;
         return this;
 
@@ -44,16 +45,16 @@ public class RRule {
         return interval;
     }
 
-    public RRule setInterval(Integer interval) {
+    public RecurrenceRule setInterval(Integer interval) {
         this.interval = interval;
         return this;
     }
 
-    public String getByDay() {
+    public List<String> getByDay() {
         return byDay;
     }
 
-    public RRule setByDay(String byDay) {
+    public RecurrenceRule setByDay(List<String> byDay) {
         this.byDay = byDay;
         return this;
     }
@@ -62,7 +63,7 @@ public class RRule {
         return byMonth;
     }
 
-    public RRule setByMonth(Integer byMonth) {
+    public RecurrenceRule setByMonth(Integer byMonth) {
         this.byMonth = byMonth;
         return this;
     }
@@ -71,7 +72,7 @@ public class RRule {
         return byMonthDay;
     }
 
-    public RRule setByMonthDay(Integer byMonthDay) {
+    public RecurrenceRule setByMonthDay(Integer byMonthDay) {
         this.byMonthDay = byMonthDay;
         return this;
     }
@@ -80,7 +81,7 @@ public class RRule {
         return bySetPos;
     }
 
-    public RRule setBySetPos(Integer bySetPos) {
+    public RecurrenceRule setBySetPos(Integer bySetPos) {
         this.bySetPos = bySetPos;
         return this;
     }

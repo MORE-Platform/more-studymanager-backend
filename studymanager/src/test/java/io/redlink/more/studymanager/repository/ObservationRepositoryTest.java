@@ -1,7 +1,5 @@
 package io.redlink.more.studymanager.repository;
 
-import io.redlink.more.studymanager.ApplicationTest;
-import io.redlink.more.studymanager.api.v1.model.FrequencyDTO;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.utils.MapperUtils;
@@ -15,7 +13,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,7 +53,7 @@ class ObservationRepositoryTest {
                 .setSchedule(new Event()
                         .setDateStart(startTime)
                         .setDateEnd(endTime)
-                        .setRRule(new RRule().setFreq("DAILY").setCount(7)));
+                        .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)));
 
         Observation observationResponse = observationRepository.insert(observation);
 

@@ -83,7 +83,7 @@ class InterventionControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value(interventionRequest.getTitle()))
                 .andExpect(jsonPath("$.interventionId").value(interventionRequest.getInterventionId()))
-                .andExpect(jsonPath("$.schedule").value(interventionRequest.getSchedule()));
+                .andExpect(jsonPath("$.schedule").exists());
     }
 
     @Test
@@ -126,7 +126,7 @@ class InterventionControllerTest {
                 .andExpect(jsonPath("$.studyGroupId").value(interventionRequest.getStudyGroupId()))
                 .andExpect(jsonPath("$.title").value(interventionRequest.getTitle()))
                 .andExpect(jsonPath("$.purpose").value("some updated purpose"))
-                .andExpect(jsonPath("$.schedule").value(interventionRequest.getSchedule()))
+                .andExpect(jsonPath("$.schedule").exists())
                 .andExpect(jsonPath("$.modified").exists())
                 .andExpect(jsonPath("$.created").exists());
     }

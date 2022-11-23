@@ -5,7 +5,7 @@ import java.time.Instant;
 public class Event {
     private Instant dateStart;
     private Instant dateEnd;
-    private RRule rRule;
+    private RecurrenceRule recurrenceRule;
 
     public Instant getDateStart() {
         return dateStart;
@@ -25,12 +25,12 @@ public class Event {
         return this;
     }
 
-    public RRule getRRule() {
-        return rRule;
+    public RecurrenceRule getRRule() {
+        return recurrenceRule;
     }
 
-    public Event setRRule(RRule rRule) {
-        this.rRule = rRule;
+    public Event setRRule(RecurrenceRule recurrenceRule) {
+        this.recurrenceRule = recurrenceRule;
         return this;
     }
 }

@@ -2,7 +2,6 @@ package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.model.*;
-import io.redlink.more.studymanager.ApplicationTest;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +52,7 @@ class InterventionRepositoryTest {
                 .setSchedule(new Event()
                         .setDateStart(startTime)
                         .setDateEnd(endTime)
-                        .setRRule(new RRule().setFreq("DAILY").setCount(7)));;
+                        .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)));;
 
         Intervention intervention2 = new Intervention()
                 .setStudyId(studyId)
