@@ -3,7 +3,8 @@
  */
 package io.redlink.more.studymanager.service;
 
-import io.redlink.more.studymanager.model.MoreUser;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
+import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.MoreAuthProperties;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -21,17 +22,17 @@ import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
 
 public class OAuth2AuthenticationService {
 
-    private final Map<String, Set<MoreUser.Role>> roleMapping;
+    private final Map<String, Set<PlatformRole>> roleMapping;
 
     public OAuth2AuthenticationService(MoreAuthProperties moreAuthProperties) {
         Objects.requireNonNull(moreAuthProperties.globalRoles(), "globalRoles must not be null");
 
-        var mapping = new HashMap<String, EnumSet<MoreUser.Role>>();
+        var mapping = new HashMap<String, EnumSet<PlatformRole>>();
         moreAuthProperties.globalRoles().forEach(
                 (moreRole, authRoles) ->
                         authRoles.forEach(
                                 authRole -> mapping
-                                        .computeIfAbsent(authRole, k -> EnumSet.noneOf(MoreUser.Role.class))
+                                        .computeIfAbsent(authRole, k -> EnumSet.noneOf(PlatformRole.class))
                                         .add(moreRole)
                         )
         );
@@ -52,31 +53,27 @@ public class OAuth2AuthenticationService {
                 .orElse(null);
     }
 
-    public MoreUser getCurrentUser() {
+    public AuthenticatedUser getCurrentUser() {
         final StandardClaimAccessor claims = getClaimAccessor();
         if (claims != null)
-            return new MoreUser(
+            return new AuthenticatedUser(
                     claims.getSubject(),
-                    claims.getGivenName(),
-                    claims.getFamilyName(),
                     claims.getFullName(),
                     Boolean.TRUE.equals(claims.getEmailVerified()) ? claims.getEmail() : null,
                     claims.getClaimAsString("org"),
                     mapToRoles(claims.getClaimAsStringList("roles"))
             );
 
-        return new MoreUser(
+        return new AuthenticatedUser(
                 null,
                 null,
                 null,
                 null,
-                null,
-                null,
-                EnumSet.noneOf(MoreUser.Role.class)
+                EnumSet.noneOf(PlatformRole.class)
         );
     }
 
-    private Set<MoreUser.Role> mapToRoles(List<String> roles) {
+    private Set<PlatformRole> mapToRoles(List<String> roles) {
         return roles.stream()
                 .map(roleMapping::get)
                 .filter(Objects::nonNull)

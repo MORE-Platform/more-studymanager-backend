@@ -4,6 +4,7 @@ import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.StudyRepository;
+import io.redlink.more.studymanager.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,11 +14,12 @@ import java.util.Optional;
 public class StudyService {
 
     private final StudyRepository studyRepository;
-
+    private final UserRepository userRepo;
     private final InterventionService interventionService;
 
-    public StudyService(StudyRepository studyRepository, InterventionService interventionService) {
+    public StudyService(StudyRepository studyRepository, UserRepository userRepo, InterventionService interventionService) {
         this.studyRepository = studyRepository;
+        this.userRepo = userRepo;
         this.interventionService = interventionService;
     }
 

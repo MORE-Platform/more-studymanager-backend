@@ -1,6 +1,6 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
-import io.redlink.more.studymanager.model.MoreUser;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.transformer.UserInfoTransformer;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import java.net.URLEncoder;
@@ -36,25 +36,25 @@ class UserControllerTest {
     @Test
     @DisplayName("Retrieve the current User")
     void testMe() throws Exception {
-        var moreUser = createUser("More", "User", "Redlink", MoreUser.Role.STUDY_CREATOR);
-        when(authService.getCurrentUser()).thenReturn(moreUser);
+        var authUser = createUser("More", "User", "Redlink", AuthenticatedUser.Role.STUDY_CREATOR);
+        when(authService.getCurrentUser()).thenReturn(authUser);
 
         mvc.perform(get("/api/v1/users/me"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(moreUser.fullName()))
-                .andExpect(jsonPath("$.email").value(moreUser.email()))
-                .andExpect(jsonPath("$.institution").value(moreUser.institution()))
+                .andExpect(jsonPath("$.name").value(authUser.fullName()))
+                .andExpect(jsonPath("$.email").value(authUser.email()))
+                .andExpect(jsonPath("$.institution").value(authUser.institution()))
                 .andExpect(jsonPath("$.roles").value(
                         Matchers.contains(
-                                UserInfoTransformer.toPlatformRole(MoreUser.Role.STUDY_CREATOR).getValue())
+                                UserInfoTransformer.toPlatformRole(AuthenticatedUser.Role.STUDY_CREATOR).getValue())
                         ))
         ;
     }
 
 
-    MoreUser createUser(String firstName, String lastName, String institution, MoreUser.Role... roles) {
-        return new MoreUser(
+    AuthenticatedUser createUser(String firstName, String lastName, String institution, AuthenticatedUser.Role... roles) {
+        return new AuthenticatedUser(
                 UUID.randomUUID().toString(),
                 firstName, lastName,
                 firstName + " " + lastName,

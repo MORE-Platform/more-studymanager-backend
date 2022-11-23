@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
@@ -43,18 +44,18 @@ class StudyControllerTest {
     @Autowired
     private MockMvc mvc;
 
-    private final MoreUser moreUser = new MoreUser(
+    private final AuthenticatedUser authUser = new AuthenticatedUser(
             UUID.randomUUID().toString(),
             "More", "User",
             "More User",
             "more@example.com",
             "The Hospital",
-            EnumSet.allOf(MoreUser.Role.class));
+            EnumSet.allOf(AuthenticatedUser.Role.class));
 
     @Test
     @DisplayName("Create study should create and then return the study with id and status set.")
     void testCreateStudy() throws Exception {
-        when(authService.getCurrentUser()).thenReturn(moreUser);
+        when(authService.getCurrentUser()).thenReturn(authUser);
         when(studyService.createStudy(any(Study.class))).thenAnswer(invocationOnMock -> new Study()
                 .setTitle(((Study) invocationOnMock.getArgument(0)).getTitle())
                 .setStudyId(1L)
