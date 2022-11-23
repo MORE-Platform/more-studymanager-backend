@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserRepository {
 
-    private static final String INSERT_USER = "INSERT INTO users (user_id,name,institution,email) VALUES (:user_id,:name,:institution,:email) ON CONFLICT (user_id) DO UPDATE SET user_id = :user_id, name = :name, institution = :institution, email = :email";
+    private static final String INSERT_USER = "INSERT INTO users (user_id,name,institution,email,inserted,updated) VALUES (:user_id,:name,:institution,:email,now(),now()) ON CONFLICT (user_id) DO UPDATE SET user_id = :user_id, name = :name, institution = :institution, email = :email, inserted = now(), updated = now()";
     private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE user_id = ?";
-    private static final String UPDATE_USER = "UPDATE users SET name = :name, institution = :institution, email = :email WHERE user_id = :user_id";
+    private static final String UPDATE_USER = "UPDATE users SET name = :name, institution = :institution, email = :email, updated = now() WHERE user_id = :user_id";
     private static final String DELETE_BY_ID = "DELETE FROM users WHERE user_id = ?";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -53,7 +53,10 @@ public class UserRepository {
                 .addValue("user_id", user.id())
                 .addValue("name", user.name())
                 .addValue("institution", user.institution())
-                .addValue("email", user.email());
+                .addValue("email", user.email())
+                .addValue("inserted", user.inserted())
+                .addValue("updated", user.updated())
+                ;
     }
 
     private static RowMapper<MoreUser> getUserRowMapper() {
@@ -61,7 +64,10 @@ public class UserRepository {
                 rs.getString("user_id"),
                 rs.getString("name"),
                 rs.getString("institution"),
-                rs.getString("email")
+                rs.getString("email"),
+                rs.getTimestamp("inserted"),
+                rs.getTimestamp("upadted")
+
         );
     }
 }

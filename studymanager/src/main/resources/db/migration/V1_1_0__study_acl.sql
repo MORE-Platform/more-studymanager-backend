@@ -3,6 +3,8 @@ CREATE TABLE users(
     name        VARCHAR,
     institution VARCHAR,
     email       VARCHAR,
+    inserted    TIMESTAMP,
+    updated     TIMESTAMP,
 
     PRIMARY KEY (user_id)
 );
