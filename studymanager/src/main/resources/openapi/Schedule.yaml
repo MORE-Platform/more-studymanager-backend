@@ -32,7 +32,9 @@ components:
           type: integer
         byday:
           description: day on which to repeat
-          $ref: '#/components/schemas/Weekday'
+          type: array
+          items:
+            $ref: '#/components/schemas/Weekday'
         bymonth:
           description: month in which to repeat
           $ref: '#/components/schemas/MonthNum'
@@ -58,6 +60,7 @@ components:
     Weekday:
       description: days of the week
       type: string
+      nullable: true
       enum:
         - MO
         - TU
