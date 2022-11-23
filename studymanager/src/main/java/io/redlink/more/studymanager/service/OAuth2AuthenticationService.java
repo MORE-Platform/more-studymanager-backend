@@ -4,7 +4,10 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.MoreUser;
+import io.redlink.more.studymanager.properties.MoreAuthProperties;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,10 +21,23 @@ import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
 
 public class OAuth2AuthenticationService {
 
-    private static final Map<String, MoreUser.Role> ROLE_MAPPING = Map.of(
-            "study-access", MoreUser.Role.STUDY_VIEWER,
-            "study-creator", MoreUser.Role.STUDY_CREATOR
-    );
+    private final Map<String, Set<MoreUser.Role>> roleMapping;
+
+    public OAuth2AuthenticationService(MoreAuthProperties moreAuthProperties) {
+        Objects.requireNonNull(moreAuthProperties.globalRoles(), "globalRoles must not be null");
+
+        var mapping = new HashMap<String, EnumSet<MoreUser.Role>>();
+        moreAuthProperties.globalRoles().forEach(
+                (moreRole, authRoles) ->
+                        authRoles.forEach(
+                                authRole -> mapping
+                                        .computeIfAbsent(authRole, k -> EnumSet.noneOf(MoreUser.Role.class))
+                                        .add(moreRole)
+                        )
+        );
+        mapping.replaceAll((key, value) -> EnumSet.copyOf(value));
+        this.roleMapping = Map.copyOf(mapping);
+    }
 
     private Authentication getAuthentication() {
         return SecurityContextHolder.getContext().getAuthentication();
@@ -60,17 +76,19 @@ public class OAuth2AuthenticationService {
         );
     }
 
-    private static Set<MoreUser.Role> mapToRoles(List<String> roles) {
+    private Set<MoreUser.Role> mapToRoles(List<String> roles) {
         return roles.stream()
-                .map(ROLE_MAPPING::get)
+                .map(roleMapping::get)
+                .filter(Objects::nonNull)
+                .flatMap(Collection::stream)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toUnmodifiableSet());
     }
 
     private record DelegatingClaimAccessor(ClaimAccessor delegate) implements StandardClaimAccessor {
         @Override
-            public Map<String, Object> getClaims() {
-                return delegate.getClaims();
-            }
+        public Map<String, Object> getClaims() {
+            return delegate.getClaims();
         }
+    }
 }
