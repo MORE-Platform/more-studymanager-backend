@@ -4,6 +4,7 @@ import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.ApplicationTest;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
+import io.redlink.more.studymanager.utils.MapperUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,13 +42,18 @@ class InterventionRepositoryTest {
     void testInsertListUpdateDelete() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
-
+        Instant startTime = Instant.now();
+        Instant endTime = Instant.now().plus(2, ChronoUnit.HOURS);
 
         Intervention intervention = new Intervention()
                 .setStudyId(studyId)
                 .setTitle("some title")
                 .setStudyGroupId(studyGroupId)
-                .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)));
+                .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)))
+                .setSchedule(new Event()
+                        .setDateStart(startTime)
+                        .setDateEnd(endTime)
+                        .setRRule(new RRule().setFreq("DAILY").setCount(7)));;
 
         Intervention intervention2 = new Intervention()
                 .setStudyId(studyId)
@@ -59,7 +65,9 @@ class InterventionRepositoryTest {
 
         assertThat(interventionResponse.getInterventionId()).isNotNull();
         assertThat(interventionResponse.getTitle()).isEqualTo(intervention.getTitle());
-        assertThat(interventionResponse.getSchedule()).isEqualTo(intervention.getSchedule());
+        assertThat(interventionResponse.getSchedule().getDateStart()).isEqualTo(startTime);
+        assertThat(MapperUtils.writeValueAsString(interventionResponse.getSchedule()))
+                .isEqualTo(MapperUtils.writeValueAsString(intervention.getSchedule()));
 
         interventionResponse = interventionRepository.updateIntervention(new Intervention()
                 .setStudyId(studyId)

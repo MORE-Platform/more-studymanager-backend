@@ -6,6 +6,7 @@ import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.utils.MapperUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -31,7 +32,6 @@ public class ObservationRepository {
     private final String DELETE_ALL = "DELETE FROM observations";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     public ObservationRepository(JdbcTemplate template) {
         this.template = template;
@@ -86,28 +86,22 @@ public class ObservationRepository {
                 .addValue("participant_info", observation.getParticipantInfo())
                 .addValue("type", observation.getType())
                 .addValue("study_group_id", observation.getStudyGroupId())
-                .addValue("properties", mapper.writeValueAsString(observation.getProperties()))
-                .addValue("schedule", mapper.writeValueAsString(observation.getSchedule()));
+                .addValue("properties", MapperUtils.writeValueAsString(observation.getProperties()))
+                .addValue("schedule", MapperUtils.writeValueAsString(observation.getSchedule()));
     }
 
     private static RowMapper<Observation> getObservationRowMapper() {
-        return (rs, rowNum) -> {
-            try {
-                return new Observation()
-                        .setStudyId(rs.getLong("study_id"))
-                        .setObservationId(rs.getInt("observation_id"))
-                        .setTitle(rs.getString("title"))
-                        .setPurpose(rs.getString("purpose"))
-                        .setParticipantInfo(rs.getString("participant_info"))
-                        .setType(rs.getString("type"))
-                        .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
-                        .setProperties(mapper.readValue(rs.getString("properties"), ObservationProperties.class))
-                        .setSchedule(mapper.readValue(rs.getString("schedule"), Event.class))
-                        .setCreated(rs.getTimestamp("created"))
-                        .setModified(rs.getTimestamp("modified"));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        };
+        return (rs, rowNum) -> new Observation()
+                .setStudyId(rs.getLong("study_id"))
+                .setObservationId(rs.getInt("observation_id"))
+                .setTitle(rs.getString("title"))
+                .setPurpose(rs.getString("purpose"))
+                .setParticipantInfo(rs.getString("participant_info"))
+                .setType(rs.getString("type"))
+                .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
+                .setProperties(MapperUtils.readValue(rs.getString("properties"), ObservationProperties.class))
+                .setSchedule(MapperUtils.readValue(rs.getString("schedule"), Event.class))
+                .setCreated(rs.getTimestamp("created"))
+                .setModified(rs.getTimestamp("modified"));
     }
 }

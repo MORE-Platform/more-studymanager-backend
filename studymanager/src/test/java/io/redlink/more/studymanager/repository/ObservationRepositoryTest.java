@@ -1,11 +1,10 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.ApplicationTest;
+import io.redlink.more.studymanager.api.v1.model.FrequencyDTO;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
-import io.redlink.more.studymanager.model.Event;
-import io.redlink.more.studymanager.model.Observation;
-import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.utils.MapperUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,20 +44,27 @@ class ObservationRepositoryTest {
         String type = "accelerometer";
         Long studyId = studyRepository.insert(new Study()).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
-
+        Instant startTime = Instant.now();
+        Instant endTime = Instant.now().plus(2, ChronoUnit.HOURS);
 
         Observation observation = new Observation()
                 .setStudyId(studyId)
                 .setType(type)
                 .setTitle("some title")
                 .setStudyGroupId(studyGroupId)
-                .setProperties(new ObservationProperties(Map.of("testProperty", "testValue")));
+                .setProperties(new ObservationProperties(Map.of("testProperty", "testValue")))
+                .setSchedule(new Event()
+                        .setDateStart(startTime)
+                        .setDateEnd(endTime)
+                        .setRRule(new RRule().setFreq("DAILY").setCount(7)));
 
         Observation observationResponse = observationRepository.insert(observation);
 
         assertThat(observationResponse.getObservationId()).isNotNull();
         assertThat(observationResponse.getTitle()).isEqualTo(observation.getTitle());
         assertThat(observationResponse.getProperties()).isEqualTo(observation.getProperties());
+        assertThat(MapperUtils.writeValueAsString(observationResponse.getSchedule()))
+                .isEqualTo(MapperUtils.writeValueAsString(observation.getSchedule()));
 
         Integer oldId = observationResponse.getObservationId();
 

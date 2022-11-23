@@ -5,7 +5,6 @@ import io.redlink.more.studymanager.api.v1.model.ActionDTO;
 import io.redlink.more.studymanager.api.v1.model.EventDTO;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
-import io.redlink.more.studymanager.controller.studymanager.InterventionsApiV1Controller;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.Event;
@@ -24,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -49,6 +49,10 @@ class InterventionControllerTest {
     @Test
     @DisplayName("Create Intervention should create and then return the intervention with intervention id set")
     void testAddIntervention() throws Exception {
+
+        Instant dateStart = Instant.now();
+        Instant dateEnd = dateStart.plus(2, ChronoUnit.HOURS);
+
         when(interventionService.addIntervention(any(Intervention.class)))
                 .thenAnswer(invocationOnMock -> new Intervention()
                         .setStudyId(((Intervention)invocationOnMock.getArgument(0)).getStudyId())
@@ -56,6 +60,9 @@ class InterventionControllerTest {
                         .setTitle(((Intervention)invocationOnMock.getArgument(0)).getTitle())
                         .setPurpose(((Intervention)invocationOnMock.getArgument(0)).getPurpose())
                         .setStudyGroupId(((Intervention)invocationOnMock.getArgument(0)).getStudyGroupId())
+                        .setSchedule(new Event()
+                                .setDateStart(dateStart)
+                                .setDateEnd(dateEnd))
                         .setCreated(Instant.now())
                         .setModified(Instant.now()));
 
@@ -64,7 +71,10 @@ class InterventionControllerTest {
                 .interventionId(1)
                 .studyId(1L)
                 .purpose("some purpose")
-                .studyGroupId(1);
+                .studyGroupId(1)
+                .schedule(new EventDTO()
+                        .dtstart(dateStart.atOffset(ZoneOffset.UTC))
+                        .dtend(dateEnd.atOffset(ZoneOffset.UTC)));
 
         mvc.perform(post("/api/v1/studies/1/interventions")
                         .content(mapper.writeValueAsString(interventionRequest))
@@ -72,13 +82,17 @@ class InterventionControllerTest {
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value(interventionRequest.getTitle()))
-                .andExpect(jsonPath("$.interventionId").value(interventionRequest.getInterventionId()));
-                // .andExpect(jsonPath("$.schedule").value(interventionRequest.getSchedule()));
+                .andExpect(jsonPath("$.interventionId").value(interventionRequest.getInterventionId()))
+                .andExpect(jsonPath("$.schedule").value(interventionRequest.getSchedule()));
     }
 
     @Test
     @DisplayName("Update intervention should return similar values")
     void testUpdateIntervention() throws Exception {
+
+        Instant dateStart = Instant.now();
+        Instant dateEnd = dateStart.plus(2, ChronoUnit.HOURS);
+
         when(interventionService.updateIntervention(any(Intervention.class))).thenAnswer(invocationOnMock ->
                 ((Intervention)invocationOnMock.getArgument(0))
                 .setStudyId(1L)
@@ -87,8 +101,8 @@ class InterventionControllerTest {
                 .setPurpose("some updated purpose")
                 .setTitle("a title")
                 .setSchedule(new Event()
-                        .setDateStart(Instant.now())
-                        .setDateEnd(Instant.now()))
+                        .setDateStart(dateStart)
+                        .setDateEnd(dateEnd))
                 .setCreated(Instant.now())
                 .setModified(Instant.now()));
 
@@ -99,8 +113,8 @@ class InterventionControllerTest {
                 .purpose("some purpose")
                 .title("a title")
                 .schedule(new EventDTO()
-                        .dtstart(Instant.now().atOffset(ZoneOffset.UTC))
-                        .dtend(Instant.now().atOffset(ZoneOffset.UTC)));
+                        .dtstart(dateStart.atOffset(ZoneOffset.UTC))
+                        .dtend(dateEnd.atOffset(ZoneOffset.UTC)));
 
         mvc.perform(put("/api/v1/studies/1/interventions/1")
                         .content(mapper.writeValueAsString(interventionRequest))
@@ -112,7 +126,7 @@ class InterventionControllerTest {
                 .andExpect(jsonPath("$.studyGroupId").value(interventionRequest.getStudyGroupId()))
                 .andExpect(jsonPath("$.title").value(interventionRequest.getTitle()))
                 .andExpect(jsonPath("$.purpose").value("some updated purpose"))
-                .andExpect(jsonPath("$.schedule.dtstart").exists())
+                .andExpect(jsonPath("$.schedule").value(interventionRequest.getSchedule()))
                 .andExpect(jsonPath("$.modified").exists())
                 .andExpect(jsonPath("$.created").exists());
     }

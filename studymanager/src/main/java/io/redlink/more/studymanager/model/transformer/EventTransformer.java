@@ -11,40 +11,48 @@ import java.time.ZoneOffset;
 
 public class EventTransformer {
     public static Event fromEventDTO_V1(EventDTO dto) {
-        return new Event()
+        if(dto != null)
+            return new Event()
                 .setDateStart(dto.getDtstart().toInstant())
                 .setDateEnd(dto.getDtend().toInstant())
                 .setRRule(fromRecurrenceRuleDTO(dto.getRrule()));
+        else return null;
     }
 
     public static EventDTO toEventDTO_V1(Event event) {
-        return new EventDTO()
+        if(event != null)
+            return new EventDTO()
                 .dtstart(event.getDateStart().atOffset(ZoneOffset.UTC))
                 .dtend(event.getDateEnd().atOffset(ZoneOffset.UTC))
                 .rrule(toRecurrenceRuleDTO(event.getRRule()));
+        else return null;
     }
 
     private static RRule fromRecurrenceRuleDTO(RecurrenceRuleDTO dto) {
-        return new RRule()
+        if(dto != null)
+            return new RRule()
                 .setFreq(dto.getFreq().getValue())
                 .setInterval(dto.getInterval())
                 .setCount(dto.getCount())
-                .setUntil(dto.getUntil().toInstant())
-                .setByDay(dto.getByday().getValue())
+                .setUntil(dto.getUntil() != null ? dto.getUntil().toInstant() : null)
+                .setByDay(dto.getByday() != null ? dto.getByday().getValue() : null)
                 .setByMonth(dto.getBymonth())
                 .setByMonthDay(dto.getBymonthday())
                 .setBySetPos(dto.getBysetpos());
+        else return null;
     }
 
     private static RecurrenceRuleDTO toRecurrenceRuleDTO(RRule rRule) {
-        return new RecurrenceRuleDTO()
+        if(rRule != null)
+            return new RecurrenceRuleDTO()
                 .freq(rRule.getFreq() != null ? FrequencyDTO.fromValue(rRule.getFreq()) : null)
                 .interval(rRule.getInterval())
                 .count(rRule.getCount())
-                .until(rRule.getUntil().atOffset(ZoneOffset.UTC))
+                .until(rRule.getUntil() != null ? rRule.getUntil().atOffset(ZoneOffset.UTC) : null)
                 .byday(rRule.getByDay() != null ? WeekdayDTO.fromValue(rRule.getByDay()) : null)
                 .bymonth(rRule.getByMonth())
                 .bymonthday(rRule.getByMonthDay())
                 .bysetpos(rRule.getBySetPos());
+        else return null;
     }
 }

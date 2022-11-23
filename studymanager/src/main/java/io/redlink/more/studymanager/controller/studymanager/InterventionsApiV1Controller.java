@@ -4,7 +4,9 @@ import io.redlink.more.studymanager.api.v1.model.ActionDTO;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.api.v1.webservices.InterventionsApi;
+import io.redlink.more.studymanager.event.ICalendarParser;
 import io.redlink.more.studymanager.model.transformer.ActionTransformer;
+import io.redlink.more.studymanager.model.transformer.EventTransformer;
 import io.redlink.more.studymanager.model.transformer.InterventionTransformer;
 import io.redlink.more.studymanager.model.transformer.TriggerTransformer;
 import io.redlink.more.studymanager.service.InterventionService;
@@ -14,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -29,6 +32,10 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     public ResponseEntity<InterventionDTO> addIntervention(Long studyId, InterventionDTO interventionDTO) {
+
+        ICalendarParser.parseToTimeRange(EventTransformer.fromEventDTO_V1(interventionDTO.getSchedule()))
+                .forEach(System.out::println);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 InterventionTransformer.toInterventionDTO_V1(
                         service.addIntervention(
