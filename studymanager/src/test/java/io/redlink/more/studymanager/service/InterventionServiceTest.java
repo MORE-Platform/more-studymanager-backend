@@ -34,7 +34,7 @@ public class InterventionServiceTest {
     @Test
     public void testBadRequestValidation() {
         TriggerFactory factory = mock(TriggerFactory.class);
-        when(factory.create(any(), any())).thenThrow(new ConfigurationValidationException(ConfigurationValidationReport.VALID.error("My error")));
+        when(factory.validate(any())).thenThrow(new ConfigurationValidationException(ConfigurationValidationReport.VALID.error("My error")));
         when(triggerFactories.get("my-trigger")).thenReturn(factory);
         when(triggerFactories.containsKey("my-trigger")).thenReturn(true);
 

@@ -13,17 +13,12 @@ public abstract class Observation<C extends ObservationProperties> extends Compo
     }
 
     @Override
-    protected C validate(C properties) throws ConfigurationValidationException {
-        return properties;
-    }
-
-    @Override
-    protected void activate() {
+    public void activate() {
         // no action
     }
 
     @Override
-    protected void deactivate() {
+    public void deactivate() {
         // no action
     }
 }

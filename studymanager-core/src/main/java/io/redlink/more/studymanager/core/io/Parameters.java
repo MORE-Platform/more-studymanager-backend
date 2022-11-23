@@ -1,4 +1,4 @@
-package io.redlink.more.studymanager.core;
+package io.redlink.more.studymanager.core.io;
 
 import java.util.HashMap;
 import java.util.Map;

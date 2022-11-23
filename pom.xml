@@ -12,6 +12,7 @@
         <module>studymanager</module>
         <module>studymanager-core</module>
         <module>studymanager-observation</module>
+        <module>studymanager-intervention</module>
     </modules>
 
     <name>MORE Study Manager</name>
@@ -34,8 +35,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <java.version>17</java.version>
-        <spring-boot.version>2.7.4</spring-boot.version>
-        <testcontainers.version>1.17.5</testcontainers.version>
+        <spring-boot.version>2.7.5</spring-boot.version>
+        <testcontainers.version>1.17.6</testcontainers.version>
 
         <docker.namespace>more-project</docker.namespace>
 
@@ -55,7 +56,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.0.0-M5</version>
+                    <version>3.0.0-M7</version>
                 </plugin>
 
                 <plugin>
@@ -71,7 +72,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                     <configuration>
                         <skip>true</skip>
                     </configuration>

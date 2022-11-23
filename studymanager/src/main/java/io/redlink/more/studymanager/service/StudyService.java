@@ -14,8 +14,11 @@ public class StudyService {
 
     private final StudyRepository studyRepository;
 
-    public StudyService(StudyRepository studyRepository) {
+    private final InterventionService interventionService;
+
+    public StudyService(StudyRepository studyRepository, InterventionService interventionService) {
         this.studyRepository = studyRepository;
+        this.interventionService = interventionService;
     }
 
     public Study createStudy(Study study) {
@@ -41,7 +44,9 @@ public class StudyService {
 
     public void setStatus(Long studyId, Study.Status status) {
         Study study = getStudy(studyId);
-        //TODO maybe check other status changed that are forbidden
+        if(status.equals(Study.Status.DRAFT)) {
+            throw BadRequestException.StateChange(study.getStudyState(), Study.Status.DRAFT);
+        }
         if(study.getStudyState().equals(Study.Status.CLOSED)) {
             throw BadRequestException.StateChange(Study.Status.CLOSED, status);
         }
@@ -49,5 +54,11 @@ public class StudyService {
             throw BadRequestException.StateChange(study.getStudyState(), status);
         }
         studyRepository.setStateById(studyId, status);
+
+        if(status.equals(Study.Status.ACTIVE)) {
+            interventionService.activateInterventionsFor(study);
+        } else {
+            interventionService.deactivateInterventionsFor(study);
+        }
     }
 }

@@ -21,7 +21,11 @@ public class ComponentProperties extends HashMap<String, Object> {
         return (String) get(name);
     }
 
-    public int getInt(String name) {
-        return (int) get(name);
+    public Integer getInt(String name) {
+        return (Integer) get(name);
+    }
+
+    public Long getLong(String name) {
+        return (Long) get(name);
     }
 }
