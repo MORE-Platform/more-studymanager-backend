@@ -1,6 +1,7 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.model.AuthenticatedUser;
+import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.transformer.UserInfoTransformer;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import java.net.URLEncoder;
@@ -36,7 +37,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Retrieve the current User")
     void testMe() throws Exception {
-        var authUser = createUser("More", "User", "Redlink", AuthenticatedUser.Role.STUDY_CREATOR);
+        var authUser = createUser("More", "User", "Redlink", PlatformRole.MORE_OPERATOR);
         when(authService.getCurrentUser()).thenReturn(authUser);
 
         mvc.perform(get("/api/v1/users/me"))
@@ -47,13 +48,13 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.institution").value(authUser.institution()))
                 .andExpect(jsonPath("$.roles").value(
                         Matchers.contains(
-                                UserInfoTransformer.toPlatformRole(AuthenticatedUser.Role.STUDY_CREATOR).getValue())
+                                UserInfoTransformer.toPlatformRole(PlatformRole.MORE_OPERATOR).getValue())
                         ))
         ;
     }
 
 
-    AuthenticatedUser createUser(String firstName, String lastName, String institution, AuthenticatedUser.Role... roles) {
+    AuthenticatedUser createUser(String firstName, String lastName, String institution, PlatformRole... roles) {
         return new AuthenticatedUser(
                 UUID.randomUUID().toString(),
                 firstName, lastName,

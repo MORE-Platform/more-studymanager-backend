@@ -9,19 +9,15 @@ public record AuthenticatedUser(
         String fullName,
         String email,
         String institution,
-        Set<AuthenticatedUser.Role> roles
+        Set<PlatformRole> roles
 ) {
-    public enum Role {
-        STUDY_VIEWER,
-        STUDY_CREATOR
-    }
 
     boolean canViewStudies() {
-        return roles.contains(AuthenticatedUser.Role.STUDY_VIEWER);
+        return roles.contains(PlatformRole.MORE_VIEWER);
     }
 
     boolean canCreateStudies() {
-        return roles.contains(AuthenticatedUser.Role.STUDY_CREATOR);
+        return roles.contains(PlatformRole.MORE_OPERATOR);
     }
 
 }

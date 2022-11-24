@@ -3,7 +3,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
-import io.redlink.more.studymanager.model.MoreUser;
+import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyService;
@@ -50,7 +50,7 @@ class StudyControllerTest {
             "More User",
             "more@example.com",
             "The Hospital",
-            EnumSet.allOf(AuthenticatedUser.Role.class));
+            EnumSet.allOf(PlatformRole.class));
 
     @Test
     @DisplayName("Create study should create and then return the study with id and status set.")

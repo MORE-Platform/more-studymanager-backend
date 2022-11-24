@@ -5,6 +5,7 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.PlatformRole;
+import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.MoreAuthProperties;
 import java.util.Collection;
 import java.util.EnumSet;

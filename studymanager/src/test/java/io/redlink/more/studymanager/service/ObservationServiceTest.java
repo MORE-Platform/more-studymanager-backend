@@ -10,6 +10,9 @@ import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -35,6 +38,7 @@ public class ObservationServiceTest {
     ObservationService observationService;
 
     @Test
+    @EnabledIfEnvironmentVariable(named = "CI", matches = "true", disabledReason = "Runs in CI only :-(")
     public void testValidation() {
         NotFoundException notFoundException = Assertions.assertThrows(NotFoundException.class, () -> {
                 observationService.addObservation(new Observation().setType("my-observation"));
