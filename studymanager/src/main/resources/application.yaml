@@ -32,6 +32,15 @@ spring:
     password: ${POSTGRES_PASSWORD:more}
     name: ${POSTGRES_DBNAME:more}
 
+  quartz:
+    job-store-type: jdbc
+    properties:
+      org:
+        quartz:
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+    jdbc:
+      initialize-schema: always
   session:
     store-type: redis
 
@@ -64,3 +73,13 @@ management:
             - diskSpace
         readiness:
           show-components: always
+
+more:
+  auth:
+    global-roles:
+      study-viewer:
+        - 'more-viewer'
+        - 'study-access' # deprecated
+      study-creator:
+        - 'more-operator'
+        - 'study-creator' # deprecated

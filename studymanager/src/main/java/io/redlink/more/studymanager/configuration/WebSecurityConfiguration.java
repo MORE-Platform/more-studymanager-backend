@@ -1,6 +1,8 @@
 package io.redlink.more.studymanager.configuration;
 
+import io.redlink.more.studymanager.properties.MoreAuthProperties;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -17,12 +19,16 @@ import org.springframework.web.context.annotation.RequestScope;
 
 @Configuration
 @EnableWebSecurity
+@EnableConfigurationProperties(MoreAuthProperties.class)
 public class WebSecurityConfiguration {
 
     final ClientRegistrationRepository clientRegistrationRepository;
 
-    public WebSecurityConfiguration(ClientRegistrationRepository clientRegistrationRepository) {
+    final MoreAuthProperties moreAuthProperties;
+
+    public WebSecurityConfiguration(ClientRegistrationRepository clientRegistrationRepository, MoreAuthProperties moreAuthProperties) {
         this.clientRegistrationRepository = clientRegistrationRepository;
+        this.moreAuthProperties = moreAuthProperties;
     }
 
     @Bean
@@ -68,7 +74,7 @@ public class WebSecurityConfiguration {
     @Bean
     @RequestScope
     protected OAuth2AuthenticationService oAuth2AuthenticationService() {
-        return new OAuth2AuthenticationService();
+        return new OAuth2AuthenticationService(moreAuthProperties);
     }
 
 }

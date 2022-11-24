@@ -6,23 +6,21 @@ import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 
-public class AccMobileObservationFactory<C extends Observation, P extends ObservationProperties>
-        extends ObservationFactory<C, P> {
+public class PolarVerityObservationFactory<C extends Observation, P extends ObservationProperties> extends ObservationFactory<C, P> {
+
     @Override
     public String getId() {
-        return "acc-mobile-observation";
+        return "polar-verity-observation";
     }
 
     @Override
     public String getTitle() {
-        return "Accelerometer Mobile";
+        return "Polar Verity Sensor";
     }
 
     @Override
     public String getDescription() {
-        return """
-                This observation allows to get accelerometer data from mobile phones.
-                """;
+        return "Enables hart rate measurement via polar verity sensor; no properties supportet";
     }
 
     @Override
@@ -31,7 +29,7 @@ public class AccMobileObservationFactory<C extends Observation, P extends Observ
     }
 
     @Override
-    public AccMobileObservation create(MorePlatformSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new AccMobileObservation(sdk, validate(properties));
+    public PolarVerityObservation create(MorePlatformSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+        return new PolarVerityObservation(sdk, validate(properties));
     }
 }

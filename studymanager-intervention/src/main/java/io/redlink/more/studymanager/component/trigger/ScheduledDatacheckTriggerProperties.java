@@ -5,6 +5,10 @@ import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import java.util.Optional;
 
 public class ScheduledDatacheckTriggerProperties extends TriggerProperties {
+    public ScheduledDatacheckTriggerProperties(TriggerProperties triggerProperties) {
+        super(triggerProperties);
+    }
+
     public Optional<String> getCronSchedule() {
         return Optional.ofNullable(this.getString("cronSchedule"));
     }

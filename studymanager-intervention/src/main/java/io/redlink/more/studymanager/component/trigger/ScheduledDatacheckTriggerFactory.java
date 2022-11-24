@@ -2,10 +2,11 @@ package io.redlink.more.studymanager.component.trigger;
 
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
+import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
-public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDatacheckTrigger, ScheduledDatacheckTriggerProperties> {
+public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDatacheckTrigger, TriggerProperties> {
     @Override
     public String getId() {
         return "scheduled-datacheck-trigger";
@@ -18,20 +19,46 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
 
     @Override
     public String getDescription() {
-        return "Checks if certain data occurs in a specific timeframe";
+        return
+"""
+Checks if certain data occurs in a specific timeframe". Example: <code>
+{
+   "cronSchedule": "0 0 12 * * ?",
+   "query": "field:*",
+   "window": 100
+}
+</code>
+<a href="http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html">Further info on cron values</a>
+""";
     }
 
     @Override
-    public ScheduledDatacheckTriggerProperties validate(ScheduledDatacheckTriggerProperties properties) {
+    public TriggerProperties validate(TriggerProperties triggerProperties) {
         ConfigurationValidationReport report = ConfigurationValidationReport.init();
-        if(properties.getCronSchedule().isEmpty()) {
-            report.missingProperty("cronSchedule");
+        ScheduledDatacheckTriggerProperties properties = new ScheduledDatacheckTriggerProperties(triggerProperties);
+
+        try {
+            if(properties.getCronSchedule().isEmpty()) {
+                report.missingProperty("cronSchedule");
+            }
+        } catch (ClassCastException e) {
+            report.error("cronSchedule must a valid string");
         }
-        if(properties.getQuery().isEmpty()) {
-            report.missingProperty("query");
+
+        try {
+            if(properties.getQuery().isEmpty()) {
+                report.missingProperty("query");
+            }
+        } catch (ClassCastException e) {
+            report.error("query must a valid string");
         }
-        if(properties.getWindow().isEmpty()) {
-            report.missingProperty("window");
+
+        try {
+            if(properties.getWindow().isEmpty()) {
+                report.missingProperty("window");
+            }
+        } catch (ClassCastException e) {
+            report.error("window must a valid long");
         }
 
         if(report.isValid()) {
@@ -42,8 +69,7 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
     }
 
     @Override
-    public ScheduledDatacheckTrigger create(MoreTriggerSDK sdk, ScheduledDatacheckTriggerProperties properties) throws ConfigurationValidationException {
-        //TODO
-        return null;
+    public ScheduledDatacheckTrigger create(MoreTriggerSDK sdk, TriggerProperties properties) throws ConfigurationValidationException {
+        return new ScheduledDatacheckTrigger(sdk, (ScheduledDatacheckTriggerProperties) validate(properties));
     }
 }
