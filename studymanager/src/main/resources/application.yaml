@@ -32,6 +32,15 @@ spring:
     password: ${POSTGRES_PASSWORD:more}
     name: ${POSTGRES_DBNAME:more}
 
+  quartz:
+    job-store-type: jdbc
+    properties:
+      org:
+        quartz:
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+    jdbc:
+      initialize-schema: always
   session:
     store-type: redis
 

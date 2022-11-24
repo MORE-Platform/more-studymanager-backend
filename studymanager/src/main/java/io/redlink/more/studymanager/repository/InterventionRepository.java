@@ -16,6 +16,8 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
+import javax.xml.crypto.Data;
 import java.util.List;
 
 import static io.redlink.more.studymanager.utils.RepositoryUtils.getValidNullableIntegerValue;
@@ -39,7 +41,7 @@ public class InterventionRepository {
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
-    public InterventionRepository(JdbcTemplate template) {
+    public InterventionRepository(JdbcTemplate template, DataSource source) {
         this.template = template;
         this.namedTemplate = new NamedParameterJdbcTemplate(template);
     }
