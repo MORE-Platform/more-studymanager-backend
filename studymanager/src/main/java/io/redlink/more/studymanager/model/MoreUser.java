@@ -1,13 +1,13 @@
 package io.redlink.more.studymanager.model;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 public record MoreUser(
         String id,
-        String name,
+        String fullName,
         String institution,
         String email,
-        Timestamp inserted,
-        Timestamp updated
-) {
+        Instant inserted,
+        Instant updated
+) implements User {
 }

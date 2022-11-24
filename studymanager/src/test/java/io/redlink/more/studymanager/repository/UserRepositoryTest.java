@@ -1,17 +1,18 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.MoreUser;
+import java.time.Instant;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
-import java.sql.Timestamp;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Testcontainers
@@ -21,38 +22,43 @@ class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JdbcTemplate template;
+
     @BeforeEach
     void deleteAll(){
-        userRepository.clear();
+        template.update("DELETE FROM users");
     }
 
     @Test
     @DisplayName("User is inserted in database and returned")
     void testInsert(){
-        MoreUser user = new MoreUser("123", "name", "inst", "123", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()));
-        MoreUser userResponse = userRepository.insert(user);
+        MoreUser user = new MoreUser("123", "name", "inst", "123", Instant.now(), Instant.now());
+        MoreUser userResponse = userRepository.save(user);
 
         assertThat(userResponse.id()).isNotNull();
-        assertThat(userResponse.name().equals(user.name()));
+        assertThat(userResponse.fullName()).isEqualTo(user.fullName());
 
     }
 
     @Test
     @DisplayName("User is updated in database and returned")
     void testUpdate(){
-        MoreUser user = new MoreUser("123", "name", "inst", "123", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()));
-        MoreUser userResponse = userRepository.insert(user);
+        MoreUser user = new MoreUser("123", "name", "inst", "123", Instant.now(), Instant.now());
+        MoreUser userResponse = userRepository.save(user);
 
-        MoreUser update = new MoreUser("123", "name", "Institution", "321", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()));
+        MoreUser update = new MoreUser("123", "name", "Institution", "321", Instant.now(), Instant.now());
 
-        MoreUser updated = userRepository.update(update);
+        MoreUser updated = userRepository.save(update);
 
-        MoreUser queried = userRepository.getById(userResponse.id());
+        Optional<MoreUser> queried = userRepository.getById(userResponse.id());
 
-        assertThat(queried.name()).isEqualTo(updated.name());
-        assertThat(queried.id()).isEqualTo(updated.id());
+        assertThat(queried).isPresent()
+                .contains(updated);
 
-        assertThat(queried.institution()).isEqualTo(updated.institution());
 
+        userRepository.deleteById(userResponse.id());
+        assertThat(userRepository.getById(userResponse.id()))
+                .isEmpty();
     }
 }

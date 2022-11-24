@@ -8,7 +8,7 @@ public record AuthenticatedUser(
         String email,
         String institution,
         Set<PlatformRole> roles
-) {
+) implements User {
 
     boolean canViewStudies() {
         return roles.contains(PlatformRole.MORE_VIEWER);

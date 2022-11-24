@@ -1,8 +1,9 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.MoreUser;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
+import io.redlink.more.studymanager.model.User;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -11,52 +12,41 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserRepository {
 
-    private static final String INSERT_USER = "INSERT INTO users (user_id,name,institution,email) VALUES (:user_id,:name,:institution,:email) ON CONFLICT (user_id) DO UPDATE SET user_id = :user_id, name = :name, institution = :institution, email = :email";
-    private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE user_id = ?";
-    private static final String UPDATE_USER = "UPDATE users SET name = :name, institution = :institution, email = :email, updated = now() WHERE user_id = :user_id";
-    private static final String DELETE_BY_ID = "DELETE FROM users WHERE user_id = ?";
-    private static final String CLEAR_USERS = "DELETE FROM users";
-    private final JdbcTemplate template;
+    private static final String INSERT_USER =
+            "INSERT INTO users (user_id,name,institution,email) " +
+            "VALUES (:user_id,:name,:institution,:email) " +
+            "ON CONFLICT (user_id) DO UPDATE SET name = excluded.name, institution = excluded.institution, email = excluded.email, updated = now() " +
+            "RETURNING *";
+    private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE user_id = :user_id";
+    private static final String DELETE_BY_ID = "DELETE FROM users WHERE user_id = :user_id";
+
     private final NamedParameterJdbcTemplate namedTemplate;
 
-    public UserRepository(JdbcTemplate template) {
-        this.template = template;
-        this.namedTemplate = new NamedParameterJdbcTemplate(template);
+    public UserRepository(NamedParameterJdbcTemplate template) {
+        this.namedTemplate = template;
 
     }
 
-    public MoreUser insert(MoreUser user) {
-        namedTemplate.update(INSERT_USER, toParams(user));
-        return getById(user.id());
+    public MoreUser save(User user) {
+        return namedTemplate.queryForObject(INSERT_USER, toParams(user), getUserRowMapper());
     }
 
-    public MoreUser update(MoreUser user){
-        namedTemplate.update(UPDATE_USER, toParams(user));
-        return getById(user.id());
+    public void deleteById(String userId) {
+        namedTemplate.update(DELETE_BY_ID, Map.of("user_id", userId));
     }
 
-    public void deleteById(String id){
-        template.update(DELETE_BY_ID, id);
-    }
-
-    public MoreUser getById(String user_id) {
-        try {
-            return template.queryForObject(GET_USER_BY_ID, getUserRowMapper(), user_id);
-        } catch (EmptyResultDataAccessException e) {
-            return null;
-        }
+    public Optional<MoreUser> getById(String userId) {
+        return namedTemplate.queryForStream(GET_USER_BY_ID, Map.of("user_id", userId), getUserRowMapper())
+                .findFirst();
     }
 
 
-
-    private static MapSqlParameterSource toParams(MoreUser user) {
+    private static MapSqlParameterSource toParams(User user) {
         return new MapSqlParameterSource()
                 .addValue("user_id", user.id())
-                .addValue("name", user.name())
+                .addValue("name", user.fullName())
                 .addValue("institution", user.institution())
                 .addValue("email", user.email())
-                .addValue("inserted", user.inserted())
-                .addValue("updated", user.updated())
                 ;
     }
 
@@ -66,14 +56,9 @@ public class UserRepository {
                 rs.getString("name"),
                 rs.getString("institution"),
                 rs.getString("email"),
-                rs.getTimestamp("inserted"),
-                rs.getTimestamp("updated")
-
+                RepositoryUtils.readInstant(rs, "inserted"),
+                RepositoryUtils.readInstant(rs, "updated")
         );
     }
 
-    // for testing purpose only
-    protected void clear() {
-        template.execute(CLEAR_USERS);
-    }
 }
