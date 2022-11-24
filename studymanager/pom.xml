@@ -147,12 +147,6 @@
             <version>0.10.2</version>
         </dependency>
 
-        <dependency>
-            <groupId>net.sf.biweekly</groupId>
-            <artifactId>biweekly</artifactId>
-            <version>0.6.6</version>
-        </dependency>
-
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
