@@ -1,5 +1,5 @@
 CREATE TABLE users(
-    user_id     VARCHAR,
+    user_id     VARCHAR NOT NULL,
     name        VARCHAR,
     institution VARCHAR,
     email       VARCHAR,

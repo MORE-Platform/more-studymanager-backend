@@ -84,8 +84,8 @@ public class StudyRepository {
                 .addValue("participant_info", study.getParticipantInfo())
                 .addValue("consent_info", study.getConsentInfo())
                 .addValue("planned_start_date", study.getPlannedStartDate())
-                .addValue("planned_end_date", study.getPlannedEndDate()
-                );
+                .addValue("planned_end_date", study.getPlannedEndDate())
+                ;
     }
 
     private static RowMapper<Study> getStudyRowMapper() {
