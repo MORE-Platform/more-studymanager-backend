@@ -3,8 +3,12 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.User;
+import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
+import java.util.EnumSet;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,17 +18,23 @@ import java.util.Optional;
 public class StudyService {
 
     private final StudyRepository studyRepository;
+    private final StudyAclRepository aclRepository;
     private final UserRepository userRepo;
     private final InterventionService interventionService;
 
-    public StudyService(StudyRepository studyRepository, UserRepository userRepo, InterventionService interventionService) {
+    public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo, InterventionService interventionService) {
         this.studyRepository = studyRepository;
+        this.aclRepository = aclRepository;
         this.userRepo = userRepo;
         this.interventionService = interventionService;
     }
 
-    public Study createStudy(Study study) {
-        return studyRepository.insert(study);
+    public Study createStudy(Study study, User currentUser) {
+        // TODO: Workaround until proper auth is available
+        var user = userRepo.save(currentUser);
+        var savedStudy = studyRepository.insert(study);
+        aclRepository.setRoles(savedStudy.getStudyId(), user.id(), EnumSet.allOf(StudyRole.class));
+        return savedStudy;
     }
 
     public List<Study> listStudies() {
