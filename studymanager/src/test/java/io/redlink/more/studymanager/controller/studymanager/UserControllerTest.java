@@ -57,7 +57,6 @@ class UserControllerTest {
     AuthenticatedUser createUser(String firstName, String lastName, String institution, PlatformRole... roles) {
         return new AuthenticatedUser(
                 UUID.randomUUID().toString(),
-                firstName, lastName,
                 firstName + " " + lastName,
                 String.format("%s.%s@%s.com",
                         firstName.toLowerCase(Locale.ROOT),

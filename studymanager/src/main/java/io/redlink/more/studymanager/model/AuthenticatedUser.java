@@ -4,8 +4,6 @@ import java.util.Set;
 
 public record AuthenticatedUser(
         String id,
-        String fistName,
-        String lastName,
         String fullName,
         String email,
         String institution,

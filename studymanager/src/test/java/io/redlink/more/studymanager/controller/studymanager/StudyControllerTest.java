@@ -46,7 +46,6 @@ class StudyControllerTest {
 
     private final AuthenticatedUser authUser = new AuthenticatedUser(
             UUID.randomUUID().toString(),
-            "More", "User",
             "More User",
             "more@example.com",
             "The Hospital",

@@ -34,6 +34,7 @@ public final class UserInfoTransformer {
         return switch (role) {
             case MORE_VIEWER -> PlatformRoleDTO.VIEWER;
             case MORE_OPERATOR -> PlatformRoleDTO.OPERATOR;
+            case MORE_ADMIN -> PlatformRoleDTO.ADMIN;
             default -> null;
         };
     }
