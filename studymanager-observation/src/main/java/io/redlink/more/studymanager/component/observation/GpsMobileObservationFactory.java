@@ -5,6 +5,7 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
+import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
 public class GpsMobileObservationFactory<C extends Observation, P extends ObservationProperties> extends ObservationFactory<C, P> {
 
@@ -33,7 +34,19 @@ Enables hart GPS data collection in mobile; Configuration:
 
     @Override
     public ObservationProperties validate(ObservationProperties properties) {
-        return properties;
+        ConfigurationValidationReport report = ConfigurationValidationReport.init();
+        try {
+            if(properties.getLong("location_interval_millis") == null) {
+                report.missingProperty("location_interval_millis");
+            }
+        } catch (ClassCastException e) {
+            report.error("location_interval_millis must a valid long");
+        }
+        if(report.isValid()) {
+            return properties;
+        } else {
+            throw new ConfigurationValidationException(report);
+        }
     }
 
     @Override
