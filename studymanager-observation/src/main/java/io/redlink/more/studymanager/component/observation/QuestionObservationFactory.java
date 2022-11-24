@@ -47,10 +47,10 @@ This observation allows to get create a simple MultipleChoice question. Paramete
         if(!properties.containsKey("answers")) {
             report.missingProperty("answers");
         }
-        if(!properties.get("answers").getClass().isAssignableFrom(List.class)) {
+        if(properties.containsKey("answers") && !properties.get("answers").getClass().isAssignableFrom(List.class)) {
             report.error("Value of answers must be a list");
         }
-        if(((List)properties.get("answers")).size() < 2) {
+        if(properties.containsKey("answers") && ((List)properties.get("answers")).size() < 2) {
             report.warning("Value answers must contain at least 2 values");
         }
         if(report.isValid()) {
