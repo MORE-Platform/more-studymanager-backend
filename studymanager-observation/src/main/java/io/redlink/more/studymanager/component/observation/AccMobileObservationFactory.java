@@ -22,7 +22,6 @@ public class AccMobileObservationFactory<C extends Observation, P extends Observ
     public String getDescription() {
         return """
                 This observation allows to get accelerometer data from mobile phones.
-                The data is represented as: {x:number, y:number, z:number}
                 """;
     }
 

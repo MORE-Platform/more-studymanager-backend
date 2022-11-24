@@ -24,7 +24,14 @@ public class PushNotificationActionFactory extends ActionFactory<PushNotificatio
 
     @Override
     public String getDescription() {
-        return "Sends a push notification to all matching participants based on trigger";
+        return
+"""
+Sends a push notification to all matching participants based on trigger. Example: <code>
+{
+   "message": "Hello world"
+}
+</code>
+""";
     }
 
     @Override
