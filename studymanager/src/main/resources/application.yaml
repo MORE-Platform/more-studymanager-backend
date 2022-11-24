@@ -68,9 +68,9 @@ management:
 more:
   auth:
     global-roles:
-      study-viewer:
+      more-viewer:
         - 'more-viewer'
         - 'study-access' # deprecated
-      study-creator:
+      more-operator:
         - 'more-operator'
         - 'study-creator' # deprecated
