@@ -64,3 +64,13 @@ management:
             - diskSpace
         readiness:
           show-components: always
+
+more:
+  auth:
+    global-roles:
+      study-viewer:
+        - 'more-viewer'
+        - 'study-access' # deprecated
+      study-creator:
+        - 'more-operator'
+        - 'study-creator' # deprecated
