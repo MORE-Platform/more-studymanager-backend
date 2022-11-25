@@ -1,8 +1,8 @@
 package io.redlink.more.studymanager.repository;
 
-import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.User;
 import java.util.List;
 import java.util.Set;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -60,7 +60,7 @@ public class StudyRepository {
         return template.query(LIST_STUDIES_ORDER_BY_MODIFIED_DESC, getStudyRowMapper());
     }
 
-    public List<Study> listStudiesByAclOrderByModifiedDesc(AuthenticatedUser user, Set<StudyRole> allowedRoles) {
+    public List<Study> listStudiesByAclOrderByModifiedDesc(User user, Set<StudyRole> allowedRoles) {
         return namedTemplate.query(LIST_STUDY_BY_ACL,
                 StudyAclRepository.createParams(user.id(), allowedRoles),
                 getStudyRowMapperWithUserRoles());

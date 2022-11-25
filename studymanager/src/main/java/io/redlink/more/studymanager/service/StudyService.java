@@ -2,7 +2,6 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
-import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.User;
@@ -10,10 +9,10 @@ import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
 import java.util.EnumSet;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import org.springframework.stereotype.Service;
 
 @Service
 public class StudyService {
@@ -42,11 +41,11 @@ public class StudyService {
         return studyRepository.listStudyOrderByModifiedDesc();
     }
 
-    public List<Study> listStudies(AuthenticatedUser user) {
+    public List<Study> listStudies(User user) {
         return listStudies(user, EnumSet.allOf(StudyRole.class));
     }
 
-    private List<Study> listStudies(AuthenticatedUser user, EnumSet<StudyRole> allowedRoles) {
+    public List<Study> listStudies(User user, Set<StudyRole> allowedRoles) {
         return studyRepository.listStudiesByAclOrderByModifiedDesc(user, allowedRoles);
     }
 

@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -70,6 +71,21 @@ class StudyServiceTest {
         verify(studyAclRepository, times(1).description("Initial ACL should be set"))
                 .setRoles(studyResponse.getStudyId(), currentUser.id(), EnumSet.allOf(StudyRole.class));
     }
+
+    @Test
+    void testListStudies() {
+        when(studyRepository.listStudiesByAclOrderByModifiedDesc(any(), any())).thenReturn(List.of(new Study()));
+
+        assertThat(studyService.listStudies(currentUser)).isNotEmpty();
+        verify(studyRepository, times(1))
+                .listStudiesByAclOrderByModifiedDesc(currentUser, EnumSet.allOf(StudyRole.class));
+
+        assertThat(studyService.listStudies(currentUser, EnumSet.of(StudyRole.STUDY_VIEWER))).isNotEmpty();
+        verify(studyRepository, times(1))
+                .listStudiesByAclOrderByModifiedDesc(currentUser, EnumSet.of(StudyRole.STUDY_VIEWER));
+
+    }
+
     @Test
     @DisplayName("When the study state is set incorrect it should fail")
     void testSetStatus() {
