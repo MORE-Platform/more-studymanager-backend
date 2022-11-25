@@ -18,9 +18,7 @@ public class TriggerJob implements Job {
     MoreSDK moreSDK;
 
     @Override
-    public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-        int count = moreSDK.getValue("i", "c", Integer.class).orElse(0);
-        LOGGER.info("scheduled {}: count {}", jobExecutionContext.getJobDetail().getKey(), count);
-        moreSDK.setValue("i", "c", count+1);
+    public void execute(JobExecutionContext context) throws JobExecutionException {
+        moreSDK.testPing(context);
     }
 }

@@ -21,10 +21,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.quartz.JobBuilder.newJob;
-import static org.quartz.JobKey.jobKey;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
-import static org.quartz.TriggerKey.triggerKey;
 
 @SpringBootTest
 @Testcontainers
@@ -71,6 +69,7 @@ public class TestQrtzScheduler {
 
         TimeUnit.MILLISECONDS.sleep(1200);
         scheduler.unscheduleJob(t2.getKey());
+        scheduler.deleteJob(job2.getKey());
 
         assertThat(store.get("issuer2-i").get()).isEqualTo(8);
     }
@@ -92,6 +91,7 @@ public class TestQrtzScheduler {
         scheduler.scheduleJob(job, trigger(job, triggerId));
         TimeUnit.MILLISECONDS.sleep(500);
         scheduler.unscheduleJob(new TriggerKey(triggerId));
+        scheduler.deleteJob(job.getKey());
         verify(moreSDK, times(2)).getValue(any(),any(),any());
         reset(moreSDK);
         TimeUnit.MILLISECONDS.sleep(200);
