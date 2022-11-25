@@ -3,7 +3,8 @@
  */
 package io.redlink.more.studymanager.service;
 
-import io.redlink.more.studymanager.model.MoreUser;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
+import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.MoreAuthProperties;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -21,17 +22,17 @@ import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
 
 public class OAuth2AuthenticationService {
 
-    private final Map<String, Set<MoreUser.Role>> roleMapping;
+    private final Map<String, Set<PlatformRole>> roleMapping;
 
     public OAuth2AuthenticationService(MoreAuthProperties moreAuthProperties) {
         Objects.requireNonNull(moreAuthProperties.globalRoles(), "globalRoles must not be null");
 
-        var mapping = new HashMap<String, EnumSet<MoreUser.Role>>();
+        var mapping = new HashMap<String, EnumSet<PlatformRole>>();
         moreAuthProperties.globalRoles().forEach(
                 (moreRole, authRoles) ->
                         authRoles.forEach(
                                 authRole -> mapping
-                                        .computeIfAbsent(authRole, k -> EnumSet.noneOf(MoreUser.Role.class))
+                                        .computeIfAbsent(authRole, k -> EnumSet.noneOf(PlatformRole.class))
                                         .add(moreRole)
                         )
         );
@@ -44,7 +45,11 @@ public class OAuth2AuthenticationService {
     }
 
     private StandardClaimAccessor getClaimAccessor() {
-        return Optional.ofNullable(getAuthentication())
+        return getStandardClaimAccessor(getAuthentication());
+    }
+
+    public static StandardClaimAccessor getStandardClaimAccessor(Authentication authentication) {
+        return Optional.ofNullable(authentication)
                 .map(Authentication::getPrincipal)
                 .filter(ClaimAccessor.class::isInstance)
                 .map(ClaimAccessor.class::cast)
@@ -52,31 +57,34 @@ public class OAuth2AuthenticationService {
                 .orElse(null);
     }
 
-    public MoreUser getCurrentUser() {
-        final StandardClaimAccessor claims = getClaimAccessor();
+    public AuthenticatedUser getCurrentUser() {
+        return getAuthenticatedUser(getClaimAccessor());
+    }
+
+    public AuthenticatedUser getAuthenticatedUser(Authentication authentication) {
+        return getAuthenticatedUser(getStandardClaimAccessor(authentication));
+    }
+
+    private AuthenticatedUser getAuthenticatedUser(StandardClaimAccessor claims) {
         if (claims != null)
-            return new MoreUser(
+            return new AuthenticatedUser(
                     claims.getSubject(),
-                    claims.getGivenName(),
-                    claims.getFamilyName(),
                     claims.getFullName(),
                     Boolean.TRUE.equals(claims.getEmailVerified()) ? claims.getEmail() : null,
                     claims.getClaimAsString("org"),
                     mapToRoles(claims.getClaimAsStringList("roles"))
             );
 
-        return new MoreUser(
+        return new AuthenticatedUser(
                 null,
                 null,
                 null,
                 null,
-                null,
-                null,
-                EnumSet.noneOf(MoreUser.Role.class)
+                EnumSet.noneOf(PlatformRole.class)
         );
     }
 
-    private Set<MoreUser.Role> mapToRoles(List<String> roles) {
+    private Set<PlatformRole> mapToRoles(List<String> roles) {
         return roles.stream()
                 .map(roleMapping::get)
                 .filter(Objects::nonNull)

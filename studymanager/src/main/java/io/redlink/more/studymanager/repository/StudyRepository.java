@@ -1,25 +1,35 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.Study;
-import org.springframework.dao.EmptyResultDataAccessException;
+import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.User;
+import java.util.List;
+import java.util.Set;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 public class StudyRepository {
 
-    private static final String INSERT_STUDY = "INSERT INTO studies (title,purpose,participant_info,consent_info,planned_start_date,planned_end_date) VALUES (:title,:purpose,:participant_info,:consent_info,:planned_start_date,:planned_end_date)";
+    private static final String INSERT_STUDY =
+            "INSERT INTO studies (title,purpose,participant_info,consent_info,planned_start_date,planned_end_date) " +
+            "VALUES (:title,:purpose,:participant_info,:consent_info,:planned_start_date,:planned_end_date) " +
+            "RETURNING *";
     private static final String GET_STUDY_BY_ID = "SELECT * FROM studies WHERE study_id = ?";
     private static final String LIST_STUDIES_ORDER_BY_MODIFIED_DESC = "SELECT * FROM studies ORDER BY modified DESC";
+    private static final String LIST_STUDY_BY_ACL =
+            "SELECT studies.*, acl.user_roles " +
+            "FROM studies " +
+            "    INNER JOIN (SELECT acl.study_id, array_agg(user_role) AS user_roles FROM study_acl acl WHERE acl.user_id = :userId AND acl.user_role IN (:roles) GROUP BY acl.study_id) acl " +
+            "    ON (studies.study_id = acl.study_id) " +
+            "ORDER BY modified DESC";
     private static final String UPDATE_STUDY =
-            "UPDATE studies SET title = :title, purpose = :purpose, participant_info = :participant_info, consent_info = :consent_info, planned_start_date = :planned_start_date, planned_end_date = :planned_end_date, modified = now() WHERE study_id = :study_id";
+            "UPDATE studies SET title = :title, purpose = :purpose, participant_info = :participant_info, consent_info = :consent_info, planned_start_date = :planned_start_date, planned_end_date = :planned_end_date, modified = now() " +
+            "WHERE study_id = :study_id " +
+            "RETURNING *";
 
     private static final String DELETE_BY_ID = "DELETE FROM studies WHERE study_id = ?";
     private static final String CLEAR_STUDIES = "DELETE FROM studies";
@@ -27,6 +37,7 @@ public class StudyRepository {
     private static final String SET_ACTIVE_STATE_BY_ID = "UPDATE studies SET status = 'active', start_date = now(), modified = now() WHERE study_id = ?";
     private static final String SET_PAUSED_STATE_BY_ID = "UPDATE studies SET status = 'paused', modified = now() WHERE study_id = ?";
     private static final String SET_CLOSED_STATE_BY_ID = "UPDATE studies SET status = 'closed', end_date = now(), modified = now() WHERE study_id = ?";
+
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -36,26 +47,32 @@ public class StudyRepository {
     }
 
     public Study insert(Study study) {
-        final KeyHolder keyHolder = new GeneratedKeyHolder();
-        namedTemplate.update(INSERT_STUDY, toParams(study), keyHolder, new String[] { "study_id" });
-        return getById(keyHolder.getKey().longValue());
+        return namedTemplate.queryForObject(INSERT_STUDY, studyToParams(study), getStudyRowMapper());
     }
 
     public Study getById(long id) {
-        try {
-            return template.queryForObject(GET_STUDY_BY_ID, getStudyRowMapper(), id);
-        } catch (EmptyResultDataAccessException e) {
-            return null;
-        }
+        return template.queryForStream(GET_STUDY_BY_ID, getStudyRowMapper(), id)
+                .findFirst()
+                .orElse(null);
     }
 
     public List<Study> listStudyOrderByModifiedDesc() {
         return template.query(LIST_STUDIES_ORDER_BY_MODIFIED_DESC, getStudyRowMapper());
     }
 
+    public List<Study> listStudiesByAclOrderByModifiedDesc(User user, Set<StudyRole> allowedRoles) {
+        return namedTemplate.query(LIST_STUDY_BY_ACL,
+                StudyAclRepository.createParams(user.id(), allowedRoles),
+                getStudyRowMapperWithUserRoles());
+    }
+
     public Study update(Study study) {
-        namedTemplate.update(UPDATE_STUDY, toParams(study).addValue("study_id", study.getStudyId()));
-        return getById(study.getStudyId());
+        return namedTemplate.queryForStream(UPDATE_STUDY,
+                        studyToParams(study).addValue("study_id", study.getStudyId()),
+                        getStudyRowMapper()
+                )
+                .findFirst()
+                .orElse(null);
     }
 
     public void deleteById(long id) {
@@ -75,15 +92,15 @@ public class StudyRepository {
         };
     }
 
-    private static MapSqlParameterSource toParams(Study study) {
+    private static MapSqlParameterSource studyToParams(Study study) {
         return new MapSqlParameterSource()
                 .addValue("title", study.getTitle())
                 .addValue("purpose", study.getPurpose())
                 .addValue("participant_info", study.getParticipantInfo())
                 .addValue("consent_info", study.getConsentInfo())
                 .addValue("planned_start_date", study.getPlannedStartDate())
-                .addValue("planned_end_date", study.getPlannedEndDate()
-        );
+                .addValue("planned_end_date", study.getPlannedEndDate())
+                ;
     }
 
     private static RowMapper<Study> getStudyRowMapper() {
@@ -99,7 +116,16 @@ public class StudyRepository {
                 .setEndDate(rs.getDate("end_date"))
                 .setCreated(rs.getTimestamp("created"))
                 .setModified(rs.getTimestamp("modified"))
-                .setStudyState(Study.Status.valueOf(rs.getString("status").toUpperCase()));
+                .setStudyState(Study.Status.valueOf(rs.getString("status").toUpperCase()))
+                ;
+    }
+
+    private static RowMapper<Study> getStudyRowMapperWithUserRoles() {
+        return ((rs, rowNum) -> {
+            var study = getStudyRowMapper().mapRow(rs, rowNum);
+            if (study == null) return null;
+            return study.setUserRoles(StudyAclRepository.readRoleArray(rs, "user_roles"));
+        });
     }
 
     // for testing purpose only

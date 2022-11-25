@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.model;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.Set;
 
 public class Study {
     private Long studyId;
@@ -16,6 +17,8 @@ public class Study {
     private Date plannedEndDate;
     private Timestamp created;
     private Timestamp modified;
+
+    private Set<StudyRole> userRoles;
 
     public enum Status {
         DRAFT("draft"),
@@ -139,6 +142,15 @@ public class Study {
 
     public Study setModified(Timestamp modified) {
         this.modified = modified;
+        return this;
+    }
+
+    public Set<StudyRole> getUserRoles() {
+        return userRoles;
+    }
+
+    public Study setUserRoles(Set<StudyRole> userRoles) {
+        this.userRoles = userRoles;
         return this;
     }
 

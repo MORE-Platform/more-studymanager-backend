@@ -37,7 +37,9 @@ public class StudyTransformer {
                 .plannedStart(study.getPlannedStartDate() != null ? study.getPlannedStartDate().toLocalDate() : null)
                 .plannedEnd(study.getPlannedEndDate() != null ? study.getPlannedEndDate().toLocalDate(): null)
                 .created(study.getCreated().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()))
-                .modified(study.getModified().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()));
+                .modified(study.getModified().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()))
+                .userRoles(RoleTransformer.toStudyRolesDTO(study.getUserRoles()))
+                ;
     }
 
     public static Study.Status fromStatusChangeDTO_V1(StatusChangeDTO statusChangeDTO) {

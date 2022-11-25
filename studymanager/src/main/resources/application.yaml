@@ -43,6 +43,9 @@ spring:
       initialize-schema: always
   session:
     store-type: redis
+    redis:
+      namespace: more:study-manager:session
+    timeout: PT30M
 
   redis:
     host: ${REDIS_HOST:localhost}
@@ -77,9 +80,9 @@ management:
 more:
   auth:
     global-roles:
-      study-viewer:
+      more-viewer:
         - 'more-viewer'
         - 'study-access' # deprecated
-      study-creator:
+      more-operator:
         - 'more-operator'
         - 'study-creator' # deprecated
