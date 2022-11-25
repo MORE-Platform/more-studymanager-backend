@@ -9,7 +9,6 @@ import java.util.Optional;
 public abstract class MorePlatformSDKImpl implements MorePlatformSDK {
 
     protected final long studyId;
-
     protected final Integer studyGroupId;
     protected final MoreSDK sdk;
 
@@ -17,6 +16,16 @@ public abstract class MorePlatformSDKImpl implements MorePlatformSDK {
         this.studyId = studyId;
         this.studyGroupId = studyGroupId;
         this.sdk = sdk;
+    }
+
+    @Override
+    public long getStudyId() {
+        return studyId;
+    }
+
+    @Override
+    public Integer getStudyGroupId() {
+        return studyGroupId;
     }
 
     @Override

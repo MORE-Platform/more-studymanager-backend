@@ -1,19 +1,37 @@
 package io.redlink.more.studymanager.core.io;
 
-public class ActionParameter {
-    private final String participantId;
-    private final Parameters parameters;
+import java.util.Objects;
 
-    public ActionParameter(String participantId, Parameters parameters) {
+public class ActionParameter extends Parameters {
+
+    private final long studyId;
+    private final int participantId;
+
+    public ActionParameter(long studyId, int participantId) {
+        super();
+        this.studyId = studyId;
         this.participantId = participantId;
-        this.parameters = parameters;
     }
 
-    public String getParticipantId() {
+    public long getStudyId() {
+        return studyId;
+    }
+
+    public int getParticipantId() {
         return participantId;
     }
 
-    public Parameters getParameters() {
-        return parameters;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        ActionParameter that = (ActionParameter) o;
+        return studyId == that.studyId && participantId == that.participantId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), studyId, participantId);
     }
 }

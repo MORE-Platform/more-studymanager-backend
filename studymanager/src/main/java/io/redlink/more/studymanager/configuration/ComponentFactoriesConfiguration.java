@@ -7,11 +7,14 @@ import org.reflections.Reflections;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Configuration
 public class ComponentFactoriesConfiguration implements BeanFactoryAware {
@@ -28,6 +31,15 @@ public class ComponentFactoriesConfiguration implements BeanFactoryAware {
         this.beanFactory = beanFactory;
     }
 
+    @Bean
+    public Map<String, TriggerFactory> triggerFactoryMap() {
+        Set<Class<? extends TriggerFactory>> triggerFactories = reflections.getSubTypesOf(TriggerFactory.class);
+        return triggerFactories.stream().map(this::instantiate).collect(Collectors.toMap(
+                (trigger) -> trigger.getId(),
+                (trigger) -> trigger
+        ));
+    }
+
     @PostConstruct
     public void onPostConstruct() {
         ConfigurableBeanFactory configurableBeanFactory = (ConfigurableBeanFactory) beanFactory;
@@ -37,10 +49,11 @@ public class ComponentFactoriesConfiguration implements BeanFactoryAware {
                 configurableBeanFactory.registerSingleton(m.getId(), m)
         );
 
+        /*
         Set<Class<? extends TriggerFactory>> triggerFactories = reflections.getSubTypesOf(TriggerFactory.class);
         triggerFactories.stream().map(this::instantiate).forEach(m ->
                 configurableBeanFactory.registerSingleton(m.getId(), m)
-        );
+        );*/
 
         Set<Class<? extends ActionFactory>> actionFactories = reflections.getSubTypesOf(ActionFactory.class);
         actionFactories.stream().map(this::instantiate).forEach(m ->

@@ -5,7 +5,7 @@ import io.redlink.more.studymanager.core.io.Parameters;
 import io.redlink.more.studymanager.core.io.TriggerResult;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
 import io.redlink.more.studymanager.model.Trigger;
-import io.redlink.more.studymanager.service.ActionService;
+import io.redlink.more.studymanager.action.ActionService;
 import io.redlink.more.studymanager.service.InterventionService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

@@ -3,9 +3,12 @@ package io.redlink.more.studymanager.sdk.scoped;
 import io.redlink.more.studymanager.core.component.Action;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.sdk.MoreSDK;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreActionSDK {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MoreActionSDKImpl.class);
     private final int interventionId;
     private final int actionId;
 
@@ -20,7 +23,8 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
 
     @Override
     public void sendPushNotification(String message) {
-
+        //TODO user service to send real message
+        LOGGER.info("Send message to participant (sid:{}, pid:{}): {}", studyId, participantId, message);
     }
 
     @Override
