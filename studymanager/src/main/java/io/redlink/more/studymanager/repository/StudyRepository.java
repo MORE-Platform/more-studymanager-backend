@@ -1,7 +1,10 @@
 package io.redlink.more.studymanager.repository;
 
+import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyRole;
 import java.util.List;
+import java.util.Set;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -17,6 +20,12 @@ public class StudyRepository {
             "RETURNING *";
     private static final String GET_STUDY_BY_ID = "SELECT * FROM studies WHERE study_id = ?";
     private static final String LIST_STUDIES_ORDER_BY_MODIFIED_DESC = "SELECT * FROM studies ORDER BY modified DESC";
+    private static final String LIST_STUDY_BY_ACL =
+            "SELECT studies.*, acl.user_roles " +
+            "FROM studies " +
+            "    INNER JOIN (SELECT acl.study_id, array_agg(user_role) AS user_roles FROM study_acl acl WHERE acl.user_id = :userId AND acl.user_role IN (:roles) GROUP BY acl.study_id) acl " +
+            "    ON (studies.study_id = acl.study_id) " +
+            "ORDER BY modified DESC";
     private static final String UPDATE_STUDY =
             "UPDATE studies SET title = :title, purpose = :purpose, participant_info = :participant_info, consent_info = :consent_info, planned_start_date = :planned_start_date, planned_end_date = :planned_end_date, modified = now() " +
             "WHERE study_id = :study_id " +
@@ -49,6 +58,12 @@ public class StudyRepository {
 
     public List<Study> listStudyOrderByModifiedDesc() {
         return template.query(LIST_STUDIES_ORDER_BY_MODIFIED_DESC, getStudyRowMapper());
+    }
+
+    public List<Study> listStudiesByAclOrderByModifiedDesc(AuthenticatedUser user, Set<StudyRole> allowedRoles) {
+        return namedTemplate.query(LIST_STUDY_BY_ACL,
+                StudyAclRepository.createParams(user.id(), allowedRoles),
+                getStudyRowMapperWithUserRoles());
     }
 
     public Study update(Study study) {
@@ -101,7 +116,16 @@ public class StudyRepository {
                 .setEndDate(rs.getDate("end_date"))
                 .setCreated(rs.getTimestamp("created"))
                 .setModified(rs.getTimestamp("modified"))
-                .setStudyState(Study.Status.valueOf(rs.getString("status").toUpperCase()));
+                .setStudyState(Study.Status.valueOf(rs.getString("status").toUpperCase()))
+                ;
+    }
+
+    private static RowMapper<Study> getStudyRowMapperWithUserRoles() {
+        return ((rs, rowNum) -> {
+            var study = getStudyRowMapper().mapRow(rs, rowNum);
+            if (study == null) return null;
+            return study.setUserRoles(StudyAclRepository.readRoleArray(rs, "user_roles"));
+        });
     }
 
     // for testing purpose only

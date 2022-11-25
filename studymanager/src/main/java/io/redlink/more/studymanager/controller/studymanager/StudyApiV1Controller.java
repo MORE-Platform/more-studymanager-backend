@@ -44,8 +44,11 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<List<StudyDTO>> listStudies() {
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                service.listStudies().stream().map(StudyTransformer::toStudyDTO_V1).toList()
+        var currentUser = authService.getCurrentUser();
+        return ResponseEntity.ok(
+                service.listStudies(currentUser).stream()
+                        .map(StudyTransformer::toStudyDTO_V1)
+                        .toList()
         );
     }
 

@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.User;
@@ -39,6 +40,14 @@ public class StudyService {
 
     public List<Study> listStudies() {
         return studyRepository.listStudyOrderByModifiedDesc();
+    }
+
+    public List<Study> listStudies(AuthenticatedUser user) {
+        return listStudies(user, EnumSet.allOf(StudyRole.class));
+    }
+
+    private List<Study> listStudies(AuthenticatedUser user, EnumSet<StudyRole> allowedRoles) {
+        return studyRepository.listStudiesByAclOrderByModifiedDesc(user, allowedRoles);
     }
 
     public Study getStudy(Long studyId) {

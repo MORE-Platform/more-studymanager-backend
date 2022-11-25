@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -123,7 +124,7 @@ public class StudyAclRepository {
 
     @Transactional
     public Set<StudyRole> setRoles(long studyId, String userId, Set<StudyRole> roles) {
-        final Map<String, Object> paramMap = createParams(studyId, userId, roles);
+        var paramMap = createParams(studyId, userId, roles);
 
         jdbcTemplate.update(SQL_RETAIN_ROLES, paramMap);
         return jdbcTemplate.queryForStream(SQL_UPDATE_ROLES,
@@ -139,19 +140,24 @@ public class StudyAclRepository {
         jdbcTemplate.update(CLEAR_ROLES, createParams(studyId, userId));
     }
 
-    private static Map<String, Object> createParams(long studyId, String userId, Set<StudyRole> roles) {
-        return Map.of(
-                "studyId", studyId,
-                "userId", userId,
-                "roles", roles.stream().map(Enum::name).toList()
-        );
+    static MapSqlParameterSource createParams(long studyId, String userId, Set<StudyRole> roles) {
+        return createParams(studyId, userId)
+                .addValue("roles", roles.stream().map(Enum::name).toList())
+                ;
     }
 
-    private static Map<String, Object> createParams(long studyId, String userId) {
-        return Map.of(
-                "studyId", studyId,
-                "userId", userId
-        );
+    static MapSqlParameterSource createParams(long studyId, String userId) {
+        return new MapSqlParameterSource()
+                .addValue("studyId", studyId)
+                .addValue("userId", userId)
+                ;
+    }
+
+    static MapSqlParameterSource createParams(String userId, Set<StudyRole> roles) {
+        return new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("roles", roles.stream().map(Enum::name).toList())
+                ;
     }
 
     private static MoreUser readUser(ResultSet rs) throws SQLException {
@@ -165,7 +171,7 @@ public class StudyAclRepository {
         );
     }
 
-    private static Set<StudyRole> readRoleArray(ResultSet rs, String columnLabel) throws SQLException {
+    static Set<StudyRole> readRoleArray(ResultSet rs, String columnLabel) throws SQLException {
         try (var array = rs.getArray(columnLabel).getResultSet()) {
             var roles = EnumSet.noneOf(StudyRole.class);
             while (array.next()) {
@@ -178,7 +184,7 @@ public class StudyAclRepository {
         }
     }
 
-    private static StudyRole readRole(ResultSet rs, String columnLabel) throws SQLException {
+    static StudyRole readRole(ResultSet rs, String columnLabel) throws SQLException {
         try {
             return StudyRole.valueOf(rs.getString(columnLabel));
         } catch (IllegalArgumentException e) {
