@@ -1,28 +1,17 @@
 package io.redlink.more.studymanager.model;
 
-import java.util.Set;
+import java.time.Instant;
 
 public record MoreUser(
         String id,
-        String fistName,
-        String lastName,
         String fullName,
-        String email,
         String institution,
-        Set<Role> roles
-) {
+        String email,
+        Instant inserted,
+        Instant updated
+) implements User {
 
-    public enum Role {
-        STUDY_VIEWER,
-        STUDY_CREATOR
+    public MoreUser(String id, String fullName, String institution, String email) {
+        this(id, fullName, institution, email, null, null);
     }
-
-    boolean canViewStudies() {
-        return roles.contains(Role.STUDY_VIEWER);
-    }
-
-    boolean canCreateStudies() {
-        return roles.contains(Role.STUDY_CREATOR);
-    }
-
 }
