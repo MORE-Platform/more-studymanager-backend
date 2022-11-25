@@ -73,8 +73,4 @@ public class MoreSDK {
     public void removeSchedule(String issuer, String id) {
         schedulingService.unscheduleJob(issuer, id, TriggerJob.class);
     }
-
-    public void testPing(Object data) {
-        LOGGER.debug("Testping: {}", data.toString());
-    }
 }
