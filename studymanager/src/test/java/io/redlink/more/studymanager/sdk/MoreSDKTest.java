@@ -2,8 +2,10 @@ package io.redlink.more.studymanager.sdk;
 
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.io.Parameters;
+import io.redlink.more.studymanager.core.io.TriggerResult;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
 import io.redlink.more.studymanager.model.Trigger;
+import io.redlink.more.studymanager.service.ActionService;
 import io.redlink.more.studymanager.service.InterventionService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -33,16 +35,22 @@ public class MoreSDKTest {
     @MockBean
     InterventionService interventionService;
 
+    @MockBean
+    ActionService actionService;
+
     @Test
     public void testTriggerScheduling() throws InterruptedException, JobExecutionException {
         Trigger triggerModel = spy(Trigger.class);
         io.redlink.more.studymanager.core.component.Trigger trigger =
                 mock( io.redlink.more.studymanager.core.component.Trigger.class);
+        TriggerResult triggerResult = mock(TriggerResult.class);
 
         when(triggerModel.getType()).thenReturn("test-trigger");
         when(interventionService.getTriggerByIds(any(),any())).thenReturn(triggerModel);
         when(triggerFactory.getId()).thenReturn("test-trigger");
         when(triggerFactory.create(any(), any())).thenReturn(trigger);
+        when(trigger.execute(any())).thenReturn(triggerResult);
+        when(triggerResult.proceed()).thenReturn(false);
 
         String id = moreSDK.addSchedule("i1", 1,null, 1, new CronSchedule("* * * ? * *"));
         TimeUnit.SECONDS.sleep(1);

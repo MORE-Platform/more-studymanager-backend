@@ -23,7 +23,7 @@ public class TriggerResult {
         return actionParameters;
     }
 
-    public boolean isProceed() {
+    public boolean proceed() {
         return proceed;
     }
 }
