@@ -4,11 +4,8 @@ import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyStatusDTO;
 import io.redlink.more.studymanager.model.Study;
-import org.threeten.bp.ZoneOffset;
-
 import java.sql.Date;
 import java.time.OffsetDateTime;
-import java.time.OffsetTime;
 
 public class StudyTransformer {
 

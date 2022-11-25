@@ -10,4 +10,9 @@ public class MoreObservationSDKImpl extends MorePlatformSDKImpl {
         super(sdk, studyId, studyGroupId);
         this.observationId = observationId;
     }
+
+    @Override
+    public String getIssuer() {
+        return studyId + "-" + studyGroupId + '-' + observationId + "-observation";
+    }
 }

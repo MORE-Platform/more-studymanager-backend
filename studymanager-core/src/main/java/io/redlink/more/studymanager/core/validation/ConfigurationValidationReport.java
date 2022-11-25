@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ConfigurationValidationReport {
-
-    public static final ConfigurationValidationReport VALID = ConfigurationValidationReport.init();
     private final List<ValidationIssue> issues;
 
     private ConfigurationValidationReport() {

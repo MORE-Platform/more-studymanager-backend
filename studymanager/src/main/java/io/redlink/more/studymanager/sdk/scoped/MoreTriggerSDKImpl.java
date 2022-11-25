@@ -4,8 +4,6 @@ import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import org.apache.commons.lang3.NotImplementedException;
-
-import java.util.Optional;
 public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTriggerSDK {
 
     private final int interventionId;
@@ -16,22 +14,27 @@ public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTrigg
     }
 
     @Override
-    public Optional<String> addSchedule(Schedule schedule) {
-        return Optional.empty();
+    public String addSchedule(Schedule schedule) {
+        return sdk.addSchedule(getIssuer(), studyId, studyGroupId, interventionId, schedule);
     }
 
     @Override
     public void removeSchedule(String id) {
-
+        sdk.removeSchedule(getIssuer(), id);
     }
 
     @Override
-    public Optional<String> addWebhook() {
+    public String addWebhook() {
         throw new NotImplementedException();
     }
 
     @Override
     public void removeWebhook() {
         throw new NotImplementedException();
+    }
+
+    @Override
+    public String getIssuer() {
+        return studyId + "-" + studyGroupId + '-' + interventionId + "-trigger";
     }
 }

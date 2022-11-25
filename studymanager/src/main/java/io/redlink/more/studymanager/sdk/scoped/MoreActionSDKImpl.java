@@ -22,4 +22,9 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
     public void sendPushNotification(String message) {
 
     }
+
+    @Override
+    public String getIssuer() {
+        return studyId + "-" + studyGroupId + '-' + interventionId + "-" + actionId + "-action";
+    }
 }

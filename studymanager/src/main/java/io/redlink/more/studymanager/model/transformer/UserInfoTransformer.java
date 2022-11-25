@@ -3,7 +3,7 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.PlatformPermissionDTO;
+import io.redlink.more.studymanager.api.v1.model.PlatformRoleDTO;
 import io.redlink.more.studymanager.api.v1.model.UserInfoDTO;
 import io.redlink.more.studymanager.model.MoreUser;
 import java.util.Objects;
@@ -19,20 +19,20 @@ public final class UserInfoTransformer {
                 .name(user.fullName())
                 .email(user.email())
                 .institution(user.institution())
-                .permissions(toPlatformPermissions(user.roles()));
+                .roles(toPlatformRoles(user.roles()));
     }
 
-    public static Set<PlatformPermissionDTO> toPlatformPermissions(Set<MoreUser.Role> roles) {
+    public static Set<PlatformRoleDTO> toPlatformRoles(Set<MoreUser.Role> roles) {
         return roles.stream()
-                .map(UserInfoTransformer::toPlatformPermission)
+                .map(UserInfoTransformer::toPlatformRole)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toUnmodifiableSet());
     }
 
-    public static PlatformPermissionDTO toPlatformPermission(MoreUser.Role role) {
+    public static PlatformRoleDTO toPlatformRole(MoreUser.Role role) {
         return switch (role) {
-            case STUDY_VIEWER -> PlatformPermissionDTO.READ_STUDIES;
-            case STUDY_CREATOR -> PlatformPermissionDTO.CREATE_STUDIES;
+            case STUDY_VIEWER -> PlatformRoleDTO.VIEWER;
+            case STUDY_CREATOR -> PlatformRoleDTO.OPERATOR;
             default -> null;
         };
     }

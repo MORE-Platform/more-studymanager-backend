@@ -6,9 +6,9 @@ import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
 import java.util.Optional;
 
 public interface MoreTriggerSDK extends MorePlatformSDK {
-    Optional<String> addSchedule(Schedule schedule);
+    String addSchedule(Schedule schedule);
     void removeSchedule(String id);
 
-    Optional<String> addWebhook();
+    String addWebhook();
     void removeWebhook();
 }
