@@ -725,6 +725,25 @@ paths:
         '400':
           description: bad request
 
+  /studies/{studyId}/export/participants:
+    parameters:
+      - $ref: '#/components/parameters/StudyId'
+    get:
+      tags:
+        - importExport
+      description: Export Participants
+      operationId: exportParticipants
+      responses:
+        200:
+          description: foo
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: bad request
+
   /users/me:
     get:
       tags:
