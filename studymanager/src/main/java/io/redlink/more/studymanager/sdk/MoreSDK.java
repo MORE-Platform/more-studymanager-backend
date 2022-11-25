@@ -5,21 +5,31 @@ import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
 import io.redlink.more.studymanager.repository.NameValuePairRepository;
+import io.redlink.more.studymanager.scheduling.SchedulingService;
+import io.redlink.more.studymanager.scheduling.TriggerJob;
 import io.redlink.more.studymanager.sdk.scoped.MoreActionSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreObservationSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreTriggerSDKImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
 public class MoreSDK {
 
+    private final Logger LOGGER = LoggerFactory.getLogger(MoreSDK.class);
     private final NameValuePairRepository nvpairs;
 
-    public MoreSDK(NameValuePairRepository nvpairs) {
+    private final SchedulingService schedulingService;
+
+    public MoreSDK(NameValuePairRepository nvpairs, SchedulingService schedulingService) {
         this.nvpairs = nvpairs;
+        this.schedulingService = schedulingService;
     }
 
     public <T extends Serializable> void setValue(String issuer, String name, T value) {
@@ -47,10 +57,24 @@ public class MoreSDK {
     }
 
     public String addSchedule(String issuer, long studyId, Integer studyGroupId, int interventionId, Schedule schedule) {
-        return null;
+
+        //build data map
+        Map<String, Object> data = new HashMap<>(Map.of("studyId", studyId, "interventionId", interventionId));
+        Optional.ofNullable(studyGroupId).ifPresent(v -> data.put("studyGroupId", studyGroupId));
+
+        return schedulingService.scheduleJob(
+                issuer,
+                data,
+                schedule,
+                TriggerJob.class
+        );
     }
 
     public void removeSchedule(String issuer, String id) {
+        schedulingService.unscheduleJob(issuer, id, TriggerJob.class);
+    }
 
+    public void testPing(Object data) {
+        LOGGER.debug("Testping: {}", data.toString());
     }
 }
