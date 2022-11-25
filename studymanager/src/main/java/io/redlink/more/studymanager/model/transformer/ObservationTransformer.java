@@ -19,7 +19,7 @@ public class ObservationTransformer {
                 .setType(dto.getType())
                 .setStudyGroupId(dto.getStudyGroupId())
                 .setProperties(MapperUtils.MAPPER.convertValue(dto.getProperties(), ObservationProperties.class))
-                .setSchedule(dto.getSchedule());
+                .setSchedule(EventTransformer.fromEventDTO_V1(dto.getSchedule()));
     }
 
     public static ObservationDTO toObservationDTO_V1(Observation observation) {
@@ -32,7 +32,7 @@ public class ObservationTransformer {
                 .type(observation.getType())
                 .studyGroupId(observation.getStudyGroupId())
                 .properties(observation.getProperties())
-                .schedule(new EventDTO())
+                .schedule(EventTransformer.toEventDTO_V1(observation.getSchedule()))
                 .created(observation.getCreated().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()))
                 .modified(observation.getModified().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()));
     }

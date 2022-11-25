@@ -13,7 +13,7 @@ public class Observation {
     private String type;
     private Integer studyGroupId;
     private ObservationProperties properties;
-    private Object schedule;
+    private Event schedule;
     private Timestamp created;
     private Timestamp modified;
 
@@ -90,11 +90,11 @@ public class Observation {
         return this;
     }
 
-    public Object getSchedule() {
+    public Event getSchedule() {
         return schedule;
     }
 
-    public Observation setSchedule(Object schedule) {
+    public Observation setSchedule(Event schedule) {
         this.schedule = schedule;
         return this;
     }
