@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.JobKey.jobKey;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
@@ -53,6 +53,7 @@ public class TestQrtzScheduler {
         scheduler.start();
 
         Trigger t1 = trigger(job1,"1");
+        System.out.println();
 
         scheduler.scheduleJob(job1, t1);
 
@@ -80,6 +81,22 @@ public class TestQrtzScheduler {
                 .withIdentity(id)
                 .usingJobData("issuer", "issuer"+id )
                 .build();
+    }
+
+    @Test
+    public void testTriggerStopWithStringKey() throws SchedulerException, InterruptedException {
+        Scheduler scheduler = factory.getScheduler();
+        scheduler.start();
+        JobDetail job = jobDetail("job");
+        String triggerId = "trigger";
+        scheduler.scheduleJob(job, trigger(job, triggerId));
+        TimeUnit.MILLISECONDS.sleep(500);
+        scheduler.unscheduleJob(new TriggerKey(triggerId));
+        verify(moreSDK, times(2)).getValue(any(),any(),any());
+        reset(moreSDK);
+        TimeUnit.MILLISECONDS.sleep(200);
+        verify(moreSDK, never()).getValue(any(),any(),any());
+        scheduler.shutdown();
     }
 
     public Trigger trigger(JobDetail job, String key) {

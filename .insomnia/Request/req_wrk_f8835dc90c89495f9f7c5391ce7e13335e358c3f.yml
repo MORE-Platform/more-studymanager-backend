@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e13335e358c3f
 type: Request
 parentId: fld_cb2aee86404440a2a911b8e9618b8b35
-modified: 1668777519261
+modified: 1669207580990
 created: 1667561236513
 url: "{{ _.api_base }}/studies/{{ studyId }}/interventions/{{ _.interventionId
   }}/actions"
@@ -12,7 +12,7 @@ body:
   mimeType: application/json
   text: |-
     {
-    	"type": "my-type",
+    	"type": "action",
     	"properties": {
     		"actionProperty": "some property"
     	}

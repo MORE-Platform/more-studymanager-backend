@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333ef36f8bb
 type: Request
 parentId: fld_f8bcdf8c9e774fb9b5098233f6261885
-modified: 1668771802936
+modified: 1669207574862
 created: 1667561236518
 url: "{{ _.api_base }}/studies/{{ studyId }}/observations"
 name: /studies/{studyId}/observations
@@ -11,13 +11,21 @@ body:
   mimeType: application/json
   text: |-
     {
-      "studyGroupId": 1,
-      "title": "accelerometer",
-      "purpose": "my purpose",
-      "participantInfo": "this is a smartphone accelerometer",
-      "type": "acc-mobile-observation",
-      "properties": {},
-      "schedule": {}
+    	"studyGroupId": {{studyGroupId}},
+    	"title": "accelerometer",
+    	"purpose": "my purpose",
+    	"participantInfo": "this is a smartphone accelerometer",
+    	"type": "acc-mobile-observation",
+    	"properties": {},
+    	"schedule": {
+    		"dtstart": "2022-11-23T07:42:27.316Z",
+    		"dtend": "2022-11-23T08:42:27.316Z",
+    		"rrule": {
+    			"freq": "DAILY",
+    			"until": "2022-11-30T07:42:27.316Z",
+    			"interval": 1
+    		}
+    	}
     }
 parameters: []
 headers:

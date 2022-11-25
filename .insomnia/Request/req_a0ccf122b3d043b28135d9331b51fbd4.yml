@@ -1,26 +1,24 @@
-_id: req_wrk_f8835dc90c89495f9f7c5391ce7e13337266d1c0
+_id: req_a0ccf122b3d043b28135d9331b51fbd4
 type: Request
-parentId: fld_663066df36c74ff9b0c69a2aabe4d759
-modified: 1669203857032
-created: 1667561236526
-url: "{{ _.api_base }}/components/trigger"
-name: /components/{componentType}
+parentId: fld_3d3afc6fe7fd469f94da7757f2fa0652
+modified: 1668778955465
+created: 1668777340108
+url: "{{ _.api_base }}/studies/{{studyId}}/export/participants"
+name: /studies/{studyId}/export/participants
 description: ""
 method: GET
 body: {}
 parameters: []
 headers: []
 authentication:
-  clientId: "{{ _.auth.clientId }}"
-  grantType: authorization_code
-  scope: "{{ _.auth.scopes }}"
   type: oauth2
-  redirectUrl: "{{ _.auth.redirectUrl }}"
+  grantType: authorization_code
   authorizationUrl: "{{ _.auth.authorizaionUrl }}"
-  disabled: false
   accessTokenUrl: "{{ _.auth.tokenUrl }}"
+  clientId: "{{ _.auth.clientId }}"
   clientSecret: "{{ _.auth.clientSecret }}"
-metaSortKey: -1667561236575
+  redirectUrl: "{{ _.auth.redirectUrl }}"
+metaSortKey: -1668777340108
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true

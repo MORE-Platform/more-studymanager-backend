@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e133306686a81
 type: Request
 parentId: fld_3ac4baaaecc44efeab366bf07b4656e8
-modified: 1668771897536
+modified: 1669207591981
 created: 1667561236514
 url: "{{ _.api_base }}/studies/{{ studyId }}/interventions/{{ interventionId
   }}/trigger"
@@ -12,10 +12,8 @@ body:
   mimeType: application/json
   text: |-
     {
-    	"type": "my-trigger",
-    	"properties": {
-    		"triggerProperty": "property"
-    	}
+    	"type": "scheduled-datacheck-trigger",
+    	"properties": {}
     }
 parameters: []
 headers:
