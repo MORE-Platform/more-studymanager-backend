@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.model.transformer;
 
+import io.redlink.more.studymanager.api.v1.model.EventDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.model.Observation;
@@ -31,7 +32,7 @@ public class ObservationTransformer {
                 .type(observation.getType())
                 .studyGroupId(observation.getStudyGroupId())
                 .properties(observation.getProperties())
-                .schedule(observation.getSchedule())
+                .schedule(new EventDTO())
                 .created(observation.getCreated().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()))
                 .modified(observation.getModified().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()));
     }

@@ -2,12 +2,10 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
-import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.repository.ObservationRepository;
-import io.redlink.more.studymanager.sdk.MorePlatformSDKImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,13 +16,10 @@ public class ObservationService {
 
     private final ObservationRepository repository;
 
-    private final MorePlatformSDK sdk;
-
     private final Map<String, ObservationFactory> observationFactories;
 
-    public ObservationService(ObservationRepository repository, MorePlatformSDKImpl sdk, Map<String, ObservationFactory> observationFactories) {
+    public ObservationService(ObservationRepository repository, Map<String, ObservationFactory> observationFactories) {
         this.repository = repository;
-        this.sdk = sdk;
         this.observationFactories = observationFactories;
     }
 
@@ -49,7 +44,7 @@ public class ObservationService {
             throw NotFoundException.ObservationFactory(observation.getType());
         }
         try {
-            observationFactories.get(observation.getType()).create(sdk, observation.getProperties());
+            observationFactories.get(observation.getType()).validate(observation.getProperties());
         } catch (ConfigurationValidationException e) {
             throw new BadRequestException(e.getMessage());
         }

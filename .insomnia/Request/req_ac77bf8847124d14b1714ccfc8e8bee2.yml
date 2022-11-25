@@ -1,0 +1,38 @@
+_id: req_ac77bf8847124d14b1714ccfc8e8bee2
+type: Request
+parentId: fld_ac178bbd6a794d82875032a46e60b2ec
+modified: 1669027179261
+created: 1669027120569
+url: "{{ _.api_base }}/studies/{{studyId}}/interventions/{{interventionId}}"
+name: /studies/{studyId}/interventions/{interventionId}
+description: ""
+method: PUT
+body:
+  mimeType: application/json
+  text: |-
+    {
+      "title": "My intervention",
+      "purpose": "some purpose",
+    	"studyGroupId": 1
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+authentication:
+  type: oauth2
+  grantType: authorization_code
+  authorizationUrl: "{{ _.auth.authorizaionUrl }}"
+  accessTokenUrl: "{{ _.auth.tokenUrl }}"
+  clientId: "{{ _.auth.clientId }}"
+  clientSecret: "{{ _.auth.clientSecret }}"
+  redirectUrl: "{{ _.auth.redirectUrl }}"
+  scope: "{{ _.auth.scopes }}"
+metaSortKey: -1667561236560.1875
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

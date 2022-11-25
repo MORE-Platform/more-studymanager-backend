@@ -45,9 +45,9 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.name").value(moreUser.fullName()))
                 .andExpect(jsonPath("$.email").value(moreUser.email()))
                 .andExpect(jsonPath("$.institution").value(moreUser.institution()))
-                .andExpect(jsonPath("$.permissions").value(
+                .andExpect(jsonPath("$.roles").value(
                         Matchers.contains(
-                                UserInfoTransformer.toPlatformPermission(MoreUser.Role.STUDY_CREATOR).getValue())
+                                UserInfoTransformer.toPlatformRole(MoreUser.Role.STUDY_CREATOR).getValue())
                         ))
         ;
     }

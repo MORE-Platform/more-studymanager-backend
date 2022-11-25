@@ -1,0 +1,29 @@
+_id: req_a2a08ae0f9d24fafa1ce65105a653bbe
+type: Request
+parentId: fld_ac178bbd6a794d82875032a46e60b2ec
+modified: 1669027134651
+created: 1669026897782
+url: "{{ _.api_base }}/studies/{{studyId}}/interventions/{{interventionId}}"
+name: /studies/{studyId}/interventions/{interventionId}
+description: ""
+method: DELETE
+body: {}
+parameters: []
+headers: []
+authentication:
+  type: oauth2
+  grantType: authorization_code
+  authorizationUrl: "{{ _.auth.authorizaionUrl }}"
+  accessTokenUrl: "{{ _.auth.tokenUrl }}"
+  clientId: "{{ _.auth.clientId }}"
+  clientSecret: "{{ _.auth.clientSecret }}"
+  redirectUrl: "{{ _.auth.redirectUrl }}"
+  scope: "{{ _.auth.scopes }}"
+metaSortKey: -1667561236566
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

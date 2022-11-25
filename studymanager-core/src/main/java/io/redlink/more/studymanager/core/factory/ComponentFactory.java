@@ -12,6 +12,8 @@ public abstract class ComponentFactory<C extends Component, P extends ComponentP
 
     public abstract String getDescription();
 
+    public abstract P validate(P properties);
+
     public WebComponent getWebComponent() {
         return null;
     }

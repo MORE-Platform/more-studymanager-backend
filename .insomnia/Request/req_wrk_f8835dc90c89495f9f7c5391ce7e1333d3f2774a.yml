@@ -1,27 +1,19 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e1333d3f2774a
 type: Request
 parentId: fld_96610131475c47f49e19ab6e25398dce
-modified: 1668771453921
+modified: 1668777676959
 created: 1667561236520
 url: "{{ _.api_base }}/studies/{{ studyId }}/participants"
 name: /studies/{studyId}/participants
 description: ""
 method: POST
 body:
-  mimeType: application/json
-  text: |-
-    [
-      {
-        "alias": "p1"
-      },  
-    	{
-        "alias": "p2"
-      }
-    ]
+  mimeType: application/octet-stream
+  fileName: /Users/juliamayrhauser/Downloads/Participants.csv
 parameters: []
 headers:
   - name: Content-Type
-    value: application/json
+    value: text/csv
 authentication:
   clientId: "{{ _.auth.clientId }}"
   grantType: authorization_code
