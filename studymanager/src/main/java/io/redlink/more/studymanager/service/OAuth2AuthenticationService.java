@@ -5,7 +5,6 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.PlatformRole;
-import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.MoreAuthProperties;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -46,7 +45,11 @@ public class OAuth2AuthenticationService {
     }
 
     private StandardClaimAccessor getClaimAccessor() {
-        return Optional.ofNullable(getAuthentication())
+        return getStandardClaimAccessor(getAuthentication());
+    }
+
+    public static StandardClaimAccessor getStandardClaimAccessor(Authentication authentication) {
+        return Optional.ofNullable(authentication)
                 .map(Authentication::getPrincipal)
                 .filter(ClaimAccessor.class::isInstance)
                 .map(ClaimAccessor.class::cast)
@@ -55,7 +58,14 @@ public class OAuth2AuthenticationService {
     }
 
     public AuthenticatedUser getCurrentUser() {
-        final StandardClaimAccessor claims = getClaimAccessor();
+        return getAuthenticatedUser(getClaimAccessor());
+    }
+
+    public AuthenticatedUser getAuthenticatedUser(Authentication authentication) {
+        return getAuthenticatedUser(getStandardClaimAccessor(authentication));
+    }
+
+    private AuthenticatedUser getAuthenticatedUser(StandardClaimAccessor claims) {
         if (claims != null)
             return new AuthenticatedUser(
                     claims.getSubject(),

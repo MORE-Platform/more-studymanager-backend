@@ -1,6 +1,7 @@
 package io.redlink.more.studymanager.configuration;
 
 import io.redlink.more.studymanager.properties.MoreAuthProperties;
+import io.redlink.more.studymanager.repository.UserRepository;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -8,6 +9,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
@@ -15,7 +19,6 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.web.context.annotation.RequestScope;
 
 @Configuration
 @EnableWebSecurity
@@ -32,7 +35,10 @@ public class WebSecurityConfiguration {
     }
 
     @Bean
-    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    protected SecurityFilterChain filterChain(HttpSecurity http,
+                                              OAuth2AuthenticationService oAuth2AuthenticationService,
+                                              OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
+                                              UserRepository userRepository) throws Exception {
         // Basics
         http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
         http.cors().disable();
@@ -57,7 +63,11 @@ public class WebSecurityConfiguration {
         // Enable OAuth2
         http.oauth2Login()
                 // register oauth2-provider under this baseurl to simplify routing
-                .authorizationEndpoint().baseUri("/login/oauth");
+                .authorizationEndpoint().baseUri("/login/oauth").and()
+                .authorizedClientService(
+                        new UserSyncingOAuth2AuthorizedClientService(oAuth2AuthorizedClientService, oAuth2AuthenticationService, userRepository)
+                );
+
         // Enable OAuth2 client_credentials flow (insomnia)
         http.oauth2ResourceServer().jwt();
 
@@ -72,9 +82,42 @@ public class WebSecurityConfiguration {
     }
 
     @Bean
-    @RequestScope
     protected OAuth2AuthenticationService oAuth2AuthenticationService() {
         return new OAuth2AuthenticationService(moreAuthProperties);
+    }
+
+    static class UserSyncingOAuth2AuthorizedClientService implements OAuth2AuthorizedClientService {
+
+        private final OAuth2AuthorizedClientService delegate;
+        private final OAuth2AuthenticationService oAuth2AuthenticationService;
+        private final UserRepository userRepository;
+
+        UserSyncingOAuth2AuthorizedClientService(OAuth2AuthorizedClientService delegate,
+                                                 OAuth2AuthenticationService oAuth2AuthenticationService,
+                                                 UserRepository userRepository) {
+            this.delegate = delegate;
+            this.oAuth2AuthenticationService = oAuth2AuthenticationService;
+            this.userRepository = userRepository;
+        }
+
+        @Override
+        public <T extends OAuth2AuthorizedClient> T loadAuthorizedClient(String clientRegistrationId, String principalName) {
+            return delegate.loadAuthorizedClient(clientRegistrationId, principalName);
+        }
+
+        @Override
+        public void saveAuthorizedClient(OAuth2AuthorizedClient authorizedClient, Authentication authentication) {
+            var user = oAuth2AuthenticationService.getAuthenticatedUser(authentication);
+            if (user.id() != null) {
+                userRepository.save(user);
+            }
+            delegate.saveAuthorizedClient(authorizedClient, authentication);
+        }
+
+        @Override
+        public void removeAuthorizedClient(String clientRegistrationId, String principalName) {
+            delegate.removeAuthorizedClient(clientRegistrationId, principalName);
+        }
     }
 
 }

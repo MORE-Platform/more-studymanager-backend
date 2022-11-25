@@ -2,7 +2,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.PlatformRole;
-import io.redlink.more.studymanager.model.transformer.UserInfoTransformer;
+import io.redlink.more.studymanager.model.transformer.RoleTransformer;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -48,7 +48,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.institution").value(authUser.institution()))
                 .andExpect(jsonPath("$.roles").value(
                         Matchers.contains(
-                                UserInfoTransformer.toPlatformRole(PlatformRole.MORE_OPERATOR).getValue())
+                                RoleTransformer.toPlatformRoleDTO(PlatformRole.MORE_OPERATOR).getValue())
                         ))
         ;
     }

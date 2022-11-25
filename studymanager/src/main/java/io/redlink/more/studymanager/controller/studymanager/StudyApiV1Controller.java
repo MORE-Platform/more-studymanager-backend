@@ -34,8 +34,9 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<StudyDTO> createStudy(StudyDTO studyDTO) {
-        Study study = service.createStudy(StudyTransformer.fromStudyDTO_V1(studyDTO));
-        LOGGER.debug("{} created a study {}", authService.getCurrentUser(), study);
+        var currentUser = authService.getCurrentUser();
+        Study study = service.createStudy(StudyTransformer.fromStudyDTO_V1(studyDTO), currentUser);
+        LOGGER.debug("{} created a study {}", currentUser, study);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 StudyTransformer.toStudyDTO_V1(study)
         );
@@ -43,8 +44,11 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<List<StudyDTO>> listStudies() {
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                service.listStudies().stream().map(StudyTransformer::toStudyDTO_V1).toList()
+        var currentUser = authService.getCurrentUser();
+        return ResponseEntity.ok(
+                service.listStudies(currentUser).stream()
+                        .map(StudyTransformer::toStudyDTO_V1)
+                        .toList()
         );
     }
 

@@ -5,7 +5,9 @@ import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import java.util.EnumSet;
 import java.util.Set;
+import org.hamcrest.Description;
 import org.hamcrest.Matchers;
+import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,4 +94,63 @@ class StudyAclRepositoryTest {
         studyAclRepository.clearRoles(study.getStudyId(), user1.id());
         assertFalse(studyAclRepository.hasAnyRole(study.getStudyId(), user1.id(), EnumSet.allOf(StudyRole.class)));
     }
+
+    @Test
+    void testListStudiesByACL() {
+        // user1 has study
+        studyAclRepository.setRoles(study.getStudyId(), user1.id(), EnumSet.allOf(StudyRole.class));
+
+        // second study is for user 2
+        var study2 = studyRepository.insert(new Study().setTitle("Study 2"));
+        studyAclRepository.setRoles(study2.getStudyId(), user2.id(), EnumSet.allOf(StudyRole.class));
+        // user2 has view-rights on study1
+        studyAclRepository.setRoles(study.getStudyId(), user2.id(), EnumSet.of(StudyRole.STUDY_VIEWER));
+
+
+        assertThat(
+                "<user1> has only access to <study>",
+                studyRepository.listStudiesByAclOrderByModifiedDesc(user1, EnumSet.allOf(StudyRole.class)),
+                Matchers.contains(hasSameStudyId(study))
+                );
+        assertThat(
+                "<user2> has access to both studies",
+                studyRepository.listStudiesByAclOrderByModifiedDesc(user2, EnumSet.allOf(StudyRole.class)),
+                Matchers.contains(hasSameStudyId(study2), hasSameStudyId(study))
+        );
+        assertThat(
+                "<user2> has VIEWER-access to both studies",
+                studyRepository.listStudiesByAclOrderByModifiedDesc(user2, EnumSet.of(StudyRole.STUDY_VIEWER)),
+                Matchers.contains(hasSameStudyId(study2), hasSameStudyId(study))
+        );
+        assertThat(
+                "<user2> has ADMIN-access only to <study2>",
+                studyRepository.listStudiesByAclOrderByModifiedDesc(user2, EnumSet.of(StudyRole.STUDY_ADMIN)),
+                Matchers.contains(hasSameStudyId(study2))
+        );
+
+    }
+
+    static TypeSafeDiagnosingMatcher<Study> hasSameStudyId(Study study) {
+        return hasStudyId(study.getStudyId());
+    }
+
+    static TypeSafeDiagnosingMatcher<Study> hasStudyId(long studyId) {
+        return new TypeSafeDiagnosingMatcher<>() {
+            @Override
+            protected boolean matchesSafely(Study item, Description mismatchDescription) {
+                describeTo(mismatchDescription, item.getStudyId());
+                return studyId == item.getStudyId();
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                describeTo(description, studyId);
+            }
+
+            private void describeTo(Description description, Long studyId) {
+                description.appendText("a study with studyId=").appendValue(studyId);
+            }
+        };
+    }
+
 }
