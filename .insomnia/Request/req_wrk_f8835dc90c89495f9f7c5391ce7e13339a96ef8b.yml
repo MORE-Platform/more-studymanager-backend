@@ -1,7 +1,7 @@
 _id: req_wrk_f8835dc90c89495f9f7c5391ce7e13339a96ef8b
 type: Request
 parentId: fld_ac178bbd6a794d82875032a46e60b2ec
-modified: 1669027176296
+modified: 1669302744989
 created: 1667561236516
 url: "{{ _.api_base }}/studies/{{ studyId }}/interventions"
 name: /studies/{studyId}/interventions
@@ -11,8 +11,23 @@ body:
   mimeType: application/json
   text: |-
     {
-      "title": "My intervention",
-      "purpose": "some purpose"
+    	"title": "My intervention",
+    	"purpose": "some purpose",
+    	"schedule": {
+    		"dtstart": "2022-11-23T07:42:27.316Z",
+    		"dtend": "2022-11-23T08:42:27.316Z",
+    		"rrule": {
+    			"freq": "WEEKLY",
+    			"until": "2022-11-30T07:42:27.316Z",
+    			"interval": 1,
+    			"byday": [
+    				"MO",
+    				"TU",
+    				"WE"
+    			]
+    			
+    		}
+    	}
     }
 parameters: []
 headers:
