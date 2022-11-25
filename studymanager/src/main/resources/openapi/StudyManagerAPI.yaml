@@ -912,7 +912,7 @@ components:
         properties:
           type: object
         schedule:
-          $ref: './Schedule.yaml/#/components/schemas/Event'
+          $ref: './Event.yaml/#/components/schemas/Event'
         created:
           type: string
           format: date-time
@@ -936,7 +936,7 @@ components:
         purpose:
           type: string
         schedule:
-          $ref: './Schedule.yaml/#/components/schemas/Event'
+          $ref: './Event.yaml/#/components/schemas/Event'
         trigger:
           $ref: '#/components/schemas/Trigger'
         actions:
