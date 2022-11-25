@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@RequestMapping(value = "/api/v1", produces = "text/csv")
+@RequestMapping(value = "/api/v1")
 public class ImportExportApiV1Controller implements ImportExportApi {
 
     private final ImportExportService service;
