@@ -14,7 +14,7 @@ public class InterventionTransformer {
                 .setTitle(dto.getTitle())
                 .setPurpose(dto.getPurpose())
                 .setStudyGroupId(dto.getStudyGroupId())
-                .setSchedule(dto.getSchedule());
+                .setSchedule(EventTransformer.fromEventDTO_V1(dto.getSchedule()));
     }
 
     public static InterventionDTO toInterventionDTO_V1(Intervention intervention) {
@@ -24,7 +24,7 @@ public class InterventionTransformer {
                 .title(intervention.getTitle())
                 .purpose(intervention.getPurpose())
                 .studyGroupId(intervention.getStudyGroupId())
-                .schedule(new EventDTO())
+                .schedule(EventTransformer.toEventDTO_V1(intervention.getSchedule()))
                 .created(intervention.getCreated().atOffset(ZoneOffset.UTC))
                 .modified(intervention.getModified().atOffset(ZoneOffset.UTC));
     }
