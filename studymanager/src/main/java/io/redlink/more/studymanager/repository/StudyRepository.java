@@ -18,7 +18,11 @@ public class StudyRepository {
             "INSERT INTO studies (title,purpose,participant_info,consent_info,planned_start_date,planned_end_date) " +
             "VALUES (:title,:purpose,:participant_info,:consent_info,:planned_start_date,:planned_end_date) " +
             "RETURNING *";
-    private static final String GET_STUDY_BY_ID = "SELECT * FROM studies WHERE study_id = ?";
+    private static final String GET_STUDY_BY_ID =
+            "SELECT *, " +
+            "  (SELECT user_roles FROM study_roles_by_user WHERE study_roles_by_user.study_id = studies.study_id AND user_id = :userId) AS user_roles " +
+            "FROM studies " +
+            "WHERE study_id = :studyId";
     private static final String LIST_STUDIES_ORDER_BY_MODIFIED_DESC = "SELECT * FROM studies ORDER BY modified DESC";
     private static final String LIST_STUDY_BY_ACL =
             "SELECT studies.*, acl.user_roles " +
@@ -29,7 +33,7 @@ public class StudyRepository {
     private static final String UPDATE_STUDY =
             "UPDATE studies SET title = :title, purpose = :purpose, participant_info = :participant_info, consent_info = :consent_info, planned_start_date = :planned_start_date, planned_end_date = :planned_end_date, modified = now() " +
             "WHERE study_id = :study_id " +
-            "RETURNING *";
+            "RETURNING *, (SELECT user_roles FROM study_roles_by_user WHERE study_roles_by_user.study_id = studies.study_id AND user_id = :userId) AS user_roles";
 
     private static final String DELETE_BY_ID = "DELETE FROM studies WHERE study_id = ?";
     private static final String CLEAR_STUDIES = "DELETE FROM studies";
@@ -51,7 +55,15 @@ public class StudyRepository {
     }
 
     public Study getById(long id) {
-        return template.queryForStream(GET_STUDY_BY_ID, getStudyRowMapper(), id)
+        return getById(id, null);
+    }
+
+    public Study getById(long id, User user) {
+        return namedTemplate.queryForStream(GET_STUDY_BY_ID,
+                        new MapSqlParameterSource()
+                                .addValue("studyId", id)
+                                .addValue("userId", user != null ? user.id() : null),
+                        getStudyRowMapperWithUserRoles())
                 .findFirst()
                 .orElse(null);
     }
@@ -66,10 +78,12 @@ public class StudyRepository {
                 getStudyRowMapperWithUserRoles());
     }
 
-    public Study update(Study study) {
+    public Study update(Study study, User user) {
         return namedTemplate.queryForStream(UPDATE_STUDY,
-                        studyToParams(study).addValue("study_id", study.getStudyId()),
-                        getStudyRowMapper()
+                        studyToParams(study)
+                                .addValue("study_id", study.getStudyId())
+                                .addValue("userId", user != null ? user.id() : null),
+                        getStudyRowMapperWithUserRoles()
                 )
                 .findFirst()
                 .orElse(null);
