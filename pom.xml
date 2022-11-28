@@ -214,11 +214,6 @@
                 <version>0.10.2</version>
             </dependency>
             <dependency>
-                <groupId>com.vladmihalcea</groupId>
-                <artifactId>hibernate-types-52</artifactId>
-                <version>2.2.2</version>
-            </dependency>
-            <dependency>
                 <groupId>jakarta.json</groupId>
                 <artifactId>jakarta.json-api</artifactId>
                 <version>2.1.1</version>
