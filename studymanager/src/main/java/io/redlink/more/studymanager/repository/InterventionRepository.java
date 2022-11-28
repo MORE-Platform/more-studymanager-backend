@@ -9,6 +9,7 @@ import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import io.redlink.more.studymanager.model.Trigger;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -79,7 +80,11 @@ public class InterventionRepository {
     }
 
     public Trigger getTriggerByIds(Long studyId, Integer interventionId) {
-        return template.queryForObject(GET_TRIGGER_BY_IDS, getTriggerRowMapper(), studyId, interventionId);
+        try {
+            return template.queryForObject(GET_TRIGGER_BY_IDS, getTriggerRowMapper(), studyId, interventionId);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     public Action createAction(Long studyId, Integer interventionId, Action action) {

@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class InterventionService {
@@ -91,13 +93,15 @@ public class InterventionService {
 
     private List<io.redlink.more.studymanager.core.component.Trigger> listTriggersFor(Study study) {
         return listInterventions(study.getStudyId()).stream()
-                .map(intervention -> {
-                    Trigger trigger = getTriggerByIds(intervention.getStudyId(), intervention.getInterventionId());
-                    return factory(trigger).create(
-                            sdk.scopedTriggerSDK(intervention.getStudyId(), intervention.getStudyGroupId(), intervention.getInterventionId()),
-                            trigger.getProperties()
-                    );
-                }).toList();
+                .map(intervention -> Optional.ofNullable(
+                        getTriggerByIds(intervention.getStudyId(), intervention.getInterventionId()))
+                        .map(trigger -> {
+                            return factory(trigger).create(
+                                    sdk.scopedTriggerSDK(intervention.getStudyId(), intervention.getStudyGroupId(), intervention.getInterventionId()),
+                                    trigger.getProperties());
+                        }).orElse(null))
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     private Action validateAction(Action action) {

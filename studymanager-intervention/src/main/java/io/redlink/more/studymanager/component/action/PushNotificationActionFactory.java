@@ -9,7 +9,7 @@ import io.redlink.more.studymanager.core.validation.ConfigurationValidationRepor
 public class PushNotificationActionFactory extends ActionFactory<PushNotificationAction, ActionProperties> {
     @Override
     public PushNotificationAction create(MoreActionSDK sdk, ActionProperties properties) throws ConfigurationValidationException {
-        return null;
+        return new PushNotificationAction(sdk, validate(properties));
     }
 
     @Override

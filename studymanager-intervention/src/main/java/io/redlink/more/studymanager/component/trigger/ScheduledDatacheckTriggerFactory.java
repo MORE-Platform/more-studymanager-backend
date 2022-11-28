@@ -28,7 +28,7 @@ Checks if certain data occurs in a specific timeframe". Example: <code>
    "window": 100
 }
 </code>
-<a href="http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html">Further info on cron values</a>
+<a target="_blank" href="http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html">Further info on cron values</a>
 """;
     }
 
@@ -40,6 +40,10 @@ Checks if certain data occurs in a specific timeframe". Example: <code>
         try {
             if(properties.getCronSchedule().isEmpty()) {
                 report.missingProperty("cronSchedule");
+            } else {
+                if(!properties.getCronSchedule().map(QuartzCronExpressionValidator::validate).orElse(false)) {
+                    report.error("cronSchedule is not a valid cronExpression");
+                }
             }
         } catch (ClassCastException e) {
             report.error("cronSchedule must a valid string");

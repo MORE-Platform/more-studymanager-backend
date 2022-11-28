@@ -4,12 +4,14 @@ import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
+import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.repository.NameValuePairRepository;
 import io.redlink.more.studymanager.scheduling.SchedulingService;
 import io.redlink.more.studymanager.scheduling.TriggerJob;
 import io.redlink.more.studymanager.sdk.scoped.MoreActionSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreObservationSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreTriggerSDKImpl;
+import io.redlink.more.studymanager.service.ParticipantService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,8 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class MoreSDK {
@@ -27,9 +31,12 @@ public class MoreSDK {
 
     private final SchedulingService schedulingService;
 
-    public MoreSDK(NameValuePairRepository nvpairs, SchedulingService schedulingService) {
+    private final ParticipantService participantService;
+
+    public MoreSDK(NameValuePairRepository nvpairs, SchedulingService schedulingService, ParticipantService participantService) {
         this.nvpairs = nvpairs;
         this.schedulingService = schedulingService;
+        this.participantService = participantService;
     }
 
     public <T extends Serializable> void setValue(String issuer, String name, T value) {
@@ -44,11 +51,11 @@ public class MoreSDK {
         nvpairs.removeValue(issuer, name);
     }
 
-    public MoreActionSDK scopedActionSDK(Long studyId, int studyGroupId, int interventionId, int actionId, int participantId) {
+    public MoreActionSDK scopedActionSDK(Long studyId, Integer studyGroupId, int interventionId, int actionId, int participantId) {
         return new MoreActionSDKImpl(this, studyId, studyGroupId, interventionId, actionId, participantId);
     }
 
-    public MorePlatformSDK scopedPlatformSDK(Long studyId, int studyGroupId, int observationId) {
+    public MorePlatformSDK scopedPlatformSDK(Long studyId, Integer studyGroupId, int observationId) {
         return new MoreObservationSDKImpl(this, studyId, studyGroupId, observationId);
     }
 
@@ -74,7 +81,16 @@ public class MoreSDK {
         schedulingService.unscheduleJob(issuer, id, TriggerJob.class);
     }
 
-    public void testPing(Object data) {
-        LOGGER.debug("Testping: {}", data.toString());
+    public Set<Integer> listParticipants(long studyId, Integer studyGroupId) {
+        return participantService.listParticipants(studyId).stream()
+                .filter(p -> {
+                    if(p.getStudyGroupId() == null) {
+                        return studyGroupId == null;
+                    } else {
+                        return p.getStudyGroupId().equals(studyGroupId);
+                    }
+                })
+                .map(Participant::getParticipantId)
+                .collect(Collectors.toSet());
     }
 }

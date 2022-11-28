@@ -2,10 +2,9 @@ package io.redlink.more.studymanager.component.action;
 
 import io.redlink.more.studymanager.core.component.Action;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.io.ActionParameter;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
-
-import java.lang.reflect.Parameter;
 
 public class PushNotificationAction extends Action<ActionProperties> {
 
@@ -14,7 +13,7 @@ public class PushNotificationAction extends Action<ActionProperties> {
     }
 
     @Override
-    public void execute(Parameter parameters) {
+    public void execute(ActionParameter parameters) {
         sdk.sendPushNotification(properties.getString("message"));
     }
 }
