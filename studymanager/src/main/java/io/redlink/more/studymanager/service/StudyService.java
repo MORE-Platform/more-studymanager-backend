@@ -2,14 +2,18 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
+import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.StudyUserRoles;
 import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.stereotype.Service;
@@ -33,8 +37,8 @@ public class StudyService {
         // TODO: Workaround until proper auth is available
         var user = userRepo.save(currentUser);
         var savedStudy = studyRepository.insert(study);
-        aclRepository.setRoles(savedStudy.getStudyId(), user.id(), EnumSet.allOf(StudyRole.class));
-        return savedStudy;
+        aclRepository.setRoles(savedStudy.getStudyId(), user.id(), EnumSet.allOf(StudyRole.class), null);
+        return getStudy(savedStudy.getStudyId(), user);
     }
 
     public List<Study> listStudies() {
@@ -49,13 +53,13 @@ public class StudyService {
         return studyRepository.listStudiesByAclOrderByModifiedDesc(user, allowedRoles);
     }
 
-    public Study getStudy(Long studyId) {
-        return Optional.ofNullable(studyRepository.getById(studyId))
+    public Study getStudy(Long studyId, User user) {
+        return Optional.ofNullable(studyRepository.getById(studyId, user))
                 .orElseThrow(() -> NotFoundException.Study(studyId));
     }
 
-    public Study updateStudy(Study study) {
-        return studyRepository.update(study);
+    public Study updateStudy(Study study, User user) {
+        return studyRepository.update(study, user);
     }
 
     public void deleteStudy(Long studyId) {
@@ -63,22 +67,46 @@ public class StudyService {
     }
 
     public void setStatus(Long studyId, Study.Status status) {
-        Study study = getStudy(studyId);
-        if(status.equals(Study.Status.DRAFT)) {
+        Study study = getStudy(studyId, null);
+        if (status.equals(Study.Status.DRAFT)) {
             throw BadRequestException.StateChange(study.getStudyState(), Study.Status.DRAFT);
         }
-        if(study.getStudyState().equals(Study.Status.CLOSED)) {
+        if (study.getStudyState().equals(Study.Status.CLOSED)) {
             throw BadRequestException.StateChange(Study.Status.CLOSED, status);
         }
-        if(study.getStudyState().equals(status)) {
+        if (study.getStudyState().equals(status)) {
             throw BadRequestException.StateChange(study.getStudyState(), status);
         }
         studyRepository.setStateById(studyId, status);
 
-        if(status.equals(Study.Status.ACTIVE)) {
+        if (status.equals(Study.Status.ACTIVE)) {
             interventionService.activateInterventionsFor(study);
         } else {
             interventionService.deactivateInterventionsFor(study);
         }
+    }
+
+    public Map<MoreUser, Set<StudyRole>> getACL(Long studyId) {
+        return aclRepository.getACL(studyId);
+    }
+
+    public Optional<StudyUserRoles> setRolesForStudy(Long studyId, String userId, Set<StudyRole> roles,
+                                                     AuthenticatedUser currentUser) {
+        if (roles.isEmpty()) {
+            aclRepository.clearRoles(studyId, userId);
+            return Optional.empty();
+        }
+
+        aclRepository.setRoles(studyId, userId, roles, currentUser.id());
+        return getRolesForStudy(studyId, userId);
+    }
+
+    public Optional<StudyUserRoles> getRolesForStudy(Long studyId, String userId) {
+        return userRepo.getById(userId).map(user ->
+                new StudyUserRoles(
+                        user,
+                        aclRepository.getRoleDetails(studyId, userId)
+                )
+        );
     }
 }

@@ -83,7 +83,7 @@ class StudyControllerTest {
     @Test
     @DisplayName("Update study should return similar values")
     void testUpdateStudy() throws Exception {
-        when(studyService.updateStudy(any(Study.class))).thenAnswer(invocationOnMock ->
+        when(studyService.updateStudy(any(Study.class), any())).thenAnswer(invocationOnMock ->
                 invocationOnMock.getArgument(0, Study.class)
                         .setStudyState(Study.Status.DRAFT)
                         .setCreated(new Timestamp(0))

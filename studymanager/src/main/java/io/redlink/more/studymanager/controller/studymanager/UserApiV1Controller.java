@@ -3,7 +3,7 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
-import io.redlink.more.studymanager.api.v1.model.UserInfoDTO;
+import io.redlink.more.studymanager.api.v1.model.CurrentUserDTO;
 import io.redlink.more.studymanager.api.v1.webservices.UsersApi;
 import io.redlink.more.studymanager.model.transformer.UserInfoTransformer;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
@@ -23,9 +23,9 @@ public class UserApiV1Controller implements UsersApi {
     }
 
     @Override
-    public ResponseEntity<UserInfoDTO> getCurrentUser() {
+    public ResponseEntity<CurrentUserDTO> getCurrentUser() {
         return ResponseEntity.ok(
-                UserInfoTransformer.toUserInfoDTO(
+                UserInfoTransformer.toCurrentUserDTO(
                         authService.getCurrentUser()
                 )
         );
