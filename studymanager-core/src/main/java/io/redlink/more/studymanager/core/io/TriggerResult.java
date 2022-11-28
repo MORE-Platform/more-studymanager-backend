@@ -13,8 +13,6 @@ public class TriggerResult {
     }
 
     public static TriggerResult NOOP = new TriggerResult(null, false);
-    public static TriggerResult PROCEED_ALL = new TriggerResult(null, true);
-
     public static TriggerResult withParams(Set<ActionParameter> actionParameterSet) {
         return new TriggerResult(actionParameterSet, true);
     }
@@ -23,7 +21,7 @@ public class TriggerResult {
         return actionParameters;
     }
 
-    public boolean isProceed() {
+    public boolean proceed() {
         return proceed;
     }
 }

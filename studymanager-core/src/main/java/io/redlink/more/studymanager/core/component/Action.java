@@ -1,10 +1,9 @@
 package io.redlink.more.studymanager.core.component;
 
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.io.ActionParameter;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
-
-import java.lang.reflect.Parameter;
 
 public abstract class Action<C extends ActionProperties> extends Component<C> {
     protected final MoreActionSDK sdk;
@@ -13,7 +12,7 @@ public abstract class Action<C extends ActionProperties> extends Component<C> {
         this.sdk = sdk;
     }
 
-    public abstract void execute(Parameter parameters);
+    public abstract void execute(ActionParameter parameter);
 
 
     @Override

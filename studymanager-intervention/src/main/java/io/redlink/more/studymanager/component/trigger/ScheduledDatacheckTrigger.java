@@ -1,10 +1,13 @@
 package io.redlink.more.studymanager.component.trigger;
 
 import io.redlink.more.studymanager.core.component.Trigger;
+import io.redlink.more.studymanager.core.io.ActionParameter;
 import io.redlink.more.studymanager.core.io.Parameters;
 import io.redlink.more.studymanager.core.io.TriggerResult;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
+
+import java.util.stream.Collectors;
 
 public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTriggerProperties> {
 
@@ -29,8 +32,11 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
 
     @Override
     public TriggerResult execute(Parameters parameters) {
-        // get all participants where query maps
-        // TriggerResult.withParams(Set.of(new ActionParameter("p1", null)));
-        return TriggerResult.PROCEED_ALL;
+        // TODO get all participants where query maps
+        return TriggerResult.withParams(
+                sdk.participantIds().stream()
+                        .map(id -> new ActionParameter(sdk.getStudyId(), id))
+                        .collect(Collectors.toSet())
+        );
     }
 }

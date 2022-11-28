@@ -8,6 +8,8 @@ public interface MorePlatformSDK {
     <T extends Serializable> Optional<T> getValue(String name, Class<T> tClass);
     void removeValue(String name);
 
+    long getStudyId();
+    Integer getStudyGroupId();
     // TODO
     /*
     * webhook(id, (params) -> ...)
