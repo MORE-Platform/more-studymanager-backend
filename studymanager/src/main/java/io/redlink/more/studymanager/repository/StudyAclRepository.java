@@ -7,6 +7,7 @@ import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.StudyUserRoles;
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.EnumSet;
@@ -188,10 +189,13 @@ public class StudyAclRepository {
     }
 
     static Set<StudyRole> readRoleArray(ResultSet rs, String columnLabel) throws SQLException {
-        try (var array = rs.getArray(columnLabel).getResultSet()) {
+        final Array array = rs.getArray(columnLabel);
+        if (array == null) return Set.of();
+
+        try (var arrayRs = array.getResultSet()) {
             var roles = EnumSet.noneOf(StudyRole.class);
-            while (array.next()) {
-                var role = readRole(array, "value");
+            while (arrayRs.next()) {
+                var role = readRole(arrayRs, "value");
                 if (role != null) {
                     roles.add(role);
                 }

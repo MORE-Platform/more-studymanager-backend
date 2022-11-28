@@ -38,7 +38,7 @@ public class StudyService {
         var user = userRepo.save(currentUser);
         var savedStudy = studyRepository.insert(study);
         aclRepository.setRoles(savedStudy.getStudyId(), user.id(), EnumSet.allOf(StudyRole.class), null);
-        return savedStudy;
+        return getStudy(savedStudy.getStudyId(), user);
     }
 
     public List<Study> listStudies() {
@@ -53,13 +53,13 @@ public class StudyService {
         return studyRepository.listStudiesByAclOrderByModifiedDesc(user, allowedRoles);
     }
 
-    public Study getStudy(Long studyId) {
-        return Optional.ofNullable(studyRepository.getById(studyId))
+    public Study getStudy(Long studyId, User user) {
+        return Optional.ofNullable(studyRepository.getById(studyId, user))
                 .orElseThrow(() -> NotFoundException.Study(studyId));
     }
 
-    public Study updateStudy(Study study) {
-        return studyRepository.update(study);
+    public Study updateStudy(Study study, User user) {
+        return studyRepository.update(study, user);
     }
 
     public void deleteStudy(Long studyId) {
@@ -67,7 +67,7 @@ public class StudyService {
     }
 
     public void setStatus(Long studyId, Study.Status status) {
-        Study study = getStudy(studyId);
+        Study study = getStudy(studyId, null);
         if (status.equals(Study.Status.DRAFT)) {
             throw BadRequestException.StateChange(study.getStudyState(), Study.Status.DRAFT);
         }

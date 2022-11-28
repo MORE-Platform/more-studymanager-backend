@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,7 +46,7 @@ class StudyServiceTest {
 
     private final AuthenticatedUser currentUser = new AuthenticatedUser(
             UUID.randomUUID().toString(),
-            "Test User", "Test Inc.", "test@example.com",
+            "Test User", "test@example.com", "Test Inc.",
             EnumSet.allOf(PlatformRole.class)
     );
 
@@ -62,6 +63,8 @@ class StudyServiceTest {
                     var u = i.getArgument(0, User.class);
                     return new MoreUser(u.id(), u.fullName(), u.institution(), u.email(), Instant.now(), Instant.now());
                 });
+        when(studyRepository.getById(eq(1L), any(User.class)))
+                .thenReturn(new Study().setStudyId(1L).setTitle(study.getTitle()));
 
         Study studyResponse = studyService.createStudy(study, currentUser);
 
@@ -95,7 +98,7 @@ class StudyServiceTest {
 
     private void testForbiddenSetStatus(Study.Status statusBefore, Study.Status statusAfter) {
         Study study = new Study().setStudyId(1L).setStudyState(statusBefore);
-        when(studyRepository.getById(any(Long.class))).thenReturn(study);
+        when(studyRepository.getById(any(Long.class), any())).thenReturn(study);
         Assertions.assertThrows(BadRequestException.class,
                 () -> studyService.setStatus(1L, statusAfter));
     }
