@@ -31,6 +31,10 @@ public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTrigg
         return sdk.listParticipants(studyId, studyGroupId);
     }
 
+    public Set<Integer> participantIdsMatchingQuery(String query) {
+        return sdk.listParticipantsByQuery(studyId, studyGroupId, query);
+    }
+
     @Override
     public String addWebhook() {
         throw new NotImplementedException();

@@ -11,16 +11,14 @@ import io.redlink.more.studymanager.scheduling.TriggerJob;
 import io.redlink.more.studymanager.sdk.scoped.MoreActionSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreObservationSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreTriggerSDKImpl;
+import io.redlink.more.studymanager.service.ElasticService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -33,10 +31,13 @@ public class MoreSDK {
 
     private final ParticipantService participantService;
 
-    public MoreSDK(NameValuePairRepository nvpairs, SchedulingService schedulingService, ParticipantService participantService) {
+    private final ElasticService elasticService;
+
+    public MoreSDK(NameValuePairRepository nvpairs, SchedulingService schedulingService, ParticipantService participantService, ElasticService elasticService) {
         this.nvpairs = nvpairs;
         this.schedulingService = schedulingService;
         this.participantService = participantService;
+        this.elasticService = elasticService;
     }
 
     public <T extends Serializable> void setValue(String issuer, String name, T value) {
@@ -92,5 +93,9 @@ public class MoreSDK {
                 })
                 .map(Participant::getParticipantId)
                 .collect(Collectors.toSet());
+    }
+
+    public Set<Integer> listParticipantsByQuery(long studyId, Integer studyGroupId, String query) {
+        return new HashSet(elasticService.participantsThatMapQuery(studyId, studyGroupId, query));
     }
 }

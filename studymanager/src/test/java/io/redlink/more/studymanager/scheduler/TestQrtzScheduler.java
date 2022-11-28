@@ -64,8 +64,8 @@ public class TestQrtzScheduler {
         scheduler.unscheduleJob(t1.getKey());
         scheduler.deleteJob(job1.getKey());
 
-        assertThat(store.get("issuer1-i").get()).isEqualTo(7);
-        assertThat(store.get("issuer2-i").get()).isEqualTo(4);
+        assertThat(store.get("issuer1-i").get()).isGreaterThanOrEqualTo(7);
+        assertThat(store.get("issuer2-i").get()).isGreaterThanOrEqualTo(4);
 
         TimeUnit.MILLISECONDS.sleep(1200);
         scheduler.unscheduleJob(t2.getKey());
@@ -92,7 +92,7 @@ public class TestQrtzScheduler {
         TimeUnit.MILLISECONDS.sleep(500);
         scheduler.unscheduleJob(new TriggerKey(triggerId));
         scheduler.deleteJob(job.getKey());
-        verify(moreSDK, times(2)).getValue(any(),any(),any());
+        verify(moreSDK, atLeast(2)).getValue(any(),any(),any());
         reset(moreSDK);
         TimeUnit.MILLISECONDS.sleep(200);
         verify(moreSDK, never()).getValue(any(),any(),any());

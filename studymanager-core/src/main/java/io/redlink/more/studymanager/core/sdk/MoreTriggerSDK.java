@@ -10,6 +10,7 @@ public interface MoreTriggerSDK extends MorePlatformSDK {
     String addSchedule(Schedule schedule);
     void removeSchedule(String id);
     Set<Integer> participantIds();
+    Set<Integer> participantIdsMatchingQuery(String query);
     String addWebhook();
     void removeWebhook();
 }

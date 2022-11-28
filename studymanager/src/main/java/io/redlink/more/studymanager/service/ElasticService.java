@@ -2,7 +2,12 @@ package io.redlink.more.studymanager.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.indices.*;
 import co.elastic.clients.util.ObjectBuilder;
 import io.redlink.more.studymanager.configuration.ElasticConfiguration;
@@ -14,6 +19,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @EnableConfigurationProperties({ElasticProperties.class})
@@ -29,33 +38,58 @@ public class ElasticService {
         this.client = elasticConfiguration.elasticServiceClient();
     }
 
-    public boolean createIndex(Study study) {
-        try {
-            IndexSettings settings = new IndexSettings.Builder()
-                    .numberOfShards(this.elasticProperties.getNumberOfShards())
-                    .build();
-            CreateIndexRequest indexRequest = new CreateIndexRequest.Builder()
-                    .index(study.getStudyId().toString())
-                    .settings(settings)
-                    .mappings(this::createMapping)
-                    .build();
+    public List<Integer> participantsThatMapQuery(Long studyId, Integer studyGroupId, String query) {
+        SearchRequest.Builder builder = new SearchRequest.Builder();
+        builder
+                .index(getStudyIdString(studyId))
+                .size(0)
+                .query(q -> q.
+                        bool(b -> b.
+                                must(m -> m.
+                                        queryString(qs -> qs.
+                                                query(query))).
+                                filter(getFilters(studyId, studyGroupId))
+                        )).aggregations(
+                        "participant_ids",
+                        a -> a.terms(t -> t.
+                                field("participant_id.keyword").
+                                size(10000))
+                );
 
-            this.client.indices().create(indexRequest);
-            return true;
-        } catch (IOException | ElasticsearchException e) {
-            LOG.warn("Error when creating elastic index. Error message: ", e);
-            return false;
+        try {
+            return client.search(builder.build(), Map.class)
+                    .aggregations().get("participant_ids").sterms().buckets().array().stream()
+                    .map(StringTermsBucket::key)
+                    .map(FieldValue::stringValue)
+                    .map(s -> s.substring(12))
+                    .map(Integer::valueOf)
+                    .toList();
+        } catch (IOException e) {
+            LOG.error("Elastic Query failed", e);
+            return List.of();
         }
     }
 
-    private ObjectBuilder<TypeMapping> createMapping(TypeMapping.Builder mapping) {
-        return mapping;
+    private List<Query> getFilters(Long studyId, Integer studyGroupId) {
+        List<Query> queries = new ArrayList<>();
+        queries.add(Query.of(f -> f.
+                term(t -> t.
+                        field("study_id").
+                        value(getStudyIdString(studyId)))));
+        if(studyGroupId != null) {
+            queries.add(Query.of(f -> f.term(t -> t.
+                            field("study_group_id").
+                            value(getStudyGroupIdString(studyGroupId)))));
+        } else {
+            queries.add(Query.of(f -> f.bool(b -> b.mustNot(m -> m.exists(e -> e.field("study_group_id"))))));
+        }
+        return queries;
     }
 
     public boolean closeIndex(Study study) {
         try {
             CloseIndexRequest indexRequest = new CloseIndexRequest.Builder()
-                    .index(study.getStudyId().toString())
+                    .index(getStudyIdString(study))
                     .build();
             this.client.indices().close(indexRequest);
             return true;
@@ -68,7 +102,7 @@ public class ElasticService {
     public boolean deleteIndex(Study study) {
         try {
             DeleteIndexRequest indexRequest = new DeleteIndexRequest.Builder()
-                    .index(study.getStudyId().toString())
+                    .index(getStudyIdString(study))
                     .ignoreUnavailable(true)
                     .build();
             this.client.indices().delete(indexRequest);
@@ -77,6 +111,18 @@ public class ElasticService {
             LOG.warn("Error when deleting elastic index. Error message: ", e);
             return false;
         }
+    }
+
+    static String getStudyIdString(Study study) {
+        return getStudyIdString(study.getStudyId());
+    }
+
+    private String getStudyGroupIdString(Integer studyGroupId) {
+        return "study_group_" + studyGroupId;
+    }
+
+    static String getStudyIdString(Long id) {
+        return "study_" + id;
     }
 
 }

@@ -32,11 +32,12 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
 
     @Override
     public TriggerResult execute(Parameters parameters) {
-        // TODO get all participants where query maps
-        return TriggerResult.withParams(
-                sdk.participantIds().stream()
-                        .map(id -> new ActionParameter(sdk.getStudyId(), id))
-                        .collect(Collectors.toSet())
-        );
+        return properties.getQuery().map(query ->
+                TriggerResult.withParams(
+                        sdk.participantIdsMatchingQuery(query).stream()
+                                .map(id -> new ActionParameter(sdk.getStudyId(), id))
+                                .collect(Collectors.toSet())
+                )
+        ).orElse(TriggerResult.NOOP);
     }
 }
