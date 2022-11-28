@@ -62,6 +62,9 @@ elastic:
   port: ${ELASTIC_PORT:9200}
   number_of_shards: 3
 
+firebase:
+  settingsFile: ${FIREBASE_SETTINGS:file:firebase-settings.json}
+
 management:
   endpoint:
     health:
