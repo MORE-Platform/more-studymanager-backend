@@ -3,9 +3,12 @@ package io.redlink.more.studymanager.repository;
 import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.StudyUserRoles;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +54,6 @@ class StudyAclRepositoryTest {
     }
 
 
-
     @Test
     void testSetRoles() {
         final Set<StudyRole> assignedRoles = studyAclRepository.setRoles(study.getStudyId(), user1.id(), null, StudyRole.STUDY_ADMIN);
@@ -79,7 +81,7 @@ class StudyAclRepositoryTest {
     void testSetAndGetRoles() {
         var rolesUser1 = EnumSet.of(StudyRole.STUDY_OPERATOR, StudyRole.STUDY_VIEWER);
         var rolesUser2 = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER);
-        
+
         assertThat(studyAclRepository.setRoles(study.getStudyId(), user1.id(), rolesUser1, null), Matchers.equalTo(rolesUser1));
         assertThat(studyAclRepository.getRoles(study.getStudyId(), user1.id()), Matchers.equalTo(rolesUser1));
 
@@ -111,7 +113,7 @@ class StudyAclRepositoryTest {
                 "<user1> has only access to <study>",
                 studyRepository.listStudiesByAclOrderByModifiedDesc(user1, EnumSet.allOf(StudyRole.class)),
                 Matchers.contains(hasSameStudyId(study))
-                );
+        );
         assertThat(
                 "<user2> has access to both studies",
                 studyRepository.listStudiesByAclOrderByModifiedDesc(user2, EnumSet.allOf(StudyRole.class)),
@@ -128,6 +130,23 @@ class StudyAclRepositoryTest {
                 Matchers.contains(hasSameStudyId(study2))
         );
 
+    }
+
+    @Test
+    void testAclDetails() {
+        studyAclRepository.setRoles(study.getStudyId(), user1.id(), EnumSet.of(StudyRole.STUDY_VIEWER), user2.id());
+        studyAclRepository.setRoles(study.getStudyId(), user1.id(), EnumSet.of(StudyRole.STUDY_VIEWER, StudyRole.STUDY_OPERATOR), user1.id());
+
+        var roleDetails = studyAclRepository.getRoleDetails(study.getStudyId(), user1.id());
+        assertThat("two roles expected", roleDetails, Matchers.hasSize(2));
+        assertThat("VIEWER was set by user2",
+                roleDetails.stream().filter(d -> d.role() == StudyRole.STUDY_VIEWER).findFirst(),
+                valueMatches(hasRoleCreator(user2.id()))
+        );
+        assertThat("OPERATOR was set by user1",
+                roleDetails.stream().filter(d -> d.role() == StudyRole.STUDY_OPERATOR).findFirst(),
+                valueMatches(hasRoleCreator(user1.id()))
+        );
     }
 
     static TypeSafeDiagnosingMatcher<Study> hasSameStudyId(Study study) {
@@ -149,6 +168,47 @@ class StudyAclRepositoryTest {
 
             private void describeTo(Description description, Long studyId) {
                 description.appendText("a study with studyId=").appendValue(studyId);
+            }
+        };
+    }
+
+    static TypeSafeDiagnosingMatcher<StudyUserRoles.StudyRoleDetails> hasRoleCreator(String userId) {
+        return new TypeSafeDiagnosingMatcher<>() {
+            @Override
+            protected boolean matchesSafely(StudyUserRoles.StudyRoleDetails item, Description mismatchDescription) {
+                describeTo(mismatchDescription, item.creator().id());
+                return userId.equals(item.creator().id());
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                describeTo(description, userId);
+            }
+
+            private static void describeTo(Description description, String userId) {
+                description.appendText("role-details created by ").appendValue(userId);
+            }
+        };
+    }
+
+    static <T> TypeSafeDiagnosingMatcher<Optional<T>> valueMatches(Matcher<T> matcher) {
+        return new TypeSafeDiagnosingMatcher<>() {
+            @Override
+            protected boolean matchesSafely(Optional<T> item, Description mismatchDescription) {
+                if (item.isEmpty()) {
+                    mismatchDescription.appendText("Empty Optional");
+                } else {
+                    matcher.describeMismatch(item.get(),
+                            mismatchDescription.appendText("Optional with value ")
+                    );
+                }
+
+                return item.isPresent() && matcher.matches(item.get());
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("Optional with value ").appendDescriptionOf(matcher);
             }
         };
     }
