@@ -2,7 +2,7 @@ package io.redlink.more.studymanager.service;
 
 import com.google.firebase.messaging.FirebaseMessagingException;
 import io.redlink.more.studymanager.model.PushNotificationsToken;
-import io.redlink.more.studymanager.repository.PushNotificationRepository;
+import io.redlink.more.studymanager.repository.PushNotificationTokenRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -11,12 +11,12 @@ import java.util.Optional;
 
 @Service
 public class PushNotificationService {
-    private final PushNotificationRepository pushNotificationsRepository;
+    private final PushNotificationTokenRepository pushNotificationsRepository;
     private final FirebaseMessagingService firebaseService;
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
 
-    public PushNotificationService(PushNotificationRepository pushNotificationsRepository,
+    public PushNotificationService(PushNotificationTokenRepository pushNotificationsRepository,
                                    FirebaseMessagingService firebaseService) {
         this.pushNotificationsRepository = pushNotificationsRepository;
         this.firebaseService = firebaseService;

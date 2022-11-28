@@ -10,14 +10,12 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-public class PushNotificationRepository {
+public class PushNotificationTokenRepository {
     private static final String GET_TOKEN_BY_ID = "SELECT service, token FROM push_notifications_token t WHERE t.study_id = :study_id AND t.participant_id = :participant_id";
 
-    private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
-    public PushNotificationRepository(JdbcTemplate template) {
-        this.template = template;
+    public PushNotificationTokenRepository(JdbcTemplate template) {
         this.namedTemplate = new NamedParameterJdbcTemplate(template);
     }
 
