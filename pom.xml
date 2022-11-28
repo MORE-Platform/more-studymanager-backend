@@ -157,6 +157,7 @@
                             <environment>
                                 <POSTGRES_HOST>postgres</POSTGRES_HOST>
                                 <ELASTIC_HOST>elastic</ELASTIC_HOST>
+                                <SPRING_PROFILES_ACTIVE>docker</SPRING_PROFILES_ACTIVE>
                             </environment>
                         </container>
                         <outputPaths>
@@ -212,11 +213,6 @@
                 <groupId>org.reflections</groupId>
                 <artifactId>reflections</artifactId>
                 <version>0.10.2</version>
-            </dependency>
-            <dependency>
-                <groupId>com.vladmihalcea</groupId>
-                <artifactId>hibernate-types-52</artifactId>
-                <version>2.2.2</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.json</groupId>
