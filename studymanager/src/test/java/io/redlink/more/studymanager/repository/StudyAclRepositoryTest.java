@@ -54,7 +54,7 @@ class StudyAclRepositoryTest {
 
     @Test
     void testSetRoles() {
-        final Set<StudyRole> assignedRoles = studyAclRepository.setRoles(study.getStudyId(), user1.id(), StudyRole.STUDY_ADMIN);
+        final Set<StudyRole> assignedRoles = studyAclRepository.setRoles(study.getStudyId(), user1.id(), null, StudyRole.STUDY_ADMIN);
         assertThat(assignedRoles, Matchers.containsInAnyOrder(StudyRole.STUDY_ADMIN));
 
         assertTrue(studyAclRepository.hasRole(study.getStudyId(), user1.id(), StudyRole.STUDY_ADMIN));
@@ -63,7 +63,7 @@ class StudyAclRepositoryTest {
 
         assertFalse(studyAclRepository.hasAnyRole(study.getStudyId(), user1.id(), StudyRole.STUDY_VIEWER, StudyRole.STUDY_OPERATOR));
 
-        final Set<StudyRole> reassignedRoles = studyAclRepository.setRoles(study.getStudyId(), user1.id(), StudyRole.STUDY_VIEWER, StudyRole.STUDY_OPERATOR);
+        final Set<StudyRole> reassignedRoles = studyAclRepository.setRoles(study.getStudyId(), user1.id(), null, StudyRole.STUDY_VIEWER, StudyRole.STUDY_OPERATOR);
         assertThat(reassignedRoles, Matchers.containsInAnyOrder(StudyRole.STUDY_VIEWER, StudyRole.STUDY_OPERATOR));
 
         assertFalse(studyAclRepository.hasRole(study.getStudyId(), user1.id(), StudyRole.STUDY_ADMIN));
@@ -80,10 +80,10 @@ class StudyAclRepositoryTest {
         var rolesUser1 = EnumSet.of(StudyRole.STUDY_OPERATOR, StudyRole.STUDY_VIEWER);
         var rolesUser2 = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER);
         
-        assertThat(studyAclRepository.setRoles(study.getStudyId(), user1.id(), rolesUser1), Matchers.equalTo(rolesUser1));
+        assertThat(studyAclRepository.setRoles(study.getStudyId(), user1.id(), rolesUser1, null), Matchers.equalTo(rolesUser1));
         assertThat(studyAclRepository.getRoles(study.getStudyId(), user1.id()), Matchers.equalTo(rolesUser1));
 
-        assertThat(studyAclRepository.setRoles(study.getStudyId(), user2.id(), rolesUser2), Matchers.equalTo(rolesUser2));
+        assertThat(studyAclRepository.setRoles(study.getStudyId(), user2.id(), rolesUser2, null), Matchers.equalTo(rolesUser2));
         assertThat(studyAclRepository.getRoles(study.getStudyId(), user2.id()), Matchers.equalTo(rolesUser2));
 
         var acl = studyAclRepository.getACL(study);
@@ -98,13 +98,13 @@ class StudyAclRepositoryTest {
     @Test
     void testListStudiesByACL() {
         // user1 has study
-        studyAclRepository.setRoles(study.getStudyId(), user1.id(), EnumSet.allOf(StudyRole.class));
+        studyAclRepository.setRoles(study.getStudyId(), user1.id(), EnumSet.allOf(StudyRole.class), null);
 
         // second study is for user 2
         var study2 = studyRepository.insert(new Study().setTitle("Study 2"));
-        studyAclRepository.setRoles(study2.getStudyId(), user2.id(), EnumSet.allOf(StudyRole.class));
+        studyAclRepository.setRoles(study2.getStudyId(), user2.id(), EnumSet.allOf(StudyRole.class), null);
         // user2 has view-rights on study1
-        studyAclRepository.setRoles(study.getStudyId(), user2.id(), EnumSet.of(StudyRole.STUDY_VIEWER));
+        studyAclRepository.setRoles(study.getStudyId(), user2.id(), EnumSet.of(StudyRole.STUDY_VIEWER), null);
 
 
         assertThat(

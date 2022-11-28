@@ -69,7 +69,7 @@ class StudyServiceTest {
         assertThat(studyResponse.getTitle()).isSameAs(study.getTitle());
 
         verify(studyAclRepository, times(1).description("Initial ACL should be set"))
-                .setRoles(studyResponse.getStudyId(), currentUser.id(), EnumSet.allOf(StudyRole.class));
+                .setRoles(studyResponse.getStudyId(), currentUser.id(), EnumSet.allOf(StudyRole.class), null);
     }
 
     @Test

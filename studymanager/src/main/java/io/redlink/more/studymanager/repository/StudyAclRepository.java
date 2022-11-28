@@ -6,6 +6,7 @@ package io.redlink.more.studymanager.repository;
 import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.StudyUserRoles;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.EnumSet;
@@ -20,12 +21,14 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static io.redlink.more.studymanager.repository.RepositoryUtils.readInstant;
+
 @Service
 public class StudyAclRepository {
 
     private static final String SQL_UPDATE_ROLES =
             "WITH new_roles AS (" +
-            "  SELECT :studyId as study_id, :userId as user_id, role as user_role, null as creator_id " +
+            "  SELECT :studyId as study_id, :userId as user_id, role as user_role, :creator as creator_id " +
             "  FROM unnest(ARRAY[ :roles ]) as role" +
             ") " +
             "INSERT INTO study_acl(study_id, user_id, user_role, creator_id) " +
@@ -118,13 +121,14 @@ public class StudyAclRepository {
     }
 
     @Transactional
-    public Set<StudyRole> setRoles(long studyId, String userId, StudyRole... roles) {
-        return setRoles(studyId, userId, Set.of(roles));
+    public Set<StudyRole> setRoles(long studyId, String userId, String creatorId, StudyRole... roles) {
+        return setRoles(studyId, userId, Set.of(roles), creatorId);
     }
 
     @Transactional
-    public Set<StudyRole> setRoles(long studyId, String userId, Set<StudyRole> roles) {
-        var paramMap = createParams(studyId, userId, roles);
+    public Set<StudyRole> setRoles(long studyId, String userId, Set<StudyRole> roles, String creatorId) {
+        var paramMap = createParams(studyId, userId, roles)
+                .addValue("creator", creatorId);
 
         jdbcTemplate.update(SQL_RETAIN_ROLES, paramMap);
         return jdbcTemplate.queryForStream(SQL_UPDATE_ROLES,
@@ -139,6 +143,18 @@ public class StudyAclRepository {
     public void clearRoles(long studyId, String userId) {
         jdbcTemplate.update(CLEAR_ROLES, createParams(studyId, userId));
     }
+
+    public Set<StudyUserRoles.StudyRoleDetails> getRoleDetails(long studyId, String userId) {
+        return jdbcTemplate.queryForStream("SELECT user_role, created, users.* FROM study_acl LEFT OUTER JOIN users ON (study_acl.creator_id = users.user_id) WHERE study_id = :studyId AND study_acl.user_id = :userId",
+                createParams(studyId, userId),
+                (rs, row) -> new StudyUserRoles.StudyRoleDetails(
+                        readRole(rs, "user_role"),
+                        readUser(rs),
+                        readInstant(rs, "created")
+                )
+        ).collect(Collectors.toUnmodifiableSet());
+    }
+
 
     static MapSqlParameterSource createParams(long studyId, String userId, Set<StudyRole> roles) {
         return createParams(studyId, userId)
@@ -166,8 +182,8 @@ public class StudyAclRepository {
                 rs.getString("name"),
                 rs.getString("institution"),
                 rs.getString("email"),
-                RepositoryUtils.readInstant(rs, "inserted"),
-                RepositoryUtils.readInstant(rs, "updated")
+                readInstant(rs, "inserted"),
+                readInstant(rs, "updated")
         );
     }
 
