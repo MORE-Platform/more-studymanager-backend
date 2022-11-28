@@ -157,6 +157,7 @@
                             <environment>
                                 <POSTGRES_HOST>postgres</POSTGRES_HOST>
                                 <ELASTIC_HOST>elastic</ELASTIC_HOST>
+                                <SPRING_PROFILES_ACTIVE>docker</SPRING_PROFILES_ACTIVE>
                             </environment>
                         </container>
                         <outputPaths>
