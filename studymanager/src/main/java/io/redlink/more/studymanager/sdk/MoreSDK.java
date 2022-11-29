@@ -4,6 +4,7 @@ import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
+import io.redlink.more.studymanager.model.ElasticDataPoint;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.repository.NameValuePairRepository;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,8 +64,8 @@ public class MoreSDK {
         nvpairs.removeValue(issuer, name);
     }
 
-    public MoreActionSDK scopedActionSDK(Long studyId, Integer studyGroupId, int interventionId, int actionId, int participantId) {
-        return new MoreActionSDKImpl(this, studyId, studyGroupId, interventionId, actionId, participantId);
+    public MoreActionSDK scopedActionSDK(Long studyId, Integer studyGroupId, int interventionId, int actionId, String actionType, int participantId) {
+        return new MoreActionSDKImpl(this, studyId, studyGroupId, interventionId, actionId, actionType, participantId);
     }
 
     public MorePlatformSDK scopedPlatformSDK(Long studyId, Integer studyGroupId, int observationId) {
@@ -110,8 +112,31 @@ public class MoreSDK {
         }
     }
 
-    public void sendPushNotification(long studyId, int participantId, String title, String message) {
+    public boolean sendPushNotification(long studyId, int participantId, String title, String message) {
         LOGGER.info("Send message to participant (sid:{}, pid:{}): {} -- {}", studyId, participantId, title, message);
-        pushNotificationService.sendPushNotification(studyId, participantId, title, message);
+        return pushNotificationService.sendPushNotification(studyId, participantId, title, message);
+    }
+
+    public void storeActionDatapoint(
+            long studyId,
+            Integer studyGroupId,
+            int participantId,
+            int actionId,
+            String actionType,
+            Instant time,
+            Map<String,Object> data
+    ) {
+        elasticService.setDataPoint(studyId, new ElasticDataPoint(
+                "SYS-" + UUID.randomUUID(),
+                "participant_" + participantId,
+                "study_" + studyId,
+                studyGroupId != null ? "study_group_" + studyGroupId : null,
+                "action_" + actionId,
+                actionType,
+                actionType,
+                time,
+                Instant.now(),
+                data
+        ));
     }
 }

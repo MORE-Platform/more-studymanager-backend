@@ -9,6 +9,7 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.indices.*;
 import io.redlink.more.studymanager.configuration.ElasticConfiguration;
 import io.redlink.more.studymanager.core.io.Timeframe;
+import io.redlink.more.studymanager.model.ElasticDataPoint;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import io.redlink.more.studymanager.model.Study;
 import org.slf4j.Logger;
@@ -129,4 +130,11 @@ public class ElasticService {
         return "study_" + id;
     }
 
+    public void setDataPoint(Long studyId, ElasticDataPoint elasticDataPoint) {
+        try {
+            client.index(i -> i.index(getStudyIdString(studyId)).document(elasticDataPoint));
+        } catch (IOException e) {
+            LOG.warn("Could nor store datapoint", e);
+        }
+    }
 }

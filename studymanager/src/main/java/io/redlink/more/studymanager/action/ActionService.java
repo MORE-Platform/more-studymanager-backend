@@ -51,7 +51,7 @@ public class ActionService {
             parameters.forEach(parameter -> {
                 Action executable = factory.create(
                         moreSDK.scopedActionSDK(
-                            studyId, studyGroupId, interventionId, action.getActionId(), parameter.getParticipantId()
+                            studyId, studyGroupId, interventionId, action.getActionId(), action.getType(), parameter.getParticipantId()
                         ),
                         action.getProperties()
                 );
