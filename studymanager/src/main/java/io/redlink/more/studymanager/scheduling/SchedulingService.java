@@ -7,6 +7,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.quartz.*;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
 import java.util.Map;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
-@Component
+@Service
 public class SchedulingService {
 
     public static final String TRIGGER = "trigger";

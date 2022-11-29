@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.Optional;
 
-@Component
 public class TriggerJob implements Job {
 
     private static Logger LOGGER = LoggerFactory.getLogger(TriggerJob.class);
