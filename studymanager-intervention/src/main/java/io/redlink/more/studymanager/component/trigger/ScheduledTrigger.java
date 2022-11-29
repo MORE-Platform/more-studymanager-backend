@@ -9,7 +9,6 @@ import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 

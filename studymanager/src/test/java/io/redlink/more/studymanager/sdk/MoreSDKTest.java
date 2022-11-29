@@ -93,7 +93,7 @@ public class MoreSDKTest {
                 new Participant().setParticipantId(4)
         ));
 
-        assertThat(moreSDK.listParticipants(1L, null)).hasSize(2);
+        assertThat(moreSDK.listParticipants(1L, null)).hasSize(4);
         assertThat(moreSDK.listParticipants(1L, 1)).hasSize(1);
         assertThat(moreSDK.listParticipants(1L, 2)).hasSize(1);
     }
