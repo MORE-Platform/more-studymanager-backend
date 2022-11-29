@@ -42,6 +42,9 @@ class StudyServiceTest {
     @Mock
     UserRepository userRepository;
 
+    @Mock
+    StudyPermissionService studyPermissionService;
+
     @InjectMocks
     StudyService studyService;
 
@@ -101,6 +104,6 @@ class StudyServiceTest {
         Study study = new Study().setStudyId(1L).setStudyState(statusBefore);
         when(studyRepository.getById(any(Long.class), any())).thenReturn(Optional.of(study));
         Assertions.assertThrows(BadRequestException.class,
-                () -> studyService.setStatus(1L, statusAfter));
+                () -> studyService.setStatus(1L, statusAfter, currentUser));
     }
 }

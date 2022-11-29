@@ -73,13 +73,15 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<Void> deleteStudy(Long studyId) {
-        service.deleteStudy(studyId);
+        var currentUser = authService.getCurrentUser();
+        service.deleteStudy(studyId, currentUser);
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<Void> setStatus(Long studyId, StatusChangeDTO statusChangeDTO) {
-        service.setStatus(studyId, StudyTransformer.fromStatusChangeDTO_V1(statusChangeDTO));
+        var currentUser = authService.getCurrentUser();
+        service.setStatus(studyId, StudyTransformer.fromStatusChangeDTO_V1(statusChangeDTO), currentUser);
         return ResponseEntity.ok().build();
     }
 }
