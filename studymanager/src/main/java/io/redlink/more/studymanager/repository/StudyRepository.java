@@ -5,8 +5,6 @@ import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.User;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
-
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -62,13 +60,15 @@ public class StudyRepository {
     }
 
     public Study getById(long id, User user) {
-        return namedTemplate.queryForStream(GET_STUDY_BY_ID,
-                        new MapSqlParameterSource()
-                                .addValue("studyId", id)
-                                .addValue("userId", user != null ? user.id() : null),
-                        getStudyRowMapperWithUserRoles())
-                .findFirst()
-                .orElse(null);
+        try (var stream = namedTemplate.queryForStream(GET_STUDY_BY_ID,
+                new MapSqlParameterSource()
+                        .addValue("studyId", id)
+                        .addValue("userId", user != null ? user.id() : null),
+                getStudyRowMapperWithUserRoles())) {
+            return stream
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 
     public List<Study> listStudyOrderByModifiedDesc() {
@@ -82,14 +82,16 @@ public class StudyRepository {
     }
 
     public Study update(Study study, User user) {
-        return namedTemplate.queryForStream(UPDATE_STUDY,
-                        studyToParams(study)
-                                .addValue("study_id", study.getStudyId())
-                                .addValue("userId", user != null ? user.id() : null),
-                        getStudyRowMapperWithUserRoles()
-                )
-                .findFirst()
-                .orElse(null);
+        try (var stream = namedTemplate.queryForStream(UPDATE_STUDY,
+                studyToParams(study)
+                        .addValue("study_id", study.getStudyId())
+                        .addValue("userId", user != null ? user.id() : null),
+                getStudyRowMapperWithUserRoles()
+        )) {
+            return stream
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 
     public void deleteById(long id) {

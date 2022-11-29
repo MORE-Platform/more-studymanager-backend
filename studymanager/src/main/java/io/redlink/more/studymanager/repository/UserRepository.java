@@ -36,8 +36,9 @@ public class UserRepository {
     }
 
     public Optional<MoreUser> getById(String userId) {
-        return namedTemplate.queryForStream(GET_USER_BY_ID, Map.of("user_id", userId), getUserRowMapper())
-                .findFirst();
+        try (var stream = namedTemplate.queryForStream(GET_USER_BY_ID, Map.of("user_id", userId), getUserRowMapper())) {
+            return stream.findFirst();
+        }
     }
 
 

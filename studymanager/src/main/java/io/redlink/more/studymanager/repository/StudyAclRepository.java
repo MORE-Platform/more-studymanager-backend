@@ -58,6 +58,10 @@ public class StudyAclRepository {
             "        GROUP BY sa.user_id) acl " +
             "    ON (users.user_id = acl.user_id)" +
             "";
+    public static final String GET_ROLE_DETAILS =
+            "SELECT user_role, created, users.* " +
+            "FROM study_acl LEFT OUTER JOIN users ON (study_acl.creator_id = users.user_id) " +
+            "WHERE study_id = :studyId AND study_acl.user_id = :userId";
 
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -87,12 +91,14 @@ public class StudyAclRepository {
     }
 
     public Set<StudyRole> getRoles(long studyId, String userId) {
-        return jdbcTemplate.queryForStream(LIST_ROLES,
-                        createParams(studyId, userId),
-                        (rs, i) -> readRole(rs, "user_role")
-                )
-                .filter(Objects::nonNull)
-                .collect(Collectors.toUnmodifiableSet());
+        try (var steam = jdbcTemplate.queryForStream(LIST_ROLES,
+                createParams(studyId, userId),
+                (rs, i) -> readRole(rs, "user_role")
+        )) {
+            return steam
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toUnmodifiableSet());
+        }
     }
 
     public boolean hasRole(long studyId, String userId, StudyRole role) {
@@ -132,12 +138,14 @@ public class StudyAclRepository {
                 .addValue("creator", creatorId);
 
         jdbcTemplate.update(SQL_RETAIN_ROLES, paramMap);
-        return jdbcTemplate.queryForStream(SQL_UPDATE_ROLES,
-                        paramMap,
-                        (rs, row) -> readRole(rs, "user_role")
-                )
-                .filter(Objects::nonNull)
-                .collect(Collectors.toUnmodifiableSet());
+        try (var stream = jdbcTemplate.queryForStream(SQL_UPDATE_ROLES,
+                paramMap,
+                (rs, row) -> readRole(rs, "user_role")
+        )) {
+            return stream
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toUnmodifiableSet());
+        }
     }
 
     @Transactional
@@ -146,14 +154,16 @@ public class StudyAclRepository {
     }
 
     public Set<StudyUserRoles.StudyRoleDetails> getRoleDetails(long studyId, String userId) {
-        return jdbcTemplate.queryForStream("SELECT user_role, created, users.* FROM study_acl LEFT OUTER JOIN users ON (study_acl.creator_id = users.user_id) WHERE study_id = :studyId AND study_acl.user_id = :userId",
+        try (var steam = jdbcTemplate.queryForStream(GET_ROLE_DETAILS,
                 createParams(studyId, userId),
                 (rs, row) -> new StudyUserRoles.StudyRoleDetails(
                         readRole(rs, "user_role"),
                         readUser(rs),
                         readInstant(rs, "created")
                 )
-        ).collect(Collectors.toUnmodifiableSet());
+        )) {
+            return steam.collect(Collectors.toUnmodifiableSet());
+        }
     }
 
 
