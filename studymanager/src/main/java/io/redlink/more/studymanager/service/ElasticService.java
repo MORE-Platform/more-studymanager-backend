@@ -62,7 +62,7 @@ public class ElasticService {
                     .map(s -> s.substring(12))
                     .map(Integer::valueOf)
                     .toList();
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             LOG.error("Elastic Query failed", e);
             return List.of();
         }
