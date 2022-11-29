@@ -13,8 +13,8 @@ public class EventTransformer {
     public static Event fromEventDTO_V1(EventDTO dto) {
         if(dto != null)
             return new Event()
-                .setDateStart(dto.getDtstart().toInstant())
-                .setDateEnd(dto.getDtend().toInstant())
+                .setDateStart(dto.getDtstart() != null ? dto.getDtstart().toInstant() : null)
+                .setDateEnd(dto.getDtend() != null ? dto.getDtend().toInstant() : null)
                 .setRRule(fromRecurrenceRuleDTO(dto.getRrule()));
         else return null;
     }
@@ -22,8 +22,8 @@ public class EventTransformer {
     public static EventDTO toEventDTO_V1(Event event) {
         if(event != null)
             return new EventDTO()
-                .dtstart(event.getDateStart().atOffset(ZoneOffset.UTC))
-                .dtend(event.getDateEnd().atOffset(ZoneOffset.UTC))
+                .dtstart(event.getDateStart() != null ? event.getDateStart().atOffset(ZoneOffset.UTC) : null)
+                .dtend(event.getDateEnd() != null ? event.getDateEnd().atOffset(ZoneOffset.UTC) : null)
                 .rrule(toRecurrenceRuleDTO(event.getRRule()));
         else return null;
     }

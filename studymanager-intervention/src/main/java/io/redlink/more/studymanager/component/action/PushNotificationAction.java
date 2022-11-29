@@ -14,6 +14,9 @@ public class PushNotificationAction extends Action<ActionProperties> {
 
     @Override
     public void execute(ActionParameter parameters) {
-        sdk.sendPushNotification(properties.getString("message"));
+        sdk.sendPushNotification(
+                properties.getString("title"),
+                properties.getString("message")
+        );
     }
 }

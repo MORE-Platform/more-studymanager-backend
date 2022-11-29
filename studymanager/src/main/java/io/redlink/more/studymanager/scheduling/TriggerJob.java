@@ -40,7 +40,7 @@ public class TriggerJob implements Job {
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         long studyId = context.getJobDetail().getJobDataMap().getLong("studyId");
-        Integer studyGroupId = (Integer) context.getJobDetail().getJobDataMap().getOrDefault("studyGroupIdl", null);
+        Integer studyGroupId = (Integer) context.getJobDetail().getJobDataMap().getOrDefault("studyGroupId", null);
         int interventionId = context.getJobDetail().getJobDataMap().getIntValue("interventionId");
 
         Trigger trigger = Optional.ofNullable(

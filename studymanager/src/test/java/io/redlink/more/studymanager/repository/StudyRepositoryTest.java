@@ -47,7 +47,7 @@ class StudyRepositoryTest {
                 .setStudyId(inserted.getStudyId())
                 .setTitle("some new title");
 
-        Study updated = studyRepository.update(update);
+        Study updated = studyRepository.update(update, null);
 
         Study queried = studyRepository.getById(inserted.getStudyId());
 

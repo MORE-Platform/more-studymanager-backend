@@ -28,7 +28,8 @@ public class PushNotificationActionFactory extends ActionFactory<PushNotificatio
 """
 Sends a push notification to all matching participants based on trigger. Example: <code>
 {
-   "message": "Hello world"
+   "title": "Hello World",
+   "message": "Nice to greet you"
 }
 </code>
 """;
@@ -37,6 +38,9 @@ Sends a push notification to all matching participants based on trigger. Example
     @Override
     public ActionProperties validate(ActionProperties properties) {
         ConfigurationValidationReport report = ConfigurationValidationReport.init();
+        if(!properties.containsKey("title")) {
+            report.missingProperty("title");
+        }
         if(!properties.containsKey("message")) {
             report.missingProperty("message");
         }

@@ -4,9 +4,11 @@ import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.io.Parameters;
 import io.redlink.more.studymanager.core.io.TriggerResult;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
+import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.action.ActionService;
 import io.redlink.more.studymanager.service.InterventionService;
+import io.redlink.more.studymanager.service.ParticipantService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.quartz.JobExecutionException;
@@ -16,9 +18,10 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -37,6 +40,9 @@ public class MoreSDKTest {
 
     @MockBean
     ActionService actionService;
+
+    @MockBean
+    ParticipantService participantService;
 
     @Test
     public void testTriggerScheduling() throws InterruptedException, JobExecutionException {
@@ -76,5 +82,19 @@ public class MoreSDKTest {
         TimeUnit.SECONDS.sleep(1);
         verify(trigger, never()).execute(any());
 
+    }
+
+    @Test
+    public void testListParticipants() {
+        when(participantService.listParticipants(any())).thenReturn(List.of(
+                new Participant().setParticipantId(1),
+                new Participant().setParticipantId(2).setStudyGroupId(1),
+                new Participant().setParticipantId(3).setStudyGroupId(2),
+                new Participant().setParticipantId(4)
+        ));
+
+        assertThat(moreSDK.listParticipants(1L, null)).hasSize(2);
+        assertThat(moreSDK.listParticipants(1L, 1)).hasSize(1);
+        assertThat(moreSDK.listParticipants(1L, 2)).hasSize(1);
     }
 }
