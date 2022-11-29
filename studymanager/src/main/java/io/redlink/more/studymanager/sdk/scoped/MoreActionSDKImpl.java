@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.sdk.scoped;
 
-import io.redlink.more.studymanager.core.component.Action;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import org.slf4j.Logger;

@@ -34,10 +34,14 @@ public class MoreSDK {
 
     private final ElasticService elasticService;
 
-    public MoreSDK(NameValuePairRepository nvpairs, SchedulingService schedulingService, ParticipantService participantService, ElasticService elasticService) {
     private final PushNotificationService pushNotificationService;
 
-    public MoreSDK(NameValuePairRepository nvpairs, SchedulingService schedulingService, ParticipantService participantService, PushNotificationService pushNotificationService) {
+    public MoreSDK(
+            NameValuePairRepository nvpairs,
+            SchedulingService schedulingService,
+            ParticipantService participantService,
+            ElasticService elasticService,
+            PushNotificationService pushNotificationService) {
         this.nvpairs = nvpairs;
         this.schedulingService = schedulingService;
         this.participantService = participantService;
