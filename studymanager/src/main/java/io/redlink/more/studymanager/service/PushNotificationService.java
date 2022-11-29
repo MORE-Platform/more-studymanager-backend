@@ -36,6 +36,8 @@ public class PushNotificationService {
                     return false;
                 }
             }
+        } else {
+            log.warn("Could not send notification: missing token for participant sid:{} pid:{}", studyID, participantId);
         }
 
         return false;

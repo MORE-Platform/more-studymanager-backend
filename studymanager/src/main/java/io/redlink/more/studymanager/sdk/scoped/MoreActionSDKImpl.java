@@ -22,9 +22,8 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
     }
 
     @Override
-    public void sendPushNotification(String message) {
-        //TODO user service to send real message
-        LOGGER.info("Send message to participant (sid:{}, pid:{}): {}", studyId, participantId, message);
+    public void sendPushNotification(String title, String message) {
+        sdk.sendPushNotification(studyId, participantId, title, message);
     }
 
     @Override

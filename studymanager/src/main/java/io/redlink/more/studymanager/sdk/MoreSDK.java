@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.sdk.scoped.MoreActionSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreObservationSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreTriggerSDKImpl;
 import io.redlink.more.studymanager.service.ParticipantService;
+import io.redlink.more.studymanager.service.PushNotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -33,10 +34,13 @@ public class MoreSDK {
 
     private final ParticipantService participantService;
 
-    public MoreSDK(NameValuePairRepository nvpairs, SchedulingService schedulingService, ParticipantService participantService) {
+    private final PushNotificationService pushNotificationService;
+
+    public MoreSDK(NameValuePairRepository nvpairs, SchedulingService schedulingService, ParticipantService participantService, PushNotificationService pushNotificationService) {
         this.nvpairs = nvpairs;
         this.schedulingService = schedulingService;
         this.participantService = participantService;
+        this.pushNotificationService = pushNotificationService;
     }
 
     public <T extends Serializable> void setValue(String issuer, String name, T value) {
@@ -92,5 +96,10 @@ public class MoreSDK {
                 })
                 .map(Participant::getParticipantId)
                 .collect(Collectors.toSet());
+    }
+
+    public void sendPushNotification(long studyId, int participantId, String title, String message) {
+        LOGGER.info("Send message to participant (sid:{}, pid:{}): {} -- {}", studyId, participantId, title, message);
+        pushNotificationService.sendPushNotification(studyId, participantId, title, message);
     }
 }
