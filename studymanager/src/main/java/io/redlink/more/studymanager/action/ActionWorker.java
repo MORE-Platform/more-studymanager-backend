@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ActionWorker {
 
-    @Async
+    //@Async
     public void execute(Action action, ActionParameter parameter) {
         action.execute(parameter);
     }

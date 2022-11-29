@@ -32,7 +32,6 @@ public class SchedulingService {
         String id = UUID.randomUUID().toString();
 
         final JobDetail job = newJob().ofType(type)
-                .storeDurably()
                 .withIdentity(new JobKey(getInnerId(JOB, issuer, id), type.getSimpleName()))
                 .usingJobData(new JobDataMap(data))
                 .build();

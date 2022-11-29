@@ -39,6 +39,7 @@ public class TriggerJob implements Job {
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
+            LOGGER.info("Execute job: {}", context.getTrigger());
             long studyId = context.getJobDetail().getJobDataMap().getLong("studyId");
             Integer studyGroupId = (Integer) context.getJobDetail().getJobDataMap().getOrDefault("studyGroupId", null);
             int interventionId = context.getJobDetail().getJobDataMap().getIntValue("interventionId");
