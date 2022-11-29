@@ -35,14 +35,7 @@ spring:
       maximum-pool-size: 35
 
   quartz:
-    job-store-type: jdbc
-    properties:
-      org:
-        quartz:
-          jobStore:
-            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-    jdbc:
-      initialize-schema: never
+    job-store-type: memory
   session:
     store-type: redis
     redis:

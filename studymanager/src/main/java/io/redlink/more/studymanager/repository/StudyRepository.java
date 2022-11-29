@@ -5,6 +5,8 @@ import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.User;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -24,6 +26,7 @@ public class StudyRepository {
             "FROM studies " +
             "WHERE study_id = :studyId";
     private static final String LIST_STUDIES_ORDER_BY_MODIFIED_DESC = "SELECT * FROM studies ORDER BY modified DESC";
+    private static final String LIST_STUDIES_BY_STATUS = "SELECT * FROM studies WHERE status = ?::study_state";
     private static final String LIST_STUDY_BY_ACL =
             "SELECT studies.*, acl.user_roles " +
             "FROM studies " +
@@ -145,5 +148,9 @@ public class StudyRepository {
     // for testing purpose only
     protected void clear() {
         template.execute(CLEAR_STUDIES);
+    }
+
+    public List<Study> listStudiesByStatus(Study.Status status) {
+        return template.query(LIST_STUDIES_BY_STATUS, getStudyRowMapper(), status.getValue());
     }
 }

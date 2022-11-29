@@ -11,7 +11,10 @@ import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.repository.InterventionRepository;
+import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,13 +27,16 @@ public class InterventionService {
 
     private final InterventionRepository repository;
 
+    private final StudyRepository studyRepository;
+
     private final Map<String, ActionFactory> actionFactories;
     private final Map<String, TriggerFactory> triggerFactories;
 
     private final MoreSDK sdk;
 
-    public InterventionService(InterventionRepository repository, MoreSDK sdk, Map<String, TriggerFactory> triggerFactories, Map<String, ActionFactory> actionFactories) {
+    public InterventionService(InterventionRepository repository, StudyRepository studyRepository, MoreSDK sdk, Map<String, TriggerFactory> triggerFactories, Map<String, ActionFactory> actionFactories) {
         this.repository = repository;
+        this.studyRepository = studyRepository;
         this.actionFactories = actionFactories;
         this.triggerFactories = triggerFactories;
         this.sdk = sdk;
@@ -81,6 +87,11 @@ public class InterventionService {
 
     public Trigger getTriggerByIds(Long studyId, Integer interventionId) {
         return repository.getTriggerByIds(studyId, interventionId);
+    }
+
+    @EventListener(ContextRefreshedEvent.class)
+    public void onStartUp() {
+        studyRepository.listStudiesByStatus(Study.Status.ACTIVE).forEach(this::activateInterventionsFor);
     }
 
     public void activateInterventionsFor(Study study) {
