@@ -7,6 +7,8 @@ import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
+import java.util.Map;
+
 public class GpsMobileObservationFactory<C extends Observation, P extends ObservationProperties> extends ObservationFactory<C, P> {
 
     @Override
@@ -30,6 +32,13 @@ Enables hart GPS data collection in mobile; Configuration:
 }
 </code>
 """;
+    }
+
+    @Override
+    public Map<String, Object> getDefaultProperties() {
+        return Map.of(
+                "location_interval_millis", 60000
+        );
     }
 
     @Override

@@ -6,6 +6,8 @@ import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
+import java.util.Map;
+
 public class PushNotificationActionFactory extends ActionFactory<PushNotificationAction, ActionProperties> {
     @Override
     public PushNotificationAction create(MoreActionSDK sdk, ActionProperties properties) throws ConfigurationValidationException {
@@ -33,6 +35,14 @@ Sends a push notification to all matching participants based on trigger. Example
 }
 </code>
 """;
+    }
+
+    @Override
+    public Map<String, Object> getDefaultProperties() {
+        return Map.of(
+                "title", "Hello World",
+                "message", "Nice to greet you"
+        );
     }
 
     @Override

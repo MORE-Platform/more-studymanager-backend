@@ -40,6 +40,14 @@ public class ConfigurationValidationReport {
         return issues;
     }
 
+    public List<ValidationIssue> getErrors() {
+        return this.issues.stream().filter(i -> i.getType().equals(ValidationIssue.Type.ERROR)).toList();
+    }
+
+    public List<ValidationIssue> getWarnings() {
+        return this.issues.stream().filter(i -> i.getType().equals(ValidationIssue.Type.WARNING)).toList();
+    }
+
     @Override
     public String toString() {
         return "ConfigurationValidationReport: " +

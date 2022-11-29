@@ -8,4 +8,9 @@ import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 
 public abstract class TriggerFactory<C extends Trigger, P extends TriggerProperties> extends ComponentFactory<C, P> {
     public abstract C create(MoreTriggerSDK sdk, P properties) throws ConfigurationValidationException;
+
+    @Override
+    public Class<TriggerProperties> getPropertyClass() {
+        return TriggerProperties.class;
+    }
 }

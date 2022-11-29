@@ -6,6 +6,8 @@ import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
+import java.util.Map;
+
 public class ScheduledTriggerFactory extends TriggerFactory<ScheduledTrigger, TriggerProperties> {
 
     public static final String CRON_SCHEDULE = "cronSchedule";
@@ -30,6 +32,13 @@ Triggers and action based on a cron trigger. Example: <code>
 </code>
 <a target="_blank" href="http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html">Further info on cron values</a>
 """;
+    }
+
+    @Override
+    public Map<String, Object> getDefaultProperties() {
+        return Map.of(
+                "cronSchedule", "0 0 12 * * ?"
+        );
     }
 
     @Override

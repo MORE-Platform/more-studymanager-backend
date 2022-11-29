@@ -8,6 +8,7 @@ import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
 import java.util.List;
+import java.util.Map;
 
 public class QuestionObservationFactory<C extends Observation, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
@@ -28,7 +29,7 @@ public class QuestionObservationFactory<C extends Observation, P extends Observa
 This observation allows to get create a simple MultipleChoice question. Parameters:
 <code>
 {
-    "question": "Are you fine?"
+    "question": "Are you fine?",
     "answers": [
         "No",
         "Yes
@@ -36,6 +37,17 @@ This observation allows to get create a simple MultipleChoice question. Paramete
 }
 </code>
 """;
+    }
+
+    @Override
+    public Map<String, Object> getDefaultProperties() {
+        return Map.of(
+                "question", "Are you fine?",
+                "answers", List.of(
+                        "No",
+                        "Yes"
+                )
+        );
     }
 
     @Override

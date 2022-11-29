@@ -1,7 +1,7 @@
 package io.redlink.more.studymanager.core.validation;
 
 public class ValidationIssue {
-    enum Type {
+    public enum Type {
         ERROR,
         WARNING
     }

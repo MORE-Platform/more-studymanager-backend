@@ -1,12 +1,18 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.ComponentFactoryDTO;
+import io.redlink.more.studymanager.api.v1.model.ValidationReportDTO;
+import io.redlink.more.studymanager.api.v1.model.ValidationReportItemDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ComponentsApi;
+import io.redlink.more.studymanager.core.component.Component;
+import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.factory.ComponentFactory;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
+import io.redlink.more.studymanager.core.properties.ComponentProperties;
 import io.redlink.more.studymanager.core.webcomponent.WebComponent;
+import io.redlink.more.studymanager.utils.MapperUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -44,19 +52,52 @@ public class ComponentApiV1Controller implements ComponentsApi {
     }
 
     @Override
+    public ResponseEntity<ValidationReportDTO> validateProperties(String componentType, String componentId, Object body) {
+        return getComponentFactory(componentType, componentId)
+                .map(f -> {
+                    try {
+                        f.validate((ComponentProperties) MapperUtils.MAPPER.convertValue(body, f.getPropertyClass()));
+                        return new ValidationReportDTO().valid(true);
+                    } catch (ConfigurationValidationException e) {
+                        return new ValidationReportDTO()
+                                .valid(false)
+                                .errors(e.getReport().getErrors().stream()
+                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).type("error"))
+                                        .toList()
+                                ).warnings(e.getReport().getWarnings().stream()
+                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).type("warning"))
+                                        .toList()
+                                );
+                    }
+                })
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Override
     public ResponseEntity<String> getWebComponentScript(String componentType, String componentId) {
+        return getComponentFactory(componentType, componentId)
+                .map(f -> getWebComponentScript(f, componentId))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    private Optional<ComponentFactory> getComponentFactory(String componentType, String componentId) {
         return switch (componentType) {
-            case "measurement" -> getWebComponentScript(observationFactories, componentId);
-            case "trigger" -> getWebComponentScript(triggertFactories, componentId);
-            case "action" -> getWebComponentScript(actionFactories, componentId);
-            default -> ResponseEntity.notFound().build();
+            case "observation" -> getComponentFactory(observationFactories, componentId);
+            case "trigger" -> getComponentFactory(triggertFactories, componentId);
+            case "action" -> getComponentFactory(actionFactories, componentId);
+            default -> Optional.empty();
         };
     }
 
-    private ResponseEntity<String> getWebComponentScript(Map<String, ? extends ComponentFactory> measurementFactories, String componentId) {
-        if(measurementFactories.containsKey(componentId) && measurementFactories.get(componentId).hasWebComponent()) {
+    private Optional<ComponentFactory> getComponentFactory(Map<String, ? extends ComponentFactory> factories, String componentId) {
+        return Optional.ofNullable(factories.get(componentId));
+    }
+
+    private ResponseEntity<String> getWebComponentScript(ComponentFactory factory, String componentId) {
+        if(factory.hasWebComponent()) {
             return ResponseEntity.ok(
-                    toScript(componentId, measurementFactories.get(componentId).getWebComponent())
+                    toScript(componentId, factory.getWebComponent())
             );
         } else {
             return ResponseEntity.notFound().build();
@@ -76,6 +117,7 @@ public class ComponentApiV1Controller implements ComponentsApi {
         return new ComponentFactoryDTO()
                 .componentId(factory.getId())
                 .title(factory.getTitle())
+                .defaultProperties(factory.getDefaultProperties())
                 .description(factory.getDescription())
                 .hasWebComponent(factory.hasWebComponent());
     }

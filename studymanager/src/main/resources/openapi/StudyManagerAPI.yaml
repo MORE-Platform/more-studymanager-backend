@@ -35,6 +35,43 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ComponentFactory'
+
+  /components/{componentType}/{componentId}/validate:
+    post:
+      tags:
+        - components
+      description: check if properties are valid for component
+      operationId: validateProperties
+      parameters:
+        - name: componentType
+          in: path
+          schema:
+            type: string
+            enum:
+              - action
+              - trigger
+              - observation
+          required: true
+        - name: componentId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Validation report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationReport'
+        '404':
+          description: Not found
+
   /components/{componentType}/{componentId}/web-component.js:
     get:
       tags:
@@ -846,8 +883,33 @@ components:
           type: string
         description:
           type: string
+        defaultProperties:
+          type: object
         hasWebComponent:
           type: boolean
+
+    ValidationReport:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: ValidationReportItem
+        warnings:
+          type: array
+          items:
+            $ref: ValidationReportItem
+
+    ValidationReportItem:
+      type: object
+      properties:
+        message:
+          type: string
+        type:
+          type: string
+
     Study:
       type: object
       properties:

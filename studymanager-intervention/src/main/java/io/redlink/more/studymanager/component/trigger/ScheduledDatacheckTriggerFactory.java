@@ -6,6 +6,8 @@ import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
+import java.util.Map;
+
 public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDatacheckTrigger, TriggerProperties> {
     @Override
     public String getId() {
@@ -25,11 +27,22 @@ Checks if certain data occurs in a specific timeframe". Example: <code>
 {
    "cronSchedule": "0 0 12 * * ?",
    "query": "field:*",
-   "window": 100
+   "window": 100,
+   "inverse": false
 }
 </code>
 <a target="_blank" href="http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html">Further info on cron values</a>
 """;
+    }
+
+    @Override
+    public Map<String, Object> getDefaultProperties() {
+        return Map.of(
+                "cronSchedule", "0 0 12 * * ?",
+                "query", "field:*",
+                "window", 100,
+                "inverse", false
+        );
     }
 
     @Override
