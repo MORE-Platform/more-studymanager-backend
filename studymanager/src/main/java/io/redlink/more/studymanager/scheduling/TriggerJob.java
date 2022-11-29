@@ -38,29 +38,32 @@ public class TriggerJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        long studyId = context.getJobDetail().getJobDataMap().getLong("studyId");
-        Integer studyGroupId = (Integer) context.getJobDetail().getJobDataMap().getOrDefault("studyGroupId", null);
-        int interventionId = context.getJobDetail().getJobDataMap().getIntValue("interventionId");
+        try {
+            long studyId = context.getJobDetail().getJobDataMap().getLong("studyId");
+            Integer studyGroupId = (Integer) context.getJobDetail().getJobDataMap().getOrDefault("studyGroupId", null);
+            int interventionId = context.getJobDetail().getJobDataMap().getIntValue("interventionId");
 
-        Trigger trigger = Optional.ofNullable(
-                interventionService.getTriggerByIds(studyId, interventionId)
-        ).orElseThrow(() ->
-                new SchedulingException(String.format("Cannot find trigger: sid:%s, iid:%s", studyId, interventionId))
-        );
+            Trigger trigger = Optional.ofNullable(
+                    interventionService.getTriggerByIds(studyId, interventionId)
+            ).orElseThrow(() ->
+                    new SchedulingException(String.format("Cannot find trigger: sid:%s, iid:%s", studyId, interventionId))
+            );
 
-        TriggerFactory factory = Optional.ofNullable(
-                triggertFactories.get(trigger.getType())
-        ).orElseThrow(() -> new SchedulingException("Cannot find triggerType " + trigger.getType()));
+            TriggerFactory factory = Optional.ofNullable(
+                    triggertFactories.get(trigger.getType())
+            ).orElseThrow(() -> new SchedulingException("Cannot find triggerType " + trigger.getType()));
 
-        MoreTriggerSDK sdk = moreSDK.scopedTriggerSDK(studyId, studyGroupId, interventionId);
-        Parameters parameters = new Parameters(Map.of("triggerTime", context.getFireTime()));
+            MoreTriggerSDK sdk = moreSDK.scopedTriggerSDK(studyId, studyGroupId, interventionId);
+            Parameters parameters = new Parameters(Map.of("triggerTime", context.getFireTime()));
 
-        TriggerResult result = factory.create(sdk, trigger.getProperties()).execute(parameters);
+            TriggerResult result = factory.create(sdk, trigger.getProperties()).execute(parameters);
 
-        if(result.proceed()) {
-            actionService.execute(studyId, studyGroupId, interventionId, result.getActionParameters());
+            if(result.proceed()) {
+                actionService.execute(studyId, studyGroupId, interventionId, result.getActionParameters());
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Cannot execute job", e);
         }
-
 
     }
 }
