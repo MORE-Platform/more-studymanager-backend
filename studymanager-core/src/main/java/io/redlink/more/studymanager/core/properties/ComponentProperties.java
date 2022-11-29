@@ -25,6 +25,13 @@ public class ComponentProperties extends HashMap<String, Object> {
         else throw new ClassCastException();
     }
 
+    public Boolean getBoolean(String name) {
+        Object o = get(name);
+        if(o == null) return null;
+        if(o instanceof Boolean) return (Boolean) o;
+        else throw new ClassCastException();
+    }
+
     public Integer getInt(String name) {
         Object o = get(name);
         if(o == null) return null;

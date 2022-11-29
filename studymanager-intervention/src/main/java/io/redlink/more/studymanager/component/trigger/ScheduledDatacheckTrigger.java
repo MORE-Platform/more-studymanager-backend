@@ -3,10 +3,12 @@ package io.redlink.more.studymanager.component.trigger;
 import io.redlink.more.studymanager.core.component.Trigger;
 import io.redlink.more.studymanager.core.io.ActionParameter;
 import io.redlink.more.studymanager.core.io.Parameters;
+import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.core.io.TriggerResult;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
 
+import java.time.Instant;
 import java.util.stream.Collectors;
 
 public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTriggerProperties> {
@@ -32,9 +34,13 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
 
     @Override
     public TriggerResult execute(Parameters parameters) {
+        Timeframe timeframe = properties.getWindow()
+                .map(window -> new Timeframe(Instant.now().minusMillis(window), Instant.now()))
+                .orElse(null);
+
         return properties.getQuery().map(query ->
                 TriggerResult.withParams(
-                        sdk.participantIdsMatchingQuery(query).stream()
+                        sdk.participantIdsMatchingQuery(query, timeframe, properties.isInverse().orElse(false)).stream()
                                 .map(id -> new ActionParameter(sdk.getStudyId(), id))
                                 .collect(Collectors.toSet())
                 )

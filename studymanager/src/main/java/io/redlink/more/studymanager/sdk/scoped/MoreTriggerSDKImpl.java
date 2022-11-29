@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.sdk.scoped;
 
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
+import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -31,8 +32,8 @@ public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTrigg
         return sdk.listParticipants(studyId, studyGroupId);
     }
 
-    public Set<Integer> participantIdsMatchingQuery(String query) {
-        return sdk.listParticipantsByQuery(studyId, studyGroupId, query);
+    public Set<Integer> participantIdsMatchingQuery(String query, Timeframe timeframe, boolean inverse) {
+        return sdk.listParticipantsByQuery(studyId, studyGroupId, query, timeframe, inverse);
     }
 
     @Override

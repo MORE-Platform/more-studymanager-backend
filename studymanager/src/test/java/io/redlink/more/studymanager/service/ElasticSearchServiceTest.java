@@ -6,6 +6,7 @@ import co.elastic.clients.json.JsonData;
 import com.google.common.io.Resources;
 import io.redlink.more.studymanager.configuration.ElasticConfiguration;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.core.io.Timeframe;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,7 +58,8 @@ public class ElasticSearchServiceTest {
         Thread.sleep(1000);
 
         List<Integer> ids = elasticService.participantsThatMapQuery(
-                study.getStudyId(), null, "data_z:[* TO *]"
+                study.getStudyId(), null, "data_z:[* TO *]",
+                new Timeframe(Instant.parse("2022-10-24T10:00:00Z"), Instant.parse("2022-10-24T15:00:00Z"))
         );
         assertThat(ids).hasSize(1);
         assertThat(ids.get(0)).isEqualTo(10);

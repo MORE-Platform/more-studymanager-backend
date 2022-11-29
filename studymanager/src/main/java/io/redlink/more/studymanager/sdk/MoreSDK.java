@@ -5,6 +5,7 @@ import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.repository.NameValuePairRepository;
 import io.redlink.more.studymanager.scheduling.SchedulingService;
 import io.redlink.more.studymanager.scheduling.TriggerJob;
@@ -93,19 +94,20 @@ public class MoreSDK {
 
     public Set<Integer> listParticipants(long studyId, Integer studyGroupId) {
         return participantService.listParticipants(studyId).stream()
-                .filter(p -> {
-                    if(p.getStudyGroupId() == null) {
-                        return studyGroupId == null;
-                    } else {
-                        return p.getStudyGroupId().equals(studyGroupId);
-                    }
-                })
+                .filter(p -> studyGroupId == null || studyGroupId.equals(p.getStudyGroupId()))
                 .map(Participant::getParticipantId)
                 .collect(Collectors.toSet());
     }
 
-    public Set<Integer> listParticipantsByQuery(long studyId, Integer studyGroupId, String query) {
-        return new HashSet(elasticService.participantsThatMapQuery(studyId, studyGroupId, query));
+    public Set<Integer> listParticipantsByQuery(long studyId, Integer studyGroupId, String query, Timeframe timeframe, boolean inverse) {
+        if(inverse) {
+            Set<Integer> participants = listParticipants(studyId, studyGroupId);
+            Set<Integer> allThatMatchQuery = new HashSet(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timeframe));
+            participants.removeAll(allThatMatchQuery);
+            return participants;
+        } else {
+            return new HashSet(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timeframe));
+        }
     }
 
     public void sendPushNotification(long studyId, int participantId, String title, String message) {

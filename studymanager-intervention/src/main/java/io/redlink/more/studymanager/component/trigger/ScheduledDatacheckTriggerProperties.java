@@ -20,4 +20,8 @@ public class ScheduledDatacheckTriggerProperties extends TriggerProperties {
     public Optional<Long> getWindow() {
         return Optional.ofNullable(this.getLong("window"));
     }
+
+    public Optional<Boolean> isInverse() {
+        return Optional.ofNullable(this.getBoolean("inverse"));
+    }
 }

@@ -4,13 +4,11 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
-import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.indices.*;
-import co.elastic.clients.util.ObjectBuilder;
 import io.redlink.more.studymanager.configuration.ElasticConfiguration;
+import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import io.redlink.more.studymanager.model.Study;
 import org.slf4j.Logger;
@@ -20,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +35,7 @@ public class ElasticService {
         this.client = elasticConfiguration.elasticServiceClient();
     }
 
-    public List<Integer> participantsThatMapQuery(Long studyId, Integer studyGroupId, String query) {
+    public List<Integer> participantsThatMapQuery(Long studyId, Integer studyGroupId, String query, Timeframe timeframe) {
         SearchRequest.Builder builder = new SearchRequest.Builder();
         builder
                 .index(getStudyIdString(studyId))
@@ -48,7 +45,7 @@ public class ElasticService {
                                 must(m -> m.
                                         queryString(qs -> qs.
                                                 query(query))).
-                                filter(getFilters(studyId, studyGroupId))
+                                filter(getFilters(studyId, studyGroupId, timeframe))
                         )).aggregations(
                         "participant_ids",
                         a -> a.terms(t -> t.
@@ -70,7 +67,7 @@ public class ElasticService {
         }
     }
 
-    private List<Query> getFilters(Long studyId, Integer studyGroupId) {
+    private List<Query> getFilters(Long studyId, Integer studyGroupId, Timeframe timeframe) {
         List<Query> queries = new ArrayList<>();
         queries.add(Query.of(f -> f.
                 term(t -> t.
@@ -80,8 +77,15 @@ public class ElasticService {
             queries.add(Query.of(f -> f.term(t -> t.
                             field("study_group_id").
                             value(getStudyGroupIdString(studyGroupId)))));
-        } else {
-            queries.add(Query.of(f -> f.bool(b -> b.mustNot(m -> m.exists(e -> e.field("study_group_id"))))));
+        }
+
+        if(timeframe != null && timeframe.getFrom() != null && timeframe.getTo() != null) {
+            queries.add(Query.of(f -> f.
+                    range(r -> r.
+                            field("effective_time_frame").
+                            from(timeframe.getFrom().toString()).
+                            to(timeframe.getTo().toString())
+                    )));
         }
         return queries;
     }
