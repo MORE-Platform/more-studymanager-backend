@@ -55,7 +55,11 @@ public class ActionService {
                         ),
                         action.getProperties()
                 );
-                worker.execute(executable, parameter);
+                try {
+                    worker.execute(executable, parameter);
+                } catch (Exception e) {
+                    LOGGER.warn("Cannot execute action", e);
+                }
             });
 
         });
