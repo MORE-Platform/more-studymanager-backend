@@ -18,6 +18,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.firewall.HttpStatusRequestRejectedHandler;
+import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
@@ -84,6 +86,12 @@ public class WebSecurityConfiguration {
     @Bean
     protected OAuth2AuthenticationService oAuth2AuthenticationService() {
         return new OAuth2AuthenticationService(moreAuthProperties);
+    }
+
+    @Bean
+    protected RequestRejectedHandler requestRejectedHandler() {
+        // Use a specific status-code for the Firewall to identify denied requests
+        return new HttpStatusRequestRejectedHandler(HttpStatus.I_AM_A_TEAPOT.value());
     }
 
     static class UserSyncingOAuth2AuthorizedClientService implements OAuth2AuthorizedClientService {
