@@ -7,6 +7,7 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
 import io.redlink.more.studymanager.properties.FirebaseProperties;
 import io.redlink.more.studymanager.service.FirebaseMessagingService;
+import java.io.FileNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -25,21 +26,22 @@ public class FirebaseConfiguration {
 
     @Bean
     public FirebaseMessagingService firebaseMessagingService() {
-
         return new FirebaseMessagingService(firebaseMessaging());
     }
 
     FirebaseMessaging firebaseMessaging() {
         try {
-
-            GoogleCredentials googleCredentials = GoogleCredentials
+            final GoogleCredentials googleCredentials = GoogleCredentials
                     .fromStream(props.settingsFile().getInputStream());
-            FirebaseOptions firebaseOptions = FirebaseOptions
+            final FirebaseOptions firebaseOptions = FirebaseOptions
                     .builder()
                     .setCredentials(googleCredentials)
                     .build();
-            FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "MORE Platform StudyManager");
+            final FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "MORE Platform StudyManager");
             return FirebaseMessaging.getInstance(app);
+        } catch (FileNotFoundException e) {
+            log.warn("Could not load FirebaseOptions: {}", e.getMessage());
+            return null;
         } catch (Exception e) {
             log.warn("Could not create Firebase Messaging: {}", e.getMessage(), e);
             return null;
