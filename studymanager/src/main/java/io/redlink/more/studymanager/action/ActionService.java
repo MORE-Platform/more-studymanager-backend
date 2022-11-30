@@ -41,7 +41,7 @@ public class ActionService {
         if (parameters == null) {
             return;
         }
-        this.interventionService.listActions(studyId, interventionId)
+        this.interventionService.listActions(studyId, interventionId, null)
                 .forEach(action -> executeAction(studyId, studyGroupId, interventionId, parameters, action));
     }
 

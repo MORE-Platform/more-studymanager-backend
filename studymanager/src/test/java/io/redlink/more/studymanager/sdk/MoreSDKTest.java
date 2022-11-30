@@ -57,7 +57,7 @@ class MoreSDKTest {
         TriggerResult triggerResult = mock(TriggerResult.class);
 
         when(triggerModel.getType()).thenReturn("test-trigger");
-        when(interventionService.getTriggerByIds(any(),any())).thenReturn(triggerModel);
+        when(interventionService.getTriggerByIds(any(),any(), any())).thenReturn(triggerModel);
         when(triggerFactory.getId()).thenReturn("test-trigger");
         when(triggerFactory.create(any(), any())).thenReturn(trigger);
         when(trigger.execute(any())).thenReturn(triggerResult);
