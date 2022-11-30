@@ -1,14 +1,16 @@
 package io.redlink.more.studymanager.sdk;
 
+import io.redlink.more.studymanager.action.ActionService;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.io.Parameters;
 import io.redlink.more.studymanager.core.io.TriggerResult;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Trigger;
-import io.redlink.more.studymanager.action.ActionService;
 import io.redlink.more.studymanager.service.InterventionService;
 import io.redlink.more.studymanager.service.ParticipantService;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.quartz.JobExecutionException;
@@ -18,17 +20,20 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("test-containers-flyway")
-public class MoreSDKTest {
+class MoreSDKTest {
     @SpyBean
     MoreSDK moreSDK;
 
@@ -45,7 +50,7 @@ public class MoreSDKTest {
     ParticipantService participantService;
 
     @Test
-    public void testTriggerScheduling() throws InterruptedException, JobExecutionException {
+    void testTriggerScheduling() throws InterruptedException, JobExecutionException {
         Trigger triggerModel = spy(Trigger.class);
         io.redlink.more.studymanager.core.component.Trigger trigger =
                 mock( io.redlink.more.studymanager.core.component.Trigger.class);
@@ -74,7 +79,7 @@ public class MoreSDKTest {
         ArgumentCaptor<Parameters> parametersCaptor = ArgumentCaptor.forClass(Parameters.class);
         verify(trigger, atLeast(1)).execute(parametersCaptor.capture());
 
-        assertThat(parametersCaptor.getValue().containsKey("triggerTime")).isTrue();
+        assertThat(parametersCaptor.getValue()).containsKey("triggerTime");
 
         moreSDK.removeSchedule("i1", id);
         reset(trigger);
@@ -85,8 +90,8 @@ public class MoreSDKTest {
     }
 
     @Test
-    public void testListParticipants() {
-        when(participantService.listParticipants(any())).thenReturn(List.of(
+    void testListParticipants() {
+        when(participantService.listParticipants(any(), any())).thenReturn(List.of(
                 new Participant().setParticipantId(1),
                 new Participant().setParticipantId(2).setStudyGroupId(1),
                 new Participant().setParticipantId(3).setStudyGroupId(2),

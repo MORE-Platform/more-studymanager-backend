@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 public class MoreSDK {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MoreSDK.class);
-
     private final NameValuePairRepository nvpairs;
 
     private final SchedulingService schedulingService;
@@ -96,7 +95,7 @@ public class MoreSDK {
     }
 
     public Set<Integer> listParticipants(long studyId, Integer studyGroupId) {
-        return participantService.listParticipants(studyId).stream()
+        return participantService.listParticipants(studyId, null).stream()
                 .filter(p -> studyGroupId == null || studyGroupId.equals(p.getStudyGroupId()))
                 .map(Participant::getParticipantId)
                 .collect(Collectors.toSet());
