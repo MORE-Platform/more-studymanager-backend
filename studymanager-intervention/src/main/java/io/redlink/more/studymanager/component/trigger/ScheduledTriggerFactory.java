@@ -25,12 +25,8 @@ public class ScheduledTriggerFactory extends TriggerFactory<ScheduledTrigger, Tr
     @Override
     public String getDescription() {
         return """
-Triggers and action based on a cron trigger. Example: <code>
-{
-   "cronSchedule": "0 0 12 * * ?",
-}
-</code>
-<a target="_blank" href="http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html">Further info on cron values</a>
+Triggers and action based on a cron trigger.
+<a target="_blank" href="http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html">Further info on cron values!</a>
 """;
     }
 

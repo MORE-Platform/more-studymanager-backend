@@ -26,16 +26,7 @@ public class QuestionObservationFactory<C extends Observation, P extends Observa
     public String getDescription() {
         return
 """
-This observation allows to get create a simple MultipleChoice question. Parameters:
-<code>
-{
-    "question": "Are you fine?",
-    "answers": [
-        "No",
-        "Yes
-    ]
-}
-</code>
+This observation allows to get create a simple MultipleChoice question.
 """;
     }
 

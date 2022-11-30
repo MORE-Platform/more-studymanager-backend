@@ -26,22 +26,14 @@ public class PushNotificationActionFactory extends ActionFactory<PushNotificatio
 
     @Override
     public String getDescription() {
-        return
-"""
-Sends a push notification to all matching participants based on trigger. Example: <code>
-{
-   "title": "Hello World",
-   "message": "Nice to greet you"
-}
-</code>
-""";
+        return "Sends a push notification to all matching participants based on trigger.";
     }
 
     @Override
     public Map<String, Object> getDefaultProperties() {
         return Map.of(
-                "title", "Hello World",
-                "message", "Nice to greet you"
+                "title", "Hello",
+                "message", "A message"
         );
     }
 

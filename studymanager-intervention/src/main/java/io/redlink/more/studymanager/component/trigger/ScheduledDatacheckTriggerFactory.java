@@ -21,18 +21,7 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
 
     @Override
     public String getDescription() {
-        return
-"""
-Checks if certain data occurs in a specific timeframe". Example: <code>
-{
-   "cronSchedule": "0 0 12 * * ?",
-   "query": "field:*",
-   "window": 100,
-   "inverse": false
-}
-</code>
-<a target="_blank" href="http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html">Further info on cron values</a>
-""";
+        return "Checks if certain data occurs in a specific timeframe.";
     }
 
     @Override

@@ -25,12 +25,7 @@ public class GpsMobileObservationFactory<C extends Observation, P extends Observ
     public String getDescription() {
         return
 """
-Enables hart GPS data collection in mobile; Configuration:
-<code>
-{
-    "location_interval_millis": 60000
-}
-</code>
+Enables hart GPS data collection in mobile.
 """;
     }
 
