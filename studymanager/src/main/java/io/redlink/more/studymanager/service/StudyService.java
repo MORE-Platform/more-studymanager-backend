@@ -2,7 +2,6 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
-import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
@@ -94,13 +93,13 @@ public class StudyService {
         participantService.alignParticipantsWithStudyState(study);
     }
 
-    public Map<MoreUser, Set<StudyRole>> getACL(Long studyId) {
-        studyPermissionService.assertCurrentUserHasAnyRole(studyId);
+    public Map<MoreUser, Set<StudyRole>> getACL(Long studyId, User user) {
+        studyPermissionService.assertAnyRole(studyId, user.id());
         return aclRepository.getACL(studyId);
     }
 
     public Optional<StudyUserRoles> setRolesForStudy(Long studyId, String userId, Set<StudyRole> roles,
-                                                     AuthenticatedUser currentUser) {
+                                                     User currentUser) {
         studyPermissionService.assertRole(studyId, currentUser.id(), StudyRole.STUDY_ADMIN);
 
         if (roles.isEmpty()) {
@@ -109,11 +108,11 @@ public class StudyService {
         }
 
         aclRepository.setRoles(studyId, userId, roles, currentUser.id());
-        return getRolesForStudy(studyId, userId);
+        return getRolesForStudy(studyId, userId, currentUser);
     }
 
-    public Optional<StudyUserRoles> getRolesForStudy(Long studyId, String userId) {
-        studyPermissionService.assertCurrentUserHasAnyRole(studyId);
+    public Optional<StudyUserRoles> getRolesForStudy(Long studyId, String userId, User currentUser) {
+        studyPermissionService.assertAnyRole(studyId, currentUser.id());
         return userRepo.getById(userId).map(user ->
                 new StudyUserRoles(
                         user,

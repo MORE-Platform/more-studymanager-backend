@@ -35,8 +35,9 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
 
     @Override
     public ResponseEntity<List<CollaboratorDTO>> listStudyCollaborators(Long studyId) {
+        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
-                studyService.getACL(studyId).entrySet().stream()
+                studyService.getACL(studyId, currentUser).entrySet().stream()
                         .map(e -> UserInfoTransformer.toCollaboratorDTO(e.getKey(), e.getValue()))
                         .toList()
         );
@@ -44,22 +45,23 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
 
     @Override
     public ResponseEntity<Void> clearStudyCollaboratorRoles(Long studyId, String uid) {
-        var currentUser = authService.getCurrentUser();
+        final var currentUser = authService.getCurrentUser();
         studyService.setRolesForStudy(studyId, uid, EnumSet.noneOf(StudyRole.class), currentUser);
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<CollaboratorDetailsDTO> getStudyCollaboratorRoles(Long studyId, String uid) {
+        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
-                studyService.getRolesForStudy(studyId, uid)
+                studyService.getRolesForStudy(studyId, uid, currentUser)
                         .map(UserInfoTransformer::toCollaboratorDetailsDTO)
         );
     }
 
     @Override
     public ResponseEntity<CollaboratorDetailsDTO> setStudyCollaboratorRoles(Long studyId, String uid, Set<StudyRoleDTO> studyRoleDTO) {
-        var currentUser = authService.getCurrentUser();
+        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
                     studyService.setRolesForStudy(studyId, uid, RoleTransformer.toStudyRoles(studyRoleDTO), currentUser)
                             .map(UserInfoTransformer::toCollaboratorDetailsDTO)
