@@ -6,21 +6,20 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.indices.*;
-import io.redlink.more.studymanager.configuration.ElasticConfiguration;
+import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
+import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.model.ElasticDataPoint;
-import io.redlink.more.studymanager.properties.ElasticProperties;
 import io.redlink.more.studymanager.model.Study;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.stereotype.Service;
-
+import io.redlink.more.studymanager.properties.ElasticProperties;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.stereotype.Service;
 
 @Service
 @EnableConfigurationProperties({ElasticProperties.class})
@@ -28,12 +27,10 @@ public class ElasticService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ElasticService.class);
 
-    private final ElasticProperties elasticProperties;
     private final ElasticsearchClient client;
 
-    public ElasticService(ElasticConfiguration elasticConfiguration, ElasticProperties elasticProperties) {
-        this.elasticProperties = elasticProperties;
-        this.client = elasticConfiguration.elasticServiceClient();
+    public ElasticService(ElasticsearchClient client) {
+        this.client = client;
     }
 
     public List<Integer> participantsThatMapQuery(Long studyId, Integer studyGroupId, String query, Timeframe timeframe) {
@@ -74,13 +71,13 @@ public class ElasticService {
                 term(t -> t.
                         field("study_id").
                         value(getStudyIdString(studyId)))));
-        if(studyGroupId != null) {
+        if (studyGroupId != null) {
             queries.add(Query.of(f -> f.term(t -> t.
-                            field("study_group_id").
-                            value(getStudyGroupIdString(studyGroupId)))));
+                    field("study_group_id").
+                    value(getStudyGroupIdString(studyGroupId)))));
         }
 
-        if(timeframe != null && timeframe.getFrom() != null && timeframe.getTo() != null) {
+        if (timeframe != null && timeframe.getFrom() != null && timeframe.getTo() != null) {
             queries.add(Query.of(f -> f.
                     range(r -> r.
                             field("effective_time_frame").
