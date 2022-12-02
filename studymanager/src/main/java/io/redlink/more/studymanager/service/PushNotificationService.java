@@ -23,21 +23,21 @@ public class PushNotificationService {
     }
 
     public boolean sendPushNotification(long studyID, int participantId, String title, String message) {
-        Optional<PushNotificationsToken> tkn = this.pushNotificationsRepository.getTokenById(studyID, (participantId));
+        Optional<PushNotificationsToken> tkn = this.pushNotificationsRepository.getTokenById(studyID, participantId);
 
         if (tkn.isPresent()) {
             PushNotificationsToken token = tkn.get();
-            if (token.service().equals("FCM")) {
+            if ("FCM".equals(token.service())) {
                 try {
                     this.firebaseService.sendNotification(title, message, token.token());
                     return true;
                 } catch (FirebaseMessagingException e) {
-                    log.warn("Could not send Notification: {}", e.getMessage(), e);
+                    log.warn("Could not send Notification (sid:{} pid{}): {}", studyID, participantId, e.getMessage(), e);
                     return false;
                 }
             }
         } else {
-            log.warn("Could not send notification: missing token for participant sid:{} pid:{}", studyID, participantId);
+            log.debug("Did not send notification: No token for participant sid:{} pid:{} registered", studyID, participantId);
         }
 
         return false;
