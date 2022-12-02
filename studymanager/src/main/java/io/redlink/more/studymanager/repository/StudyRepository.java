@@ -4,6 +4,7 @@ import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.User;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -55,19 +56,18 @@ public class StudyRepository {
         return namedTemplate.queryForObject(INSERT_STUDY, studyToParams(study), getStudyRowMapper());
     }
 
-    public Study getById(long id) {
+    public Optional<Study> getById(long id) {
         return getById(id, null);
     }
 
-    public Study getById(long id, User user) {
+    public Optional<Study> getById(long id, User user) {
         try (var stream = namedTemplate.queryForStream(GET_STUDY_BY_ID,
                 new MapSqlParameterSource()
                         .addValue("studyId", id)
                         .addValue("userId", user != null ? user.id() : null),
                 getStudyRowMapperWithUserRoles())) {
             return stream
-                    .findFirst()
-                    .orElse(null);
+                    .findFirst();
         }
     }
 
@@ -81,7 +81,7 @@ public class StudyRepository {
                 getStudyRowMapperWithUserRoles());
     }
 
-    public Study update(Study study, User user) {
+    public Optional<Study> update(Study study, User user) {
         try (var stream = namedTemplate.queryForStream(UPDATE_STUDY,
                 studyToParams(study)
                         .addValue("study_id", study.getStudyId())
@@ -89,8 +89,7 @@ public class StudyRepository {
                 getStudyRowMapperWithUserRoles()
         )) {
             return stream
-                    .findFirst()
-                    .orElse(null);
+                    .findFirst();
         }
     }
 

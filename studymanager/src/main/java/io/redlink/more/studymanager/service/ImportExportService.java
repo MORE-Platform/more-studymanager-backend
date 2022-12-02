@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
@@ -22,7 +23,8 @@ public class ImportExportService {
 
     public ByteArrayResource exportParticipants(Long studyId) {
         List<Participant> participantList = participantRepository.listParticipants(studyId);
-        Study study = studyRepository.getById(studyId);
+        Study study = studyRepository.getById(studyId)
+                .orElseThrow(() -> new NotFoundException("study", studyId));
         StringBuilder str = new StringBuilder("STUDYID;TITLE;ALIAS;PARTICIPANTID;REGISTRATIONTOKEN\n");
         participantList.forEach(p -> str.append(writeToParticipantCsv(p, study)));
         return new ByteArrayResource(str.toString().getBytes(StandardCharsets.UTF_8));

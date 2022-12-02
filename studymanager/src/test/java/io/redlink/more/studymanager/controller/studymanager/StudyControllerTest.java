@@ -11,6 +11,7 @@ import io.redlink.more.studymanager.service.StudyService;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -84,10 +85,12 @@ class StudyControllerTest {
     @DisplayName("Update study should return similar values")
     void testUpdateStudy() throws Exception {
         when(studyService.updateStudy(any(Study.class), any())).thenAnswer(invocationOnMock ->
-                invocationOnMock.getArgument(0, Study.class)
-                        .setStudyState(Study.Status.DRAFT)
-                        .setCreated(new Timestamp(0))
-                        .setModified(new Timestamp(0)));
+                Optional.of(
+                        invocationOnMock.getArgument(0, Study.class)
+                                .setStudyState(Study.Status.DRAFT)
+                                .setCreated(new Timestamp(0))
+                                .setModified(new Timestamp(0))
+                ));
 
         StudyDTO studyRequest = new StudyDTO()
                 .studyId(1L)

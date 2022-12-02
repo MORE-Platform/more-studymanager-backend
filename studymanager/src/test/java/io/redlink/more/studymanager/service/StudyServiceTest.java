@@ -13,6 +13,7 @@ import io.redlink.more.studymanager.repository.UserRepository;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -64,7 +65,7 @@ class StudyServiceTest {
                     return new MoreUser(u.id(), u.fullName(), u.institution(), u.email(), Instant.now(), Instant.now());
                 });
         when(studyRepository.getById(eq(1L), any(User.class)))
-                .thenReturn(new Study().setStudyId(1L).setTitle(study.getTitle()));
+                .thenReturn(Optional.of(new Study().setStudyId(1L).setTitle(study.getTitle())));
 
         Study studyResponse = studyService.createStudy(study, currentUser);
 
@@ -98,7 +99,7 @@ class StudyServiceTest {
 
     private void testForbiddenSetStatus(Study.Status statusBefore, Study.Status statusAfter) {
         Study study = new Study().setStudyId(1L).setStudyState(statusBefore);
-        when(studyRepository.getById(any(Long.class), any())).thenReturn(study);
+        when(studyRepository.getById(any(Long.class), any())).thenReturn(Optional.of(study));
         Assertions.assertThrows(BadRequestException.class,
                 () -> studyService.setStatus(1L, statusAfter));
     }

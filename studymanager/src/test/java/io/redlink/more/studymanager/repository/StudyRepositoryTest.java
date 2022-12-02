@@ -1,6 +1,8 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.Study;
+import java.util.Optional;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,9 +49,14 @@ class StudyRepositoryTest {
                 .setStudyId(inserted.getStudyId())
                 .setTitle("some new title");
 
-        Study updated = studyRepository.update(update, null);
+        Optional<Study> optUpdated = studyRepository.update(update, null);
+        assertThat(optUpdated).isPresent();
+        Study updated = optUpdated.get();
 
-        Study queried = studyRepository.getById(inserted.getStudyId());
+
+        Optional<Study> optQueried = studyRepository.getById(inserted.getStudyId());
+        assertThat(optQueried).isPresent();
+        Study queried = optQueried.get();
 
         assertThat(queried.getTitle()).isEqualTo(updated.getTitle());
         assertThat(queried.getStudyId()).isEqualTo(updated.getStudyId());
@@ -87,22 +94,32 @@ class StudyRepositoryTest {
         assertThat(study.getStartDate()).isNull();
 
         studyRepository.setStateById(study.getStudyId(), Study.Status.ACTIVE);
-        study = studyRepository.getById(study.getStudyId());
+
+        study = assertPresent(studyRepository.getById(study.getStudyId()));
         assertThat(study.getStudyState()).isEqualTo(Study.Status.ACTIVE);
         assertThat(study.getStartDate()).isNotNull();
         assertThat(study.getEndDate()).isNull();
 
         studyRepository.setStateById(study.getStudyId(), Study.Status.PAUSED);
-        study = studyRepository.getById(study.getStudyId());
+        study = assertPresent(studyRepository.getById(study.getStudyId()));
         assertThat(study.getStudyState()).isEqualTo(Study.Status.PAUSED);
         assertThat(study.getStartDate()).isNotNull();
         assertThat(study.getEndDate()).isNull();
 
         studyRepository.setStateById(study.getStudyId(), Study.Status.CLOSED);
-        study = studyRepository.getById(study.getStudyId());
+        study = assertPresent(studyRepository.getById(study.getStudyId()));
         assertThat(study.getStudyState()).isEqualTo(Study.Status.CLOSED);
         assertThat(study.getStartDate()).isNotNull();
         assertThat(study.getEndDate()).isNotNull();
+    }
+
+
+    private <T> T assertPresent(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<T> t) {
+        assertThat(t).isPresent();
+        return t.get();
+    }
+    private <T> T assertPresent(Supplier<Optional<T>> supplier) {
+        return assertPresent(supplier.get());
     }
 
 }

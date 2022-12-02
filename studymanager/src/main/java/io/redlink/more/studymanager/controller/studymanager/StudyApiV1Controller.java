@@ -55,20 +55,19 @@ public class StudyApiV1Controller implements StudiesApi {
     @Override
     public ResponseEntity<StudyDTO> getStudy(Long studyId) {
         var currentUser = authService.getCurrentUser();
-        return ResponseEntity.ok(
-                StudyTransformer.toStudyDTO_V1(service.getStudy(studyId, currentUser))
+        return ResponseEntity.of(
+                service.getStudy(studyId, currentUser)
+                        .map(StudyTransformer::toStudyDTO_V1)
         );
     }
 
     @Override
     public ResponseEntity<StudyDTO> updateStudy(Long studyId, StudyDTO studyDTO) {
         var currentUser = authService.getCurrentUser();
-        return ResponseEntity.ok(
-            StudyTransformer.toStudyDTO_V1(
-                    service.updateStudy(
+        return ResponseEntity.of(
+                service.updateStudy(
                         StudyTransformer.fromStudyDTO_V1(studyDTO), currentUser
-                )
-            )
+                ).map(StudyTransformer::toStudyDTO_V1)
         );
     }
 
