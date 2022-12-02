@@ -5,10 +5,14 @@ import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.json.JsonData;
 import com.google.common.io.Resources;
 import io.redlink.more.studymanager.configuration.ElasticConfiguration;
+import io.redlink.more.studymanager.model.ElasticDataPoint;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.core.io.Timeframe;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
@@ -24,15 +28,17 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Testcontainers
 @ContextConfiguration(initializers = ElasticSearchServiceTest.EnvInitializer.class,
         classes = {
                 ElasticService.class,
-                ElasticConfiguration.class
+                ElasticConfiguration.class,
+                JacksonAutoConfiguration.class,
         })
-public class ElasticSearchServiceTest {
+class ElasticSearchServiceTest {
 
     @Container
     public static ElasticsearchContainer elasticContainer = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.3.2")
@@ -49,7 +55,7 @@ public class ElasticSearchServiceTest {
     private ElasticsearchClient client;
 
     @Test
-    public void testParticipantsThatMapQuery() throws InterruptedException {
+    void testParticipantsThatMapQuery() throws InterruptedException {
         Study study = new Study().setStudyId(28L);
 
         indexDoc(study, 1);
@@ -67,6 +73,24 @@ public class ElasticSearchServiceTest {
         elasticService.deleteIndex(study);
     }
 
+    @Test
+    void testRecordAction() {
+        assertThatNoException().isThrownBy(() ->
+                elasticService.setDataPoint(25L, new ElasticDataPoint(
+                        UUID.randomUUID().toString(),
+                        "participant_1",
+                        "study_25",
+                        "study_group_1",
+                        "action_1",
+                        "test",
+                        "test",
+                        Instant.now(),
+                        Instant.now(),
+                        Map.of()
+                ))
+        );
+    }
+
     private void indexDoc(Study study, int i) {
         IndexRequest<JsonData> request = IndexRequest.of(d -> d
                 .index(ElasticService.getStudyIdString(study))
@@ -81,7 +105,7 @@ public class ElasticSearchServiceTest {
 
     private InputStream file(int i) {
         try {
-            return Resources.getResource("elastic/doc"+i+".json").openStream();
+            return Resources.getResource("elastic/doc" + i + ".json").openStream();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

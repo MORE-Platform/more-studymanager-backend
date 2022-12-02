@@ -7,6 +7,7 @@ import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.service.InterventionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -37,32 +38,49 @@ public class ActionService {
     }
 
     public void execute(long studyId, Integer studyGroupId, int interventionId, Set<ActionParameter> parameters) {
-        if(parameters == null) {
+        if (parameters == null) {
             return;
         }
-        this.interventionService.listActions(studyId, interventionId).forEach(action -> {
+        this.interventionService.listActions(studyId, interventionId)
+                .forEach(action -> executeAction(studyId, studyGroupId, interventionId, parameters, action));
+    }
+
+    private void executeAction(long studyId, Integer studyGroupId, int interventionId, Set<ActionParameter> parameters,
+                               io.redlink.more.studymanager.model.Action action) {
+        final var mdc = MDC.getCopyOfContextMap();
+        try {
+            MDC.put("actionId", String.valueOf(action.getActionId()));
+            MDC.put("actionType", action.getType());
             ActionFactory factory = actionFactories.get(action.getType());
 
-            if(factory == null) {
-                LOGGER.error("No factory found for actionType: {}", action.getType());
+            if (factory == null) {
+                LOGGER.error("Skipping action_{} from intervention_{} in study_{}: No factory found for actionType {}",
+                        action.getActionId(), interventionId, studyId, action.getType());
                 return;
             }
 
             parameters.forEach(parameter -> {
+                MDC.put("participantId", String.valueOf(parameter.getParticipantId()));
                 Action executable = factory.create(
                         moreSDK.scopedActionSDK(
-                            studyId, studyGroupId, interventionId, action.getActionId(), action.getType(), parameter.getParticipantId()
+                                studyId, studyGroupId, interventionId, action.getActionId(), action.getType(), parameter.getParticipantId()
                         ),
                         action.getProperties()
                 );
                 try {
                     worker.execute(executable, parameter);
                 } catch (Exception e) {
-                    LOGGER.warn("Cannot execute action", e);
+                    LOGGER.warn("Error executing action_{} [{}] from intervention_{} in study_{}: {}",
+                            action.getActionId(), action.getType(), interventionId, studyId, e.getMessage(), e);
                 }
             });
-
-        });
+        } finally {
+            if (mdc != null) {
+                MDC.setContextMap(mdc);
+            } else {
+                MDC.clear();
+            }
+        }
     }
 
 }

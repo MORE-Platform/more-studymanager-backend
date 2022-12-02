@@ -28,7 +28,8 @@ import java.util.stream.Collectors;
 @Component
 public class MoreSDK {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(MoreSDK.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MoreSDK.class);
+
     private final NameValuePairRepository nvpairs;
 
     private final SchedulingService schedulingService;
@@ -104,16 +105,16 @@ public class MoreSDK {
     public Set<Integer> listParticipantsByQuery(long studyId, Integer studyGroupId, String query, Timeframe timeframe, boolean inverse) {
         if(inverse) {
             Set<Integer> participants = listParticipants(studyId, studyGroupId);
-            Set<Integer> allThatMatchQuery = new HashSet(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timeframe));
+            Set<Integer> allThatMatchQuery = new HashSet<>(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timeframe));
             participants.removeAll(allThatMatchQuery);
             return participants;
         } else {
-            return new HashSet(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timeframe));
+            return new HashSet<>(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timeframe));
         }
     }
 
     public boolean sendPushNotification(long studyId, int participantId, String title, String message) {
-        LOGGER.info("Send message to participant (sid:{}, pid:{}): {} -- {}", studyId, participantId, title, message);
+        LOGGER.debug("Sending message to participant (sid:{}, pid:{}): {} -- {}", studyId, participantId, title, message);
         return pushNotificationService.sendPushNotification(studyId, participantId, title, message);
     }
 
