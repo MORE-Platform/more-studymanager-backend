@@ -18,10 +18,9 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
-import javax.sql.DataSource;
 import java.util.List;
 
-import static io.redlink.more.studymanager.utils.RepositoryUtils.getValidNullableIntegerValue;
+import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNullableIntegerValue;
 
 @Component
 public class InterventionRepository {

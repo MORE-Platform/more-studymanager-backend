@@ -1,6 +1,7 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
 import org.springframework.stereotype.Service;
@@ -41,4 +42,9 @@ public class ParticipantService {
         participantRepository.setStatusByIds(studyId, participantId, status);
     }
 
+    public void alignParticipantsStatusWithStudyState(Study study) {
+        if (study.getStudyState() == Study.Status.CLOSED) {
+            participantRepository.lockParticipants(study.getStudyId());
+        }
+    }
 }
