@@ -1,13 +1,15 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.MoreUser;
+import io.redlink.more.studymanager.model.SearchResult;
 import io.redlink.more.studymanager.model.User;
-import java.util.Map;
 import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class UserRepository {
@@ -19,6 +21,13 @@ public class UserRepository {
             "RETURNING *";
     private static final String GET_USER_BY_ID = "SELECT * FROM users WHERE user_id = :user_id";
     private static final String DELETE_BY_ID = "DELETE FROM users WHERE user_id = :user_id";
+    private static final String FIND_USERS =
+            "SELECT * FROM users " +
+            "WHERE LOWER(name) LIKE LOWER(:query) OR LOWER(email) LIKE LOWER(:query) " +
+            "LIMIT :limit OFFSET :skip";
+    private static final String COUNT_USERS =
+            "SELECT count(*) as count FROM users " +
+            "WHERE LOWER(name) LIKE LOWER(:query) OR LOWER(email) LIKE LOWER(:query)";
 
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -32,19 +41,49 @@ public class UserRepository {
     }
 
     public void deleteById(String userId) {
-        namedTemplate.update(DELETE_BY_ID, Map.of("user_id", userId));
+        namedTemplate.update(DELETE_BY_ID, toParams(userId));
     }
 
     public Optional<MoreUser> getById(String userId) {
-        try (var stream = namedTemplate.queryForStream(GET_USER_BY_ID, Map.of("user_id", userId), getUserRowMapper())) {
+        try (var stream = namedTemplate.queryForStream(GET_USER_BY_ID, toParams(userId), getUserRowMapper())) {
             return stream.findFirst();
         }
     }
 
 
-    private static MapSqlParameterSource toParams(User user) {
+    @Transactional(readOnly = true)
+    public SearchResult<MoreUser> findUser(String query, int offset, int limit) {
+        String sqlLike = StringUtils.defaultString(query).replace("%", "");
+        if (sqlLike.isEmpty()) {
+            return new SearchResult<>();
+        } else {
+            sqlLike = StringUtils.wrap(sqlLike, '%');
+        }
+
+        final MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("query", sqlLike)
+                .addValue("skip", offset)
+                .addValue("limit", limit);
+        final Long count = namedTemplate.queryForObject(COUNT_USERS, params, ((rs, i) -> rs.getLong("count")));
+        if (count == null || count == 0) {
+            return new SearchResult<>();
+        }
+
+        return new SearchResult<>(
+                count,
+                offset,
+                namedTemplate.query(
+                        FIND_USERS, params, getUserRowMapper()
+                ));
+    }
+
+    private static MapSqlParameterSource toParams(String userId) {
         return new MapSqlParameterSource()
-                .addValue("user_id", user.id())
+                .addValue("user_id", userId);
+    }
+
+    private static MapSqlParameterSource toParams(User user) {
+        return toParams(user.id())
                 .addValue("name", user.fullName())
                 .addValue("institution", user.institution())
                 .addValue("email", user.email())
