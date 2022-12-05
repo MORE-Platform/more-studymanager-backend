@@ -35,7 +35,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <java.version>17</java.version>
-        <spring-boot.version>2.7.5</spring-boot.version>
+        <spring-boot.version>3.0.0</spring-boot.version>
         <testcontainers.version>1.17.6</testcontainers.version>
 
         <docker.namespace>more-project</docker.namespace>
@@ -67,6 +67,7 @@
                         <source>${java.version}</source>
                         <target>${java.version}</target>
                         <release>${java.version}</release>
+                        <parameters>true</parameters>
                     </configuration>
                 </plugin>
                 <plugin>

@@ -20,7 +20,9 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.firewall.HttpStatusRequestRejectedHandler;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.IpAddressMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -46,11 +48,17 @@ public class WebSecurityConfiguration {
         http.cors().disable();
 
         // Restricted Paths
-        http.authorizeRequests()
-                .antMatchers("/api", "/api/v1/me").permitAll()
-                .antMatchers("/api/v1/**").authenticated()
-                .antMatchers("/login/init").authenticated()
-                .antMatchers("/actuator/**").hasIpAddress("127.0.0.1/8")
+        http.authorizeHttpRequests()
+                .requestMatchers("/api", "/api/v1/me").permitAll()
+                .requestMatchers("/api/v1/**").authenticated()
+                .requestMatchers("/login/init").authenticated()
+                // actuator only from localhost
+                .requestMatchers(
+                        new AndRequestMatcher(
+                                new AntPathRequestMatcher("/actuator/**"),
+                                new IpAddressMatcher("127.0.0.1/8")
+                        )
+                ).permitAll()
                 .anyRequest().denyAll();
 
         // API-Calls should not be redirected to the login page, but answered with a 401
