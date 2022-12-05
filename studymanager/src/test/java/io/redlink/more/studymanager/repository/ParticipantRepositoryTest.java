@@ -132,7 +132,7 @@ class ParticipantRepositoryTest {
         var kickedP = createParticipant(studyId, Participant.Status.KICKED_OUT);
         var lockedP = createParticipant(studyId, Participant.Status.LOCKED);
 
-        participantRepository.lockParticipants(studyId);
+        participantRepository.lockParticipantsAndCleanup(studyId);
         assertThat(participantRepository.getByIds(studyId, activeP.getParticipantId()))
                 .as("Active -> Locked")
                 .hasFieldOrPropertyWithValue("status", Participant.Status.LOCKED);

@@ -71,14 +71,29 @@ public class ParticipantRepository {
         return getByIds(participant.getStudyId(), participant.getParticipantId());
     }
 
+    @Transactional
     public void setStatusByIds(Long studyId, Integer participantId, Participant.Status status) {
         namedTemplate.update(SET_STATUS, toParams(studyId)
                 .addValue("participant_id", participantId)
                 .addValue("status", RepositoryUtils.toParam(status)));
     }
 
-    public void lockParticipants(Long studyId) {
-        namedTemplate.update(LOCK_ACTIVE_PARTICIPANTS, toParams(studyId));
+    @Transactional
+    public void cleanupParticipant(Long studyId, Integer participantId) {
+        final var params = toParams(studyId)
+                .addValue("participant_id", participantId);
+        namedTemplate.update("DELETE FROM api_credentials WHERE study_id = :study_id AND participant_id = :participant_id", params);
+        namedTemplate.update("DELETE FROM registration_tokens WHERE study_id = :study_id AND participant_id = :participant_id", params);
+        namedTemplate.update("DELETE FROM push_notifications_token WHERE study_id = :study_id AND participant_id = :participant_id", params);
+    }
+
+    @Transactional
+    public void lockParticipantsAndCleanup(Long studyId) {
+        final var params = toParams(studyId);
+        namedTemplate.update(LOCK_ACTIVE_PARTICIPANTS, params);
+        namedTemplate.update("DELETE FROM api_credentials WHERE study_id = :study_id", params);
+        namedTemplate.update("DELETE FROM registration_tokens WHERE study_id = :study_id", params);
+        namedTemplate.update("DELETE FROM push_notifications_token WHERE study_id = :study_id", params);
     }
 
     public void clear() {
