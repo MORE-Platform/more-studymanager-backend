@@ -15,6 +15,8 @@ import io.redlink.more.studymanager.service.StudyService;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,6 +47,10 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
     @Override
     public ResponseEntity<Void> clearStudyCollaboratorRoles(Long studyId, String uid) {
         var currentUser = authService.getCurrentUser();
+        if (StringUtils.equals(currentUser.id(), uid)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+
         studyService.setRolesForStudy(studyId, uid, EnumSet.noneOf(StudyRole.class), currentUser);
         return ResponseEntity.noContent().build();
     }
@@ -60,9 +66,14 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
     @Override
     public ResponseEntity<CollaboratorDetailsDTO> setStudyCollaboratorRoles(Long studyId, String uid, Set<StudyRoleDTO> studyRoleDTO) {
         var currentUser = authService.getCurrentUser();
+        if (studyRoleDTO.isEmpty() && StringUtils.equals(currentUser.id(), uid)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+
         return ResponseEntity.of(
-                    studyService.setRolesForStudy(studyId, uid, RoleTransformer.toStudyRoles(studyRoleDTO), currentUser)
-                            .map(UserInfoTransformer::toCollaboratorDetailsDTO)
+                studyService.setRolesForStudy(studyId, uid, RoleTransformer.toStudyRoles(studyRoleDTO), currentUser)
+                        .map(UserInfoTransformer::toCollaboratorDetailsDTO)
         );
     }
+
 }
