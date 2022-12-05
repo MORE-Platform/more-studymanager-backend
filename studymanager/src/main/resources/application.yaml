@@ -42,9 +42,10 @@ spring:
       namespace: more:study-manager:session
     timeout: PT30M
 
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   flyway:
     out-of-order: true
