@@ -110,6 +110,17 @@
                             <phase>generate-resources</phase>
                             <configuration>
                                 <fileTemplate>/org/codehaus/mojo/license/third-party-file-groupByLicense.ftl</fileTemplate>
+                                <failOnBlacklist>false</failOnBlacklist>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>validate-third-party</id>
+                            <goals>
+                                <goal>add-third-party</goal>
+                            </goals>
+                            <phase>compile</phase>
+                            <configuration>
+                                <outputDirectory>${project.build.directory}</outputDirectory>
                                 <failOnBlacklist>true</failOnBlacklist>
                             </configuration>
                         </execution>
