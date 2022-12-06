@@ -1,0 +1,30 @@
+_id: req_19bc76317e5d41d29274fe239fda80d4
+type: Request
+parentId: fld_2eeefac150884bb4a2a23ce70d15684f
+modified: 1670341890715
+created: 1670341864858
+url: "{{ _.api_base }}/studies/{{ studyId }}/collaborators"
+name: /studies/{studyId}/collaborators
+description: ""
+method: GET
+body: {}
+parameters: []
+headers: []
+authentication:
+  clientId: "{{ _.auth.clientId }}"
+  grantType: authorization_code
+  scope: "{{ _.auth.scopes }}"
+  type: oauth2
+  redirectUrl: "{{ _.auth.redirectUrl }}"
+  authorizationUrl: "{{ _.auth.authorizaionUrl }}"
+  disabled: false
+  accessTokenUrl: "{{ _.auth.tokenUrl }}"
+  clientSecret: "{{ _.auth.clientSecret }}"
+metaSortKey: -1667561417419.625
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global
