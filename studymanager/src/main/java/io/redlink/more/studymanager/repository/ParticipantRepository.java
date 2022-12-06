@@ -28,8 +28,6 @@ public class ParticipantRepository {
             "UPDATE participants SET alias = :alias, study_group_id = :study_group_id, modified = now() WHERE study_id = :study_id AND participant_id = :participant_id";
     private static final String SET_STATUS =
             "UPDATE participants SET status=:status::participant_status WHERE study_id = :study_id AND participant_id = :participant_id";
-    private static final String LOCK_ACTIVE_PARTICIPANTS =
-            "UPDATE participants SET status='locked' WHERE study_id = :study_id AND status IN ('new', 'active')";
     private static final String DELETE_ALL = "DELETE FROM participants";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -88,9 +86,8 @@ public class ParticipantRepository {
     }
 
     @Transactional
-    public void lockParticipantsAndCleanup(Long studyId) {
+    public void cleanupParticipants(Long studyId) {
         final var params = toParams(studyId);
-        namedTemplate.update(LOCK_ACTIVE_PARTICIPANTS, params);
         namedTemplate.update("DELETE FROM api_credentials WHERE study_id = :study_id", params);
         namedTemplate.update("DELETE FROM registration_tokens WHERE study_id = :study_id", params);
         namedTemplate.update("DELETE FROM push_notifications_token WHERE study_id = :study_id", params);

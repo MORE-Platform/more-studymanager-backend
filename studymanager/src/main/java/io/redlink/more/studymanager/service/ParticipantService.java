@@ -50,9 +50,9 @@ public class ParticipantService {
         }
     }
 
-    public void alignParticipantsStatusWithStudyState(Study study) {
+    public void alignParticipantsWithStudyState(Study study) {
         if (study.getStudyState() == Study.Status.CLOSED) {
-            participantRepository.lockParticipantsAndCleanup(study.getStudyId());
+            participantRepository.cleanupParticipants(study.getStudyId());
         }
     }
 }

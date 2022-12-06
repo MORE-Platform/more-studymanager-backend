@@ -3,7 +3,6 @@ package io.redlink.more.studymanager.repository;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyGroup;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -120,45 +119,4 @@ class ParticipantRepositoryTest {
         assertThat(participant.getStudyGroupId()).isNull();
     }
 
-
-    @Test
-    @DisplayName("Lock active and new Participants")
-    void testParticipantLocking() {
-        Long studyId = studyRepository.insert(new Study()).getStudyId();
-
-        var activeP = createParticipant(studyId, Participant.Status.ACTIVE);
-        var newP = createParticipant(studyId, Participant.Status.NEW);
-        var abandonedP = createParticipant(studyId, Participant.Status.ABANDONED);
-        var kickedP = createParticipant(studyId, Participant.Status.KICKED_OUT);
-        var lockedP = createParticipant(studyId, Participant.Status.LOCKED);
-
-        participantRepository.lockParticipantsAndCleanup(studyId);
-        assertThat(participantRepository.getByIds(studyId, activeP.getParticipantId()))
-                .as("Active -> Locked")
-                .hasFieldOrPropertyWithValue("status", Participant.Status.LOCKED);
-        assertThat(participantRepository.getByIds(studyId, newP.getParticipantId()))
-                .as("New -> Locked")
-                .hasFieldOrPropertyWithValue("status", Participant.Status.LOCKED);
-        assertThat(participantRepository.getByIds(studyId, abandonedP.getParticipantId()))
-                .as("ABANDONED should stay!")
-                .hasFieldOrPropertyWithValue("status", Participant.Status.ABANDONED);
-        assertThat(participantRepository.getByIds(studyId, kickedP.getParticipantId()))
-                .as("KICKED_OUT should stay!")
-                .hasFieldOrPropertyWithValue("status", Participant.Status.KICKED_OUT);
-        assertThat(participantRepository.getByIds(studyId, lockedP.getParticipantId()))
-                .as("LOCKED should stay!")
-                .hasFieldOrPropertyWithValue("status", Participant.Status.LOCKED);
-
-    }
-
-    private Participant createParticipant(Long studyId, Participant.Status status) {
-        final Participant p = participantRepository.insert(new Participant()
-                .setStudyId(studyId)
-                .setRegistrationToken(UUID.randomUUID().toString())
-        );
-        participantRepository.setStatusByIds(studyId, p.getParticipantId(), status);
-        final Participant participant = participantRepository.getByIds(studyId, p.getParticipantId());
-        assertThat(participant).hasFieldOrPropertyWithValue("status", status);
-        return participant;
-    }
 }

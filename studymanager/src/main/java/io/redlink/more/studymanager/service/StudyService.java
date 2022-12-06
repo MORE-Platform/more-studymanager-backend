@@ -84,7 +84,7 @@ public class StudyService {
         studyRepository.setStateById(studyId, status);
 
         interventionService.alignInterventionsWithStudyState(study);
-        participantService.alignParticipantsStatusWithStudyState(study);
+        participantService.alignParticipantsWithStudyState(study);
     }
 
     public Map<MoreUser, Set<StudyRole>> getACL(Long studyId) {
