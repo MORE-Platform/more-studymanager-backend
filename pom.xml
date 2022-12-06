@@ -110,7 +110,7 @@
                             <phase>generate-resources</phase>
                             <configuration>
                                 <fileTemplate>/org/codehaus/mojo/license/third-party-file-groupByLicense.ftl</fileTemplate>
-                                <failOnBlacklist>false</failOnBlacklist>
+                                <failOnBlacklist>true</failOnBlacklist>
                             </configuration>
                         </execution>
                     </executions>
