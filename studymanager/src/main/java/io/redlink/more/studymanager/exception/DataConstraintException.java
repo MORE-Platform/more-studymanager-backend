@@ -21,4 +21,10 @@ public class DataConstraintException extends RuntimeException {
         );
     }
 
+    public static DataConstraintException createNoSelfAdminRemoval(long studyId, String userId) {
+        return new DataConstraintException(
+                "Removing yourself (%s) as %s from study_%d is not allowed."
+                        .formatted(userId, StudyRole.STUDY_ADMIN, studyId)
+        );
+    }
 }
