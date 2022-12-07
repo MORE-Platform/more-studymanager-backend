@@ -1,8 +1,12 @@
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
+import java.util.EnumSet;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,16 +19,25 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ParticipantServiceTest {
+class ParticipantServiceTest {
 
     @Mock
     ParticipantRepository participantRepository;
+    @Mock
+    StudyPermissionService studyPermissionService;
+
     @InjectMocks
     ParticipantService participantService;
 
+    private final AuthenticatedUser currentUser = new AuthenticatedUser(
+            UUID.randomUUID().toString(),
+            "Test User", "test@example.com", "Test Inc.",
+            EnumSet.allOf(PlatformRole.class)
+    );
+
     @Test
     @DisplayName("When the participant is saved it should return the participant with id.")
-    public void testSaveStudy() {
+    void testSaveStudy() {
         String token = RandomTokenGenerator.generate();
 
         Participant participant = new Participant()
@@ -35,7 +48,7 @@ public class ParticipantServiceTest {
         when(participantRepository.insert(any(Participant.class)))
                 .thenReturn(new Participant().setParticipantId(1).setStudyId(1L).setAlias("participant x").setRegistrationToken(token));
 
-        Participant participantResponse = participantService.createParticipant(participant);
+        Participant participantResponse = participantService.createParticipant(participant, currentUser);
 
         assertThat(participantResponse.getStudyId()).isEqualTo(1L);
         assertThat(participantResponse.getParticipantId()).isEqualTo(1);

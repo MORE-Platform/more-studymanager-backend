@@ -6,6 +6,7 @@ import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,8 +16,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNullableIntegerValue;
 
