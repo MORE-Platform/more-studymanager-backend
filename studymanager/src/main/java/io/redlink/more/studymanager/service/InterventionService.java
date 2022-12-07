@@ -29,7 +29,8 @@ import java.util.Optional;
 @Service
 public class InterventionService {
 
-    private static final Set<StudyRole> EDIT_ROLES = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR);
+    private static final Set<StudyRole> READ_ROLES = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR);
+    private static final Set<StudyRole> WRITE_ROLES = READ_ROLES;
 
     private final InterventionRepository repository;
 
@@ -56,67 +57,67 @@ public class InterventionService {
     }
 
     public Intervention addIntervention(Intervention intervention, User user) {
-        studyPermissionService.assertAnyRole(intervention.getStudyId(), user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(intervention.getStudyId(), user.id(), WRITE_ROLES);
         return repository.insert(intervention);
     }
 
     public List<Intervention> listInterventions(Long studyId, User user) {
         if (user != null) {
-            studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+            studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
         }
         return repository.listInterventions(studyId);
     }
 
     public Intervention getIntervention(Long studyId, Integer interventionId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
         return repository.getByIds(studyId, interventionId);
     }
 
     public void deleteIntervention(Long studyId, Integer interventionId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
         repository.deleteByIds(studyId, interventionId);
     }
 
     public Intervention updateIntervention(Intervention intervention, User user) {
-        studyPermissionService.assertAnyRole(intervention.getStudyId(), user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(intervention.getStudyId(), user.id(), WRITE_ROLES);
         return repository.updateIntervention(intervention);
     }
 
     public Action createAction(Long studyId, Integer interventionId, Action action, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
         return repository.createAction(studyId, interventionId, validateAction(action));
     }
 
     public Action getActionByIds(Long studyId, Integer interventionId, Integer actionId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
         return repository.getActionByIds(studyId, interventionId, actionId);
     }
 
     public List<Action> listActions(Long studyId, Integer interventionId, User user) {
         if (user != null) {
-            studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+            studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
         }
         return repository.listActions(studyId, interventionId);
     }
 
     public void deleteAction(Long studyId, Integer interventionId, Integer actionId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
         repository.deleteActionByIds(studyId, interventionId, actionId);
     }
 
     public Action updateAction(Long studyId, Integer interventionId, Integer actionId, Action action, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
         return repository.updateAction(studyId, interventionId, actionId, validateAction(action));
     }
 
     public Trigger updateTrigger(Long studyId, Integer interventionId, Trigger trigger, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
         return repository.updateTrigger(studyId, interventionId, validateTrigger(trigger));
     }
 
     public Trigger getTriggerByIds(Long studyId, Integer interventionId, User user) {
         if (user != null) {
-            studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+            studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
         }
         return repository.getTriggerByIds(studyId, interventionId);
     }

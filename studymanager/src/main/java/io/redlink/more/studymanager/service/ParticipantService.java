@@ -19,7 +19,8 @@ import static io.redlink.more.studymanager.model.Participant.Status.LOCKED;
 @Service
 public class ParticipantService {
 
-    private static final Set<StudyRole> EDIT_ROLES = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR);
+    private static final Set<StudyRole> READ_ROLES = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR);
+    private static final Set<StudyRole> WRITE_ROLES = READ_ROLES;
 
     private final ParticipantRepository participantRepository;
     private final StudyPermissionService studyPermissionService;
@@ -31,35 +32,35 @@ public class ParticipantService {
     }
 
     public Participant createParticipant(Participant participant, User user) {
-        studyPermissionService.assertAnyRole(participant.getStudyId(), user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(participant.getStudyId(), user.id(), WRITE_ROLES);
         participant.setRegistrationToken(RandomTokenGenerator.generate());
         return participantRepository.insert(participant);
     }
 
     public List<Participant> listParticipants(Long studyId, User user) {
         if (user != null) {
-            studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+            studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
         }
         return participantRepository.listParticipants(studyId);
     }
 
     public Participant getParticipant(Long studyId, Integer participantId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
         return participantRepository.getByIds(studyId, participantId);
     }
 
     public void deleteParticipant(Long studyId, Integer participantId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
         participantRepository.deleteParticipant(studyId, participantId);
     }
 
     public Participant updateParticipant(Participant participant, User user) {
-        studyPermissionService.assertAnyRole(participant.getStudyId(), user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(participant.getStudyId(), user.id(), WRITE_ROLES);
         return participantRepository.update(participant);
     }
 
     public void setStatus(Long studyId, Integer participantId, Participant.Status status, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
         participantRepository.setStatusByIds(studyId, participantId, status);
         if (EnumSet.of(ABANDONED, KICKED_OUT, LOCKED).contains(status)) {
             participantRepository.cleanupParticipant(studyId, participantId);

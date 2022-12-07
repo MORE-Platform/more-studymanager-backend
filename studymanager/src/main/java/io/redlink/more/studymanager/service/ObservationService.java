@@ -18,7 +18,8 @@ import java.util.Map;
 @Service
 public class ObservationService {
 
-    private static final Set<StudyRole> EDIT_ROLES = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR);
+    private static final Set<StudyRole> READ_ROLES = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR);
+    private static final Set<StudyRole> WRITE_ROLES = READ_ROLES;
 
     private final ObservationRepository repository;
 
@@ -34,24 +35,24 @@ public class ObservationService {
     }
 
     public Observation addObservation(Observation observation, User user) {
-        studyPermissionService.assertAnyRole(observation.getStudyId(), user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(observation.getStudyId(), user.id(), WRITE_ROLES);
 
         return repository.insert(validate(observation));
     }
 
     public void deleteObservation(Long studyId, Integer observationId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
 
         repository.deleteObservation(studyId, observationId);
     }
 
     public List<Observation> listObservations(Long studyId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
         return repository.listObservations(studyId);
     }
 
     public Observation updateObservation(Observation observation, User user) {
-        studyPermissionService.assertAnyRole(observation.getStudyId(), user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(observation.getStudyId(), user.id(), WRITE_ROLES);
         return repository.updateObservation(validate(observation));
     }
 

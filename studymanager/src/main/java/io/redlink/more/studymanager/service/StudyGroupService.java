@@ -15,7 +15,8 @@ import java.util.Optional;
 @Service
 public class StudyGroupService {
 
-    private static final Set<StudyRole> EDIT_ROLES = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR);
+    private static final Set<StudyRole> READ_ROLES = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR, StudyRole.STUDY_VIEWER);
+    private static final Set<StudyRole> WRITE_ROLES = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR);
 
     private final StudyGroupRepository repository;
     private final StudyPermissionService studyPermissionService;
@@ -26,28 +27,28 @@ public class StudyGroupService {
     }
 
     public StudyGroup createStudyGroup(StudyGroup studyGroup, User user) {
-        studyPermissionService.assertAnyRole(studyGroup.getStudyId(), user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyGroup.getStudyId(), user.id(), WRITE_ROLES);
         return this.repository.insert(studyGroup);
     }
 
     public List<StudyGroup> listStudyGroups(long studyId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
         return this.repository.listStudyGroupsOrderedByStudyGroupIdAsc(studyId);
     }
 
     public StudyGroup getStudyGroup(long studyId, int studyGroupId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
         return Optional.ofNullable(repository.getByIds(studyId, studyGroupId))
                 .orElseThrow(() -> NotFoundException.StudyGroup(studyId, studyGroupId));
     }
 
     public StudyGroup updateStudyGroup(StudyGroup studyGroup, User user) {
-        studyPermissionService.assertAnyRole(studyGroup.getStudyId(), user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyGroup.getStudyId(), user.id(), WRITE_ROLES);
         return this.repository.update(studyGroup);
     }
 
     public void deleteStudyGroup(long studyId, int studyGroupId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EDIT_ROLES);
+        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
         this.repository.deleteById(studyId, studyGroupId);
     }
 }

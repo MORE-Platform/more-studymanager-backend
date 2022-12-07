@@ -31,6 +31,7 @@ public class ImportExportService {
 
     public Resource exportParticipants(Long studyId, User user) {
         studyPermissionService.assertAnyRole(studyId, user.id(), EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR));
+
         List<Participant> participantList = participantRepository.listParticipants(studyId);
         Study study = studyRepository.getById(studyId)
                 .orElseThrow(() -> new NotFoundException("study", studyId));

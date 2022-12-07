@@ -46,10 +46,6 @@ public class StudyService {
         return getStudy(savedStudy.getStudyId(), user).orElse(savedStudy);
     }
 
-    public List<Study> listStudies() {
-        return studyRepository.listStudyOrderByModifiedDesc();
-    }
-
     public List<Study> listStudies(User user) {
         return listStudies(user, EnumSet.allOf(StudyRole.class));
     }
@@ -59,23 +55,27 @@ public class StudyService {
     }
 
     public Optional<Study> getStudy(Long studyId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id());
+        studyPermissionService.assertAnyRole(studyId, user.id(), EnumSet.allOf(StudyRole.class));
         return (studyRepository.getById(studyId, user))
                 ;
     }
 
     public Optional<Study> updateStudy(Study study, User user) {
-        studyPermissionService.assertAnyRole(study.getStudyId(), user.id(), StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR);
+        studyPermissionService.assertAnyRole(study.getStudyId(), user.id(),
+                EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR));
+
         return studyRepository.update(study, user);
     }
 
     public void deleteStudy(Long studyId, User user) {
         studyPermissionService.assertAnyRole(studyId, user.id(), StudyRole.STUDY_ADMIN);
+
         studyRepository.deleteById(studyId);
     }
 
     public void setStatus(Long studyId, Study.Status status, User user) {
         studyPermissionService.assertRole(studyId, user.id(), StudyRole.STUDY_ADMIN);
+
         Study study = getStudy(studyId, user)
                                 .orElseThrow(() -> NotFoundException.Study(studyId));
         if (status.equals(Study.Status.DRAFT)) {
@@ -95,6 +95,7 @@ public class StudyService {
 
     public Map<MoreUser, Set<StudyRole>> getACL(Long studyId, User user) {
         studyPermissionService.assertAnyRole(studyId, user.id());
+
         return aclRepository.getACL(studyId);
     }
 
@@ -113,6 +114,7 @@ public class StudyService {
 
     public Optional<StudyUserRoles> getRolesForStudy(Long studyId, String userId, User currentUser) {
         studyPermissionService.assertAnyRole(studyId, currentUser.id());
+
         return userRepo.getById(userId).map(user ->
                 new StudyUserRoles(
                         user,
