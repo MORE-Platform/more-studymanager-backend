@@ -1,16 +1,16 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.User;
-import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 import static io.redlink.more.studymanager.model.Participant.Status.ABANDONED;
 import static io.redlink.more.studymanager.model.Participant.Status.KICKED_OUT;
@@ -49,9 +49,9 @@ public class ParticipantService {
         return participantRepository.getByIds(studyId, participantId);
     }
 
-    public void deleteParticipant(Long studyId, Integer participantId, User user) {
+    public Optional<Participant> deleteParticipant(Long studyId, Integer participantId, User user) {
         studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
-        participantRepository.deleteParticipant(studyId, participantId);
+        return participantRepository.deleteParticipant(studyId, participantId);
     }
 
     public Participant updateParticipant(Participant participant, User user) {
