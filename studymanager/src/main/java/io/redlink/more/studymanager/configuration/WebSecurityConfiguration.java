@@ -59,6 +59,7 @@ public class WebSecurityConfiguration {
                                 new IpAddressMatcher("127.0.0.1/8")
                         )
                 ).permitAll()
+                .requestMatchers("/error").authenticated()
                 .anyRequest().denyAll();
 
         // API-Calls should not be redirected to the login page, but answered with a 401

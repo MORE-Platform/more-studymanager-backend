@@ -63,8 +63,9 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
     public ResponseEntity<CollaboratorDetailsDTO> setStudyCollaboratorRoles(Long studyId, String uid, Set<StudyRoleDTO> studyRoleDTO) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
-                    studyService.setRolesForStudy(studyId, uid, RoleTransformer.toStudyRoles(studyRoleDTO), currentUser)
-                            .map(UserInfoTransformer::toCollaboratorDetailsDTO)
+                studyService.setRolesForStudy(studyId, uid, RoleTransformer.toStudyRoles(studyRoleDTO), currentUser)
+                        .map(UserInfoTransformer::toCollaboratorDetailsDTO)
         );
     }
+
 }

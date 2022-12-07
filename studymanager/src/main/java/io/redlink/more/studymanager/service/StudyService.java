@@ -1,6 +1,7 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -77,7 +79,7 @@ public class StudyService {
         studyPermissionService.assertRole(studyId, user.id(), StudyRole.STUDY_ADMIN);
 
         Study study = getStudy(studyId, user)
-                                .orElseThrow(() -> NotFoundException.Study(studyId));
+                .orElseThrow(() -> NotFoundException.Study(studyId));
         if (status.equals(Study.Status.DRAFT)) {
             throw BadRequestException.StateChange(study.getStudyState(), Study.Status.DRAFT);
         }
@@ -102,6 +104,12 @@ public class StudyService {
     public Optional<StudyUserRoles> setRolesForStudy(Long studyId, String userId, Set<StudyRole> roles,
                                                      User currentUser) {
         studyPermissionService.assertRole(studyId, currentUser.id(), StudyRole.STUDY_ADMIN);
+
+        //MORE-218: One must not remove oneself as ADMIN
+        if (StringUtils.equals(currentUser.id(), userId)
+            && !roles.contains(StudyRole.STUDY_ADMIN)) {
+            throw DataConstraintException.createNoSelfAdminRemoval(studyId, userId);
+        }
 
         if (roles.isEmpty()) {
             aclRepository.clearRoles(studyId, userId);

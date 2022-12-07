@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 public class MoreSDK {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MoreSDK.class);
+
     private final NameValuePairRepository nvpairs;
 
     private final SchedulingService schedulingService;
@@ -94,22 +95,24 @@ public class MoreSDK {
         schedulingService.unscheduleJob(issuer, id, TriggerJob.class);
     }
 
-    public Set<Integer> listParticipants(long studyId, Integer studyGroupId) {
+    public Set<Integer> listActiveParticipants(long studyId, Integer studyGroupId) {
         return participantService.listParticipants(studyId, null).stream()
                 .filter(p -> studyGroupId == null || studyGroupId.equals(p.getStudyGroupId()))
+                .filter(p -> Participant.Status.ACTIVE.equals(p.getStatus()))
                 .map(Participant::getParticipantId)
                 .collect(Collectors.toSet());
     }
 
-    public Set<Integer> listParticipantsByQuery(long studyId, Integer studyGroupId, String query, Timeframe timeframe, boolean inverse) {
+    public Set<Integer> listActiveParticipantsByQuery(long studyId, Integer studyGroupId, String query, Timeframe timeframe, boolean inverse) {
+        Set<Integer> participants = listActiveParticipants(studyId, studyGroupId);
+        Set<Integer> allThatMatchQuery = new HashSet<>(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timeframe));
         if(inverse) {
-            Set<Integer> participants = listParticipants(studyId, studyGroupId);
-            Set<Integer> allThatMatchQuery = new HashSet<>(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timeframe));
             participants.removeAll(allThatMatchQuery);
-            return participants;
+
         } else {
-            return new HashSet<>(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timeframe));
+            participants.retainAll(allThatMatchQuery);
         }
+        return participants;
     }
 
     public boolean sendPushNotification(long studyId, int participantId, String title, String message) {

@@ -277,6 +277,8 @@ paths:
                 $ref: '#/components/schemas/CollaboratorDetails'
         '400':
           description: invalid roles list
+        '409':
+          description: role update failed
         '404':
           description: unknown uid
 
@@ -288,6 +290,8 @@ paths:
       responses:
         '204':
           description: Cleared
+        '409':
+          description: removal failed
 
   /studies/{studyId}/studyGroups:
     post:
