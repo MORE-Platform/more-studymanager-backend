@@ -94,6 +94,14 @@ public class InterventionService {
         studyRepository.listStudiesByStatus(Study.Status.ACTIVE).forEach(this::activateInterventionsFor);
     }
 
+    public void alignInterventionsWithStudyState(Study study) {
+        if (study.getStudyState() == Study.Status.ACTIVE) {
+            activateInterventionsFor(study);
+        } else {
+            deactivateInterventionsFor(study);
+        }
+    }
+
     public void activateInterventionsFor(Study study) {
         listTriggersFor(study).forEach(Component::activate);
     }

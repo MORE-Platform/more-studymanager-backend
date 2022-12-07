@@ -25,12 +25,15 @@ public class StudyService {
     private final StudyAclRepository aclRepository;
     private final UserRepository userRepo;
     private final InterventionService interventionService;
+    private final ParticipantService participantService;
 
-    public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo, InterventionService interventionService) {
+    public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
+                        InterventionService interventionService, ParticipantService participantService) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
         this.interventionService = interventionService;
+        this.participantService = participantService;
     }
 
     public Study createStudy(Study study, User currentUser) {
@@ -80,11 +83,8 @@ public class StudyService {
         }
         studyRepository.setStateById(studyId, status);
 
-        if (status.equals(Study.Status.ACTIVE)) {
-            interventionService.activateInterventionsFor(study);
-        } else {
-            interventionService.deactivateInterventionsFor(study);
-        }
+        interventionService.alignInterventionsWithStudyState(study);
+        participantService.alignParticipantsWithStudyState(study);
     }
 
     public Map<MoreUser, Set<StudyRole>> getACL(Long studyId) {
