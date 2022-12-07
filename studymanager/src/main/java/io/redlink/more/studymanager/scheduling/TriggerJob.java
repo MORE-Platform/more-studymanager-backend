@@ -49,7 +49,7 @@ public class TriggerJob implements Job {
             MDC.put("studyGroupId", String.valueOf(studyGroupId));
 
             Trigger trigger = Optional.ofNullable(
-                    interventionService.getTriggerByIds(studyId, interventionId)
+                    interventionService.getTriggerByIds(studyId, interventionId, null)
             ).orElseThrow(() ->
                     new SchedulingException(String.format("Cannot find trigger: sid:%s, iid:%s", studyId, interventionId))
             );

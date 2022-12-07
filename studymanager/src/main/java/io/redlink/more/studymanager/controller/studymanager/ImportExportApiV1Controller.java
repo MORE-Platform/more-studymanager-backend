@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.webservices.ImportExportApi;
 import io.redlink.more.studymanager.service.ImportExportService;
+import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,15 +15,20 @@ public class ImportExportApiV1Controller implements ImportExportApi {
 
     private final ImportExportService service;
 
-    public ImportExportApiV1Controller(ImportExportService service) {
+    private final OAuth2AuthenticationService authService;
+
+
+    public ImportExportApiV1Controller(ImportExportService service, OAuth2AuthenticationService authService) {
         this.service = service;
+        this.authService = authService;
     }
 
 
     @Override
     public ResponseEntity<Resource> exportParticipants(Long studyId) {
+        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
-                service.exportParticipants(studyId)
+                service.exportParticipants(studyId, currentUser)
         );
     }
 }

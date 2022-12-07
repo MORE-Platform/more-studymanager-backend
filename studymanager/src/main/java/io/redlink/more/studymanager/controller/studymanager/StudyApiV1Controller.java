@@ -34,7 +34,7 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<StudyDTO> createStudy(StudyDTO studyDTO) {
-        var currentUser = authService.getCurrentUser();
+        final var currentUser = authService.getCurrentUser();
         Study study = service.createStudy(StudyTransformer.fromStudyDTO_V1(studyDTO), currentUser);
         LOGGER.debug("{} created a study {}", currentUser, study);
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -44,7 +44,7 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<List<StudyDTO>> listStudies() {
-        var currentUser = authService.getCurrentUser();
+        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
                 service.listStudies(currentUser).stream()
                         .map(StudyTransformer::toStudyDTO_V1)
@@ -54,7 +54,7 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<StudyDTO> getStudy(Long studyId) {
-        var currentUser = authService.getCurrentUser();
+        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
                 service.getStudy(studyId, currentUser)
                         .map(StudyTransformer::toStudyDTO_V1)
@@ -63,7 +63,7 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<StudyDTO> updateStudy(Long studyId, StudyDTO studyDTO) {
-        var currentUser = authService.getCurrentUser();
+        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
                 service.updateStudy(
                         StudyTransformer.fromStudyDTO_V1(studyDTO), currentUser
@@ -73,13 +73,15 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<Void> deleteStudy(Long studyId) {
-        service.deleteStudy(studyId);
+        final var currentUser = authService.getCurrentUser();
+        service.deleteStudy(studyId, currentUser);
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<Void> setStatus(Long studyId, StatusChangeDTO statusChangeDTO) {
-        service.setStatus(studyId, StudyTransformer.fromStatusChangeDTO_V1(statusChangeDTO));
+        final var currentUser = authService.getCurrentUser();
+        service.setStatus(studyId, StudyTransformer.fromStatusChangeDTO_V1(statusChangeDTO), currentUser);
         return ResponseEntity.ok().build();
     }
 }

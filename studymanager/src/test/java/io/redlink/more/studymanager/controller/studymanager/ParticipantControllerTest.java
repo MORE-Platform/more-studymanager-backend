@@ -2,11 +2,16 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.PlatformRole;
+import io.redlink.more.studymanager.model.User;
+import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ParticipantService;
-
 import java.sql.Timestamp;
-
+import java.util.EnumSet;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +35,8 @@ class ParticipantControllerTest {
 
     @MockBean
     ParticipantService participantService;
+    @MockBean
+    OAuth2AuthenticationService oAuth2AuthenticationService;
 
     @Autowired
     ObjectMapper mapper;
@@ -37,13 +44,24 @@ class ParticipantControllerTest {
     @Autowired
     private MockMvc mvc;
 
+    @BeforeEach
+    void setUp() {
+        when(oAuth2AuthenticationService.getCurrentUser()).thenReturn(
+                new AuthenticatedUser(
+                        UUID.randomUUID().toString(),
+                        "Test User", "test@example.com", "Test Inc.",
+                        EnumSet.allOf(PlatformRole.class)
+                )
+        );
+    }
+
     @Test
     @DisplayName("Create participant should create the participant with Id and status set")
     void testCreateParticipant() throws Exception {
 
         final long studyId = 1L;
 
-        when(participantService.createParticipant(any(Participant.class))).thenAnswer(invocationOnMock -> new Participant()
+        when(participantService.createParticipant(any(Participant.class), any(User.class))).thenAnswer(invocationOnMock -> new Participant()
                 .setStudyId(1L)
                 .setParticipantId(1)
                 .setAlias("participant x")
@@ -77,7 +95,7 @@ class ParticipantControllerTest {
     void testCreateFromCSV() throws Exception {
         String participant1 = "Participant1";
         String participant2 = "Participant2";
-        when(participantService.createParticipant(any(Participant.class))).thenAnswer(invocationOnMock -> new Participant()
+        when(participantService.createParticipant(any(Participant.class), any(User.class))).thenAnswer(invocationOnMock -> new Participant()
                         .setStudyId(1L)
                         .setParticipantId(1)
                         .setAlias(participant1)
@@ -107,7 +125,7 @@ class ParticipantControllerTest {
     @Test
     @DisplayName("Update participant should return similar values")
     void testUpdateStudy() throws Exception {
-        when(participantService.updateParticipant(any(Participant.class))).thenAnswer(invocationOnMock ->
+        when(participantService.updateParticipant(any(Participant.class), any(User.class))).thenAnswer(invocationOnMock ->
                 invocationOnMock.getArgument(0, Participant.class)
                         .setStatus(Participant.Status.NEW)
                         .setAlias("person x")

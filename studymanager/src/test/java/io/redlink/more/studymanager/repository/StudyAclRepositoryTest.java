@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.repository;
 
+import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
@@ -12,6 +13,7 @@ import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +23,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
@@ -38,7 +41,7 @@ class StudyAclRepositoryTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private MoreUser user1, user2;
+    private MoreUser admin, user1, user2;
     private Study study;
 
     @BeforeEach
@@ -47,10 +50,12 @@ class StudyAclRepositoryTest {
         jdbcTemplate.update("DELETE FROM users");
         jdbcTemplate.update("DELETE FROM studies");
 
+        admin = userRepository.save(new MoreUser("admin", "Admin", null, null));
         user1 = userRepository.save(new MoreUser("user1", "User One", null, null));
         user2 = userRepository.save(new MoreUser("user2", "User Two", null, null));
 
         study = studyRepository.insert(new Study().setTitle("ACL-Test"));
+        studyAclRepository.setRoles(study.getStudyId(), admin.id(), null, StudyRole.STUDY_ADMIN);
     }
 
 
@@ -89,7 +94,8 @@ class StudyAclRepositoryTest {
         assertThat(studyAclRepository.getRoles(study.getStudyId(), user2.id()), Matchers.equalTo(rolesUser2));
 
         var acl = studyAclRepository.getACL(study);
-        assertThat(acl, Matchers.aMapWithSize(2));
+        assertThat(acl, Matchers.aMapWithSize(3));
+        assertThat(acl.get(admin), Matchers.equalTo(EnumSet.of(StudyRole.STUDY_ADMIN)));
         assertThat(acl.get(user1), Matchers.equalTo(rolesUser1));
         assertThat(acl.get(user2), Matchers.equalTo(rolesUser2));
 
@@ -147,6 +153,21 @@ class StudyAclRepositoryTest {
                 roleDetails.stream().filter(d -> d.role() == StudyRole.STUDY_OPERATOR).findFirst(),
                 valueMatches(hasRoleCreator(user1.id()))
         );
+    }
+
+    @Test
+    @DisplayName("Ensure that there is at least on STUDY_ADMIN")
+    void testAtLeastOneStudyAdmin() {
+
+        assertThrows(DataConstraintException.class,
+                () -> studyAclRepository.clearRoles(study.getStudyId(), admin.id()),
+                "Removing the last ADMIN is forbidden");
+        assertThrows(DataConstraintException.class,
+                () -> studyAclRepository.setRoles(study.getStudyId(), admin.id(), user1.id()),
+                "Removing the last ADMIN is forbidden");
+
+        studyAclRepository.setRoles(study.getStudyId(), user1.id(), admin.id(), StudyRole.STUDY_ADMIN);
+        studyAclRepository.clearRoles(study.getStudyId(), admin.id());
     }
 
     static TypeSafeDiagnosingMatcher<Study> hasSameStudyId(Study study) {

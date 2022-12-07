@@ -3,9 +3,13 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
+import java.util.EnumSet;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -16,12 +20,18 @@ public class ImportExportService {
 
     private final ParticipantRepository participantRepository;
     private final StudyRepository studyRepository;
-    public ImportExportService(ParticipantRepository participantRepository, StudyRepository studyRepository) {
+    private final StudyPermissionService studyPermissionService;
+
+    public ImportExportService(ParticipantRepository participantRepository, StudyRepository studyRepository,
+                               StudyPermissionService studyPermissionService) {
         this.participantRepository = participantRepository;
         this.studyRepository = studyRepository;
+        this.studyPermissionService = studyPermissionService;
     }
 
-    public ByteArrayResource exportParticipants(Long studyId) {
+    public Resource exportParticipants(Long studyId, User user) {
+        studyPermissionService.assertAnyRole(studyId, user.id(), EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR));
+
         List<Participant> participantList = participantRepository.listParticipants(studyId);
         Study study = studyRepository.getById(studyId)
                 .orElseThrow(() -> new NotFoundException("study", studyId));

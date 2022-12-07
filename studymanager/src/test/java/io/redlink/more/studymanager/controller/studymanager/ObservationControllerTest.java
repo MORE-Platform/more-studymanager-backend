@@ -3,10 +3,17 @@ package io.redlink.more.studymanager.controller.studymanager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.EventDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.PlatformRole;
+import io.redlink.more.studymanager.model.User;
+import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ObservationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.util.EnumSet;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,16 +42,30 @@ class ObservationControllerTest {
     @MockBean
     ObservationService observationService;
 
+    @MockBean
+    OAuth2AuthenticationService oAuth2AuthenticationService;
+
     @Autowired
     ObjectMapper mapper;
 
     @Autowired
     private MockMvc mvc;
 
+    @BeforeEach
+    void setUp() {
+        when(oAuth2AuthenticationService.getCurrentUser()).thenReturn(
+                new AuthenticatedUser(
+                        UUID.randomUUID().toString(),
+                        "Test User", "test@example.com", "Test Inc.",
+                        EnumSet.allOf(PlatformRole.class)
+                )
+        );
+    }
+
     @Test
     @DisplayName("Create Observation should create and then return the observation with observation id set")
     void testAddObservation() throws Exception {
-        when(observationService.addObservation(any(Observation.class)))
+        when(observationService.addObservation(any(Observation.class), any(User.class)))
                 .thenAnswer(invocationOnMock -> new Observation()
                         .setStudyId(((Observation)invocationOnMock.getArgument(0)).getStudyId())
                         .setObservationId(((Observation)invocationOnMock.getArgument(0)).getObservationId())
@@ -81,7 +102,7 @@ class ObservationControllerTest {
     @Test
     @DisplayName("Update observation should return similar values")
     void testUpdateStudy() throws Exception {
-        when(observationService.updateObservation(any(Observation.class))).thenAnswer(invocationOnMock -> ((Observation)invocationOnMock.getArgument(0))
+        when(observationService.updateObservation(any(Observation.class), any(User.class))).thenAnswer(invocationOnMock -> ((Observation)invocationOnMock.getArgument(0))
                 .setTitle("title")
                 .setCreated(new Timestamp(0))
                 .setModified(new Timestamp(0)));
@@ -105,7 +126,7 @@ class ObservationControllerTest {
     @Test
     @DisplayName("Schedule with empty value should not throw error")
     void testEmptySchedule() throws Exception {
-        when(observationService.addObservation(any(Observation.class))).thenAnswer(invocationOnMock -> ((Observation)invocationOnMock.getArgument(0))
+        when(observationService.addObservation(any(Observation.class), any(User.class))).thenAnswer(invocationOnMock -> ((Observation)invocationOnMock.getArgument(0))
                 .setTitle("title")
                 .setSchedule(new Event().setDateEnd(null).setDateStart(null).setRRule(null))
                 .setCreated(new Timestamp(0))
