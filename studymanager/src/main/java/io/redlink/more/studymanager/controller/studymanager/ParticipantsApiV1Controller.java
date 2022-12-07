@@ -6,13 +6,12 @@ import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.service.ParticipantService;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -47,9 +46,11 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     }
 
     @Override
-    public ResponseEntity<Void> deleteParticipant(Long studyId, Integer participantId) {
-        service.deleteParticipant(studyId, participantId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ParticipantDTO> deleteParticipant(Long studyId, Integer participantId) {
+        return service.deleteParticipant(studyId, participantId)
+                .map(ParticipantTransformer::toParticipantDTO_V1)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @Override

@@ -519,7 +519,14 @@ paths:
         - $ref: '#/components/parameters/ParticipantId'
       responses:
         '200':
-          description: deleted participants
+          description: >
+            participant could not be deleted because it was already activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Participant'
+        '204':
+          description: participant deleted
         '500':
           description: Error
 

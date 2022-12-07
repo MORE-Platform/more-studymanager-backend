@@ -5,6 +5,7 @@ import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
 import java.util.EnumSet;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -35,8 +36,8 @@ public class ParticipantService {
         return participantRepository.getByIds(studyId, participantId);
     }
 
-    public void deleteParticipant(Long studyId, Integer participantId) {
-        participantRepository.deleteParticipant(studyId, participantId);
+    public Optional<Participant> deleteParticipant(Long studyId, Integer participantId) {
+        return participantRepository.deleteParticipant(studyId, participantId);
     }
 
     public Participant updateParticipant(Participant participant) {
