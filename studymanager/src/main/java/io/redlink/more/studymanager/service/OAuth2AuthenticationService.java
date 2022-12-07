@@ -23,8 +23,10 @@ import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
 public class OAuth2AuthenticationService {
 
     private final Map<String, Set<PlatformRole>> roleMapping;
+    private final MoreAuthProperties.ClaimsProperties claimSettings;
 
     public OAuth2AuthenticationService(MoreAuthProperties moreAuthProperties) {
+        claimSettings = Objects.requireNonNull(moreAuthProperties.claims(), "claims must not be null");
         Objects.requireNonNull(moreAuthProperties.globalRoles(), "globalRoles must not be null");
 
         var mapping = new HashMap<String, EnumSet<PlatformRole>>();
@@ -71,8 +73,8 @@ public class OAuth2AuthenticationService {
                     claims.getSubject(),
                     claims.getFullName(),
                     Boolean.TRUE.equals(claims.getEmailVerified()) ? claims.getEmail() : null,
-                    claims.getClaimAsString("org"),
-                    mapToRoles(claims.getClaimAsStringList("roles"))
+                    claims.getClaimAsString(claimSettings.institution()),
+                    extractRoles(claims)
             );
 
         return new AuthenticatedUser(
@@ -84,6 +86,14 @@ public class OAuth2AuthenticationService {
         );
     }
 
+    public Set<PlatformRole> extractRoles(Map<String, Object> attributes) {
+        return extractRoles(new DelegatingClaimAccessor(attributes));
+    }
+
+    public Set<PlatformRole> extractRoles(ClaimAccessor token) {
+        return mapToRoles(token.getClaimAsStringList(claimSettings.roles()));
+    }
+
     private Set<PlatformRole> mapToRoles(List<String> roles) {
         return roles.stream()
                 .map(roleMapping::get)
@@ -93,10 +103,15 @@ public class OAuth2AuthenticationService {
                 .collect(Collectors.toUnmodifiableSet());
     }
 
-    private record DelegatingClaimAccessor(ClaimAccessor delegate) implements StandardClaimAccessor {
+    private record DelegatingClaimAccessor(Map<String, Object> claims) implements StandardClaimAccessor {
+
+        public DelegatingClaimAccessor(ClaimAccessor delegate) {
+            this(delegate.getClaims());
+        }
+
         @Override
         public Map<String, Object> getClaims() {
-            return delegate.getClaims();
+            return claims();
         }
     }
 }

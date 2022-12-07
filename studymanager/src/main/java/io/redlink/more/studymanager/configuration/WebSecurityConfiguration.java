@@ -104,7 +104,7 @@ public class WebSecurityConfiguration {
     }
 
     @Bean
-    protected GrantedAuthoritiesMapper userAuthoritiesMapper() {
+    protected GrantedAuthoritiesMapper userAuthoritiesMapper(OAuth2AuthenticationService oAuth2AuthenticationService) {
         return authorities -> {
             final Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
 
@@ -123,14 +123,10 @@ public class WebSecurityConfiguration {
                         mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_EMAIL"));
                     }
 
-                    // Can the user access (edit) studies?
-                    if (hasRole(idToken, "study-access")) {
-                        mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_STUDY_EDIT"));
-                    }
-                    // Can the user create (new) studies?
-                    if (hasRole(idToken, "study-creator")) {
-                        mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_STUDY_CREATE"));
-                    }
+                    oAuth2AuthenticationService.extractRoles(idToken)
+                            .forEach(role -> mappedAuthorities.add(
+                                    role.authority()
+                            ));
 
                     // Keep the original Granted Authority
                     mappedAuthorities.add(oidcUserAuthority);
@@ -138,6 +134,11 @@ public class WebSecurityConfiguration {
                     final Map<String, Object> userAttributes = oauth2UserAuthority.getAttributes();
 
                     // Map the attributes found in userAttributes
+                    oAuth2AuthenticationService.extractRoles(userAttributes)
+                            .forEach(role -> mappedAuthorities.add(
+                                    role.authority()
+                            ));
+
                     // to one or more GrantedAuthority's and add it to mappedAuthorities
                     mappedAuthorities.add(oauth2UserAuthority);
                 }
@@ -151,16 +152,11 @@ public class WebSecurityConfiguration {
         return StringUtils.isNoneBlank(
                 userInfo.getFullName(),
                 userInfo.getEmail(),
-                userInfo.getClaimAsString("org")
+                userInfo.getClaimAsString(
+                        moreAuthProperties.claims().roles()
+                )
         );
     }
-
-    private boolean hasRole(OidcIdToken idToken, String role) {
-        var roles = idToken.getClaimAsStringList("roles");
-
-        return roles != null && roles.contains(role);
-    }
-
 
     @Bean
     protected OAuth2AuthenticationService oAuth2AuthenticationService() {
