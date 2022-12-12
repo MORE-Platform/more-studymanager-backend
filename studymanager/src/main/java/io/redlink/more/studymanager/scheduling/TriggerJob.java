@@ -27,7 +27,7 @@ public class TriggerJob implements Job {
     private MoreSDK moreSDK;
 
     @Autowired
-    private Map<String, TriggerFactory> triggertFactories;
+    private Map<String, TriggerFactory> triggerFactories;
 
     @Autowired
     private InterventionService interventionService;
@@ -39,7 +39,6 @@ public class TriggerJob implements Job {
     public void execute(JobExecutionContext context) throws JobExecutionException {
         final var mdc = MDC.getCopyOfContextMap();
         try {
-            LOGGER.info("Execute Trigger-Job: {}", context.getTrigger());
             long studyId = context.getJobDetail().getJobDataMap().getLong("studyId");
             Integer studyGroupId = (Integer) context.getJobDetail().getJobDataMap().getOrDefault("studyGroupId", null);
             int interventionId = context.getJobDetail().getJobDataMap().getIntValue("interventionId");
@@ -47,6 +46,7 @@ public class TriggerJob implements Job {
             MDC.put("studyId", String.valueOf(studyId));
             MDC.put("interventionId", String.valueOf(interventionId));
             MDC.put("studyGroupId", String.valueOf(studyGroupId));
+            LOGGER.debug("Execute Trigger-Job: {}", context.getTrigger());
 
             Trigger trigger = Optional.ofNullable(
                     interventionService.getTriggerByIds(studyId, interventionId, null)
@@ -55,7 +55,7 @@ public class TriggerJob implements Job {
             );
 
             TriggerFactory factory = Optional.ofNullable(
-                    triggertFactories.get(trigger.getType())
+                    triggerFactories.get(trigger.getType())
             ).orElseThrow(() -> new SchedulingException("Cannot find triggerType " + trigger.getType()));
 
             MoreTriggerSDK sdk = moreSDK.scopedTriggerSDK(studyId, studyGroupId, interventionId);
