@@ -10,8 +10,14 @@ import io.redlink.more.studymanager.api.v1.webservices.UsersApi;
 import io.redlink.more.studymanager.model.transformer.UserInfoTransformer;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.UserService;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import org.apache.http.client.utils.URIBuilder;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimAccessor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,11 +36,47 @@ public class UserApiV1Controller implements UsersApi {
 
     @Override
     public ResponseEntity<CurrentUserDTO> getCurrentUser() {
+        final IdTokenClaimAccessor claimAccessor = authService.getClaimAccessor();
+
+        final URL issuer = claimAccessor.getIssuer();
+        final URI profileUrl = buildProfileUrl(issuer);
+        final URI userManagementUrl = buildUserManagementUrl(issuer);
+
         return ResponseEntity.ok(
                 UserInfoTransformer.toCurrentUserDTO(
-                        authService.getCurrentUser()
+                        authService.getAuthenticatedUser(claimAccessor),
+                        profileUrl,
+                        userManagementUrl
                 )
         );
+    }
+
+    private URI buildProfileUrl(URL issuerUrl) {
+        try {
+            if (issuerUrl != null) {
+                var b = new URIBuilder(issuerUrl.toURI());
+                var ps = new ArrayList<>(b.getPathSegments());
+                ps.add("account");
+                b.setPathSegments(ps);
+                return b.build();
+            }
+        } catch (URISyntaxException e) {
+            // empty
+        }
+        return null;
+    }
+
+    private URI buildUserManagementUrl(URL issuerUrl) {
+        try {
+            if (issuerUrl != null) {
+                var b = new URIBuilder(issuerUrl.toURI());
+                b.setPath(b.getPath().replace("/realms/", "/admin/") + "/console");
+                return b.build();
+            }
+        } catch (URISyntaxException e) {
+            // empty
+        }
+        return null;
     }
 
     @Override

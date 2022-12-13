@@ -3,6 +3,7 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.model.AttributeMapClaimAccessor;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.MoreAuthProperties;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.ClaimAccessor;
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimAccessor;
 import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
 
 public class OAuth2AuthenticationService {
@@ -46,16 +48,16 @@ public class OAuth2AuthenticationService {
         return SecurityContextHolder.getContext().getAuthentication();
     }
 
-    private StandardClaimAccessor getClaimAccessor() {
+    public IdTokenClaimAccessor getClaimAccessor() {
         return getStandardClaimAccessor(getAuthentication());
     }
 
-    public static StandardClaimAccessor getStandardClaimAccessor(Authentication authentication) {
+    public static IdTokenClaimAccessor getStandardClaimAccessor(Authentication authentication) {
         return Optional.ofNullable(authentication)
                 .map(Authentication::getPrincipal)
                 .filter(ClaimAccessor.class::isInstance)
                 .map(ClaimAccessor.class::cast)
-                .map(DelegatingClaimAccessor::new)
+                .map(AttributeMapClaimAccessor::new)
                 .orElse(null);
     }
 
@@ -67,8 +69,9 @@ public class OAuth2AuthenticationService {
         return getAuthenticatedUser(getStandardClaimAccessor(authentication));
     }
 
-    private AuthenticatedUser getAuthenticatedUser(StandardClaimAccessor claims) {
-        if (claims != null)
+    public AuthenticatedUser getAuthenticatedUser(ClaimAccessor ca) {
+        if (ca != null) {
+            final var claims = new AttributeMapClaimAccessor(ca);
             return new AuthenticatedUser(
                     claims.getSubject(),
                     claims.getFullName(),
@@ -76,6 +79,7 @@ public class OAuth2AuthenticationService {
                     claims.getClaimAsString(claimSettings.institution()),
                     extractRoles(claims)
             );
+        }
 
         return new AuthenticatedUser(
                 null,
@@ -87,7 +91,7 @@ public class OAuth2AuthenticationService {
     }
 
     public Set<PlatformRole> extractRoles(Map<String, Object> attributes) {
-        return extractRoles(new DelegatingClaimAccessor(attributes));
+        return extractRoles(new AttributeMapClaimAccessor(attributes));
     }
 
     public Set<PlatformRole> extractRoles(ClaimAccessor token) {
@@ -108,15 +112,4 @@ public class OAuth2AuthenticationService {
     }
 
 
-    private record DelegatingClaimAccessor(Map<String, Object> claims) implements StandardClaimAccessor {
-
-        public DelegatingClaimAccessor(ClaimAccessor delegate) {
-            this(delegate.getClaims());
-        }
-
-        @Override
-        public Map<String, Object> getClaims() {
-            return claims();
-        }
-    }
 }
