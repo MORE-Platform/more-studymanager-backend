@@ -1241,6 +1241,9 @@ components:
         - $ref: '#/components/schemas/UserInfo'
         - type: object
           properties:
+            completeProfile:
+              type: boolean
+              default: false
             roles:
               type: array
               items:

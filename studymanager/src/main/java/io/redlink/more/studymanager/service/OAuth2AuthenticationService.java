@@ -103,6 +103,11 @@ public class OAuth2AuthenticationService {
                 .collect(Collectors.toUnmodifiableSet());
     }
 
+    public boolean validateProfile(StandardClaimAccessor userInfo) {
+        return getAuthenticatedUser(userInfo).isValid();
+    }
+
+
     private record DelegatingClaimAccessor(Map<String, Object> claims) implements StandardClaimAccessor {
 
         public DelegatingClaimAccessor(ClaimAccessor delegate) {

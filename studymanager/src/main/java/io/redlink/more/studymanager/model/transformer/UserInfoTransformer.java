@@ -41,6 +41,7 @@ public final class UserInfoTransformer {
                 .name(user.fullName())
                 .email(user.email())
                 .institution(user.institution())
+                .completeProfile(user.isValid())
                 .roles(RoleTransformer.toPlatformRolesDTO(user.roles()));
     }
 

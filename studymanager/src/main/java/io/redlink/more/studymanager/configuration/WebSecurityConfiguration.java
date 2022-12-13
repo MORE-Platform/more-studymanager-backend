@@ -7,7 +7,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -114,7 +113,7 @@ public class WebSecurityConfiguration {
                     final OidcUserInfo userInfo = oidcUserAuthority.getUserInfo();
 
                     // Is the profile complete?
-                    if (validateProfile(userInfo)) {
+                    if (oAuth2AuthenticationService.validateProfile(userInfo)) {
                         mappedAuthorities.add(new SimpleGrantedAuthority("ROLE_FULL_PROFILE"));
                     }
 
@@ -146,16 +145,6 @@ public class WebSecurityConfiguration {
 
             return Set.copyOf(mappedAuthorities);
         };
-    }
-
-    private boolean validateProfile(OidcUserInfo userInfo) {
-        return StringUtils.isNoneBlank(
-                userInfo.getFullName(),
-                userInfo.getEmail(),
-                userInfo.getClaimAsString(
-                        moreAuthProperties.claims().roles()
-                )
-        );
     }
 
     @Bean
