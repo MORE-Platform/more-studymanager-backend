@@ -7,6 +7,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 
 @RestController
@@ -31,4 +34,17 @@ public class ImportExportApiV1Controller implements ImportExportApi {
                 service.exportParticipants(studyId, currentUser)
         );
     }
+
+    @Override
+    public ResponseEntity<Void> importParticipants(Long studyId, MultipartFile file) {
+        final var currentUser = authService.getCurrentUser();
+        try {
+            service.importParticipants(studyId, currentUser, file.getInputStream());
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.status(201).build();
+    }
+
+
 }
