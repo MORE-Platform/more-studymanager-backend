@@ -7,6 +7,7 @@ import io.redlink.more.studymanager.api.v1.model.CollaboratorDTO;
 import io.redlink.more.studymanager.api.v1.model.CollaboratorDetailsDTO;
 import io.redlink.more.studymanager.api.v1.model.CollaboratorRoleDetailsDTO;
 import io.redlink.more.studymanager.api.v1.model.CurrentUserDTO;
+import io.redlink.more.studymanager.api.v1.model.ProfileLinksDTO;
 import io.redlink.more.studymanager.api.v1.model.UserInfoDTO;
 import io.redlink.more.studymanager.api.v1.model.UserSearchResultListResultDTO;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
@@ -15,6 +16,7 @@ import io.redlink.more.studymanager.model.SearchResult;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.StudyUserRoles;
 import io.redlink.more.studymanager.model.User;
+import java.net.URI;
 import java.time.ZoneOffset;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,7 +35,8 @@ public final class UserInfoTransformer {
                 .institution(user.institution());
     }
 
-    public static CurrentUserDTO toCurrentUserDTO(AuthenticatedUser user) {
+    public static CurrentUserDTO toCurrentUserDTO(AuthenticatedUser user,
+                                                  URI profileUrl, URI userManagementUrl) {
         if (user == null) return null;
 
         return new CurrentUserDTO()
@@ -41,7 +44,14 @@ public final class UserInfoTransformer {
                 .name(user.fullName())
                 .email(user.email())
                 .institution(user.institution())
-                .roles(RoleTransformer.toPlatformRolesDTO(user.roles()));
+                .completeProfile(user.isValid())
+                .roles(RoleTransformer.toPlatformRolesDTO(user.roles()))
+                .links(
+                        new ProfileLinksDTO()
+                                .profile(profileUrl)
+                                .userManagement(userManagementUrl)
+                )
+                ;
     }
 
     public static CollaboratorDTO toCollaboratorDTO(MoreUser user, Set<StudyRole> roles) {

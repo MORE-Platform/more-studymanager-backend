@@ -1264,14 +1264,32 @@ components:
         - $ref: '#/components/schemas/UserInfo'
         - type: object
           properties:
+            completeProfile:
+              type: boolean
+              default: false
+              readOnly: true
             roles:
               type: array
               items:
                 $ref: '#/components/schemas/PlatformRole'
               uniqueItems: true
               readOnly: true
+            links:
+              title: ProfileLinks
+              type: object
+              properties:
+                profile:
+                  type: string
+                  format: uri
+                  readOnly: true
+                userManagement:
+                  type: string
+                  format: uri
+                  readOnly: true
+              readOnly: true
           required:
             - roles
+            - links
           readOnly: true
 
     Collaborator:
