@@ -88,3 +88,5 @@ more:
       more-operator:
         - 'more-operator'
         - 'study-creator' # deprecated
+      more-admin:
+        - 'more-admin'

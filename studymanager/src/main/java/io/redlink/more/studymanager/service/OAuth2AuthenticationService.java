@@ -3,6 +3,7 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.model.AttributeMapClaimAccessor;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.MoreAuthProperties;
@@ -18,13 +19,16 @@ import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.ClaimAccessor;
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimAccessor;
 import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
 
 public class OAuth2AuthenticationService {
 
     private final Map<String, Set<PlatformRole>> roleMapping;
+    private final MoreAuthProperties.ClaimsProperties claimSettings;
 
     public OAuth2AuthenticationService(MoreAuthProperties moreAuthProperties) {
+        claimSettings = Objects.requireNonNull(moreAuthProperties.claims(), "claims must not be null");
         Objects.requireNonNull(moreAuthProperties.globalRoles(), "globalRoles must not be null");
 
         var mapping = new HashMap<String, EnumSet<PlatformRole>>();
@@ -44,16 +48,16 @@ public class OAuth2AuthenticationService {
         return SecurityContextHolder.getContext().getAuthentication();
     }
 
-    private StandardClaimAccessor getClaimAccessor() {
+    public IdTokenClaimAccessor getClaimAccessor() {
         return getStandardClaimAccessor(getAuthentication());
     }
 
-    public static StandardClaimAccessor getStandardClaimAccessor(Authentication authentication) {
+    public static IdTokenClaimAccessor getStandardClaimAccessor(Authentication authentication) {
         return Optional.ofNullable(authentication)
                 .map(Authentication::getPrincipal)
                 .filter(ClaimAccessor.class::isInstance)
                 .map(ClaimAccessor.class::cast)
-                .map(DelegatingClaimAccessor::new)
+                .map(AttributeMapClaimAccessor::new)
                 .orElse(null);
     }
 
@@ -65,15 +69,17 @@ public class OAuth2AuthenticationService {
         return getAuthenticatedUser(getStandardClaimAccessor(authentication));
     }
 
-    private AuthenticatedUser getAuthenticatedUser(StandardClaimAccessor claims) {
-        if (claims != null)
+    public AuthenticatedUser getAuthenticatedUser(ClaimAccessor ca) {
+        if (ca != null) {
+            final var claims = new AttributeMapClaimAccessor(ca);
             return new AuthenticatedUser(
                     claims.getSubject(),
                     claims.getFullName(),
                     Boolean.TRUE.equals(claims.getEmailVerified()) ? claims.getEmail() : null,
-                    claims.getClaimAsString("org"),
-                    mapToRoles(claims.getClaimAsStringList("roles"))
+                    claims.getClaimAsString(claimSettings.institution()),
+                    extractRoles(claims)
             );
+        }
 
         return new AuthenticatedUser(
                 null,
@@ -82,6 +88,14 @@ public class OAuth2AuthenticationService {
                 null,
                 EnumSet.noneOf(PlatformRole.class)
         );
+    }
+
+    public Set<PlatformRole> extractRoles(Map<String, Object> attributes) {
+        return extractRoles(new AttributeMapClaimAccessor(attributes));
+    }
+
+    public Set<PlatformRole> extractRoles(ClaimAccessor token) {
+        return mapToRoles(token.getClaimAsStringList(claimSettings.roles()));
     }
 
     private Set<PlatformRole> mapToRoles(List<String> roles) {
@@ -93,10 +107,9 @@ public class OAuth2AuthenticationService {
                 .collect(Collectors.toUnmodifiableSet());
     }
 
-    private record DelegatingClaimAccessor(ClaimAccessor delegate) implements StandardClaimAccessor {
-        @Override
-        public Map<String, Object> getClaims() {
-            return delegate.getClaims();
-        }
+    public boolean validateProfile(StandardClaimAccessor userInfo) {
+        return getAuthenticatedUser(userInfo).isValid();
     }
+
+
 }
