@@ -46,7 +46,7 @@ public class ImportExportService {
     public void importParticipants(Long studyId, User user, InputStream inputStream) {
         studyPermissionService.assertAnyRole(studyId, user.id(), EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR));
 
-        var scanner = new Scanner(inputStream);
+        var scanner = new Scanner(inputStream).useDelimiter("[\\r\\n]+");
         boolean isHeader = true;
         while (scanner.hasNext()) {
             String line = scanner.next();
@@ -56,7 +56,7 @@ public class ImportExportService {
                 isHeader = false;
             }
         }
-
+        scanner.close();
     }
 
     private String writeToParticipantCsv(Participant participant, Study study) {
