@@ -54,13 +54,16 @@ public class WebSecurityConfiguration {
                                               OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
                                               UserRepository userRepository) throws Exception {
         // Basics
-        http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+        http.csrf()
+                .ignoringRequestMatchers("/kibana/**")
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
         http.cors().disable();
 
         // Restricted Paths
         http.authorizeHttpRequests()
                 .requestMatchers("/api", "/api/v1/me").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
+                .requestMatchers("/kibana/**").authenticated()
                 .requestMatchers("/login/init").authenticated()
                 // actuator only from localhost
                 .requestMatchers(
@@ -91,6 +94,9 @@ public class WebSecurityConfiguration {
 
         // Enable OAuth2 client_credentials flow (insomnia)
         http.oauth2ResourceServer().jwt();
+
+        //TODO maybe disable in production
+        http.headers().frameOptions().disable();
 
         return http.build();
     }

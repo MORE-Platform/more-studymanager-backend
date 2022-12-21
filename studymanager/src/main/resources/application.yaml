@@ -61,6 +61,9 @@ elastic:
   port: ${ELASTIC_PORT:9200}
   number_of_shards: 3
 
+kibana:
+  uri: ${KIBANA_URI:http://localhost:5601}
+
 firebase:
   settingsFile: ${FIREBASE_SETTINGS:file:firebase-settings.json}
 
