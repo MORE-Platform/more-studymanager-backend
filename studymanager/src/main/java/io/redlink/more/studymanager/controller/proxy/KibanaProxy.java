@@ -25,12 +25,14 @@ public class KibanaProxy {
     public KibanaProxy(ProxyService proxyService, KibanaProperties kibanaProperties) {
         this.proxyService = proxyService;
         this.baseUri = kibanaProperties.uri();
+        LOGGER.info("Set kibana uri to: {}", this.baseUri);
     }
 
     @RequestMapping(value = "/{*path}")
     public ResponseEntity proxy(
             @PathVariable final String path,
             final HttpServletRequest request) {
+        LOGGER.info("Proxying request: {}", path);
         return proxyService.processProxyRequest(request, baseUri, "kibana/"+path);
     }
 }
