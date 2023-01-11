@@ -96,15 +96,11 @@ public class StudyService {
     }
 
     public Map<MoreUser, Set<StudyRole>> getACL(Long studyId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id());
-
         return aclRepository.getACL(studyId);
     }
 
     public Optional<StudyUserRoles> setRolesForStudy(Long studyId, String userId, Set<StudyRole> roles,
                                                      User currentUser) {
-        studyPermissionService.assertRole(studyId, currentUser.id(), StudyRole.STUDY_ADMIN);
-
         //MORE-218: One must not remove oneself as ADMIN
         if (StringUtils.equals(currentUser.id(), userId)
             && !roles.contains(StudyRole.STUDY_ADMIN)) {
@@ -121,8 +117,6 @@ public class StudyService {
     }
 
     public Optional<StudyUserRoles> getRolesForStudy(Long studyId, String userId, User currentUser) {
-        studyPermissionService.assertAnyRole(studyId, currentUser.id());
-
         return userRepo.getById(userId).map(user ->
                 new StudyUserRoles(
                         user,
