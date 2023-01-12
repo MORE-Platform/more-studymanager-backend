@@ -21,7 +21,7 @@ public class AccMobileObservationFactory<C extends Observation, P extends Observ
     @Override
     public String getDescription() {
         return """
-                This observation enables you to collect accelerometer data via the mobile sensor.
+                This observation enables you to collect accelerometer data via the smartphone sensor.
                 """;
     }
 

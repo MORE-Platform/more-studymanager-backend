@@ -25,7 +25,7 @@ public class GpsMobileObservationFactory<C extends Observation, P extends Observ
     public String getDescription() {
         return
 """
-This observation enables you to collect GPS data via the mobile sensor.
+This observation enables you to collect GPS data via the smartphone sensor.
 """;
     }
 
