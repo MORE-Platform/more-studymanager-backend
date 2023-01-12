@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,6 +34,7 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
         this.studyService = studyService;
     }
 
+    @PreAuthorize("@controllerPermissionSecurity.hasRoles(#studyId, 'STUDY_ADMIN','STUDY_OPERATOR','STUDY_VIEWER')")
     @Override
     public ResponseEntity<List<CollaboratorDTO>> listStudyCollaborators(Long studyId) {
         final var currentUser = authService.getCurrentUser();
@@ -43,6 +45,7 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
         );
     }
 
+    @PreAuthorize("@controllerPermissionSecurity.hasRoles(#studyId, 'STUDY_ADMIN')")
     @Override
     public ResponseEntity<Void> clearStudyCollaboratorRoles(Long studyId, String uid) {
         final var currentUser = authService.getCurrentUser();
@@ -50,6 +53,7 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("@controllerPermissionSecurity.hasRoles(#studyId, 'STUDY_ADMIN','STUDY_OPERATOR','STUDY_VIEWER')")
     @Override
     public ResponseEntity<CollaboratorDetailsDTO> getStudyCollaboratorRoles(Long studyId, String uid) {
         final var currentUser = authService.getCurrentUser();
@@ -59,6 +63,7 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
         );
     }
 
+    @PreAuthorize("@controllerPermissionSecurity.hasRoles(#studyId, 'STUDY_ADMIN')")
     @Override
     public ResponseEntity<CollaboratorDetailsDTO> setStudyCollaboratorRoles(Long studyId, String uid, Set<StudyRoleDTO> studyRoleDTO) {
         final var currentUser = authService.getCurrentUser();
