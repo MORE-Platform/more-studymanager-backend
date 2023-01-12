@@ -3,7 +3,6 @@ package io.redlink.more.studymanager.controller.security;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyPermissionService;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,9 +15,6 @@ public class ControllerPermissionSecurity{
     public ControllerPermissionSecurity(StudyPermissionService studyPermissionService, OAuth2AuthenticationService authService){
         this.studyPermissionService = studyPermissionService;
         this.authService = authService;
-        System.out.println("x");
-        System.out.println("x");
-        System.out.println("x");
     }
 
     public boolean hasRoles(final long studyId, String... roles){

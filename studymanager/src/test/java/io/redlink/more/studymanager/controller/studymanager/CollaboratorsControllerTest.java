@@ -1,38 +1,30 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.redlink.more.studymanager.api.v1.model.CollaboratorDTO;
-import io.redlink.more.studymanager.api.v1.model.UserInfoDTO;
-import io.redlink.more.studymanager.controller.security.ControllerPermissionSecurity;
 import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyPermissionService;
 import io.redlink.more.studymanager.service.StudyService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
-import java.time.Instant;
-import java.util.EnumSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest({CollaboratorsApiV1Controller.class})
-@AutoConfigureMockMvc(addFilters = false)
+@SpringBootTest
 class CollaboratorsControllerTest {
-
     @MockBean
     StudyPermissionService studyPermissionService;
 
@@ -42,14 +34,16 @@ class CollaboratorsControllerTest {
     @MockBean
     OAuth2AuthenticationService authService;
 
-    @InjectMocks
-    ControllerPermissionSecurity controllerPermissionSecurity;
-
     @Autowired
-    ObjectMapper mapper;
+    private WebApplicationContext context;
 
-    @Autowired
     private MockMvc mvc;
+    @BeforeEach
+    public void setup(){
+        this.mvc = MockMvcBuilders.webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+    }
 
     private final AuthenticatedUser authUser = new AuthenticatedUser(
             UUID.randomUUID().toString(),
@@ -58,33 +52,28 @@ class CollaboratorsControllerTest {
             "The Hospital",
             EnumSet.allOf(PlatformRole.class));
 
+    @WithMockUser
     @Test
-    void testRoleChecksDenied() throws Exception{
+    void testRoleChecksDenied() throws Exception {
         when(authService.getCurrentUser()).thenReturn(authUser);
         when(studyPermissionService.hasAnyRole(anyLong(), anyString(), anySet())).thenReturn(false);
 
-        CollaboratorDTO collaboratorRequest = new CollaboratorDTO().user(new UserInfoDTO().uid("d").name("n").email("email@email.com").institution("institution")).roles(Set.of());
-
-        mvc.perform(put("/api/v1/studies/L2/Collaborators/8")
-                        .content(mapper.writeValueAsString(collaboratorRequest))
-                        .contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(get("/api/v1/studies/2/collaborators")
+                        .content("testContent"))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
 
+    @WithMockUser
     @Test
     void testRoleChecksAccepted() throws Exception{
         when(authService.getCurrentUser()).thenReturn(authUser);
         when(studyPermissionService.hasAnyRole(anyLong(), anyString(), anySet())).thenReturn(true);
-        when(studyService.setRolesForStudy(anyLong(),anyString(),anySet(),any(User.class)))
-                .thenReturn(Optional.of(new StudyUserRoles(new MoreUser("id","name","institution","test@mail.com"),
-                        Set.of(new StudyUserRoles.StudyRoleDetails(StudyRole.STUDY_ADMIN, new MoreUser("id","name","institution","test@mail.com"), Instant.now())))));
+        when(studyService.getACL(anyLong(),any(User.class)))
+                .thenReturn(Map.of(new MoreUser("test","test","test","test"), Set.of(StudyRole.STUDY_ADMIN)));
 
-        CollaboratorDTO collaboratorRequest = new CollaboratorDTO().user(new UserInfoDTO().uid("d").name("n").email("email@email.com").institution("institution")).roles(Set.of());
-
-        mvc.perform(put("/api/v1/studies/L2/Collaborators/8")
-                        .content(mapper.writeValueAsString(collaboratorRequest))
-                        .contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(get("/api/v1/studies/2/collaborators")
+                        .content("testContent"))
                 .andDo(print())
                 .andExpect(status().isOk());
 
