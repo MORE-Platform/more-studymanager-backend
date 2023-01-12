@@ -20,7 +20,7 @@ public class PolarVerityObservationFactory<C extends Observation, P extends Obse
 
     @Override
     public String getDescription() {
-        return "Enables hart rate measurement via polar verity sensor; no properties supportet";
+        return "This observation enables you to collect heart rate data via the polar verity sensor. No properties are supported.";
     }
 
     @Override
