@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @Testcontainers
-@ActiveProfiles("test-containers-flyway")
+@ActiveProfiles("test-containers-flyway-mock")
 class CollaboratorsControllerTest {
     @MockBean
     StudyPermissionService studyPermissionService;
