@@ -10,7 +10,6 @@ import java.util.Set;
 @Component("controllerPermissionSecurity")
 public class ControllerPermissionSecurity{
     private final StudyPermissionService studyPermissionService;
-
     private final OAuth2AuthenticationService authService;
     public ControllerPermissionSecurity(StudyPermissionService studyPermissionService, OAuth2AuthenticationService authService){
         this.studyPermissionService = studyPermissionService;
