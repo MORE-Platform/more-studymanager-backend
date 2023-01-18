@@ -7,6 +7,7 @@ import io.redlink.more.studymanager.api.v1.model.CollaboratorDTO;
 import io.redlink.more.studymanager.api.v1.model.CollaboratorDetailsDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyRoleDTO;
 import io.redlink.more.studymanager.api.v1.webservices.CollaboratorsApi;
+import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.RoleTransformer;
 import io.redlink.more.studymanager.model.transformer.UserInfoTransformer;
@@ -34,8 +35,8 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
         this.studyService = studyService;
     }
 
-    @PreAuthorize("@controllerPermissionSecurity.hasRoles(#studyId, 'STUDY_ADMIN','STUDY_OPERATOR','STUDY_VIEWER')")
     @Override
+    @PreAuthorize("hasAnyRole(#studyId, 'STUDY_READER')")
     public ResponseEntity<List<CollaboratorDTO>> listStudyCollaborators(Long studyId) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
@@ -44,17 +45,18 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
                         .toList()
         );
     }
+    public static String string = StudyRole.STUDY_ADMIN.toString();
 
-    @PreAuthorize("@controllerPermissionSecurity.hasRoles(#studyId, 'STUDY_ADMIN')")
     @Override
+    @PreAuthorize("hasAnyRole(#studyId, 'STUDY_ADMIN')")
     public ResponseEntity<Void> clearStudyCollaboratorRoles(Long studyId, String uid) {
         final var currentUser = authService.getCurrentUser();
         studyService.setRolesForStudy(studyId, uid, EnumSet.noneOf(StudyRole.class), currentUser);
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("@controllerPermissionSecurity.hasRoles(#studyId, 'STUDY_ADMIN','STUDY_OPERATOR','STUDY_VIEWER')")
     @Override
+    @PreAuthorize("hasAnyRole(#studyId, 'STUDY_READER')")
     public ResponseEntity<CollaboratorDetailsDTO> getStudyCollaboratorRoles(Long studyId, String uid) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
@@ -63,8 +65,8 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
         );
     }
 
-    @PreAuthorize("@controllerPermissionSecurity.hasRoles(#studyId, 'STUDY_ADMIN')")
     @Override
+    @PreAuthorize("hasAnyRole(#studyId, 'STUDY_ADMIN')")
     public ResponseEntity<CollaboratorDetailsDTO> setStudyCollaboratorRoles(Long studyId, String uid, Set<StudyRoleDTO> studyRoleDTO) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
