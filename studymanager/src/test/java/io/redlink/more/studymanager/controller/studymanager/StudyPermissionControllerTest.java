@@ -65,8 +65,13 @@ class StudyPermissionControllerTest {
             "The Hospital",
             EnumSet.allOf(PlatformRole.class));
 
+    private Study newStudy;
     @BeforeEach
     public void init(){
+        this.mvc = MockMvcBuilders.webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+
         AuthenticatedUser studyCreator = new AuthenticatedUser(
                 UUID.randomUUID().toString(),
                 "More Study creator",
@@ -74,7 +79,7 @@ class StudyPermissionControllerTest {
                 "The Hospital",
                 EnumSet.allOf(PlatformRole.class));
 
-        studyService.createStudy(new Study()
+        newStudy = studyService.createStudy(new Study()
                         .setTitle("testRoleAuth")
                         .setStudyId(1L)
                         .setPlannedStartDate(new Date(System.currentTimeMillis()))
@@ -86,20 +91,14 @@ class StudyPermissionControllerTest {
 
         userRepository.save(user1);
         userRepository.save(user2);
-        studyService.setRolesForStudy(1L, user1.id(), new HashSet<>(){{add(StudyRole.STUDY_VIEWER);}}, studyCreator);
-    }
-    @BeforeEach
-    public void mvcSetup(){
-        this.mvc = MockMvcBuilders.webAppContextSetup(context)
-                .apply(springSecurity())
-                .build();
+        studyService.setRolesForStudy(newStudy.getStudyId(), user1.id(), new HashSet<>(){{add(StudyRole.STUDY_VIEWER);}}, studyCreator);
     }
 
     @Test
     @WithMockUser
     void testRoleChecksDenied() throws Exception {
         when(authService.getCurrentUser()).thenReturn(user2);
-        mvc.perform(get("/api/v1/studies/1/collaborators")
+        mvc.perform(get("/api/v1/studies/" + newStudy.getStudyId() + "/collaborators")
                         .content("testContent"))
                 .andDo(print())
                 .andExpect(status().isForbidden());
@@ -109,7 +108,7 @@ class StudyPermissionControllerTest {
     @WithMockUser
     void testRoleChecksAccepted() throws Exception{
         when(authService.getCurrentUser()).thenReturn(user1);
-        mvc.perform(get("/api/v1/studies/1/collaborators")
+        mvc.perform(get("/api/v1/studies/" + newStudy.getStudyId() + "/collaborators")
                         .content("testContent"))
                 .andDo(print())
                 .andExpect(status().isOk());
