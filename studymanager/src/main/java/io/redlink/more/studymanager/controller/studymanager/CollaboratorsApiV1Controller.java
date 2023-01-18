@@ -45,7 +45,6 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
                         .toList()
         );
     }
-    public static String string = StudyRole.STUDY_ADMIN.toString();
 
     @Override
     @PreAuthorize("hasAnyRole(#studyId, 'STUDY_ADMIN')")
