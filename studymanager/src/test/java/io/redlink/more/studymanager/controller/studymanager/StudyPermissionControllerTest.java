@@ -34,6 +34,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test-containers-flyway")
 class StudyPermissionControllerTest {
 
+    private static final String USER_ADMIN = "study-admin",
+            USER_COLLAB_1 = "collaborator1",
+            USER_COLLAB_2 = "collaborator2";
+
     @Autowired
     private UserRepository userRepository;
 
@@ -52,28 +56,29 @@ class StudyPermissionControllerTest {
     private MockMvc mvc;
 
     private final AuthenticatedUser user1 = new AuthenticatedUser(
-            "collaborator1",
+            USER_COLLAB_1,
             "More test User 1",
             "more@example.com",
             "The Hospital",
             EnumSet.allOf(PlatformRole.class));
 
     private final AuthenticatedUser user2 = new AuthenticatedUser(
-            "collaborator2",
+            USER_COLLAB_2,
             "More test User 2",
             "more@example.com",
             "The Hospital",
             EnumSet.allOf(PlatformRole.class));
 
     private Study newStudy;
+
     @BeforeEach
-    public void init(){
+    public void init() {
         this.mvc = MockMvcBuilders.webAppContextSetup(context)
                 .apply(springSecurity())
                 .build();
 
         AuthenticatedUser studyCreator = new AuthenticatedUser(
-                UUID.randomUUID().toString(),
+                USER_ADMIN,
                 "More Study creator",
                 "more@example.com",
                 "The Hospital",
@@ -91,13 +96,15 @@ class StudyPermissionControllerTest {
 
         userRepository.save(user1);
         userRepository.save(user2);
-        studyService.setRolesForStudy(newStudy.getStudyId(), user1.id(), new HashSet<>(){{add(StudyRole.STUDY_VIEWER);}}, studyCreator);
+        studyService.setRolesForStudy(newStudy.getStudyId(), user1.id(), new HashSet<>() {{
+            add(StudyRole.STUDY_VIEWER);
+        }}, studyCreator);
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = USER_COLLAB_2)
     void testRoleChecksDenied() throws Exception {
-        when(authService.getCurrentUser()).thenReturn(user2);
+        //when(authService.getCurrentUser()).thenReturn(user2);
         mvc.perform(get("/api/v1/studies/" + newStudy.getStudyId() + "/collaborators")
                         .content("testContent"))
                 .andDo(print())
@@ -105,9 +112,9 @@ class StudyPermissionControllerTest {
     }
 
     @Test
-    @WithMockUser
-    void testRoleChecksAccepted() throws Exception{
-        when(authService.getCurrentUser()).thenReturn(user1);
+    @WithMockUser(username = USER_COLLAB_1)
+    void testRoleChecksAccepted() throws Exception {
+        //when(authService.getCurrentUser()).thenReturn(user1);
         mvc.perform(get("/api/v1/studies/" + newStudy.getStudyId() + "/collaborators")
                         .content("testContent"))
                 .andDo(print())

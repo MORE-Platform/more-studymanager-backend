@@ -1,8 +1,12 @@
 package io.redlink.more.studymanager.configuration;
 
+import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyPermissionService;
+import java.io.Serializable;
+import java.util.EnumSet;
+import java.util.Set;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.PermissionEvaluator;
@@ -15,26 +19,20 @@ import org.springframework.security.config.annotation.method.configuration.Globa
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class MethodSecurityConfiguration extends GlobalMethodSecurityConfiguration {
 
     private final StudyPermissionService studyPermissionService;
-    private final OAuth2AuthenticationService oAuth2AuthenticationService;
-    public MethodSecurityConfiguration(StudyPermissionService studyPermissionService, OAuth2AuthenticationService oAuth2AuthenticationService){
+
+    public MethodSecurityConfiguration(StudyPermissionService studyPermissionService){
         this.studyPermissionService = studyPermissionService;
-        this.oAuth2AuthenticationService = oAuth2AuthenticationService;
     }
 
     @Override
     protected MethodSecurityExpressionHandler createExpressionHandler() {
         MoreMethodSecurityExpressionHandler expressionHandler =
-                new MoreMethodSecurityExpressionHandler(studyPermissionService, oAuth2AuthenticationService);
+                new MoreMethodSecurityExpressionHandler(studyPermissionService);
         expressionHandler.setPermissionEvaluator(new MorePermissionEvaluator());
         return expressionHandler;
     }
@@ -42,21 +40,29 @@ public class MethodSecurityConfiguration extends GlobalMethodSecurityConfigurati
 
     static class MoreMethodSecurityExpressionHandler extends DefaultMethodSecurityExpressionHandler {
 
-        public MoreMethodSecurityExpressionHandler(StudyPermissionService studyPermissionService, OAuth2AuthenticationService oAuth2AuthenticationService){
+        public MoreMethodSecurityExpressionHandler(StudyPermissionService studyPermissionService){
             this.studyPermissionService = studyPermissionService;
-            this.oAuth2AuthenticationService = oAuth2AuthenticationService;
         }
         private final StudyPermissionService studyPermissionService;
-        private final OAuth2AuthenticationService oAuth2AuthenticationService;
 
         @Override
         protected MethodSecurityExpressionOperations createSecurityExpressionRoot(
                 Authentication authentication, MethodInvocation invocation) {
-            MoreMethodSecurityExpressionRoot root =
-                    new MoreMethodSecurityExpressionRoot(authentication, studyPermissionService, oAuth2AuthenticationService);
+
+            final MoreMethodSecurityExpressionRoot root =
+                    new MoreMethodSecurityExpressionRoot(authentication, studyPermissionService);
             root.setPermissionEvaluator(getPermissionEvaluator());
             root.setTrustResolver(this.getTrustResolver());
             root.setRoleHierarchy(getRoleHierarchy());
+
+            final RequiresStudyRole annotation = invocation.getMethod().getAnnotation(RequiresStudyRole.class);
+            if (annotation != null) {
+                var allowedRoles = annotation.value();
+                if (allowedRoles != null && allowedRoles.length > 0) {
+                    root.setAllowedRoles(Set.of(allowedRoles));
+                }
+            }
+
             return root;
         }
     }
@@ -65,50 +71,58 @@ public class MethodSecurityConfiguration extends GlobalMethodSecurityConfigurati
     static class MoreMethodSecurityExpressionRoot extends SecurityExpressionRoot implements MethodSecurityExpressionOperations {
 
         private final StudyPermissionService studyPermissionService;
-        private final OAuth2AuthenticationService authService;
 
-        public MoreMethodSecurityExpressionRoot(Authentication authentication, StudyPermissionService studyPermissionService, OAuth2AuthenticationService authService) {
+        private Object filterObject;
+        private Object returnObject;
+        private Object target;
+
+        private Set<StudyRole> allowedRoles = EnumSet.allOf(StudyRole.class);
+
+
+        public MoreMethodSecurityExpressionRoot(Authentication authentication, StudyPermissionService studyPermissionService) {
             super(authentication);
             this.studyPermissionService = studyPermissionService;
-            this.authService = authService;
         }
 
-        public boolean hasAnyRole(Long studyId, String roles) {
-            Set<StudyRole> roleSet;
-            switch (roles) {
-                case "STUDY_READER" -> roleSet = new HashSet<>(Arrays.asList(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR, StudyRole.STUDY_VIEWER));
-                case "STUDY_WRITER" -> roleSet = new HashSet<>(Arrays.asList(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR));
-                case "STUDY_ADMIN" -> roleSet = new HashSet<>() {{
-                    add(StudyRole.STUDY_ADMIN);
-                }};
-                default -> roleSet = new HashSet<>();
-            }
-            return studyPermissionService.hasAnyRole(studyId, authService.getCurrentUser().id(), roleSet);
+        public boolean checkStudyRole(Long studyId) {
+            return studyPermissionService.hasAnyRole(studyId, getAuthentication().getName(), allowedRoles);
         }
 
         @Override
         public void setFilterObject(Object filterObject) {
-
+            this.filterObject = filterObject;
         }
 
         @Override
         public Object getFilterObject() {
-            return null;
+            return filterObject;
         }
 
         @Override
         public void setReturnObject(Object returnObject) {
-
+            this.returnObject = returnObject;
         }
 
         @Override
         public Object getReturnObject() {
-            return null;
+            return returnObject;
+        }
+
+        public void setThis(Object target) {
+            this.target = target;
         }
 
         @Override
         public Object getThis() {
-            return this;
+            return target;
+        }
+
+        public void setAllowedRoles(Set<StudyRole> allowedRoles) {
+            this.allowedRoles = allowedRoles;
+        }
+
+        public Set<StudyRole> getAllowedRoles() {
+            return allowedRoles;
         }
     }
 

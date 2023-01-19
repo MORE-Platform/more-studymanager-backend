@@ -7,6 +7,7 @@ import io.redlink.more.studymanager.api.v1.model.CollaboratorDTO;
 import io.redlink.more.studymanager.api.v1.model.CollaboratorDetailsDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyRoleDTO;
 import io.redlink.more.studymanager.api.v1.webservices.CollaboratorsApi;
+import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.RoleTransformer;
@@ -36,7 +37,7 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole(#studyId, 'STUDY_READER')")
+    @RequiresStudyRole
     public ResponseEntity<List<CollaboratorDTO>> listStudyCollaborators(Long studyId) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
@@ -47,7 +48,7 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole(#studyId, 'STUDY_ADMIN')")
+    @RequiresStudyRole(StudyRole.STUDY_ADMIN)
     public ResponseEntity<Void> clearStudyCollaboratorRoles(Long studyId, String uid) {
         final var currentUser = authService.getCurrentUser();
         studyService.setRolesForStudy(studyId, uid, EnumSet.noneOf(StudyRole.class), currentUser);

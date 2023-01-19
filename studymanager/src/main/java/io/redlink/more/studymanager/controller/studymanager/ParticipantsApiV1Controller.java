@@ -2,8 +2,10 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ParticipantsApi;
+import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ParticipantService;
@@ -78,6 +80,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<List<ParticipantDTO>> listParticipants(Long studyId) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
