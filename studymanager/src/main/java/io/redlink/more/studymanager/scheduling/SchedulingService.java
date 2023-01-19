@@ -6,11 +6,11 @@ import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
 import org.apache.commons.lang3.NotImplementedException;
 import org.quartz.*;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import static org.quartz.JobBuilder.newJob;
@@ -68,7 +68,8 @@ public class SchedulingService {
 
     private ScheduleBuilder<? extends Trigger> getSchedulerBuilderFor(Schedule schedule) {
         if(schedule instanceof CronSchedule) {
-            return CronScheduleBuilder.cronSchedule(((CronSchedule) schedule).getCronExpression());
+            return CronScheduleBuilder.cronSchedule(((CronSchedule) schedule).getCronExpression())
+                    .inTimeZone(TimeZone.getTimeZone("Europe/Vienna")); //TODO make configurable per study
         } else {
             throw new NotImplementedException("SchedulerType " + schedule.getClass().getSimpleName() + " not yet supportet");
         }
