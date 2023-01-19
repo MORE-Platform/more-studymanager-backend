@@ -91,8 +91,10 @@ public class StudyService {
         }
         studyRepository.setStateById(studyId, status);
 
-        interventionService.alignInterventionsWithStudyState(study);
-        participantService.alignParticipantsWithStudyState(study);
+        studyRepository.getById(studyId).ifPresent(s -> {
+            interventionService.alignInterventionsWithStudyState(s);
+            participantService.alignParticipantsWithStudyState(s);
+        });
     }
 
     public Map<MoreUser, Set<StudyRole>> getACL(Long studyId, User user) {
