@@ -27,17 +27,14 @@ public class StudyService {
     private final UserRepository userRepo;
     private final InterventionService interventionService;
     private final ParticipantService participantService;
-    private final StudyPermissionService studyPermissionService;
 
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
-                        InterventionService interventionService, ParticipantService participantService,
-                        StudyPermissionService studyPermissionService) {
+                        InterventionService interventionService, ParticipantService participantService) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
         this.interventionService = interventionService;
         this.participantService = participantService;
-        this.studyPermissionService = studyPermissionService;
     }
 
     public Study createStudy(Study study, User currentUser) {
@@ -57,27 +54,18 @@ public class StudyService {
     }
 
     public Optional<Study> getStudy(Long studyId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EnumSet.allOf(StudyRole.class));
-        return (studyRepository.getById(studyId, user))
-                ;
+        return (studyRepository.getById(studyId, user));
     }
 
     public Optional<Study> updateStudy(Study study, User user) {
-        studyPermissionService.assertAnyRole(study.getStudyId(), user.id(),
-                EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR));
-
         return studyRepository.update(study, user);
     }
 
-    public void deleteStudy(Long studyId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), StudyRole.STUDY_ADMIN);
-
+    public void deleteStudy(Long studyId) {
         studyRepository.deleteById(studyId);
     }
 
     public void setStatus(Long studyId, Study.Status status, User user) {
-        studyPermissionService.assertRole(studyId, user.id(), StudyRole.STUDY_ADMIN);
-
         Study study = getStudy(studyId, user)
                 .orElseThrow(() -> NotFoundException.Study(studyId));
         if (status.equals(Study.Status.DRAFT)) {
@@ -95,7 +83,7 @@ public class StudyService {
         participantService.alignParticipantsWithStudyState(study);
     }
 
-    public Map<MoreUser, Set<StudyRole>> getACL(Long studyId, User user) {
+    public Map<MoreUser, Set<StudyRole>> getACL(Long studyId) {
         return aclRepository.getACL(studyId);
     }
 
@@ -113,10 +101,10 @@ public class StudyService {
         }
 
         aclRepository.setRoles(studyId, userId, roles, currentUser.id());
-        return getRolesForStudy(studyId, userId, currentUser);
+        return getRolesForStudy(studyId, userId);
     }
 
-    public Optional<StudyUserRoles> getRolesForStudy(Long studyId, String userId, User currentUser) {
+    public Optional<StudyUserRoles> getRolesForStudy(Long studyId, String userId) {
         return userRepo.getById(userId).map(user ->
                 new StudyUserRoles(
                         user,

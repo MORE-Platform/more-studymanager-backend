@@ -5,13 +5,9 @@ import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
-import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Observation;
-import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.repository.ObservationRepository;
-import java.util.EnumSet;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,16 +34,10 @@ class ObservationServiceTest {
     @InjectMocks
     ObservationService observationService;
 
-    private final AuthenticatedUser currentUser = new AuthenticatedUser(
-            UUID.randomUUID().toString(),
-            "Test User", "test@example.com", "Test Inc.",
-            EnumSet.allOf(PlatformRole.class)
-    );
-
     @Test
     void testValidation() {
         NotFoundException notFoundException = Assertions.assertThrows(NotFoundException.class, () ->
-                observationService.addObservation(new Observation().setStudyId(1L).setObservationId(1).setType("my-observation"), currentUser)
+                observationService.addObservation(new Observation().setStudyId(1L).setObservationId(1).setType("my-observation"))
         );
         Assertions.assertEquals("Observation Factory 'my-observation' cannot be found", notFoundException.getMessage());
 
@@ -57,7 +47,7 @@ class ObservationServiceTest {
         when(observationFactories.containsKey("my-observation")).thenReturn(true);
 
         BadRequestException badRequestException = Assertions.assertThrows(BadRequestException.class, () ->
-                observationService.addObservation(new Observation().setStudyId(1L).setObservationId(1).setType("my-observation"), currentUser)
+                observationService.addObservation(new Observation().setStudyId(1L).setObservationId(1).setType("my-observation"))
         );
         Assertions.assertEquals("ConfigurationValidationReport: [ERROR] My error", badRequestException.getMessage());
     }

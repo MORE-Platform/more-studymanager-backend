@@ -41,7 +41,7 @@ class InterventionServiceTest {
     @Test
     void testNotFoundValidation() {
         NotFoundException notFoundException = Assertions.assertThrows(NotFoundException.class, () ->
-                interventionService.updateTrigger(1L, 1, new Trigger().setType("my-trigger"), currentUser)
+                interventionService.updateTrigger(1L, 1, new Trigger().setType("my-trigger"))
         );
         Assertions.assertEquals("Trigger Factory 'my-trigger' cannot be found", notFoundException.getMessage());
     }
@@ -54,7 +54,7 @@ class InterventionServiceTest {
         when(triggerFactories.containsKey("my-trigger")).thenReturn(true);
 
         Assertions.assertThrows(BadRequestException.class, () ->
-                interventionService.updateTrigger(1L, 1, new Trigger().setType("my-trigger"), currentUser)
+                interventionService.updateTrigger(1L, 1, new Trigger().setType("my-trigger"))
         );
     }
 

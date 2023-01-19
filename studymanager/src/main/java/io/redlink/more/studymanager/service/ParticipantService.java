@@ -31,31 +31,24 @@ public class ParticipantService {
         this.studyPermissionService = studyPermissionService;
     }
 
-    public Participant createParticipant(Participant participant, User user) {
-        studyPermissionService.assertAnyRole(participant.getStudyId(), user.id(), WRITE_ROLES);
+    public Participant createParticipant(Participant participant) {
         participant.setRegistrationToken(RandomTokenGenerator.generate());
         return participantRepository.insert(participant);
     }
 
-    public List<Participant> listParticipants(Long studyId, User user) {
-        if (user != null) {
-            studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
-        }
+    public List<Participant> listParticipants(Long studyId) {
         return participantRepository.listParticipants(studyId);
     }
 
-    public Participant getParticipant(Long studyId, Integer participantId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
+    public Participant getParticipant(Long studyId, Integer participantId) {
         return participantRepository.getByIds(studyId, participantId);
     }
 
-    public Optional<Participant> deleteParticipant(Long studyId, Integer participantId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
+    public Optional<Participant> deleteParticipant(Long studyId, Integer participantId) {
         return participantRepository.deleteParticipant(studyId, participantId);
     }
 
-    public Participant updateParticipant(Participant participant, User user) {
-        studyPermissionService.assertAnyRole(participant.getStudyId(), user.id(), WRITE_ROLES);
+    public Participant updateParticipant(Participant participant) {
         return participantRepository.update(participant);
     }
 

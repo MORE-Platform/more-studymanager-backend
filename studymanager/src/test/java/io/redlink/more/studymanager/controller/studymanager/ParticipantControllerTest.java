@@ -5,7 +5,6 @@ import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.PlatformRole;
-import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import java.sql.Timestamp;
@@ -61,7 +60,7 @@ class ParticipantControllerTest {
 
         final long studyId = 1L;
 
-        when(participantService.createParticipant(any(Participant.class), any(User.class))).thenAnswer(invocationOnMock -> new Participant()
+        when(participantService.createParticipant(any(Participant.class))).thenAnswer(invocationOnMock -> new Participant()
                 .setStudyId(1L)
                 .setParticipantId(1)
                 .setAlias("participant x")
@@ -95,7 +94,7 @@ class ParticipantControllerTest {
     void testCreateFromCSV() throws Exception {
         String participant1 = "Participant1";
         String participant2 = "Participant2";
-        when(participantService.createParticipant(any(Participant.class), any(User.class))).thenAnswer(invocationOnMock -> new Participant()
+        when(participantService.createParticipant(any(Participant.class))).thenAnswer(invocationOnMock -> new Participant()
                         .setStudyId(1L)
                         .setParticipantId(1)
                         .setAlias(participant1)
@@ -125,7 +124,7 @@ class ParticipantControllerTest {
     @Test
     @DisplayName("Update participant should return similar values")
     void testUpdateStudy() throws Exception {
-        when(participantService.updateParticipant(any(Participant.class), any(User.class))).thenAnswer(invocationOnMock ->
+        when(participantService.updateParticipant(any(Participant.class))).thenAnswer(invocationOnMock ->
                 invocationOnMock.getArgument(0, Participant.class)
                         .setStatus(Participant.Status.NEW)
                         .setAlias("person x")

@@ -9,14 +9,10 @@ import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.Trigger;
-import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.repository.InterventionRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
-import java.util.EnumSet;
-import java.util.Set;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -29,14 +25,9 @@ import java.util.Optional;
 @Service
 public class InterventionService {
 
-    private static final Set<StudyRole> READ_ROLES = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR);
-    private static final Set<StudyRole> WRITE_ROLES = READ_ROLES;
-
     private final InterventionRepository repository;
 
     private final StudyRepository studyRepository;
-
-    private final StudyPermissionService studyPermissionService;
 
     private final Map<String, ActionFactory> actionFactories;
     private final Map<String, TriggerFactory> triggerFactories;
@@ -44,81 +35,61 @@ public class InterventionService {
     private final MoreSDK sdk;
 
     public InterventionService(InterventionRepository repository, StudyRepository studyRepository,
-                               StudyPermissionService studyPermissionService,
                                MoreSDK sdk,
                                Map<String, TriggerFactory> triggerFactories,
                                Map<String, ActionFactory> actionFactories) {
         this.repository = repository;
         this.studyRepository = studyRepository;
-        this.studyPermissionService = studyPermissionService;
         this.actionFactories = actionFactories;
         this.triggerFactories = triggerFactories;
         this.sdk = sdk;
     }
 
-    public Intervention addIntervention(Intervention intervention, User user) {
-        studyPermissionService.assertAnyRole(intervention.getStudyId(), user.id(), WRITE_ROLES);
+    public Intervention addIntervention(Intervention intervention) {
         return repository.insert(intervention);
     }
 
-    public List<Intervention> listInterventions(Long studyId, User user) {
-        if (user != null) {
-            studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
-        }
+    public List<Intervention> listInterventions(Long studyId) {
         return repository.listInterventions(studyId);
     }
 
-    public Intervention getIntervention(Long studyId, Integer interventionId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
+    public Intervention getIntervention(Long studyId, Integer interventionId) {
         return repository.getByIds(studyId, interventionId);
     }
 
-    public void deleteIntervention(Long studyId, Integer interventionId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
+    public void deleteIntervention(Long studyId, Integer interventionId) {
         repository.deleteByIds(studyId, interventionId);
     }
 
-    public Intervention updateIntervention(Intervention intervention, User user) {
-        studyPermissionService.assertAnyRole(intervention.getStudyId(), user.id(), WRITE_ROLES);
+    public Intervention updateIntervention(Intervention intervention) {
         return repository.updateIntervention(intervention);
     }
 
-    public Action createAction(Long studyId, Integer interventionId, Action action, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
+    public Action createAction(Long studyId, Integer interventionId, Action action) {
         return repository.createAction(studyId, interventionId, validateAction(action));
     }
 
-    public Action getActionByIds(Long studyId, Integer interventionId, Integer actionId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
+    public Action getActionByIds(Long studyId, Integer interventionId, Integer actionId) {
         return repository.getActionByIds(studyId, interventionId, actionId);
     }
 
-    public List<Action> listActions(Long studyId, Integer interventionId, User user) {
-        if (user != null) {
-            studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
-        }
+    public List<Action> listActions(Long studyId, Integer interventionId) {
         return repository.listActions(studyId, interventionId);
     }
 
-    public void deleteAction(Long studyId, Integer interventionId, Integer actionId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
+    public void deleteAction(Long studyId, Integer interventionId, Integer actionId) {
         repository.deleteActionByIds(studyId, interventionId, actionId);
     }
 
-    public Action updateAction(Long studyId, Integer interventionId, Integer actionId, Action action, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
+    public Action updateAction(Long studyId, Integer interventionId, Integer actionId, Action action) {
         return repository.updateAction(studyId, interventionId, actionId, validateAction(action));
     }
 
-    public Trigger updateTrigger(Long studyId, Integer interventionId, Trigger trigger, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
+    public Trigger updateTrigger(Long studyId, Integer interventionId, Trigger trigger) {
         return repository.updateTrigger(studyId, interventionId, validateTrigger(trigger));
     }
 
-    public Trigger getTriggerByIds(Long studyId, Integer interventionId, User user) {
-        if (user != null) {
-            studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
-        }
+    public Trigger getTriggerByIds(Long studyId, Integer interventionId) {
         return repository.getTriggerByIds(studyId, interventionId);
     }
 
@@ -144,9 +115,9 @@ public class InterventionService {
     }
 
     private List<io.redlink.more.studymanager.core.component.Trigger> listTriggersFor(Study study) {
-        return listInterventions(study.getStudyId(), null).stream()
+        return listInterventions(study.getStudyId()).stream()
                 .map(intervention -> Optional.ofNullable(
-                                getTriggerByIds(intervention.getStudyId(), intervention.getInterventionId(), null))
+                                getTriggerByIds(intervention.getStudyId(), intervention.getInterventionId()))
                         .map(trigger -> factory(trigger)
                                 .create(
                                     sdk.scopedTriggerSDK(intervention.getStudyId(), intervention.getStudyGroupId(), intervention.getInterventionId()),

@@ -2,7 +2,6 @@ package io.redlink.more.studymanager.configuration;
 
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
-import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyPermissionService;
 import java.io.Serializable;
 import java.util.EnumSet;
