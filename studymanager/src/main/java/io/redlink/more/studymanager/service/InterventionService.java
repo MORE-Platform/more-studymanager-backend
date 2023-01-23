@@ -15,8 +15,10 @@ import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.repository.InterventionRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
+import io.redlink.more.studymanager.utils.LoggingUtils;
 import java.util.EnumSet;
 import java.util.Set;
+import org.slf4j.MDC;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -124,7 +126,11 @@ public class InterventionService {
 
     @EventListener(ContextRefreshedEvent.class)
     public void onStartUp() {
-        studyRepository.listStudiesByStatus(Study.Status.ACTIVE).forEach(this::activateInterventionsFor);
+        studyRepository.listStudiesByStatus(Study.Status.ACTIVE).forEach(study -> {
+            try (var ctx = LoggingUtils.createContext(study)) {
+                activateInterventionsFor(study);
+            }
+        });
     }
 
     public void alignInterventionsWithStudyState(Study study) {
