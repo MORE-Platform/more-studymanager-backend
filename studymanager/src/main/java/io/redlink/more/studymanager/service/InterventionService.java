@@ -129,7 +129,7 @@ public class InterventionService {
         studyRepository.listStudiesByStatus(Study.Status.ACTIVE).forEach(study -> {
             try (var ctx = LoggingUtils.createContext(study)) {
                 activateInterventionsFor(study);
-            }
+            } catch (RuntimeException e) {}
         });
     }
 
