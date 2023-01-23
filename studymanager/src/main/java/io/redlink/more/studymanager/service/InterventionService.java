@@ -3,6 +3,7 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.core.component.Component;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
+import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Action;
@@ -16,8 +17,12 @@ import io.redlink.more.studymanager.repository.InterventionRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.utils.LoggingUtils;
+
+import java.text.ParseException;
 import java.util.EnumSet;
 import java.util.Set;
+
+import org.quartz.CronExpression;
 import org.slf4j.MDC;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
@@ -181,6 +186,13 @@ public class InterventionService {
         }
         try {
             factory(trigger).validate(trigger.getProperties());
+            if(trigger.getProperties().containsKey("cronSchedule")) {
+                try {
+                    CronExpression.validateExpression(trigger.getProperties().get("cronSchedule").toString());
+                } catch (ParseException e) {
+                    throw new ConfigurationValidationException(ConfigurationValidationReport.init().error(e.getMessage()));
+                }
+            }
         } catch (ConfigurationValidationException e) {
             throw new BadRequestException(e.getMessage());
         }
