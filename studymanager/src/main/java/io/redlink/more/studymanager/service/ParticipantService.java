@@ -2,8 +2,6 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.StudyRole;
-import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
 
@@ -19,12 +17,9 @@ import static io.redlink.more.studymanager.model.Participant.Status.*;
 public class ParticipantService {
 
     private final ParticipantRepository participantRepository;
-    private final StudyPermissionService studyPermissionService;
 
-
-    public ParticipantService(ParticipantRepository repository, StudyPermissionService studyPermissionService) {
+    public ParticipantService(ParticipantRepository repository) {
         this.participantRepository = repository;
-        this.studyPermissionService = studyPermissionService;
     }
 
     public Participant createParticipant(Participant participant) {
@@ -54,8 +49,7 @@ public class ParticipantService {
         }
     }
 
-    public void setStatus(Long studyId, Integer participantId, Participant.Status status, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR));
+    public void setStatus(Long studyId, Integer participantId, Participant.Status status) {
         participantRepository.setStatusByIds(studyId, participantId, status);
         if (EnumSet.of(ABANDONED, KICKED_OUT, LOCKED).contains(status)) {
             participantRepository.cleanupParticipant(studyId, participantId);
