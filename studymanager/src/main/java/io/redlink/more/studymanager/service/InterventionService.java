@@ -1,8 +1,10 @@
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.controller.proxy.KibanaProxy;
 import io.redlink.more.studymanager.core.component.Component;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
+import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Action;
@@ -13,6 +15,13 @@ import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.repository.InterventionRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
+import io.redlink.more.studymanager.utils.LoggingUtils;
+
+import java.text.ParseException;
+
+import org.quartz.CronExpression;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -26,13 +35,13 @@ import java.util.Optional;
 public class InterventionService {
 
     private final InterventionRepository repository;
-
     private final StudyRepository studyRepository;
-
     private final Map<String, ActionFactory> actionFactories;
     private final Map<String, TriggerFactory> triggerFactories;
 
     private final MoreSDK sdk;
+    private static final Logger LOGGER = LoggerFactory.getLogger(InterventionService.class);
+
 
     public InterventionService(InterventionRepository repository, StudyRepository studyRepository,
                                MoreSDK sdk,
@@ -95,7 +104,13 @@ public class InterventionService {
 
     @EventListener(ContextRefreshedEvent.class)
     public void onStartUp() {
-        studyRepository.listStudiesByStatus(Study.Status.ACTIVE).forEach(this::activateInterventionsFor);
+        studyRepository.listStudiesByStatus(Study.Status.ACTIVE).forEach(study -> {
+            try (var ctx = LoggingUtils.createContext(study)) {
+                activateInterventionsFor(study);
+            } catch (RuntimeException e) {
+                LOGGER.warn("Failed to activate interventions for study_{}: {}", study.getStudyId(), e.getMessage(), e);
+            }
+        });
     }
 
     public void alignInterventionsWithStudyState(Study study) {
@@ -146,6 +161,13 @@ public class InterventionService {
         }
         try {
             factory(trigger).validate(trigger.getProperties());
+            if(trigger.getProperties().containsKey("cronSchedule")) {
+                try {
+                    CronExpression.validateExpression(trigger.getProperties().get("cronSchedule").toString());
+                } catch (ParseException e) {
+                    throw new ConfigurationValidationException(ConfigurationValidationReport.init().error(e.getMessage()));
+                }
+            }
         } catch (ConfigurationValidationException e) {
             throw new BadRequestException(e.getMessage());
         }

@@ -9,6 +9,7 @@ import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.service.InterventionService;
+import io.redlink.more.studymanager.utils.LoggingUtils;
 import java.util.Map;
 import java.util.Optional;
 import org.quartz.Job;
@@ -37,15 +38,14 @@ public class TriggerJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        final var mdc = MDC.getCopyOfContextMap();
-        try {
+        try (var ctx = LoggingUtils.createContext()) {
             long studyId = context.getJobDetail().getJobDataMap().getLong("studyId");
             Integer studyGroupId = (Integer) context.getJobDetail().getJobDataMap().getOrDefault("studyGroupId", null);
             int interventionId = context.getJobDetail().getJobDataMap().getIntValue("interventionId");
 
-            MDC.put("studyId", String.valueOf(studyId));
-            MDC.put("interventionId", String.valueOf(interventionId));
-            MDC.put("studyGroupId", String.valueOf(studyGroupId));
+            ctx.putStudy(studyId);
+            ctx.putStudyGroup(studyGroupId);
+            ctx.putIntervention(interventionId);
             LOGGER.debug("Execute Trigger-Job: {}", context.getTrigger());
 
             Trigger trigger = Optional.ofNullable(
@@ -70,12 +70,6 @@ public class TriggerJob implements Job {
             }
         } catch (Exception e) {
             LOGGER.warn("Cannot execute Trigger-Job: {}", e.getMessage(), e);
-        } finally {
-            if (mdc != null) {
-                MDC.setContextMap(mdc);
-            } else {
-                MDC.clear();
-            }
         }
 
     }
