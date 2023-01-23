@@ -12,5 +12,5 @@
 
 
     <logger name="io.redlink.more" level="DEBUG"/>
-
+    <logger name="org.springframework.web" level="DEBUG"/>
 </configuration>

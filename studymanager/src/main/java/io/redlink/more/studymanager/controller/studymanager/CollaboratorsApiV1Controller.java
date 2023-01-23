@@ -7,6 +7,7 @@ import io.redlink.more.studymanager.api.v1.model.CollaboratorDTO;
 import io.redlink.more.studymanager.api.v1.model.CollaboratorDetailsDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyRoleDTO;
 import io.redlink.more.studymanager.api.v1.webservices.CollaboratorsApi;
+import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.RoleTransformer;
 import io.redlink.more.studymanager.model.transformer.UserInfoTransformer;
@@ -34,16 +35,17 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
     }
 
     @Override
+    @RequiresStudyRole
     public ResponseEntity<List<CollaboratorDTO>> listStudyCollaborators(Long studyId) {
-        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
-                studyService.getACL(studyId, currentUser).entrySet().stream()
+                studyService.getACL(studyId).entrySet().stream()
                         .map(e -> UserInfoTransformer.toCollaboratorDTO(e.getKey(), e.getValue()))
                         .toList()
         );
     }
 
     @Override
+    @RequiresStudyRole(StudyRole.STUDY_ADMIN)
     public ResponseEntity<Void> clearStudyCollaboratorRoles(Long studyId, String uid) {
         final var currentUser = authService.getCurrentUser();
         studyService.setRolesForStudy(studyId, uid, EnumSet.noneOf(StudyRole.class), currentUser);
@@ -51,15 +53,16 @@ public class CollaboratorsApiV1Controller implements CollaboratorsApi {
     }
 
     @Override
+    @RequiresStudyRole
     public ResponseEntity<CollaboratorDetailsDTO> getStudyCollaboratorRoles(Long studyId, String uid) {
-        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
-                studyService.getRolesForStudy(studyId, uid, currentUser)
+                studyService.getRolesForStudy(studyId, uid)
                         .map(UserInfoTransformer::toCollaboratorDetailsDTO)
         );
     }
 
     @Override
+    @RequiresStudyRole(StudyRole.STUDY_ADMIN)
     public ResponseEntity<CollaboratorDetailsDTO> setStudyCollaboratorRoles(Long studyId, String uid, Set<StudyRoleDTO> studyRoleDTO) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(

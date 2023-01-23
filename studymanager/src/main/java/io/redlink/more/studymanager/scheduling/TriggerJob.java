@@ -49,7 +49,7 @@ public class TriggerJob implements Job {
             LOGGER.debug("Execute Trigger-Job: {}", context.getTrigger());
 
             Trigger trigger = Optional.ofNullable(
-                    interventionService.getTriggerByIds(studyId, interventionId, null)
+                    interventionService.getTriggerByIds(studyId, interventionId)
             ).orElseThrow(() ->
                     new SchedulingException(String.format("Cannot find trigger: sid:%s, iid:%s", studyId, interventionId))
             );

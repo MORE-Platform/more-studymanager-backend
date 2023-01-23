@@ -2,9 +2,10 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.StudyGroupDTO;
 import io.redlink.more.studymanager.api.v1.webservices.StudyGroupsApi;
+import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyGroupTransformer;
-import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyGroupService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,19 +25,16 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
 
     private final StudyGroupService service;
 
-    private final OAuth2AuthenticationService authService;
 
-
-    public StudyGroupApiV1Controller(StudyGroupService service, OAuth2AuthenticationService authService) {
+    public StudyGroupApiV1Controller(StudyGroupService service) {
         this.service = service;
-        this.authService = authService;
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<StudyGroupDTO> createStudyGroup(Long studyId, StudyGroupDTO studyGroupDTO) {
-        final var currentUser = authService.getCurrentUser();
         StudyGroup studyGroup = service.createStudyGroup(
-                StudyGroupTransformer.fromStudyGroupDTO_V1(studyGroupDTO), currentUser
+                StudyGroupTransformer.fromStudyGroupDTO_V1(studyGroupDTO)
         );
         LOGGER.debug("StudyGroup created: {}", studyGroup);
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -45,40 +43,39 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
     }
 
     @Override
+    @RequiresStudyRole
     public ResponseEntity<List<StudyGroupDTO>> listStudyGroups(Long studyId) {
-        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
-                service.listStudyGroups(studyId, currentUser).stream()
+                service.listStudyGroups(studyId).stream()
                         .map(StudyGroupTransformer::toStudyGroupDTO_V1)
                         .toList()
         );
     }
 
     @Override
+    @RequiresStudyRole
     public ResponseEntity<StudyGroupDTO> getStudyGroup(Long studyId, Integer studyGroupId) {
-        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
-                StudyGroupTransformer.toStudyGroupDTO_V1(service.getStudyGroup(studyId, studyGroupId, currentUser))
+                StudyGroupTransformer.toStudyGroupDTO_V1(service.getStudyGroup(studyId, studyGroupId))
         );
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<StudyGroupDTO> updateStudyGroup(Long studyId, Integer studyGroupId, StudyGroupDTO studyGroupDTO) {
-        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
                 StudyGroupTransformer.toStudyGroupDTO_V1(
                         service.updateStudyGroup(
-                                StudyGroupTransformer.fromStudyGroupDTO_V1(studyGroupDTO),
-                                currentUser
+                                StudyGroupTransformer.fromStudyGroupDTO_V1(studyGroupDTO)
                         )
                 )
         );
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<Void> deleteStudyGroup(Long studyId, Integer studyGroupId) {
-        final var currentUser = authService.getCurrentUser();
-        service.deleteStudyGroup(studyId, studyGroupId, currentUser);
+        service.deleteStudyGroup(studyId, studyGroupId);
         return ResponseEntity.noContent().build();
     }
 }

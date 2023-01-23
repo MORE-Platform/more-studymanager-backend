@@ -62,7 +62,7 @@ class MoreSDKTest {
         TriggerResult triggerResult = mock(TriggerResult.class);
 
         when(triggerModel.getType()).thenReturn("test-trigger");
-        when(interventionService.getTriggerByIds(any(),any(), any())).thenReturn(triggerModel);
+        when(interventionService.getTriggerByIds(any(),any())).thenReturn(triggerModel);
         when(triggerFactory.getId()).thenReturn("test-trigger");
         when(triggerFactory.create(any(), any())).thenReturn(trigger);
         when(trigger.execute(any())).thenReturn(triggerResult);
@@ -96,7 +96,7 @@ class MoreSDKTest {
 
     @Test
     void testListParticipants() {
-        when(participantService.listParticipants(any(), any())).thenReturn(List.of(
+        when(participantService.listParticipants(any())).thenReturn(List.of(
                 new Participant().setParticipantId(1).setStatus(Participant.Status.ACTIVE),
                 new Participant().setParticipantId(2).setStatus(Participant.Status.ACTIVE).setStudyGroupId(1),
                 new Participant().setParticipantId(3).setStatus(Participant.Status.ACTIVE).setStudyGroupId(2),

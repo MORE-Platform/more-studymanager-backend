@@ -7,7 +7,6 @@ import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.PlatformRole;
-import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ObservationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
@@ -65,7 +64,7 @@ class ObservationControllerTest {
     @Test
     @DisplayName("Create Observation should create and then return the observation with observation id set")
     void testAddObservation() throws Exception {
-        when(observationService.addObservation(any(Observation.class), any(User.class)))
+        when(observationService.addObservation(any(Observation.class)))
                 .thenAnswer(invocationOnMock -> new Observation()
                         .setStudyId(((Observation)invocationOnMock.getArgument(0)).getStudyId())
                         .setObservationId(((Observation)invocationOnMock.getArgument(0)).getObservationId())
@@ -102,7 +101,7 @@ class ObservationControllerTest {
     @Test
     @DisplayName("Update observation should return similar values")
     void testUpdateStudy() throws Exception {
-        when(observationService.updateObservation(any(Observation.class), any(User.class))).thenAnswer(invocationOnMock -> ((Observation)invocationOnMock.getArgument(0))
+        when(observationService.updateObservation(any(Observation.class))).thenAnswer(invocationOnMock -> ((Observation)invocationOnMock.getArgument(0))
                 .setTitle("title")
                 .setCreated(new Timestamp(0))
                 .setModified(new Timestamp(0)));
@@ -126,7 +125,7 @@ class ObservationControllerTest {
     @Test
     @DisplayName("Schedule with empty value should not throw error")
     void testEmptySchedule() throws Exception {
-        when(observationService.addObservation(any(Observation.class), any(User.class))).thenAnswer(invocationOnMock -> ((Observation)invocationOnMock.getArgument(0))
+        when(observationService.addObservation(any(Observation.class))).thenAnswer(invocationOnMock -> ((Observation)invocationOnMock.getArgument(0))
                 .setTitle("title")
                 .setSchedule(new Event().setDateEnd(null).setDateStart(null).setRRule(null))
                 .setCreated(new Timestamp(0))
