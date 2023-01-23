@@ -17,11 +17,8 @@ import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.utils.LoggingUtils;
 
 import java.text.ParseException;
-import java.util.EnumSet;
-import java.util.Set;
 
 import org.quartz.CronExpression;
-import org.slf4j.MDC;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
