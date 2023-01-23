@@ -5,11 +5,7 @@ import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
-import io.redlink.more.studymanager.model.StudyRole;
-import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.repository.ObservationRepository;
-import java.util.EnumSet;
-import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,41 +14,29 @@ import java.util.Map;
 @Service
 public class ObservationService {
 
-    private static final Set<StudyRole> READ_ROLES = EnumSet.of(StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR);
-    private static final Set<StudyRole> WRITE_ROLES = READ_ROLES;
-
     private final ObservationRepository repository;
-
-    private final StudyPermissionService studyPermissionService;
 
     private final Map<String, ObservationFactory> observationFactories;
 
-    public ObservationService(ObservationRepository repository, StudyPermissionService studyPermissionService,
+    public ObservationService(ObservationRepository repository,
                               Map<String, ObservationFactory> observationFactories) {
         this.repository = repository;
-        this.studyPermissionService = studyPermissionService;
         this.observationFactories = observationFactories;
     }
 
-    public Observation addObservation(Observation observation, User user) {
-        studyPermissionService.assertAnyRole(observation.getStudyId(), user.id(), WRITE_ROLES);
-
+    public Observation addObservation(Observation observation) {
         return repository.insert(validate(observation));
     }
 
-    public void deleteObservation(Long studyId, Integer observationId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), WRITE_ROLES);
-
+    public void deleteObservation(Long studyId, Integer observationId) {
         repository.deleteObservation(studyId, observationId);
     }
 
-    public List<Observation> listObservations(Long studyId, User user) {
-        studyPermissionService.assertAnyRole(studyId, user.id(), READ_ROLES);
+    public List<Observation> listObservations(Long studyId) {
         return repository.listObservations(studyId);
     }
 
-    public Observation updateObservation(Observation observation, User user) {
-        studyPermissionService.assertAnyRole(observation.getStudyId(), user.id(), WRITE_ROLES);
+    public Observation updateObservation(Observation observation) {
         return repository.updateObservation(validate(observation));
     }
 

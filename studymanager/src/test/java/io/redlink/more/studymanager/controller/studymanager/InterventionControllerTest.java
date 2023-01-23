@@ -12,7 +12,6 @@ import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.Trigger;
-import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.service.InterventionService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
@@ -75,7 +74,7 @@ class InterventionControllerTest {
         Instant dateStart = Instant.now();
         Instant dateEnd = dateStart.plus(2, ChronoUnit.HOURS);
 
-        when(interventionService.addIntervention(any(Intervention.class), any(User.class)))
+        when(interventionService.addIntervention(any(Intervention.class)))
                 .thenAnswer(invocationOnMock -> new Intervention()
                         .setStudyId(((Intervention)invocationOnMock.getArgument(0)).getStudyId())
                         .setInterventionId(((Intervention)invocationOnMock.getArgument(0)).getInterventionId())
@@ -115,7 +114,7 @@ class InterventionControllerTest {
         Instant dateStart = Instant.now();
         Instant dateEnd = dateStart.plus(2, ChronoUnit.HOURS);
 
-        when(interventionService.updateIntervention(any(Intervention.class), any(User.class))).thenAnswer(invocationOnMock ->
+        when(interventionService.updateIntervention(any(Intervention.class))).thenAnswer(invocationOnMock ->
                 ((Intervention)invocationOnMock.getArgument(0))
                 .setStudyId(1L)
                 .setInterventionId(1)
@@ -156,7 +155,7 @@ class InterventionControllerTest {
     @Test
     @DisplayName("A trigger can be updated")
     void testUpdateAndGetTrigger() throws Exception {
-        when(interventionService.updateTrigger(any(Long.class), any(Integer.class), any(Trigger.class), any(User.class)))
+        when(interventionService.updateTrigger(any(Long.class), any(Integer.class), any(Trigger.class)))
                 .thenAnswer(invocationOnMock -> ((Trigger)invocationOnMock.getArgument(2))
                 .setType("my-type")
                 .setProperties(MapperUtils.MAPPER.convertValue(Map.of("name", "value"), TriggerProperties.class))
@@ -180,7 +179,7 @@ class InterventionControllerTest {
     @DisplayName("Creating an Action should return the Action with Id and timestamps set")
     @Disabled("Do not get the test-idea")
     void testPostAndPutOfAction() throws Exception {
-        when(interventionService.createAction(any(Long.class), any(Integer.class), any(Action.class), any(User.class)))
+        when(interventionService.createAction(any(Long.class), any(Integer.class), any(Action.class)))
                 .thenAnswer(invocationOnMock -> new Action()
                         .setActionId(((Action)invocationOnMock.getArgument(2)).getActionId())
                         .setType(((Action)invocationOnMock.getArgument(2)).getType())

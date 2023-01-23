@@ -2,10 +2,11 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ParticipantsApi;
+import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
-import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -19,21 +20,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class ParticipantsApiV1Controller implements ParticipantsApi {
     private final ParticipantService service;
 
-    private final OAuth2AuthenticationService authService;
 
-
-    public ParticipantsApiV1Controller(ParticipantService service, OAuth2AuthenticationService authService) {
+    public ParticipantsApiV1Controller(ParticipantService service) {
         this.service = service;
-        this.authService = authService;
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<List<ParticipantDTO>> createParticipants(Long studyId, List<ParticipantDTO> participantDTO) {
-        final var currentUser = authService.getCurrentUser();
         List<Participant> participants = participantDTO.stream()
                 .map(p -> p.studyId(studyId))
                 .map(ParticipantTransformer::fromParticipantDTO_V1)
-                .map(participant -> service.createParticipant(participant, currentUser))
+                .map(service::createParticipant)
                 .toList();
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 participants.stream()
@@ -43,15 +41,15 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<List<ParticipantDTO>> updateParticipantList(Long studyId, List<ParticipantDTO> participantDTO) {
-        final var currentUser = authService.getCurrentUser();
         if (participantDTO.stream().anyMatch(p -> p.getParticipantId() == null)) {
             throw new NotFoundException("Participant without id");
         }
         List<Participant> participants = participantDTO.stream()
                 .map(p -> p.studyId(studyId))
                 .map(ParticipantTransformer::fromParticipantDTO_V1)
-                .map(participant -> service.updateParticipant(participant, currentUser))
+                .map(service::updateParticipant)
                 .toList();
         return ResponseEntity.ok(
                 participants.stream()
@@ -61,38 +59,37 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<ParticipantDTO> deleteParticipant(Long studyId, Integer participantId) {
-        final var currentUser = authService.getCurrentUser();
-        return service.deleteParticipant(studyId, participantId, currentUser)
+        return service.deleteParticipant(studyId, participantId)
                 .map(ParticipantTransformer::toParticipantDTO_V1)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<ParticipantDTO> getParticipant(Long studyId, Integer participantId) {
-        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
-                ParticipantTransformer.toParticipantDTO_V1(service.getParticipant(studyId, participantId, currentUser))
+                ParticipantTransformer.toParticipantDTO_V1(service.getParticipant(studyId, participantId))
         );
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<List<ParticipantDTO>> listParticipants(Long studyId) {
-        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
-                service.listParticipants(studyId, currentUser).stream()
+                service.listParticipants(studyId).stream()
                         .map(ParticipantTransformer::toParticipantDTO_V1)
                         .toList()
         );
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<ParticipantDTO> updateParticipant(Long studyId, Integer participantId, ParticipantDTO participantDTO) {
-        final var currentUser = authService.getCurrentUser();
         Participant participant = service.updateParticipant(
-                ParticipantTransformer.fromParticipantDTO_V1((participantDTO.studyId(studyId)).participantId(participantId)),
-                currentUser
+                ParticipantTransformer.fromParticipantDTO_V1((participantDTO.studyId(studyId)).participantId(participantId))
         );
         return ResponseEntity.status(HttpStatus.OK).body(
                 ParticipantTransformer.toParticipantDTO_V1(participant)

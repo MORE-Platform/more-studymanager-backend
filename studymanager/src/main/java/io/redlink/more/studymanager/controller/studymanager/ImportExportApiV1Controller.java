@@ -1,6 +1,8 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.webservices.ImportExportApi;
+import io.redlink.more.studymanager.controller.RequiresStudyRole;
+import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.service.ImportExportService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import org.springframework.core.io.Resource;
@@ -28,6 +30,7 @@ public class ImportExportApiV1Controller implements ImportExportApi {
 
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<Resource> exportParticipants(Long studyId) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
@@ -36,10 +39,10 @@ public class ImportExportApiV1Controller implements ImportExportApi {
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<Void> importParticipants(Long studyId, MultipartFile file) {
-        final var currentUser = authService.getCurrentUser();
         try {
-            service.importParticipants(studyId, currentUser, file.getInputStream());
+            service.importParticipants(studyId, file.getInputStream());
         } catch (IOException e) {
             return ResponseEntity.badRequest().build();
         }
