@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.controller.proxy.KibanaProxy;
 import io.redlink.more.studymanager.core.component.Component;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
@@ -19,6 +20,8 @@ import io.redlink.more.studymanager.utils.LoggingUtils;
 import java.text.ParseException;
 
 import org.quartz.CronExpression;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -32,13 +35,13 @@ import java.util.Optional;
 public class InterventionService {
 
     private final InterventionRepository repository;
-
     private final StudyRepository studyRepository;
-
     private final Map<String, ActionFactory> actionFactories;
     private final Map<String, TriggerFactory> triggerFactories;
 
     private final MoreSDK sdk;
+    private static final Logger LOGGER = LoggerFactory.getLogger(KibanaProxy.class);
+
 
     public InterventionService(InterventionRepository repository, StudyRepository studyRepository,
                                MoreSDK sdk,
@@ -104,7 +107,9 @@ public class InterventionService {
         studyRepository.listStudiesByStatus(Study.Status.ACTIVE).forEach(study -> {
             try (var ctx = LoggingUtils.createContext(study)) {
                 activateInterventionsFor(study);
-            } catch (RuntimeException e) {}
+            } catch (RuntimeException e) {
+                LOGGER.error(e.getMessage());
+            }
         });
     }
 
