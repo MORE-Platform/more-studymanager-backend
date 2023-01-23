@@ -40,7 +40,7 @@ public class InterventionService {
     private final Map<String, TriggerFactory> triggerFactories;
 
     private final MoreSDK sdk;
-    private static final Logger LOGGER = LoggerFactory.getLogger(KibanaProxy.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(InterventionService.class);
 
 
     public InterventionService(InterventionRepository repository, StudyRepository studyRepository,
@@ -108,7 +108,7 @@ public class InterventionService {
             try (var ctx = LoggingUtils.createContext(study)) {
                 activateInterventionsFor(study);
             } catch (RuntimeException e) {
-                LOGGER.error(e.getMessage());
+                LOGGER.warn("Failed to activate interventions for study_{}: {}", study.getStudyId(), e.getMessage(), e);
             }
         });
     }
