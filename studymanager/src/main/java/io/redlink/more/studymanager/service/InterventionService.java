@@ -34,6 +34,7 @@ import java.util.Optional;
 @Service
 public class InterventionService {
 
+    private final StudyStateService studyStateService;
     private final InterventionRepository repository;
     private final StudyRepository studyRepository;
     private final Map<String, ActionFactory> actionFactories;
@@ -43,10 +44,12 @@ public class InterventionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(InterventionService.class);
 
 
-    public InterventionService(InterventionRepository repository, StudyRepository studyRepository,
+    public InterventionService(StudyStateService studyStateService,
+                               InterventionRepository repository, StudyRepository studyRepository,
                                MoreSDK sdk,
                                Map<String, TriggerFactory> triggerFactories,
                                Map<String, ActionFactory> actionFactories) {
+        this.studyStateService = studyStateService;
         this.repository = repository;
         this.studyRepository = studyRepository;
         this.actionFactories = actionFactories;
@@ -55,6 +58,7 @@ public class InterventionService {
     }
 
     public Intervention addIntervention(Intervention intervention) {
+        studyStateService.assertStudyNotInState(intervention.getStudyId(), Study.Status.CLOSED);
         return repository.insert(intervention);
     }
 
@@ -67,14 +71,17 @@ public class InterventionService {
     }
 
     public void deleteIntervention(Long studyId, Integer interventionId) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         repository.deleteByIds(studyId, interventionId);
     }
 
     public Intervention updateIntervention(Intervention intervention) {
+        studyStateService.assertStudyNotInState(intervention.getStudyId(), Study.Status.CLOSED);
         return repository.updateIntervention(intervention);
     }
 
     public Action createAction(Long studyId, Integer interventionId, Action action) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         return repository.createAction(studyId, interventionId, validateAction(action));
     }
 
@@ -87,14 +94,17 @@ public class InterventionService {
     }
 
     public void deleteAction(Long studyId, Integer interventionId, Integer actionId) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         repository.deleteActionByIds(studyId, interventionId, actionId);
     }
 
     public Action updateAction(Long studyId, Integer interventionId, Integer actionId, Action action) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         return repository.updateAction(studyId, interventionId, actionId, validateAction(action));
     }
 
     public Trigger updateTrigger(Long studyId, Integer interventionId, Trigger trigger) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         return repository.updateTrigger(studyId, interventionId, validateTrigger(trigger));
     }
 

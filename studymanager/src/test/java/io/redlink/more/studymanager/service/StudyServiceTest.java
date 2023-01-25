@@ -45,6 +45,9 @@ class StudyServiceTest {
     @Mock
     StudyPermissionService studyPermissionService;
 
+    @Mock
+    StudyStateService studyStateService;
+
     @InjectMocks
     StudyService studyService;
 

@@ -16,13 +16,16 @@ import static io.redlink.more.studymanager.model.Participant.Status.*;
 @Service
 public class ParticipantService {
 
+    private final StudyStateService studyStateService;
     private final ParticipantRepository participantRepository;
 
-    public ParticipantService(ParticipantRepository repository) {
+    public ParticipantService(StudyStateService studyStateService, ParticipantRepository repository) {
+        this.studyStateService = studyStateService;
         this.participantRepository = repository;
     }
 
     public Participant createParticipant(Participant participant) {
+        studyStateService.assertStudyNotInState(participant.getStudyId(), Study.Status.CLOSED);
         participant.setRegistrationToken(RandomTokenGenerator.generate());
         return participantRepository.insert(participant);
     }
@@ -36,10 +39,12 @@ public class ParticipantService {
     }
 
     public Optional<Participant> deleteParticipant(Long studyId, Integer participantId) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         return participantRepository.deleteParticipant(studyId, participantId);
     }
 
     public Participant updateParticipant(Participant participant) {
+        studyStateService.assertStudyNotInState(participant.getStudyId(), Study.Status.CLOSED);
         return participantRepository.update(participant);
     }
 
@@ -50,6 +55,7 @@ public class ParticipantService {
     }
 
     public void setStatus(Long studyId, Integer participantId, Participant.Status status) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         participantRepository.setStatusByIds(studyId, participantId, status);
         if (EnumSet.of(ABANDONED, KICKED_OUT, LOCKED).contains(status)) {
             participantRepository.cleanupParticipant(studyId, participantId);

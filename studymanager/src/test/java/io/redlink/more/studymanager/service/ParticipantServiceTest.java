@@ -20,6 +20,9 @@ class ParticipantServiceTest {
     @Mock
     ParticipantRepository participantRepository;
 
+    @Mock
+    StudyStateService studyStateService;
+
     @InjectMocks
     ParticipantService participantService;
 

@@ -27,12 +27,14 @@ public class StudyService {
     private final UserRepository userRepo;
     private final InterventionService interventionService;
     private final ParticipantService participantService;
+    private final StudyStateService studyStateService;
 
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
-                        InterventionService interventionService, ParticipantService participantService) {
+                        StudyStateService studyStateService, InterventionService interventionService, ParticipantService participantService) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
+        this.studyStateService = studyStateService;
         this.interventionService = interventionService;
         this.participantService = participantService;
     }
@@ -58,6 +60,7 @@ public class StudyService {
     }
 
     public Optional<Study> updateStudy(Study study, User user) {
+        studyStateService.assertStudyNotInState(study, Study.Status.CLOSED);
         return studyRepository.update(study, user);
     }
 
@@ -91,6 +94,7 @@ public class StudyService {
 
     public Optional<StudyUserRoles> setRolesForStudy(Long studyId, String userId, Set<StudyRole> roles,
                                                      User currentUser) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         //MORE-218: One must not remove oneself as ADMIN
         if (StringUtils.equals(currentUser.id(), userId)
             && !roles.contains(StudyRole.STUDY_ADMIN)) {

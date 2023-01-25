@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.repository;
 
+import io.redlink.more.studymanager.exception.BadStudyStateException;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.User;
@@ -43,6 +44,7 @@ public class StudyRepository {
     private static final String SET_ACTIVE_STATE_BY_ID = "UPDATE studies SET status = 'active', start_date = now(), modified = now() WHERE study_id = ?";
     private static final String SET_PAUSED_STATE_BY_ID = "UPDATE studies SET status = 'paused', modified = now() WHERE study_id = ?";
     private static final String SET_CLOSED_STATE_BY_ID = "UPDATE studies SET status = 'closed', end_date = now(), modified = now() WHERE study_id = ?";
+    private static final String ASSERT_STATE = "SELECT study_id FROM studies WHERE study_id = :study_id AND status::varchar IN (:study_status)";
 
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -153,5 +155,19 @@ public class StudyRepository {
 
     public List<Study> listStudiesByStatus(Study.Status status) {
         return template.query(LIST_STUDIES_BY_STATUS, getStudyRowMapper(), status.getValue());
+    }
+
+    public Long assertStudyState(Long studyId, Set<Study.Status> states){
+        if(states.isEmpty())
+            throw BadStudyStateException.state();
+        try(
+                var stream = namedTemplate.queryForStream(ASSERT_STATE,
+                        new MapSqlParameterSource()
+                                .addValue("study_id", studyId)
+                                .addValue("study_status", states.stream().map(Study.Status::getValue).toList()),
+                        (rs, rowNum) -> rs.getLong("study_id")
+                )) {
+            return stream.findFirst().orElseThrow(BadStudyStateException::state);
+        }
     }
 }
