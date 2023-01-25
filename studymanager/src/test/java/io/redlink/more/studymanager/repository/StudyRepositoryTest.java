@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.repository;
 
-import io.redlink.more.studymanager.exception.BadStudyStateException;
 import io.redlink.more.studymanager.model.Study;
 
 import java.util.Collections;
@@ -16,7 +15,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
 
 @SpringBootTest
 @Testcontainers
@@ -126,9 +124,9 @@ class StudyRepositoryTest {
         Set<Study.Status> statusSet3 = Collections.emptySet();
 
         Study study = studyRepository.insert(new Study());
-        assertThat(studyRepository.assertStudyState(study.getStudyId(), statusSet1)).isEqualTo(study.getStudyId());
-        assertThrows(BadStudyStateException.class, () -> studyRepository.assertStudyState(study.getStudyId(), statusSet2));
-        assertThrows(BadStudyStateException.class, () -> studyRepository.assertStudyState(study.getStudyId(), statusSet3));
+        assertThat(studyRepository.hasState(study.getStudyId(), statusSet1)).isEqualTo(true);
+        assertThat(studyRepository.hasState(study.getStudyId(), statusSet2)).isEqualTo(false);
+        assertThat(studyRepository.hasState(study.getStudyId(), statusSet3)).isEqualTo(false);
     }
 
 

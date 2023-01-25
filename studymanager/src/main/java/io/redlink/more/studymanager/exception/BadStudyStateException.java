@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(code = HttpStatus.CONFLICT)
 public class BadStudyStateException extends RuntimeException{
 
-    public BadStudyStateException(String cause){ super(cause); }
+    public BadStudyStateException(String message){ super(message); }
 
     public BadStudyStateException(Throwable cause){ super(cause); }
 

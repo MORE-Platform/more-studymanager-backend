@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.exception.BadStudyStateException;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,8 @@ public class StudyStateService {
     }
 
     public Long assertStudyState(Long studyId, Set<Study.Status> states) {
-        return studyRepository.assertStudyState(studyId, states);
+        if(studyRepository.hasState(studyId, states))
+            return studyId;
+        throw BadStudyStateException.state();
     }
 }
