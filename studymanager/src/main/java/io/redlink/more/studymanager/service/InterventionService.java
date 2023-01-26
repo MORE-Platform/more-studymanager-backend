@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.service;
 
-import io.redlink.more.studymanager.controller.proxy.KibanaProxy;
 import io.redlink.more.studymanager.core.component.Component;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;

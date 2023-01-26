@@ -22,7 +22,7 @@ public class StudyStateService {
         return study;
     }
 
-    public Study assertStudyNotInState(final Study study, Set<Study.Status> states){
+    public Study assertStudyNotInState(final Study study, Set<Study.Status> states) {
         assertStudyNotInState(study.getStudyId(), states);
         return study;
     }
@@ -31,7 +31,7 @@ public class StudyStateService {
         return assertStudyNotInState(studyId, Set.of(states));
     }
 
-    public Long assertStudyNotInState(Long studyId, Set<Study.Status> states){
+    public Long assertStudyNotInState(Long studyId, Set<Study.Status> states) {
         return assertStudyState(studyId, EnumSet.complementOf(EnumSet.copyOf(states)));
     }
 
@@ -50,7 +50,9 @@ public class StudyStateService {
     }
 
     public Long assertStudyState(Long studyId, Set<Study.Status> states) {
-        if(studyRepository.hasState(studyId, states))
+        if (studyId == null)
+            throw new IllegalArgumentException("studyId must not be null");
+        if (studyRepository.hasState(studyId, states))
             return studyId;
         throw BadStudyStateException.state();
     }

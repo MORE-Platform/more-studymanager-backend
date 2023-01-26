@@ -1,11 +1,7 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.Study;
-
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Supplier;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +10,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Testcontainers
@@ -124,9 +127,9 @@ class StudyRepositoryTest {
         Set<Study.Status> statusSet3 = Collections.emptySet();
 
         Study study = studyRepository.insert(new Study());
-        assertThat(studyRepository.hasState(study.getStudyId(), statusSet1)).isEqualTo(true);
-        assertThat(studyRepository.hasState(study.getStudyId(), statusSet2)).isEqualTo(false);
-        assertThat(studyRepository.hasState(study.getStudyId(), statusSet3)).isEqualTo(false);
+        assertTrue(studyRepository.hasState(study.getStudyId(), statusSet1));
+        assertFalse(studyRepository.hasState(study.getStudyId(), statusSet2));
+        assertFalse(studyRepository.hasState(study.getStudyId(), statusSet3));
     }
 
 
