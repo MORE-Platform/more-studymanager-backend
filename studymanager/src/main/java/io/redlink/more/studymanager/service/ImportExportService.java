@@ -21,10 +21,12 @@ public class ImportExportService {
 
     private final ParticipantService participantService;
     private final StudyService studyService;
+    private final StudyStateService studyStateService;
 
-    public ImportExportService(ParticipantService participantService, StudyService studyService) {
+    public ImportExportService(ParticipantService participantService, StudyService studyService, StudyStateService studyStateService) {
         this.participantService = participantService;
         this.studyService = studyService;
+        this.studyStateService = studyStateService;
     }
 
     public Resource exportParticipants(Long studyId, User user) {
@@ -37,6 +39,7 @@ public class ImportExportService {
     }
 
     public void importParticipants(Long studyId, InputStream inputStream) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         var scanner = new Scanner(inputStream).useDelimiter("[\\r\\n]+");
         boolean isHeader = true;
         while (scanner.hasNext()) {

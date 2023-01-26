@@ -31,6 +31,9 @@ class ObservationServiceTest {
     @Mock
     Map<String, ObservationFactory> observationFactories;
 
+    @Mock
+    StudyStateService studyStateService;
+
     @InjectMocks
     ObservationService observationService;
 

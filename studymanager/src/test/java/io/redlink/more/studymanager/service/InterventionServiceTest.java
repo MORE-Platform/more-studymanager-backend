@@ -29,6 +29,8 @@ class InterventionServiceTest {
     Map<String, TriggerFactory> triggerFactories;
     @Mock
     StudyPermissionService studyPermissionService;
+    @Mock
+    StudyStateService studyStateService;
     @InjectMocks
     InterventionService interventionService;
 
