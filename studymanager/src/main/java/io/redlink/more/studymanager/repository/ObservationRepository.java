@@ -1,12 +1,12 @@
 package io.redlink.more.studymanager.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,19 +17,18 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
-import static io.redlink.more.studymanager.utils.RepositoryUtils.getValidNullableIntegerValue;
+import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNullableIntegerValue;
 
 @Component
 public class ObservationRepository {
 
-    private final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb)";
-    private final String GET_OBSERVATION_BY_IDS = "SELECT * FROM observations WHERE study_id = ? AND observation_id = ?";
-    private final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
-    private final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = ?";
-    private final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now() WHERE study_id=:study_id AND observation_id=:observation_id";
-    private final String DELETE_ALL = "DELETE FROM observations";
+    private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb)";
+    private static final String GET_OBSERVATION_BY_IDS = "SELECT * FROM observations WHERE study_id = ? AND observation_id = ?";
+    private static final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
+    private static final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = ?";
+    private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now() WHERE study_id=:study_id AND observation_id=:observation_id";
+    private static final String DELETE_ALL = "DELETE FROM observations";
+
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 

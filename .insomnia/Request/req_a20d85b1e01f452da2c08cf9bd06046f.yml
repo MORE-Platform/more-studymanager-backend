@@ -1,0 +1,42 @@
+_id: req_a20d85b1e01f452da2c08cf9bd06046f
+type: Request
+parentId: fld_1733bb12995049f4bdde934b38ebc1f9
+modified: 1670341587083
+created: 1670341484629
+url: "{{ api_base }}/users/search"
+name: /users/search
+description: ""
+method: GET
+body: {}
+parameters:
+  - id: pair_ca82261db9cf4db192837f1c46128e0d
+    name: q
+    value: "{% prompt 'User Search', 'Search', '', '', false, false %}"
+    description: ""
+  - id: pair_bc0fdba0dea143d2b62b7c4a1b7d4d55
+    name: offset
+    value: "0"
+    description: ""
+  - id: pair_6a8a67abf409451ab06f3df85805d536
+    name: limit
+    value: "5"
+    description: ""
+headers: []
+authentication:
+  clientId: "{{ _.auth.clientId }}"
+  grantType: authorization_code
+  scope: "{{ _.auth.scopes }}"
+  type: oauth2
+  redirectUrl: "{{ _.auth.redirectUrl }}"
+  authorizationUrl: "{{ _.auth.authorizaionUrl }}"
+  disabled: false
+  accessTokenUrl: "{{ _.auth.tokenUrl }}"
+  clientSecret: "{{ _.auth.clientSecret }}"
+metaSortKey: 596.875
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

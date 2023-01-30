@@ -43,6 +43,7 @@ public class StudyRepository {
     private static final String SET_ACTIVE_STATE_BY_ID = "UPDATE studies SET status = 'active', start_date = now(), modified = now() WHERE study_id = ?";
     private static final String SET_PAUSED_STATE_BY_ID = "UPDATE studies SET status = 'paused', modified = now() WHERE study_id = ?";
     private static final String SET_CLOSED_STATE_BY_ID = "UPDATE studies SET status = 'closed', end_date = now(), modified = now() WHERE study_id = ?";
+    private static final String STUDY_HAS_STATE = "SELECT study_id FROM studies WHERE study_id = :study_id AND status::varchar IN (:study_status)";
 
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -153,5 +154,19 @@ public class StudyRepository {
 
     public List<Study> listStudiesByStatus(Study.Status status) {
         return template.query(LIST_STUDIES_BY_STATUS, getStudyRowMapper(), status.getValue());
+    }
+
+    public boolean hasState(long studyId, Set<Study.Status> allowedStates){
+        if(allowedStates.isEmpty())
+            return false;
+        try(
+                var stream = namedTemplate.queryForStream(STUDY_HAS_STATE,
+                        new MapSqlParameterSource()
+                                .addValue("study_id", studyId)
+                                .addValue("study_status", allowedStates.stream().map(Study.Status::getValue).toList()),
+                        (rs, rowNum) -> rs.getLong("study_id")
+                )) {
+            return stream.findFirst().isPresent();
+        }
     }
 }

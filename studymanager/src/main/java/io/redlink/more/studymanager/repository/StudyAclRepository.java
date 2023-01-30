@@ -3,6 +3,7 @@
  */
 package io.redlink.more.studymanager.repository;
 
+import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
@@ -17,6 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -48,6 +50,11 @@ public class StudyAclRepository {
     private static final String CLEAR_ROLES =
             "DELETE FROM study_acl " +
             "WHERE study_id = :studyId AND user_id = :userId";
+    private static final String COUNT_USERS_BY_ROLES =
+            "SELECT count(*) " +
+            "FROM study_acl " +
+            "WHERE study_id = :studyId AND user_role IN (:roles) " +
+            "GROUP BY user_id";
     private static final String LIST_ACL_FOR_STUDY =
             "SELECT users.*, acl.roles " +
             "FROM users " +
@@ -127,30 +134,72 @@ public class StudyAclRepository {
         )).orElse(0);
     }
 
+    /**
+     * @see #setRoles(long, String, Set, String)
+     */
     @Transactional
     public Set<StudyRole> setRoles(long studyId, String userId, String creatorId, StudyRole... roles) {
         return setRoles(studyId, userId, Set.of(roles), creatorId);
     }
 
+    /**
+     * Set/Update the roles of the provided user for a study.
+     * @param studyId the studyId
+     * @param userId the userId to manipulate
+     * @param roles the roles to set
+     * @param creatorId who grants the new roles
+     * @return the assigned roles
+     * @throws DataConstraintException if the operation would leave the study without at least one {@link StudyRole#STUDY_ADMIN}
+     */
     @Transactional
     public Set<StudyRole> setRoles(long studyId, String userId, Set<StudyRole> roles, String creatorId) {
         var paramMap = createParams(studyId, userId, roles)
                 .addValue("creator", creatorId);
+
+        if (roles.isEmpty()) {
+            clearRoles(studyId, userId);
+            return EnumSet.noneOf(StudyRole.class);
+        }
 
         jdbcTemplate.update(SQL_RETAIN_ROLES, paramMap);
         try (var stream = jdbcTemplate.queryForStream(SQL_UPDATE_ROLES,
                 paramMap,
                 (rs, row) -> readRole(rs, "user_role")
         )) {
+            if (!hasAdmin(studyId)) {
+                throw DataConstraintException.createOneStudyAdminRequired(studyId, userId);
+            }
+
             return stream
                     .filter(Objects::nonNull)
                     .collect(Collectors.toUnmodifiableSet());
         }
     }
 
+    /**
+     * Clears all roles of the provided user for a study.
+     * @param studyId the studyId
+     * @param userId the userId to manipulate
+     * @throws DataConstraintException if the operation would leave the study without at least one {@link StudyRole#STUDY_ADMIN}
+     */
     @Transactional
     public void clearRoles(long studyId, String userId) {
         jdbcTemplate.update(CLEAR_ROLES, createParams(studyId, userId));
+        if (!hasAdmin(studyId)) {
+            throw DataConstraintException.createOneStudyAdminRequired(studyId, userId);
+        }
+    }
+
+    private boolean hasAdmin(long studyId) {
+        return countUsersByRoles(studyId, EnumSet.of(StudyRole.STUDY_ADMIN)) > 0;
+    }
+
+    private long countUsersByRoles(long studyId, Set<StudyRole> roles) {
+        try (Stream<Long> stream = jdbcTemplate.queryForStream(COUNT_USERS_BY_ROLES,
+                createParams(studyId, "unused", roles),
+                (rs, row) -> rs.getLong("count"))) {
+            return stream.findFirst().orElse(0L);
+        }
     }
 
     public Set<StudyUserRoles.StudyRoleDetails> getRoleDetails(long studyId, String userId) {

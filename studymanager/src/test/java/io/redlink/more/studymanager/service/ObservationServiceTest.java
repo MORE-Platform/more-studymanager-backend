@@ -20,22 +20,28 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ObservationServiceTest {
+class ObservationServiceTest {
 
     @Mock
     ObservationRepository observationRepository;
 
     @Mock
+    StudyPermissionService studyPermissionService;
+
+    @Mock
     Map<String, ObservationFactory> observationFactories;
+
+    @Mock
+    StudyStateService studyStateService;
 
     @InjectMocks
     ObservationService observationService;
 
     @Test
-    public void testValidation() {
-        NotFoundException notFoundException = Assertions.assertThrows(NotFoundException.class, () -> {
-                observationService.addObservation(new Observation().setType("my-observation"));
-        });
+    void testValidation() {
+        NotFoundException notFoundException = Assertions.assertThrows(NotFoundException.class, () ->
+                observationService.addObservation(new Observation().setStudyId(1L).setObservationId(1).setType("my-observation"))
+        );
         Assertions.assertEquals("Observation Factory 'my-observation' cannot be found", notFoundException.getMessage());
 
         ObservationFactory factory = mock(ObservationFactory.class);
@@ -43,9 +49,9 @@ public class ObservationServiceTest {
         when(observationFactories.get("my-observation")).thenReturn(factory);
         when(observationFactories.containsKey("my-observation")).thenReturn(true);
 
-        BadRequestException badRequestException = Assertions.assertThrows(BadRequestException.class, () -> {
-            observationService.addObservation(new Observation().setType("my-observation"));
-        });
+        BadRequestException badRequestException = Assertions.assertThrows(BadRequestException.class, () ->
+                observationService.addObservation(new Observation().setStudyId(1L).setObservationId(1).setType("my-observation"))
+        );
         Assertions.assertEquals("ConfigurationValidationReport: [ERROR] My error", badRequestException.getMessage());
     }
 }

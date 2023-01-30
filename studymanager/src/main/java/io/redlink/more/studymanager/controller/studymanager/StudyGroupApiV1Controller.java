@@ -2,7 +2,9 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.StudyGroupDTO;
 import io.redlink.more.studymanager.api.v1.webservices.StudyGroupsApi;
+import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyGroupTransformer;
 import io.redlink.more.studymanager.service.StudyGroupService;
 import org.slf4j.Logger;
@@ -23,13 +25,17 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
 
     private final StudyGroupService service;
 
+
     public StudyGroupApiV1Controller(StudyGroupService service) {
         this.service = service;
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<StudyGroupDTO> createStudyGroup(Long studyId, StudyGroupDTO studyGroupDTO) {
-        StudyGroup studyGroup = service.createStudyGroup(StudyGroupTransformer.fromStudyGroupDTO_V1(studyGroupDTO));
+        StudyGroup studyGroup = service.createStudyGroup(
+                StudyGroupTransformer.fromStudyGroupDTO_V1(studyGroupDTO)
+        );
         LOGGER.debug("StudyGroup created: {}", studyGroup);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 StudyGroupTransformer.toStudyGroupDTO_V1(studyGroup)
@@ -37,13 +43,17 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
     }
 
     @Override
+    @RequiresStudyRole
     public ResponseEntity<List<StudyGroupDTO>> listStudyGroups(Long studyId) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(
-                service.listStudyGroups(studyId).stream().map(StudyGroupTransformer::toStudyGroupDTO_V1).toList()
+        return ResponseEntity.ok(
+                service.listStudyGroups(studyId).stream()
+                        .map(StudyGroupTransformer::toStudyGroupDTO_V1)
+                        .toList()
         );
     }
 
     @Override
+    @RequiresStudyRole
     public ResponseEntity<StudyGroupDTO> getStudyGroup(Long studyId, Integer studyGroupId) {
         return ResponseEntity.ok(
                 StudyGroupTransformer.toStudyGroupDTO_V1(service.getStudyGroup(studyId, studyGroupId))
@@ -51,6 +61,7 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<StudyGroupDTO> updateStudyGroup(Long studyId, Integer studyGroupId, StudyGroupDTO studyGroupDTO) {
         return ResponseEntity.ok(
                 StudyGroupTransformer.toStudyGroupDTO_V1(
@@ -62,6 +73,7 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<Void> deleteStudyGroup(Long studyId, Integer studyGroupId) {
         service.deleteStudyGroup(studyId, studyGroupId);
         return ResponseEntity.noContent().build();

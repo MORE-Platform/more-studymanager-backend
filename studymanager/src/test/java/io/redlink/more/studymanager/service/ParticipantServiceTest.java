@@ -15,16 +15,21 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ParticipantServiceTest {
+class ParticipantServiceTest {
 
     @Mock
     ParticipantRepository participantRepository;
+
+    @Mock
+    StudyStateService studyStateService;
+
     @InjectMocks
     ParticipantService participantService;
 
+
     @Test
     @DisplayName("When the participant is saved it should return the participant with id.")
-    public void testSaveStudy() {
+    void testSaveStudy() {
         String token = RandomTokenGenerator.generate();
 
         Participant participant = new Participant()

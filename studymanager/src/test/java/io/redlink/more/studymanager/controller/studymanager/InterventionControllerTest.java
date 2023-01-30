@@ -7,11 +7,17 @@ import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Intervention;
+import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.service.InterventionService;
+import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.util.EnumSet;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,11 +47,25 @@ class InterventionControllerTest {
     @MockBean
     InterventionService interventionService;
 
+    @MockBean
+    OAuth2AuthenticationService oAuth2AuthenticationService;
+
     @Autowired
     ObjectMapper mapper;
 
     @Autowired
     private MockMvc mvc;
+
+    @BeforeEach
+    void setUp() {
+        when(oAuth2AuthenticationService.getCurrentUser()).thenReturn(
+                new AuthenticatedUser(
+                        UUID.randomUUID().toString(),
+                        "Test User", "test@example.com", "Test Inc.",
+                        EnumSet.allOf(PlatformRole.class)
+                )
+        );
+    }
 
     @Test
     @DisplayName("Create Intervention should create and then return the intervention with intervention id set")
@@ -135,7 +155,8 @@ class InterventionControllerTest {
     @Test
     @DisplayName("A trigger can be updated")
     void testUpdateAndGetTrigger() throws Exception {
-        when(interventionService.updateTrigger(any(Long.class), any(Integer.class), any(Trigger.class))).thenAnswer(invocationOnMock -> ((Trigger)invocationOnMock.getArgument(2))
+        when(interventionService.updateTrigger(any(Long.class), any(Integer.class), any(Trigger.class)))
+                .thenAnswer(invocationOnMock -> ((Trigger)invocationOnMock.getArgument(2))
                 .setType("my-type")
                 .setProperties(MapperUtils.MAPPER.convertValue(Map.of("name", "value"), TriggerProperties.class))
                 .setCreated(Instant.now())

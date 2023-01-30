@@ -2,6 +2,8 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.service.ImportExportService;
+import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +14,6 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.nio.charset.StandardCharsets;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -23,10 +23,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 
 @WebMvcTest({ImportExportApiV1Controller.class})
 @AutoConfigureMockMvc(addFilters = false)
-public class ImportExportControllerTest {
+class ImportExportControllerTest {
 
     @MockBean
     ImportExportService importExportService;
+
+    @MockBean
+    OAuth2AuthenticationService oAuth2AuthenticationService;
 
     @Autowired
     ObjectMapper mapper;
@@ -40,7 +43,7 @@ public class ImportExportControllerTest {
 
         String csv = "STUDYID;TITLE;PARTICIPANTID;ALIAS;REGISTRATIONTOKEN\n1;Study;1;SomeAlias;SomeToken";
 
-        when(importExportService.exportParticipants(any(Long.class)))
+        when(importExportService.exportParticipants(any(Long.class), any()))
                 .thenAnswer(invocationOnMock -> new ByteArrayResource(csv.getBytes(StandardCharsets.UTF_8)));
 
         MvcResult result = mvc.perform(get("/api/v1/studies/1/export/participants")

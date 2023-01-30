@@ -25,7 +25,7 @@ public class GpsMobileObservationFactory<C extends Observation, P extends Observ
     public String getDescription() {
         return
 """
-Enables hart GPS data collection in mobile.
+This observation enables you to collect GPS data via the smartphone sensor.
 """;
     }
 

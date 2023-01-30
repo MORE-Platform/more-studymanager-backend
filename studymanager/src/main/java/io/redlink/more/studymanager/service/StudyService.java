@@ -1,8 +1,8 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.exception.NotFoundException;
-import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.MoreUser;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,12 +26,17 @@ public class StudyService {
     private final StudyAclRepository aclRepository;
     private final UserRepository userRepo;
     private final InterventionService interventionService;
+    private final ParticipantService participantService;
+    private final StudyStateService studyStateService;
 
-    public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo, InterventionService interventionService) {
+    public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
+                        StudyStateService studyStateService, InterventionService interventionService, ParticipantService participantService) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
+        this.studyStateService = studyStateService;
         this.interventionService = interventionService;
+        this.participantService = participantService;
     }
 
     public Study createStudy(Study study, User currentUser) {
@@ -39,10 +45,6 @@ public class StudyService {
         var savedStudy = studyRepository.insert(study);
         aclRepository.setRoles(savedStudy.getStudyId(), user.id(), EnumSet.allOf(StudyRole.class), null);
         return getStudy(savedStudy.getStudyId(), user).orElse(savedStudy);
-    }
-
-    public List<Study> listStudies() {
-        return studyRepository.listStudyOrderByModifiedDesc();
     }
 
     public List<Study> listStudies(User user) {
@@ -54,11 +56,11 @@ public class StudyService {
     }
 
     public Optional<Study> getStudy(Long studyId, User user) {
-        return (studyRepository.getById(studyId, user))
-                ;
+        return (studyRepository.getById(studyId, user));
     }
 
     public Optional<Study> updateStudy(Study study, User user) {
+        studyStateService.assertStudyNotInState(study, Study.Status.CLOSED);
         return studyRepository.update(study, user);
     }
 
@@ -66,9 +68,9 @@ public class StudyService {
         studyRepository.deleteById(studyId);
     }
 
-    public void setStatus(Long studyId, Study.Status status) {
-        Study study = getStudy(studyId, null)
-                                .orElseThrow(() -> NotFoundException.Study(studyId));
+    public void setStatus(Long studyId, Study.Status status, User user) {
+        Study study = getStudy(studyId, user)
+                .orElseThrow(() -> NotFoundException.Study(studyId));
         if (status.equals(Study.Status.DRAFT)) {
             throw BadRequestException.StateChange(study.getStudyState(), Study.Status.DRAFT);
         }
@@ -80,11 +82,10 @@ public class StudyService {
         }
         studyRepository.setStateById(studyId, status);
 
-        if (status.equals(Study.Status.ACTIVE)) {
-            interventionService.activateInterventionsFor(study);
-        } else {
-            interventionService.deactivateInterventionsFor(study);
-        }
+        studyRepository.getById(studyId).ifPresent(s -> {
+            interventionService.alignInterventionsWithStudyState(s);
+            participantService.alignParticipantsWithStudyState(s);
+        });
     }
 
     public Map<MoreUser, Set<StudyRole>> getACL(Long studyId) {
@@ -92,7 +93,14 @@ public class StudyService {
     }
 
     public Optional<StudyUserRoles> setRolesForStudy(Long studyId, String userId, Set<StudyRole> roles,
-                                                     AuthenticatedUser currentUser) {
+                                                     User currentUser) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
+        //MORE-218: One must not remove oneself as ADMIN
+        if (StringUtils.equals(currentUser.id(), userId)
+            && !roles.contains(StudyRole.STUDY_ADMIN)) {
+            throw DataConstraintException.createNoSelfAdminRemoval(studyId, userId);
+        }
+
         if (roles.isEmpty()) {
             aclRepository.clearRoles(studyId, userId);
             return Optional.empty();

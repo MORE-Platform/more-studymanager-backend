@@ -3,6 +3,7 @@ package io.redlink.more.studymanager.repository;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyGroup;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -68,7 +69,7 @@ class ParticipantRepositoryTest {
     }
 
     @Test
-    @DisplayName("Studies are deleted and listed correctly")
+    @DisplayName("Participants are deleted and listed correctly")
     void testListAndDelete() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
 
@@ -82,15 +83,68 @@ class ParticipantRepositoryTest {
                 .setStudyId(studyId)
                 .setRegistrationToken("TEST789"));
 
-        assertThat(participantRepository.listParticipants(studyId)).hasSize(3);
-        participantRepository.deleteParticipant(studyId, s1.getParticipantId());
-        assertThat(participantRepository.listParticipants(studyId)).hasSize(2);
-        participantRepository.deleteParticipant(studyId, s2.getParticipantId());
-        assertThat(participantRepository.listParticipants(studyId)).hasSize(1);
-        participantRepository.deleteParticipant(studyId, s2.getParticipantId());
-        assertThat(participantRepository.listParticipants(studyId)).hasSize(1);
-        participantRepository.deleteParticipant(studyId, s3.getParticipantId());
-        assertThat(participantRepository.listParticipants(studyId)).isEmpty();
+        assertThat(participantRepository.listParticipants(studyId))
+                .hasSize(3);
+        assertThat(participantRepository.deleteParticipant(studyId, s1.getParticipantId()))
+                .isEmpty();
+        assertThat(participantRepository.listParticipants(studyId))
+                .hasSize(2);
+        assertThat(participantRepository.deleteParticipant(studyId, s2.getParticipantId()))
+                .isEmpty();
+        assertThat(participantRepository.listParticipants(studyId))
+                .hasSize(1);
+        assertThat(participantRepository.deleteParticipant(studyId, s2.getParticipantId()))
+                .isEmpty();
+        assertThat(participantRepository.listParticipants(studyId))
+                .hasSize(1);
+        assertThat(participantRepository.deleteParticipant(studyId, s3.getParticipantId()))
+                .isEmpty();
+        assertThat(participantRepository.listParticipants(studyId))
+                .isEmpty();
+
+        var p4 = createParticipant(studyId, Participant.Status.ACTIVE);
+        var p5 = createParticipant(studyId);
+        var p6 = createParticipant(studyId, Participant.Status.ABANDONED);
+        var p7 = createParticipant(studyId, Participant.Status.KICKED_OUT);
+        assertThat(participantRepository.listParticipants(studyId))
+                .hasSize(4);
+        assertThat(participantRepository.deleteParticipant(studyId, p4.getParticipantId()))
+                .isPresent()
+                .hasValueSatisfying(p -> assertThat(p).hasFieldOrPropertyWithValue("status", Participant.Status.KICKED_OUT));
+        assertThat(participantRepository.listParticipants(studyId))
+                .hasSize(4);
+        assertThat(participantRepository.deleteParticipant(studyId, p5.getParticipantId()))
+                .isEmpty();
+        assertThat(participantRepository.listParticipants(studyId))
+                .hasSize(3);
+        assertThat(participantRepository.deleteParticipant(studyId, p6.getParticipantId()))
+                .isPresent()
+                .hasValueSatisfying(p -> assertThat(p).hasFieldOrPropertyWithValue("status", Participant.Status.ABANDONED));
+        assertThat(participantRepository.listParticipants(studyId))
+                .hasSize(3);
+        assertThat(participantRepository.deleteParticipant(studyId, p7.getParticipantId()))
+                .isPresent()
+                .hasValueSatisfying(p -> assertThat(p).hasFieldOrPropertyWithValue("status", Participant.Status.KICKED_OUT));
+        assertThat(participantRepository.listParticipants(studyId))
+                .hasSize(3);
+
+    }
+
+    private Participant createParticipant(Long studyId, Participant.Status status) {
+        final Participant p = createParticipant(studyId);
+        if (status != null) {
+            return participantRepository.setStatusByIds(p.getStudyId(), p.getParticipantId(), status)
+                    .orElseThrow();
+        }
+        return p;
+
+    }
+
+    private Participant createParticipant(Long studyId) {
+        return participantRepository.insert(new Participant()
+                .setStudyId(studyId)
+                .setRegistrationToken(RandomStringUtils.randomAlphanumeric(12))
+        );
     }
 
     @Test
@@ -112,7 +166,7 @@ class ParticipantRepositoryTest {
 
     @Test
     @DisplayName("Participants study group must be undefined")
-    public void testUndefinedStudyGroup() {
+    void testUndefinedStudyGroup() {
         Long studyId = studyRepository.insert(new Study()).getStudyId();
         Participant participant = participantRepository
                 .insert(new Participant().setStudyId(studyId).setRegistrationToken("abc"));

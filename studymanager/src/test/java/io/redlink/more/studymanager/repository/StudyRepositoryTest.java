@@ -1,8 +1,7 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.Study;
-import java.util.Optional;
-import java.util.function.Supplier;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,7 +10,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Testcontainers
@@ -111,6 +117,19 @@ class StudyRepositoryTest {
         assertThat(study.getStudyState()).isEqualTo(Study.Status.CLOSED);
         assertThat(study.getStartDate()).isNotNull();
         assertThat(study.getEndDate()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Study state correctly asserted")
+    void testAssertState(){
+        Set<Study.Status> statusSet1 = Set.of(Study.Status.ACTIVE, Study.Status.DRAFT);
+        Set<Study.Status> statusSet2 = Set.of(Study.Status.CLOSED);
+        Set<Study.Status> statusSet3 = Collections.emptySet();
+
+        Study study = studyRepository.insert(new Study());
+        assertTrue(studyRepository.hasState(study.getStudyId(), statusSet1));
+        assertFalse(studyRepository.hasState(study.getStudyId(), statusSet2));
+        assertFalse(studyRepository.hasState(study.getStudyId(), statusSet3));
     }
 
 

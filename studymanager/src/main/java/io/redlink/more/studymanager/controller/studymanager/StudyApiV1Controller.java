@@ -3,7 +3,9 @@ package io.redlink.more.studymanager.controller.studymanager;
 import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.api.v1.webservices.StudiesApi;
+import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyTransformer;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyService;
@@ -34,7 +36,7 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<StudyDTO> createStudy(StudyDTO studyDTO) {
-        var currentUser = authService.getCurrentUser();
+        final var currentUser = authService.getCurrentUser();
         Study study = service.createStudy(StudyTransformer.fromStudyDTO_V1(studyDTO), currentUser);
         LOGGER.debug("{} created a study {}", currentUser, study);
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -44,7 +46,7 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<List<StudyDTO>> listStudies() {
-        var currentUser = authService.getCurrentUser();
+        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
                 service.listStudies(currentUser).stream()
                         .map(StudyTransformer::toStudyDTO_V1)
@@ -53,8 +55,9 @@ public class StudyApiV1Controller implements StudiesApi {
     }
 
     @Override
+    @RequiresStudyRole
     public ResponseEntity<StudyDTO> getStudy(Long studyId) {
-        var currentUser = authService.getCurrentUser();
+        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
                 service.getStudy(studyId, currentUser)
                         .map(StudyTransformer::toStudyDTO_V1)
@@ -62,8 +65,9 @@ public class StudyApiV1Controller implements StudiesApi {
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<StudyDTO> updateStudy(Long studyId, StudyDTO studyDTO) {
-        var currentUser = authService.getCurrentUser();
+        final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
                 service.updateStudy(
                         StudyTransformer.fromStudyDTO_V1(studyDTO), currentUser
@@ -72,14 +76,17 @@ public class StudyApiV1Controller implements StudiesApi {
     }
 
     @Override
+    @RequiresStudyRole(StudyRole.STUDY_ADMIN)
     public ResponseEntity<Void> deleteStudy(Long studyId) {
         service.deleteStudy(studyId);
         return ResponseEntity.noContent().build();
     }
 
     @Override
+    @RequiresStudyRole(StudyRole.STUDY_ADMIN)
     public ResponseEntity<Void> setStatus(Long studyId, StatusChangeDTO statusChangeDTO) {
-        service.setStatus(studyId, StudyTransformer.fromStatusChangeDTO_V1(statusChangeDTO));
+        final var currentUser = authService.getCurrentUser();
+        service.setStatus(studyId, StudyTransformer.fromStatusChangeDTO_V1(statusChangeDTO), currentUser);
         return ResponseEntity.ok().build();
     }
 }

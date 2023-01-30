@@ -2,11 +2,15 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.PlatformRole;
+import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ParticipantService;
-
 import java.sql.Timestamp;
-
+import java.util.EnumSet;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,12 +34,25 @@ class ParticipantControllerTest {
 
     @MockBean
     ParticipantService participantService;
+    @MockBean
+    OAuth2AuthenticationService oAuth2AuthenticationService;
 
     @Autowired
     ObjectMapper mapper;
 
     @Autowired
     private MockMvc mvc;
+
+    @BeforeEach
+    void setUp() {
+        when(oAuth2AuthenticationService.getCurrentUser()).thenReturn(
+                new AuthenticatedUser(
+                        UUID.randomUUID().toString(),
+                        "Test User", "test@example.com", "Test Inc.",
+                        EnumSet.allOf(PlatformRole.class)
+                )
+        );
+    }
 
     @Test
     @DisplayName("Create participant should create the participant with Id and status set")
