@@ -64,6 +64,45 @@ services:
       SERVER_BASEPATH: /kibana
       SERVER_REWRITEBASEPATH: "true"
 
+  limesurvey:
+    image: docker.io/martialblog/limesurvey:latest
+    environment:
+      DB_TYPE: pgsql
+      DB_PORT: 5432
+      DB_HOST: lime-db
+      DB_PASSWORD: limesurvey
+      DB_NAME: limesurvey
+      DB_USERNAME: limesurvey
+      ADMIN_USER: admin
+      ADMIN_NAME: Admin
+      ADMIN_PASSWORD: admin
+    volumes:
+      - type: volume
+        source: limesurvey-data
+        target: /var/www/html/upload/surveys
+    ports:
+      - "8081:8080"
+    depends_on:
+      - lime-db
+
+  lime-db:
+    image: postgres:14-alpine
+    volumes:
+      - type: volume
+        source: lime-db-data
+        target: /var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: limesurvey
+      POSTGRES_DB: limesurvey
+      POSTGRES_PASSWORD: limesurvey
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 1s
+      retries: 5
+
 volumes:
   postgres-data:
   elastic-data:
+  limesurvey-data:
+  lime-db-data:
