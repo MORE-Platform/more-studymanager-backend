@@ -87,12 +87,10 @@ services:
 
   lime-db:
     image: postgres:14-alpine
-    ports:
-      - "5433:5432"
     volumes:
       - type: volume
         source: lime-db-data
-        target: /var/lib/postgresql/limesurvey-data
+        target: /var/lib/postgresql/data
     environment:
       POSTGRES_USER: limesurvey
       POSTGRES_DB: limesurvey
