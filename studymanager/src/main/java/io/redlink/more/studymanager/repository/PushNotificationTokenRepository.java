@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PushNotificationTokenRepository {
     private static final String GET_TOKEN_BY_ID = "SELECT service, token FROM push_notifications_token t WHERE t.study_id = :study_id AND t.participant_id = :participant_id";
+    private static final String CLEAR_TOKEN_BY_ID = "DELETE FROM push_notifications_token t WHERE t.study_id = :study_id AND t.participant_id = :participant_id";
 
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -20,14 +21,22 @@ public class PushNotificationTokenRepository {
 
 
     public Optional<PushNotificationsToken> getTokenById(long studyId, int participantId) {
-        try (var stream = namedTemplate.queryForStream(GET_TOKEN_BY_ID, new MapSqlParameterSource()
-                        .addValue("study_id", studyId)
-                        .addValue("participant_id", participantId),
+        try (var stream = namedTemplate.queryForStream(GET_TOKEN_BY_ID,
+                createParams(studyId, participantId),
                 getTokenRowMapper())) {
             return stream.findFirst();
         }
     }
 
+    public boolean deleteToken(long studyID, int participantId) {
+        return 1 == namedTemplate.update(CLEAR_TOKEN_BY_ID, createParams(studyID, participantId));
+    }
+
+    private static MapSqlParameterSource createParams(long studyId, int participantId) {
+        return new MapSqlParameterSource()
+                .addValue("study_id", studyId)
+                .addValue("participant_id", participantId);
+    }
 
     private static RowMapper<PushNotificationsToken> getTokenRowMapper() {
         return (rs, rowNum) -> new PushNotificationsToken(
@@ -35,5 +44,4 @@ public class PushNotificationTokenRepository {
                 rs.getString("token")
         );
     }
-
 }
