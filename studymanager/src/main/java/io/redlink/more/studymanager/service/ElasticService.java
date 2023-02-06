@@ -10,9 +10,13 @@ import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.model.ElasticDataPoint;
+import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -133,5 +137,18 @@ public class ElasticService {
         } catch (IOException e) {
             LOG.warn("Could nor store datapoint", e);
         }
+    }
+
+    public List<ParticipationData> getParticipationData(Long studyId){
+        return List.of(
+                new ParticipationData(1,1,1,true,Instant.parse("2023-01-01T18:10:10.00Z")),
+
+                new ParticipationData(1,2,2,true,Instant.parse("2023-02-01T19:10:10.00Z")),
+
+                new ParticipationData(1,3,2,false, null),
+
+                new ParticipationData(2,2,2,false,null),
+
+                new ParticipationData(3,3,2,true,Instant.parse("2023-02-06T12:17:10.00Z")));
     }
 }
