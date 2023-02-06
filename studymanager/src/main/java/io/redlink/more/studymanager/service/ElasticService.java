@@ -10,9 +10,12 @@ import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.model.ElasticDataPoint;
+import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -133,5 +136,38 @@ public class ElasticService {
         } catch (IOException e) {
             LOG.warn("Could nor store datapoint", e);
         }
+    }
+
+    public List<ParticipationData> getParticipationData(Long studyId){
+        return List.of(
+                new ParticipationData()
+                        .setObservationId(1)
+                        .setParticipantId(1)
+                        .setStudyGroupId(1)
+                        .setDataReceived(true)
+                        .setLastDataReceived(OffsetDateTime.of(2023,1,1,10,0,0,0, ZoneOffset.UTC)),
+                new ParticipationData()
+                        .setObservationId(1)
+                        .setParticipantId(2)
+                        .setStudyGroupId(2)
+                        .setDataReceived(true)
+                        .setLastDataReceived(OffsetDateTime.of(2023,1,1,11,0,0,0, ZoneOffset.UTC)),
+                new ParticipationData()
+                        .setObservationId(1)
+                        .setParticipantId(3)
+                        .setStudyGroupId(2)
+                        .setDataReceived(false),
+                new ParticipationData()
+                        .setObservationId(2)
+                        .setParticipantId(2)
+                        .setStudyGroupId(2)
+                        .setDataReceived(false),
+                new ParticipationData()
+                        .setObservationId(3)
+                        .setParticipantId(3)
+                        .setStudyGroupId(2)
+                        .setDataReceived(true)
+                        .setLastDataReceived(OffsetDateTime.of(2023,2,1,12,10,0,0, ZoneOffset.UTC))
+        );
     }
 }
