@@ -11,10 +11,10 @@ public class StudyDataTransformer {
 
     public static ParticipationDataDTO toParticipationDataDTO_V1(ParticipationData participationData){
         return new ParticipationDataDTO()
-                .observationId(participationData.getObservationId())
-                .participantId(participationData.getParticipantId())
-                .studyGroupId(participationData.getStudyGroupId())
-                .dataReceived(participationData.isDataReceived())
-                .lastDataReceived(participationData.getLastDataReceived() != null ? participationData.getLastDataReceived().atOffset(OffsetDateTime.now().getOffset()) : null);
+                .observationId(participationData.observationId())
+                .participantId(participationData.participantId())
+                .studyGroupId(participationData.studyGroupId())
+                .dataReceived(participationData.dataReceived())
+                .lastDataReceived(participationData.lastDataReceived() != null ? participationData.lastDataReceived().atOffset(OffsetDateTime.now().getOffset()) : null);
     }
 }
