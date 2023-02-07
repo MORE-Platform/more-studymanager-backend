@@ -10,10 +10,11 @@ import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Test;;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -29,6 +30,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Testcontainers
@@ -47,6 +51,9 @@ class ElasticSearchServiceTest {
             .withEnv("action.auto_create_index", "true")
             .withEnv("bootstrap.memory_lock", "true")
             .withEnv("ES_JAVA_OPTS", "-Xms256m -Xmx512m");
+
+    @MockBean
+    private DataProcessingService dataProcessingService;
 
     @Autowired
     private ElasticService elasticService;
@@ -89,6 +96,25 @@ class ElasticSearchServiceTest {
                         Map.of()
                 ))
         );
+    }
+
+    @Test
+    void testGetParticipationData() throws InterruptedException{
+        Study study = new Study().setStudyId(30L);
+        indexDoc(study,3);
+        indexDoc(study,4);
+        indexDoc(study,5);
+        indexDoc(study,6);
+        indexDoc(study,7);
+        indexDoc(study,8);
+
+        Thread.sleep(1000);
+
+        when(dataProcessingService.completeParticipationData(anyList(), anyLong())).thenAnswer(i -> {return i.getArgument(0);});
+
+        assertThat(elasticService.getParticipationData(30L).size()).isEqualTo(5);
+        System.out.println(elasticService.getParticipationData(30L).toString());
+        elasticService.deleteIndex(study);
     }
 
     private void indexDoc(Study study, int i) {

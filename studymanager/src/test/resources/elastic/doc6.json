@@ -1,0 +1,14 @@
+{
+  "datapoint_id": "ff56eec8-2f60-4f43-a933-6024b070b651",
+  "participant_id": "participant_1",
+  "study_id": "study_123",
+  "study_group_id": "study_group_1",
+  "observation_id": "1",
+  "observation_type": "acc-mobile-observation",
+  "data_type": "acc-mobile-observation",
+  "storage_date": "2021-09-24T13:53:47.809288313Z",
+  "effective_time_frame": "2022-10-24T13:53:46.038Z",
+  "data_z": 10.051051,
+  "data_x": 0.11306087,
+  "data_y": 0.39182472
+}
