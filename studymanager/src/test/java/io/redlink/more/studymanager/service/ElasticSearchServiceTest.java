@@ -113,7 +113,6 @@ class ElasticSearchServiceTest {
         when(dataProcessingService.completeParticipationData(anyList(), anyLong())).thenAnswer(i -> {return i.getArgument(0);});
 
         assertThat(elasticService.getParticipationData(30L).size()).isEqualTo(5);
-        System.out.println(elasticService.getParticipationData(30L).toString());
         elasticService.deleteIndex(study);
     }
 
