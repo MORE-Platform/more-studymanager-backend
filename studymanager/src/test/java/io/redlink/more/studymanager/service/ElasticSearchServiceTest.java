@@ -10,7 +10,7 @@ import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -110,7 +110,7 @@ class ElasticSearchServiceTest {
 
         Thread.sleep(1000);
 
-        when(dataProcessingService.completeParticipationData(anyList(), anyLong())).thenAnswer(i -> {return i.getArgument(0);});
+        when(dataProcessingService.completeParticipationData(anyList(), anyLong())).thenAnswer(i -> i.getArgument(0));
 
         assertThat(elasticService.getParticipationData(30L).size()).isEqualTo(5);
         elasticService.deleteIndex(study);
