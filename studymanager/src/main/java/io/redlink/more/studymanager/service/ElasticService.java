@@ -3,7 +3,6 @@ package io.redlink.more.studymanager.service;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -159,7 +158,6 @@ public class ElasticService {
                                 )
                 );
         try{
-            LOG.info("accessing buckets" + builder.toString());
             List<ParticipationData> participationDataList = new ArrayList<>();
 
             List<StringTermsBucket> observationBuckets =  client.search(builder.build(), Map.class)
@@ -168,7 +166,6 @@ public class ElasticService {
                     .sterms()
                     .buckets()
                     .array();
-            LOG.info("observation buckets" + String.valueOf(observationBuckets));
             for(StringTermsBucket observation : observationBuckets){
                 List<StringTermsBucket> participantBuckets = observation
                         .aggregations()
@@ -176,26 +173,20 @@ public class ElasticService {
                         .sterms()
                         .buckets()
                         .array();
-                LOG.info("participant buckets" + String.valueOf(participantBuckets));
                 for(StringTermsBucket participant : participantBuckets){
                     String lastDataReceived = participant
                             .aggregations()
                             .get("latest_data")
                             .max()
                             .valueAsString();
-                    LOG.info("accessing study_group bucket");
-
-                    Aggregate studyGroupId1 = participant
+                    StringTermsBucket studyGroupId = participant
                             .aggregations()
-                            .get("study_group_id");
-                    LOG.info("studyGroup-aggregate" + studyGroupId1);
-                    StringTermsBucket studyGroupId = studyGroupId1
+                            .get("study_group_id")
                             .sterms()
                             .buckets()
                             .array()
                             .get(0);
                     assert lastDataReceived != null;
-                    LOG.info("study_group bucket accessed");
                     participationDataList.add(new ParticipationData(
                             Integer.valueOf(observation.key().stringValue()),
                             Integer.valueOf(participant.key().stringValue().substring(12)),
@@ -207,7 +198,7 @@ public class ElasticService {
             return participationDataList;
         }catch (IOException | ElasticsearchException e) {
             LOG.error("Elastic Query failed", e);
-            return List.of();
+            return new ArrayList<>();
         }
     }
 
