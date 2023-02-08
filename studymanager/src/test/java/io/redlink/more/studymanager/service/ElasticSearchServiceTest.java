@@ -91,6 +91,22 @@ class ElasticSearchServiceTest {
         );
     }
 
+    @Test
+    void testGetParticipationData() throws InterruptedException{
+        Study study = new Study().setStudyId(30L);
+        indexDoc(study,3);
+        indexDoc(study,4);
+        indexDoc(study,5);
+        indexDoc(study,6);
+        indexDoc(study,7);
+        indexDoc(study,8);
+
+        Thread.sleep(1000);
+
+        assertThat(elasticService.getParticipationData(30L).size()).isEqualTo(5);
+        elasticService.deleteIndex(study);
+    }
+
     private void indexDoc(Study study, int i) {
         IndexRequest<JsonData> request = IndexRequest.of(d -> d
                 .index(ElasticService.getStudyIdString(study))

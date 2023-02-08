@@ -15,8 +15,6 @@ import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import java.io.IOException;
 import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,9 +31,7 @@ public class ElasticService {
 
     private final ElasticsearchClient client;
 
-    public ElasticService(ElasticsearchClient client) {
-        this.client = client;
-    }
+    public ElasticService(ElasticsearchClient client) { this.client = client; }
 
     public List<Integer> participantsThatMapQuery(Long studyId, Integer studyGroupId, String query, Timeframe timeframe) {
         SearchRequest.Builder builder = new SearchRequest.Builder();
@@ -140,15 +136,70 @@ public class ElasticService {
     }
 
     public List<ParticipationData> getParticipationData(Long studyId){
-        return List.of(
-                new ParticipationData(1,1,1,true,Instant.parse("2023-01-01T18:10:10.00Z")),
+        SearchRequest.Builder builder = new SearchRequest.Builder();
+        builder.index(getStudyIdString(studyId))
+                .size(0)
+                .aggregations("observation_ids",
+                        a -> a.terms(t -> t
+                                        .field("observation_id.keyword")
+                                        .size(10000))
+                                .aggregations("participant_ids",
+                                        a3 -> a3.terms(t -> t
+                                                        .field("participant_id.keyword")
+                                                        .size(10000))
+                                                .aggregations("latest_data",
+                                                        a4 -> a4.max(m -> m
+                                                                .field("storage_date"))
+                                                ).aggregations("study_group_id",
+                                                        a5 -> a5.terms(t -> t
+                                                                .field("study_group_id.keyword")
+                                                                .size(10000))
+                                                )
+                                )
+                );
+        try{
+            List<ParticipationData> participationDataList = new ArrayList<>();
 
-                new ParticipationData(1,2,2,true,Instant.parse("2023-02-01T19:10:10.00Z")),
-
-                new ParticipationData(1,3,2,false, null),
-
-                new ParticipationData(2,2,2,false,null),
-
-                new ParticipationData(3,3,2,true,Instant.parse("2023-02-06T12:17:10.00Z")));
+            List<StringTermsBucket> observationBuckets =  client.search(builder.build(), Map.class)
+                    .aggregations()
+                    .get("observation_ids")
+                    .sterms()
+                    .buckets()
+                    .array();
+            for(StringTermsBucket observation : observationBuckets){
+                List<StringTermsBucket> participantBuckets = observation
+                        .aggregations()
+                        .get("participant_ids")
+                        .sterms()
+                        .buckets()
+                        .array();
+                for(StringTermsBucket participant : participantBuckets){
+                    String lastDataReceived = participant
+                            .aggregations()
+                            .get("latest_data")
+                            .max()
+                            .valueAsString();
+                    StringTermsBucket studyGroupId = participant
+                            .aggregations()
+                            .get("study_group_id")
+                            .sterms()
+                            .buckets()
+                            .array()
+                            .get(0);
+                    assert lastDataReceived != null;
+                    participationDataList.add(new ParticipationData(
+                            Integer.valueOf(observation.key().stringValue()),
+                            Integer.valueOf(participant.key().stringValue().substring(12)),
+                            Integer.valueOf(studyGroupId.key().stringValue().substring(12)),
+                            true,
+                            Instant.parse(lastDataReceived)));
+                }
+            }
+            return participationDataList;
+        }catch (IOException | ElasticsearchException e) {
+            LOG.error("Elastic Query failed", e);
+            return List.of();
+        }
     }
+
 }
