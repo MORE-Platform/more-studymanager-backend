@@ -159,6 +159,7 @@ public class ElasticService {
                                 )
                 );
         try{
+            LOG.info("accessing buckets" + builder.toString());
             List<ParticipationData> participationDataList = new ArrayList<>();
 
             List<StringTermsBucket> observationBuckets =  client.search(builder.build(), Map.class)
@@ -167,6 +168,7 @@ public class ElasticService {
                     .sterms()
                     .buckets()
                     .array();
+            LOG.info("observation buckets" + String.valueOf(observationBuckets));
             for(StringTermsBucket observation : observationBuckets){
                 List<StringTermsBucket> participantBuckets = observation
                         .aggregations()
@@ -174,6 +176,7 @@ public class ElasticService {
                         .sterms()
                         .buckets()
                         .array();
+                LOG.info("participant buckets" + String.valueOf(participantBuckets));
                 for(StringTermsBucket participant : participantBuckets){
                     String lastDataReceived = participant
                             .aggregations()
