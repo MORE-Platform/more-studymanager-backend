@@ -3,6 +3,7 @@ package io.redlink.more.studymanager.service;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -179,14 +180,19 @@ public class ElasticService {
                             .get("latest_data")
                             .max()
                             .valueAsString();
-                    StringTermsBucket studyGroupId = participant
+                    LOG.info("accessing study_group bucket");
+
+                    Aggregate studyGroupId1 = participant
                             .aggregations()
-                            .get("study_group_id")
+                            .get("study_group_id");
+                    LOG.info("studyGroup-aggregate" + studyGroupId1);
+                    StringTermsBucket studyGroupId = studyGroupId1
                             .sterms()
                             .buckets()
                             .array()
                             .get(0);
                     assert lastDataReceived != null;
+                    LOG.info("study_group bucket accessed");
                     participationDataList.add(new ParticipationData(
                             Integer.valueOf(observation.key().stringValue()),
                             Integer.valueOf(participant.key().stringValue().substring(12)),
