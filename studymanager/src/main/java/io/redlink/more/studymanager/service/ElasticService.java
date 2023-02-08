@@ -29,14 +29,9 @@ public class ElasticService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ElasticService.class);
 
-    private final DataProcessingService dataProcessingService;
-
     private final ElasticsearchClient client;
 
-    public ElasticService(ElasticsearchClient client, DataProcessingService dataProcessingService) {
-        this.client = client;
-        this.dataProcessingService = dataProcessingService;
-    }
+    public ElasticService(ElasticsearchClient client) { this.client = client; }
 
     public List<Integer> participantsThatMapQuery(Long studyId, Integer studyGroupId, String query, Timeframe timeframe) {
         SearchRequest.Builder builder = new SearchRequest.Builder();
@@ -200,7 +195,7 @@ public class ElasticService {
                             Instant.parse(lastDataReceived)));
                 }
             }
-            return dataProcessingService.completeParticipationData(participationDataList, studyId);
+            return participationDataList;
         }catch (IOException | ElasticsearchException e) {
             LOG.error("Elastic Query failed", e);
             return List.of();

@@ -14,13 +14,17 @@ import java.util.Map;
 public class DataProcessingService {
     private final ObservationService observationService;
     private final ParticipantService participantService;
+    private final ElasticService elasticService;
 
-    public DataProcessingService(ObservationService observationService, ParticipantService participantService){
+    public DataProcessingService(ObservationService observationService, ParticipantService participantService, ElasticService elasticService){
         this.observationService = observationService;
         this.participantService = participantService;
+        this.elasticService = elasticService;
+
     }
 
-    public List<ParticipationData> completeParticipationData(List<ParticipationData> participationDataList, Long studyId){
+    public List<ParticipationData> getParticipationData(Long studyId){
+        List<ParticipationData> participationDataList = elasticService.getParticipationData(studyId);
         List<Observation> observationList = observationService.listObservations(studyId);
         List<Participant> participantList = participantService.listParticipants(studyId);
 

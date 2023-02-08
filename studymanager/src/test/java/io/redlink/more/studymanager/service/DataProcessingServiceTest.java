@@ -30,6 +30,9 @@ public class DataProcessingServiceTest {
     @Mock
     ParticipantService participantService;
 
+    @Mock
+    ElasticService elasticService;
+
     @InjectMocks
     DataProcessingService dataProcessingService;
 
@@ -42,8 +45,9 @@ public class DataProcessingServiceTest {
 
         when(observationService.listObservations(anyLong())).thenReturn(observations);
         when(participantService.listParticipants(anyLong())).thenReturn(participants);
+        when(elasticService.getParticipationData(anyLong())).thenReturn(participationsGiven);
 
-        assertThat(dataProcessingService.completeParticipationData(participationsGiven, 1L))
+        assertThat(dataProcessingService.getParticipationData(1L))
                 .isEqualTo(participationsExpected);
     }
 
