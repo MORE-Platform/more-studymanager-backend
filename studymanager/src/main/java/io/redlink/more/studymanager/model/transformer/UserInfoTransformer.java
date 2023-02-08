@@ -17,7 +17,6 @@ import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.StudyUserRoles;
 import io.redlink.more.studymanager.model.User;
 import java.net.URI;
-import java.time.ZoneOffset;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -77,7 +76,7 @@ public final class UserInfoTransformer {
         return new CollaboratorRoleDetailsDTO()
                 .role(RoleTransformer.toStudyRoleDTO(role.role()))
                 .assignedBy(toUserInfoDTO(role.creator()))
-                .assignedAt(role.created().atOffset(ZoneOffset.UTC))
+                .assignedAt(Transformers.toOffsetDateTime(role.created()))
                 ;
     }
 

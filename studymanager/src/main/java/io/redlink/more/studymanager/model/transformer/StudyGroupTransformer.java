@@ -3,9 +3,10 @@ package io.redlink.more.studymanager.model.transformer;
 import io.redlink.more.studymanager.api.v1.model.StudyGroupDTO;
 import io.redlink.more.studymanager.model.StudyGroup;
 
-import java.time.OffsetDateTime;
+public final class StudyGroupTransformer {
 
-public class StudyGroupTransformer {
+    private StudyGroupTransformer() {
+    }
 
     public static StudyGroup fromStudyGroupDTO_V1(StudyGroupDTO studyGroupDTO) {
         return new StudyGroup()
@@ -21,7 +22,7 @@ public class StudyGroupTransformer {
                 .studyGroupId(studyGroup.getStudyGroupId())
                 .title(studyGroup.getTitle())
                 .purpose(studyGroup.getPurpose())
-                .created(studyGroup.getCreated().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()))
-                .modified(studyGroup.getModified().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()));
+                .created(Transformers.toOffsetDateTime(studyGroup.getCreated()))
+                .modified(Transformers.toOffsetDateTime(studyGroup.getModified()));
     }
 }

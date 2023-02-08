@@ -5,7 +5,6 @@ import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyStatusDTO;
 import io.redlink.more.studymanager.model.Study;
 import java.sql.Date;
-import java.time.OffsetDateTime;
 
 public class StudyTransformer {
 
@@ -20,8 +19,8 @@ public class StudyTransformer {
                 .setPurpose(studyDTO.getPurpose())
                 .setParticipantInfo(studyDTO.getParticipantInfo())
                 .setConsentInfo(studyDTO.getConsentInfo())
-                .setPlannedStartDate(studyDTO.getPlannedStart() != null ? Date.valueOf(studyDTO.getPlannedStart()): null)
-                .setPlannedEndDate(studyDTO.getPlannedEnd() != null ? Date.valueOf(studyDTO.getPlannedEnd()): null);
+                .setPlannedStartDate(Transformers.toSqlDate(studyDTO.getPlannedStart()))
+                .setPlannedEndDate(Transformers.toSqlDate(studyDTO.getPlannedEnd()));
     }
 
     public static StudyDTO toStudyDTO_V1(Study study) {
@@ -32,12 +31,12 @@ public class StudyTransformer {
                 .participantInfo(study.getParticipantInfo())
                 .consentInfo(study.getConsentInfo())
                 .status(StudyStatusDTO.fromValue(study.getStudyState().getValue()))
-                .start(study.getStartDate() != null ? study.getStartDate().toLocalDate() : null)
-                .end(study.getEndDate() != null ? study.getEndDate().toLocalDate() : null)
-                .plannedStart(study.getPlannedStartDate() != null ? study.getPlannedStartDate().toLocalDate() : null)
-                .plannedEnd(study.getPlannedEndDate() != null ? study.getPlannedEndDate().toLocalDate(): null)
-                .created(study.getCreated().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()))
-                .modified(study.getModified().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()))
+                .start(Transformers.toLocalDate(study.getStartDate()))
+                .end(Transformers.toLocalDate(study.getEndDate()))
+                .plannedStart(Transformers.toLocalDate(study.getPlannedStartDate()))
+                .plannedEnd(Transformers.toLocalDate(study.getPlannedEndDate()))
+                .created(Transformers.toOffsetDateTime(study.getCreated()))
+                .modified(Transformers.toOffsetDateTime(study.getModified()))
                 .userRoles(RoleTransformer.toStudyRolesDTO(study.getUserRoles()))
                 ;
     }
