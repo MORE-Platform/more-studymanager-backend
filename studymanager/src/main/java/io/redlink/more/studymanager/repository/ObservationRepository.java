@@ -100,7 +100,7 @@ public class ObservationRepository {
                 .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
                 .setProperties(MapperUtils.readValue(rs.getString("properties"), ObservationProperties.class))
                 .setSchedule(MapperUtils.readValue(rs.getString("schedule"), Event.class))
-                .setCreated(rs.getTimestamp("created"))
-                .setModified(rs.getTimestamp("modified"));
+                .setCreated(RepositoryUtils.readInstant(rs, "created"))
+                .setModified(RepositoryUtils.readInstant(rs, "modified"));
     }
 }

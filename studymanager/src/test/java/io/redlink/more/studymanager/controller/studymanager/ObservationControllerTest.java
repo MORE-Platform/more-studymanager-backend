@@ -10,8 +10,6 @@ import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ObservationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
-import java.util.EnumSet;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,9 +20,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -74,8 +74,8 @@ class ObservationControllerTest {
                         .setType(((Observation)invocationOnMock.getArgument(0)).getType())
                         .setProperties(((Observation)invocationOnMock.getArgument(0)).getProperties())
                         .setStudyGroupId(((Observation)invocationOnMock.getArgument(0)).getStudyGroupId())
-                        .setCreated(new Timestamp(System.currentTimeMillis()))
-                        .setModified(new Timestamp(System.currentTimeMillis())));
+                        .setCreated(Instant.ofEpochMilli(System.currentTimeMillis()))
+                        .setModified(Instant.ofEpochMilli(System.currentTimeMillis())));
 
         ObservationDTO observationRequest = new ObservationDTO()
                 .title("observation 1")
@@ -103,8 +103,8 @@ class ObservationControllerTest {
     void testUpdateStudy() throws Exception {
         when(observationService.updateObservation(any(Observation.class))).thenAnswer(invocationOnMock -> ((Observation)invocationOnMock.getArgument(0))
                 .setTitle("title")
-                .setCreated(new Timestamp(0))
-                .setModified(new Timestamp(0)));
+                .setCreated(Instant.ofEpochMilli(0))
+                .setModified(Instant.ofEpochMilli(0)));
 
         ObservationDTO observationRequest = new ObservationDTO()
                 .studyId(1L)
@@ -128,8 +128,8 @@ class ObservationControllerTest {
         when(observationService.addObservation(any(Observation.class))).thenAnswer(invocationOnMock -> ((Observation)invocationOnMock.getArgument(0))
                 .setTitle("title")
                 .setSchedule(new Event().setDateEnd(null).setDateStart(null).setRRule(null))
-                .setCreated(new Timestamp(0))
-                .setModified(new Timestamp(0)));
+                .setCreated(Instant.ofEpochMilli(0))
+                .setModified(Instant.ofEpochMilli(0)));
 
         ObservationDTO observationRequest = new ObservationDTO()
                 .studyId(1L)

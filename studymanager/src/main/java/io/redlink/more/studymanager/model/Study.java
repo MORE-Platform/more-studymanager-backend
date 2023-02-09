@@ -1,7 +1,7 @@
 package io.redlink.more.studymanager.model;
 
-import java.sql.Date;
-import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Set;
 
 public class Study {
@@ -11,12 +11,12 @@ public class Study {
     private String participantInfo;
     private String consentInfo;
     private Status studyState;
-    private Date startDate;
-    private Date endDate;
-    private Date plannedStartDate;
-    private Date plannedEndDate;
-    private Timestamp created;
-    private Timestamp modified;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private LocalDate plannedStartDate;
+    private LocalDate plannedEndDate;
+    private Instant created;
+    private Instant modified;
 
     private Set<StudyRole> userRoles;
 
@@ -91,56 +91,56 @@ public class Study {
         return this;
     }
 
-    public Date getStartDate() {
+    public LocalDate getStartDate() {
         return startDate;
     }
 
-    public Study setStartDate(Date startDate) {
+    public Study setStartDate(LocalDate startDate) {
         this.startDate = startDate;
         return this;
     }
 
-    public Date getEndDate() {
+    public LocalDate getEndDate() {
         return endDate;
     }
 
-    public Study setEndDate(Date endDate) {
+    public Study setEndDate(LocalDate endDate) {
         this.endDate = endDate;
         return this;
     }
 
-    public Date getPlannedStartDate() {
+    public LocalDate getPlannedStartDate() {
         return plannedStartDate;
     }
 
-    public Study setPlannedStartDate(Date plannedStartDate) {
+    public Study setPlannedStartDate(LocalDate plannedStartDate) {
         this.plannedStartDate = plannedStartDate;
         return this;
     }
 
-    public Date getPlannedEndDate() {
+    public LocalDate getPlannedEndDate() {
         return plannedEndDate;
     }
 
-    public Study setPlannedEndDate(Date plannedEndDate) {
+    public Study setPlannedEndDate(LocalDate plannedEndDate) {
         this.plannedEndDate = plannedEndDate;
         return this;
     }
 
-    public Timestamp getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public Study setCreated(Timestamp created) {
+    public Study setCreated(Instant created) {
         this.created = created;
         return this;
     }
 
-    public Timestamp getModified() {
+    public Instant getModified() {
         return modified;
     }
 
-    public Study setModified(Timestamp modified) {
+    public Study setModified(Instant modified) {
         this.modified = modified;
         return this;
     }

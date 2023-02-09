@@ -65,7 +65,7 @@ class ParticipantRepositoryTest {
         assertThat(update.getAlias()).isEqualTo(updated.getAlias());
         assertThat(participantResponse.getStudyId()).isEqualTo(updated.getStudyId());
         assertThat(participantResponse.getCreated()).isEqualTo(updated.getCreated());
-        assertThat(participantResponse.getModified().getTime()).isLessThan(updated.getModified().getTime());
+        assertThat(participantResponse.getModified().toEpochMilli()).isLessThan(updated.getModified().toEpochMilli());
     }
 
     @Test

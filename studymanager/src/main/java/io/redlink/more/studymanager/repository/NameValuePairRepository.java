@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.repository;
 
-import org.checkerframework.checker.nullness.Opt;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;

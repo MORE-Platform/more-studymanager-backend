@@ -129,12 +129,12 @@ public class StudyRepository {
                 .setPurpose(rs.getString("purpose"))
                 .setParticipantInfo(rs.getString("participant_info"))
                 .setConsentInfo(rs.getString("consent_info"))
-                .setPlannedStartDate(rs.getDate("planned_start_date"))
-                .setPlannedEndDate(rs.getDate("planned_end_date"))
-                .setStartDate(rs.getDate("start_date"))
-                .setEndDate(rs.getDate("end_date"))
-                .setCreated(rs.getTimestamp("created"))
-                .setModified(rs.getTimestamp("modified"))
+                .setPlannedStartDate(RepositoryUtils.readLocalDate(rs, "planned_start_date"))
+                .setPlannedEndDate(RepositoryUtils.readLocalDate(rs,"planned_end_date"))
+                .setStartDate(RepositoryUtils.readLocalDate(rs,"start_date"))
+                .setEndDate(RepositoryUtils.readLocalDate(rs,"end_date"))
+                .setCreated(RepositoryUtils.readInstant(rs, "created"))
+                .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setStudyState(Study.Status.valueOf(rs.getString("status").toUpperCase()))
                 ;
     }

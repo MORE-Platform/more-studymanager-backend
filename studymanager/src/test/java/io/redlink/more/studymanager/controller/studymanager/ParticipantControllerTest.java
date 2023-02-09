@@ -7,9 +7,6 @@ import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ParticipantService;
-import java.sql.Timestamp;
-import java.util.EnumSet;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +16,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -66,8 +67,8 @@ class ParticipantControllerTest {
                 .setAlias("participant x")
                 .setStudyGroupId(1)
                 .setStatus(Participant.Status.NEW)
-                .setCreated(new Timestamp(System.currentTimeMillis()))
-                .setModified(new Timestamp(System.currentTimeMillis()))
+                .setCreated(Instant.ofEpochMilli(System.currentTimeMillis()))
+                .setModified(Instant.ofEpochMilli(System.currentTimeMillis()))
                 .setRegistrationToken("TEST123"));
 
         ParticipantDTO participantRequest = new ParticipantDTO()
@@ -100,8 +101,8 @@ class ParticipantControllerTest {
                         .setAlias(participant1)
                         .setStudyGroupId(1)
                         .setStatus(Participant.Status.NEW)
-                        .setCreated(new Timestamp(System.currentTimeMillis()))
-                        .setModified(new Timestamp(System.currentTimeMillis()))
+                        .setCreated(Instant.ofEpochMilli(System.currentTimeMillis()))
+                        .setModified(Instant.ofEpochMilli(System.currentTimeMillis()))
                         .setRegistrationToken("TEST123"))
                 .thenAnswer(invocationOnMock -> new Participant()
                         .setStudyId(1L)
@@ -109,8 +110,8 @@ class ParticipantControllerTest {
                         .setAlias(participant2)
                         .setStudyGroupId(1)
                         .setStatus(Participant.Status.NEW)
-                        .setCreated(new Timestamp(System.currentTimeMillis()))
-                        .setModified(new Timestamp(System.currentTimeMillis()))
+                        .setCreated(Instant.ofEpochMilli(System.currentTimeMillis()))
+                        .setModified(Instant.ofEpochMilli(System.currentTimeMillis()))
                         .setRegistrationToken("TEST123"));
 
         String csv = "Participants\n%s\n%s".formatted(participant1, participant2);
@@ -128,8 +129,8 @@ class ParticipantControllerTest {
                 invocationOnMock.getArgument(0, Participant.class)
                         .setStatus(Participant.Status.NEW)
                         .setAlias("person x")
-                        .setCreated(new Timestamp(0))
-                        .setModified(new Timestamp(0)));
+                        .setCreated(Instant.ofEpochMilli(0))
+                        .setModified(Instant.ofEpochMilli(0)));
 
         ParticipantDTO participantRequest = new ParticipantDTO()
                 .studyId(1L)

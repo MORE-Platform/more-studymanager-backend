@@ -4,7 +4,6 @@ import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyStatusDTO;
 import io.redlink.more.studymanager.model.Study;
-import java.sql.Date;
 
 public class StudyTransformer {
 
@@ -19,8 +18,8 @@ public class StudyTransformer {
                 .setPurpose(studyDTO.getPurpose())
                 .setParticipantInfo(studyDTO.getParticipantInfo())
                 .setConsentInfo(studyDTO.getConsentInfo())
-                .setPlannedStartDate(Transformers.toSqlDate(studyDTO.getPlannedStart()))
-                .setPlannedEndDate(Transformers.toSqlDate(studyDTO.getPlannedEnd()));
+                .setPlannedStartDate(Transformers.toLocalDate(studyDTO.getPlannedStart()))
+                .setPlannedEndDate(Transformers.toLocalDate(studyDTO.getPlannedEnd()));
     }
 
     public static StudyDTO toStudyDTO_V1(Study study) {
