@@ -188,9 +188,9 @@ public class ElasticService {
                             .get(0);
                     assert lastDataReceived != null;
                     participationDataList.add(new ParticipationData(
-                            Integer.valueOf(observation.key().stringValue()),
-                            Integer.valueOf(participant.key().stringValue().substring(12)),
-                            Integer.valueOf(studyGroupId.key().stringValue().substring(12)),
+                            new ParticipationData.NamedId(Integer.parseInt(observation.key().stringValue()), null),
+                            new ParticipationData.NamedId(Integer.parseInt(participant.key().stringValue().substring(12)), null),
+                            new ParticipationData.NamedId(Integer.parseInt(studyGroupId.key().stringValue().substring(12)), null),
                             true,
                             Instant.parse(lastDataReceived)));
                 }
