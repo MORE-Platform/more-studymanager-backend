@@ -1077,6 +1077,14 @@ components:
           format: date-time
           readOnly: true
 
+    StudyGroupData:
+      type: object
+      properties:
+        studyGroupId:
+          $ref: '#/components/schemas/IdReference'
+        title:
+          type: string
+
     Participant:
       type: object
       properties:
@@ -1101,6 +1109,14 @@ components:
           type: string
           format: date-time
           readOnly: true
+
+    ParticipantData:
+      type: object
+      properties:
+        participantId:
+          $ref: '#/components/schemas/IdReference'
+        alias:
+          type: string
 
     ParticipantStatus:
       type: string
@@ -1142,15 +1158,23 @@ components:
           format: date-time
           readOnly: true
 
-    ParticipationData:
+    ObservationData:
       type: object
       properties:
         observationId:
-          $ref: '#/components/schemas/IdReference'
-        participantId:
-          $ref: '#/components/schemas/IdReference'
-        studyGroupId:
-          $ref: '#/components/schemas/IdReference'
+          $ref: '#components/schemas/IdReference'
+        title:
+          type: string
+
+    ParticipationData:
+      type: object
+      properties:
+        observationData:
+          $ref: '#/components/schemas/ObservationData'
+        participantData:
+          $ref: '#/components/schemas/ParticipantData'
+        studyGroupData:
+          $ref: '#/components/schemas/StudyGroupData'
         dataReceived:
           type: boolean
         lastDataReceived:
