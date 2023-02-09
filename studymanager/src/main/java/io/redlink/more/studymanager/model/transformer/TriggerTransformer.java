@@ -5,9 +5,11 @@ import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.utils.MapperUtils;
 
-import java.time.ZoneOffset;
+public final class TriggerTransformer {
 
-public class TriggerTransformer {
+    private TriggerTransformer() {
+    }
+
     public static Trigger fromTriggerDTO_V1(TriggerDTO dto) {
         return new Trigger()
                 .setType(dto.getType())
@@ -18,7 +20,7 @@ public class TriggerTransformer {
         return new TriggerDTO()
                 .type(trigger.getType())
                 .properties(trigger.getProperties())
-                .created(trigger.getCreated().atOffset(ZoneOffset.UTC))
-                .modified(trigger.getModified().atOffset(ZoneOffset.UTC));
+                .created(Transformers.toOffsetDateTime(trigger.getCreated()))
+                .modified(Transformers.toOffsetDateTime(trigger.getModified()));
     }
 }

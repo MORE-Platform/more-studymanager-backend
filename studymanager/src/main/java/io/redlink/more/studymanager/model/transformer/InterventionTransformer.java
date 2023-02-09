@@ -1,11 +1,12 @@
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.EventDTO;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.model.Intervention;
-import java.time.ZoneOffset;
 
-public class InterventionTransformer {
+public final class InterventionTransformer {
+
+    private InterventionTransformer() {
+    }
 
     public static Intervention fromInterventionDTO_V1(InterventionDTO dto) {
         return new Intervention()
@@ -25,8 +26,8 @@ public class InterventionTransformer {
                 .purpose(intervention.getPurpose())
                 .studyGroupId(intervention.getStudyGroupId())
                 .schedule(EventTransformer.toEventDTO_V1(intervention.getSchedule()))
-                .created(intervention.getCreated().atOffset(ZoneOffset.UTC))
-                .modified(intervention.getModified().atOffset(ZoneOffset.UTC));
+                .created(Transformers.toOffsetDateTime(intervention.getCreated()))
+                .modified(Transformers.toOffsetDateTime(intervention.getModified()));
     }
 
 }

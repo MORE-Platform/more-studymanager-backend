@@ -4,8 +4,6 @@ import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipantStatusDTO;
 import io.redlink.more.studymanager.model.Participant;
 
-import java.time.OffsetDateTime;
-
 public class ParticipantTransformer {
 
     private ParticipantTransformer() {
@@ -28,8 +26,8 @@ public class ParticipantTransformer {
                 .studyGroupId(participant.getStudyGroupId())
                 .registrationToken(participant.getRegistrationToken())
                 .status(ParticipantStatusDTO.fromValue(participant.getStatus().getValue()))
-                .modified(participant.getModified().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()))
-                .created(participant.getCreated().toLocalDateTime().atOffset(OffsetDateTime.now().getOffset()));
+                .modified(Transformers.toOffsetDateTime(participant.getModified()))
+                .created(Transformers.toOffsetDateTime(participant.getCreated()));
     }
 
 }
