@@ -5,9 +5,11 @@ import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.utils.MapperUtils;
 
-import java.time.ZoneOffset;
+public final class ActionTransformer {
 
-public class ActionTransformer {
+    private ActionTransformer() {
+    }
+
     public static Action fromActionDTO_V1(ActionDTO dto) {
         return new Action()
                 .setActionId(dto.getActionId())
@@ -20,8 +22,8 @@ public class ActionTransformer {
                 .actionId(action.getActionId())
                 .type(action.getType())
                 .properties(action.getProperties())
-                .created(action.getCreated().atOffset(ZoneOffset.UTC))
-                .modified(action.getModified().atOffset(ZoneOffset.UTC));
+                .created(Transformers.toOffsetDateTime(action.getCreated()))
+                .modified(Transformers.toOffsetDateTime(action.getModified()));
     }
 
 }
