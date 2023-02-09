@@ -2,7 +2,7 @@ package io.redlink.more.studymanager.model;
 
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 public class Observation {
     private Long studyId;
@@ -14,8 +14,8 @@ public class Observation {
     private Integer studyGroupId;
     private ObservationProperties properties;
     private Event schedule;
-    private Timestamp created;
-    private Timestamp modified;
+    private Instant created;
+    private Instant modified;
 
 
     public Long getStudyId() {
@@ -99,20 +99,20 @@ public class Observation {
         return this;
     }
 
-    public Timestamp getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public Observation setCreated(Timestamp created) {
+    public Observation setCreated(Instant created) {
         this.created = created;
         return this;
     }
 
-    public Timestamp getModified() {
+    public Instant getModified() {
         return modified;
     }
 
-    public Observation setModified(Timestamp modified) {
+    public Observation setModified(Instant modified) {
         this.modified = modified;
         return this;
     }

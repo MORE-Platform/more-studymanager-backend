@@ -1,7 +1,6 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.Study;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -71,7 +70,7 @@ class StudyRepositoryTest {
         assertThat(update.getTitle()).isEqualTo(updated.getTitle());
         assertThat(inserted.getStudyId()).isEqualTo(updated.getStudyId());
         assertThat(inserted.getCreated()).isEqualTo(updated.getCreated());
-        assertThat(inserted.getModified().getTime()).isLessThan(updated.getModified().getTime());
+        assertThat(inserted.getModified().toEpochMilli()).isLessThan(updated.getModified().toEpochMilli());
     }
 
     @Test

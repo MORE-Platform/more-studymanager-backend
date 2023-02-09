@@ -6,8 +6,8 @@ import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Intervention;
-import io.redlink.more.studymanager.utils.MapperUtils;
 import io.redlink.more.studymanager.model.Trigger;
+import io.redlink.more.studymanager.utils.MapperUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -147,8 +147,8 @@ public class InterventionRepository {
         return (rs, rowNum) -> new Trigger()
                 .setProperties(MapperUtils.readValue(rs.getObject("properties").toString(), TriggerProperties.class))
                 .setType(rs.getString("type"))
-                .setCreated(rs.getTimestamp("created").toInstant())
-                .setModified(rs.getTimestamp("modified").toInstant());
+                .setCreated(RepositoryUtils.readInstant(rs,"created"))
+                .setModified(RepositoryUtils.readInstant(rs,"modified"));
     }
 
     private static RowMapper<Action> getActionRowMapper() {
@@ -156,8 +156,8 @@ public class InterventionRepository {
                 .setActionId(rs.getInt("action_id"))
                 .setType(rs.getString("type"))
                 .setProperties(MapperUtils.readValue(rs.getObject("properties"), ActionProperties.class))
-                .setModified(rs.getTimestamp("modified").toInstant())
-                .setCreated(rs.getTimestamp("created").toInstant());
+                .setModified(RepositoryUtils.readInstant(rs,"modified"))
+                .setCreated(RepositoryUtils.readInstant(rs,"created"));
     }
 
     private static RowMapper<Intervention> getInterventionRowMapper() {
@@ -168,8 +168,8 @@ public class InterventionRepository {
                 .setPurpose(rs.getString("purpose"))
                 .setSchedule(MapperUtils.readValue(rs.getString("schedule"), Event.class))
                 .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
-                .setCreated(rs.getTimestamp("created").toInstant())
-                .setModified(rs.getTimestamp("modified").toInstant());
+                .setCreated(RepositoryUtils.readInstant(rs,"created"))
+                .setModified(RepositoryUtils.readInstant(rs,"modified"));
         }
 
 }

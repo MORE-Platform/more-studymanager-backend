@@ -4,11 +4,13 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.Participant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.time.LocalDate;
 
 public final class RepositoryUtils {
 
@@ -22,6 +24,14 @@ public final class RepositoryUtils {
             return null;
         }
         return timestamp.toInstant();
+    }
+
+    public static LocalDate readLocalDate(ResultSet rs, String columnLabel) throws SQLException{
+        var date = rs.getDate(columnLabel);
+        if(date == null) {
+            return null;
+        }
+        return date.toLocalDate();
     }
 
     public static Integer getValidNullableIntegerValue(ResultSet rs, String strColName) throws SQLException {

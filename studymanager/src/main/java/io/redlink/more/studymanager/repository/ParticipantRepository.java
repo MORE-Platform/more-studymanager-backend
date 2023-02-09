@@ -156,8 +156,8 @@ public class ParticipantRepository {
                 .setParticipantId(rs.getInt("participant_id"))
                 .setAlias(rs.getString("alias"))
                 .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
-                .setCreated(rs.getTimestamp("created"))
-                .setModified(rs.getTimestamp("modified"))
+                .setCreated(RepositoryUtils.readInstant(rs, "created"))
+                .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setStatus(RepositoryUtils.readParticipantStatus(rs, "status"))
                 .setRegistrationToken(rs.getString("token"));
     }

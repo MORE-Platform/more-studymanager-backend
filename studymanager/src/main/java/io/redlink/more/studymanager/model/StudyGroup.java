@@ -1,14 +1,14 @@
 package io.redlink.more.studymanager.model;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 public class StudyGroup {
     private Long studyId;
     private Integer studyGroupId;
     private String title;
     private String purpose;
-    private Timestamp created;
-    private Timestamp modified;
+    private Instant created;
+    private Instant modified;
 
     public Long getStudyId() {
         return studyId;
@@ -46,20 +46,20 @@ public class StudyGroup {
         return this;
     }
 
-    public Timestamp getCreated() {
+    public Instant getCreated() {
         return created;
     }
 
-    public StudyGroup setCreated(Timestamp created) {
+    public StudyGroup setCreated(Instant created) {
         this.created = created;
         return this;
     }
 
-    public Timestamp getModified() {
+    public Instant getModified() {
         return modified;
     }
 
-    public StudyGroup setModified(Timestamp modified) {
+    public StudyGroup setModified(Instant modified) {
         this.modified = modified;
         return this;
     }
