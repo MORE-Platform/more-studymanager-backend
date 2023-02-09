@@ -92,64 +92,64 @@ public class DataProcessingServiceTest {
 
         ParticipationData participation1 =
                 new ParticipationData(
-                        new ParticipationData.Pair(observation1.getObservationId(), observation1.getTitle()),
-                        new ParticipationData.Pair(participant1.getParticipantId(), participant1.getAlias()),
-                        new ParticipationData.Pair(participant1.getStudyGroupId(), participant1.getStudyGroupId().toString()),
+                        new ParticipationData.NamedId(observation1.getObservationId(), observation1.getTitle()),
+                        new ParticipationData.NamedId(participant1.getParticipantId(), participant1.getAlias()),
+                        new ParticipationData.NamedId(participant1.getStudyGroupId(), participant1.getStudyGroupId().toString()),
                         true,
                         Instant.parse("2023-02-06T10:03:00.00Z"));
         ParticipationData participation2 =
                 new ParticipationData(
-                        new ParticipationData.Pair(observation1.getObservationId(), observation1.getTitle()),
-                        new ParticipationData.Pair(participant2.getParticipantId(), participant2.getAlias()),
-                        new ParticipationData.Pair(participant2.getStudyGroupId(), participant2.getStudyGroupId().toString()),
+                        new ParticipationData.NamedId(observation1.getObservationId(), observation1.getTitle()),
+                        new ParticipationData.NamedId(participant2.getParticipantId(), participant2.getAlias()),
+                        new ParticipationData.NamedId(participant2.getStudyGroupId(), participant2.getStudyGroupId().toString()),
                         true,
                         Instant.parse("2022-02-06T10:03:00.00Z"));
         ParticipationData participation3 =
                 new ParticipationData(
-                        new ParticipationData.Pair(observation2.getObservationId(), observation2.getTitle()),
-                        new ParticipationData.Pair(participant1.getParticipantId(), participant1.getAlias()),
-                        new ParticipationData.Pair(participant1.getStudyGroupId(), participant1.getStudyGroupId().toString()),
+                        new ParticipationData.NamedId(observation2.getObservationId(), observation2.getTitle()),
+                        new ParticipationData.NamedId(participant1.getParticipantId(), participant1.getAlias()),
+                        new ParticipationData.NamedId(participant1.getStudyGroupId(), participant1.getStudyGroupId().toString()),
                         true,
                         Instant.parse("2021-02-06T10:03:00.00Z"));
         ParticipationData participation4 =
                 new ParticipationData(
-                        new ParticipationData.Pair(observation2.getObservationId(), observation2.getTitle()),
-                        new ParticipationData.Pair(participant2.getParticipantId(), participant2.getAlias()),
-                        new ParticipationData.Pair(participant2.getStudyGroupId(), participant2.getStudyGroupId().toString()),
+                        new ParticipationData.NamedId(observation2.getObservationId(), observation2.getTitle()),
+                        new ParticipationData.NamedId(participant2.getParticipantId(), participant2.getAlias()),
+                        new ParticipationData.NamedId(participant2.getStudyGroupId(), participant2.getStudyGroupId().toString()),
                         true,
                         Instant.parse("2020-02-06T10:03:00.00Z"));
         ParticipationData participation5 =
                 new ParticipationData(
-                        new ParticipationData.Pair(observation2.getObservationId(), observation2.getTitle()),
-                        new ParticipationData.Pair(participant3.getParticipantId(), participant3.getAlias()),
-                        new ParticipationData.Pair(participant3.getStudyGroupId(), participant3.getStudyGroupId().toString()),
+                        new ParticipationData.NamedId(observation2.getObservationId(), observation2.getTitle()),
+                        new ParticipationData.NamedId(participant3.getParticipantId(), participant3.getAlias()),
+                        new ParticipationData.NamedId(participant3.getStudyGroupId(), participant3.getStudyGroupId().toString()),
                         true,
                         Instant.parse("2019-02-06T10:03:00.00Z"));
 
         ParticipationData missingParticipation1 = new ParticipationData(
-                new ParticipationData.Pair(1,"1"),
-                new ParticipationData.Pair(1,"1"),
-                new ParticipationData.Pair(1,"1"),
+                new ParticipationData.NamedId(1,"1"),
+                new ParticipationData.NamedId(1,"1"),
+                new ParticipationData.NamedId(1,"1"),
                 false,null);
         ParticipationData missingParticipation2 = new ParticipationData(
-                new ParticipationData.Pair(1,"1"),
-                new ParticipationData.Pair(2,"2"),
-                new ParticipationData.Pair(1,"1"),
+                new ParticipationData.NamedId(1,"1"),
+                new ParticipationData.NamedId(2,"2"),
+                new ParticipationData.NamedId(1,"1"),
                 false,null);
         ParticipationData missingParticipation3 = new ParticipationData(
-                new ParticipationData.Pair(2,"2"),
-                new ParticipationData.Pair(1,"1"),
-                new ParticipationData.Pair(1,"1"),
+                new ParticipationData.NamedId(2,"2"),
+                new ParticipationData.NamedId(1,"1"),
+                new ParticipationData.NamedId(1,"1"),
                 false,null);
         ParticipationData missingParticipation4 = new ParticipationData(
-                new ParticipationData.Pair(2,"2"),
-                new ParticipationData.Pair(2,"2"),
-                new ParticipationData.Pair(1,"1"),
+                new ParticipationData.NamedId(2,"2"),
+                new ParticipationData.NamedId(2,"2"),
+                new ParticipationData.NamedId(1,"1"),
                 false,null);
         ParticipationData missingParticipation5 = new ParticipationData(
-                new ParticipationData.Pair(2,"2"),
-                new ParticipationData.Pair(3,"3"),
-                new ParticipationData.Pair(2,"2"),
+                new ParticipationData.NamedId(2,"2"),
+                new ParticipationData.NamedId(3,"3"),
+                new ParticipationData.NamedId(2,"2"),
                 false,null);
 
         List<Observation> observations = List.of(observation1, observation2);

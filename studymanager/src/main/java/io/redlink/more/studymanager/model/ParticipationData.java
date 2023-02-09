@@ -4,9 +4,9 @@ import java.time.Instant;
 import java.util.Comparator;
 
 public record ParticipationData(
-        Pair observationData,
-        Pair participantData,
-        Pair studyGroupData,
+        NamedId observationData,
+        NamedId participantData,
+        NamedId studyGroupData,
         boolean dataReceived,
         Instant lastDataReceived
 ) implements Comparable<ParticipationData> {
@@ -22,15 +22,15 @@ public record ParticipationData(
         return PARTICIPATION_DATA_COMPARATOR.compare(this, compParticipation);
     }
 
-    public record Pair(
+    public record NamedId(
             int id,
             String title
-    ) implements Comparable<Pair>{
+    ) implements Comparable<NamedId>{
 
-        public static final Comparator<Pair> PAIR_COMPARATOR =
-                Comparator.comparing(Pair::id);
+        public static final Comparator<NamedId> PAIR_COMPARATOR =
+                Comparator.comparing(NamedId::id);
         @Override
-        public int compareTo(Pair compData) {
+        public int compareTo(NamedId compData) {
             return PAIR_COMPARATOR.compare(this, compData);
         }
     }

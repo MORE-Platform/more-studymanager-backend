@@ -55,9 +55,9 @@ public class DataProcessingService {
         }
         for(ParticipationData participationData : incompleteParticipationDataList){
             participationDataList.add(new ParticipationData(
-                    new ParticipationData.Pair(participationData.observationData().id(), observationTitleById.get(participationData.observationData().id())),
-                    new ParticipationData.Pair(participationData.participantData().id(), participantAliasById.get(participationData.participantData().id())),
-                    new ParticipationData.Pair(participationData.studyGroupData().id(), studyGroupTitleById.get(participationData.studyGroupData().id())),
+                    new ParticipationData.NamedId(participationData.observationData().id(), observationTitleById.get(participationData.observationData().id())),
+                    new ParticipationData.NamedId(participationData.participantData().id(), participantAliasById.get(participationData.participantData().id())),
+                    new ParticipationData.NamedId(participationData.studyGroupData().id(), studyGroupTitleById.get(participationData.studyGroupData().id())),
                     participationData.dataReceived(),
                     participationData.lastDataReceived()
             ));
@@ -70,9 +70,9 @@ public class DataProcessingService {
                                 p.studyGroupData().id() == (participant.getStudyGroupId()) &&
                                 p.participantData().id() == (participant.getParticipantId()))).toList().isEmpty())
                     participationDataList.add(new ParticipationData(
-                            new ParticipationData.Pair(observation.getObservationId(), observation.getTitle()),
-                            new ParticipationData.Pair(participant.getParticipantId(), participant.getAlias()),
-                            new ParticipationData.Pair(participant.getStudyGroupId(), studyGroupTitleById.get(participant.getStudyGroupId())),
+                            new ParticipationData.NamedId(observation.getObservationId(), observation.getTitle()),
+                            new ParticipationData.NamedId(participant.getParticipantId(), participant.getAlias()),
+                            new ParticipationData.NamedId(participant.getStudyGroupId(), studyGroupTitleById.get(participant.getStudyGroupId())),
                             false,
                             null)
                     );

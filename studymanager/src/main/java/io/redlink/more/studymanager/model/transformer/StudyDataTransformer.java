@@ -16,7 +16,9 @@ public class StudyDataTransformer {
                 .dataReceived(participationData.dataReceived())
                 .lastDataReceived(Transformers.toOffsetDateTime(participationData.lastDataReceived()));
     }
-    public static IdTitleDTO toIdTitleDTO_V1(ParticipationData.Pair idTitle){
+    public static IdTitleDTO toIdTitleDTO_V1(ParticipationData.NamedId idTitle){
+        if(idTitle == null)
+            return null;
         return new IdTitleDTO()
                 .id(idTitle.id())
                 .title(idTitle.title());
