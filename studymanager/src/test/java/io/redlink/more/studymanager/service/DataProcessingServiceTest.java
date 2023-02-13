@@ -77,10 +77,12 @@ public class DataProcessingServiceTest {
         Observation observation1 = new Observation()
                 .setObservationId(1)
                 .setTitle("1")
-                .setStudyGroupId(1);
+                .setStudyGroupId(1)
+                .setType("type1");
         Observation observation2 = new Observation()
                 .setObservationId(2)
-                .setTitle("2");
+                .setTitle("2")
+                .setType("type1");
 
         StudyGroup studyGroup1 = new StudyGroup()
                 .setStudyGroupId(1)
@@ -93,6 +95,7 @@ public class DataProcessingServiceTest {
         ParticipationData participation1 =
                 new ParticipationData(
                         new ParticipationData.NamedId(observation1.getObservationId(), observation1.getTitle()),
+                        "type1",
                         new ParticipationData.NamedId(participant1.getParticipantId(), participant1.getAlias()),
                         new ParticipationData.NamedId(participant1.getStudyGroupId(), participant1.getStudyGroupId().toString()),
                         true,
@@ -100,6 +103,7 @@ public class DataProcessingServiceTest {
         ParticipationData participation2 =
                 new ParticipationData(
                         new ParticipationData.NamedId(observation1.getObservationId(), observation1.getTitle()),
+                        "type1",
                         new ParticipationData.NamedId(participant2.getParticipantId(), participant2.getAlias()),
                         new ParticipationData.NamedId(participant2.getStudyGroupId(), participant2.getStudyGroupId().toString()),
                         true,
@@ -107,6 +111,7 @@ public class DataProcessingServiceTest {
         ParticipationData participation3 =
                 new ParticipationData(
                         new ParticipationData.NamedId(observation2.getObservationId(), observation2.getTitle()),
+                        "type1",
                         new ParticipationData.NamedId(participant1.getParticipantId(), participant1.getAlias()),
                         new ParticipationData.NamedId(participant1.getStudyGroupId(), participant1.getStudyGroupId().toString()),
                         true,
@@ -114,6 +119,7 @@ public class DataProcessingServiceTest {
         ParticipationData participation4 =
                 new ParticipationData(
                         new ParticipationData.NamedId(observation2.getObservationId(), observation2.getTitle()),
+                        "type1",
                         new ParticipationData.NamedId(participant2.getParticipantId(), participant2.getAlias()),
                         new ParticipationData.NamedId(participant2.getStudyGroupId(), participant2.getStudyGroupId().toString()),
                         true,
@@ -121,6 +127,7 @@ public class DataProcessingServiceTest {
         ParticipationData participation5 =
                 new ParticipationData(
                         new ParticipationData.NamedId(observation2.getObservationId(), observation2.getTitle()),
+                        "type1",
                         new ParticipationData.NamedId(participant3.getParticipantId(), participant3.getAlias()),
                         new ParticipationData.NamedId(participant3.getStudyGroupId(), participant3.getStudyGroupId().toString()),
                         true,
@@ -128,26 +135,31 @@ public class DataProcessingServiceTest {
 
         ParticipationData missingParticipation1 = new ParticipationData(
                 new ParticipationData.NamedId(1,"1"),
+                "type1",
                 new ParticipationData.NamedId(1,"1"),
                 new ParticipationData.NamedId(1,"1"),
                 false,null);
         ParticipationData missingParticipation2 = new ParticipationData(
                 new ParticipationData.NamedId(1,"1"),
+                "type1",
                 new ParticipationData.NamedId(2,"2"),
                 new ParticipationData.NamedId(1,"1"),
                 false,null);
         ParticipationData missingParticipation3 = new ParticipationData(
                 new ParticipationData.NamedId(2,"2"),
+                "type1",
                 new ParticipationData.NamedId(1,"1"),
                 new ParticipationData.NamedId(1,"1"),
                 false,null);
         ParticipationData missingParticipation4 = new ParticipationData(
                 new ParticipationData.NamedId(2,"2"),
+                "type1",
                 new ParticipationData.NamedId(2,"2"),
                 new ParticipationData.NamedId(1,"1"),
                 false,null);
         ParticipationData missingParticipation5 = new ParticipationData(
                 new ParticipationData.NamedId(2,"2"),
+                "type1",
                 new ParticipationData.NamedId(3,"3"),
                 new ParticipationData.NamedId(2,"2"),
                 false,null);

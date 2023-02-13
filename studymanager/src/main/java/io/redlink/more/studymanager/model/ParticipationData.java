@@ -4,18 +4,19 @@ import java.time.Instant;
 import java.util.Comparator;
 
 public record ParticipationData(
-        NamedId observationData,
-        NamedId participantData,
-        NamedId studyGroupData,
+        NamedId observationNamedId,
+        String observationType,
+        NamedId participantNamedId,
+        NamedId studyGroupNamedId,
         boolean dataReceived,
         Instant lastDataReceived
 ) implements Comparable<ParticipationData> {
 
     public static final Comparator<ParticipationData> PARTICIPATION_DATA_COMPARATOR =
 
-            Comparator.comparing(ParticipationData::observationData)
-                    .thenComparing(ParticipationData::studyGroupData)
-                    .thenComparing(ParticipationData::participantData);
+            Comparator.comparing(ParticipationData::observationNamedId)
+                    .thenComparing(ParticipationData::studyGroupNamedId)
+                    .thenComparing(ParticipationData::participantNamedId);
 
     @Override
     public int compareTo(ParticipationData compParticipation) {

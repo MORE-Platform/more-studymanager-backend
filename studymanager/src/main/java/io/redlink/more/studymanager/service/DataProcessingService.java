@@ -41,23 +41,24 @@ public class DataProcessingService {
             }
         }
 
-        Map<Integer, String> observationTitleById = new HashMap<>();
-        Map<Integer, String> participantAliasById = new HashMap<>();
-        Map<Integer, String> studyGroupTitleById = new HashMap<>();
+        Map<Integer, Observation> observationById = new HashMap<>();
+        Map<Integer, Participant> participantById = new HashMap<>();
+        Map<Integer, StudyGroup> studyGroupById = new HashMap<>();
         for(Observation observation : observationList){
-            observationTitleById.put(observation.getObservationId(), observation.getTitle());
+            observationById.put(observation.getObservationId(), observation);
         }
         for(Participant participant : participantList){
-            participantAliasById.put(participant.getParticipantId(), participant.getAlias());
+            participantById.put(participant.getParticipantId(), participant);
         }
         for(StudyGroup studyGroup : studyGroupList){
-            studyGroupTitleById.put(studyGroup.getStudyGroupId(), studyGroup.getTitle());
+            studyGroupById.put(studyGroup.getStudyGroupId(), studyGroup);
         }
         for(ParticipationData participationData : incompleteParticipationDataList){
             participationDataList.add(new ParticipationData(
-                    new ParticipationData.NamedId(participationData.observationData().id(), observationTitleById.get(participationData.observationData().id())),
-                    new ParticipationData.NamedId(participationData.participantData().id(), participantAliasById.get(participationData.participantData().id())),
-                    new ParticipationData.NamedId(participationData.studyGroupData().id(), studyGroupTitleById.get(participationData.studyGroupData().id())),
+                    new ParticipationData.NamedId(participationData.observationNamedId().id(), observationById.get(participationData.observationNamedId().id()).getTitle()),
+                    observationById.get(participationData.observationNamedId().id()).getType(),
+                    new ParticipationData.NamedId(participationData.participantNamedId().id(), participantById.get(participationData.participantNamedId().id()).getAlias()),
+                    new ParticipationData.NamedId(participationData.studyGroupNamedId().id(), studyGroupById.get(participationData.studyGroupNamedId().id()).getTitle()),
                     participationData.dataReceived(),
                     participationData.lastDataReceived()
             ));
@@ -66,13 +67,14 @@ public class DataProcessingService {
         for(Observation observation : participantsByObservation.keySet()){
             for(Participant participant : participantsByObservation.get(observation)){
                 if(participationDataList.stream()
-                        .filter(p -> (p.observationData().id() == (observation.getObservationId()) &&
-                                p.studyGroupData().id() == (participant.getStudyGroupId()) &&
-                                p.participantData().id() == (participant.getParticipantId()))).toList().isEmpty())
+                        .filter(p -> (p.observationNamedId().id() == (observation.getObservationId()) &&
+                                p.studyGroupNamedId().id() == (participant.getStudyGroupId()) &&
+                                p.participantNamedId().id() == (participant.getParticipantId()))).toList().isEmpty())
                     participationDataList.add(new ParticipationData(
                             new ParticipationData.NamedId(observation.getObservationId(), observation.getTitle()),
+                            observation.getType(),
                             new ParticipationData.NamedId(participant.getParticipantId(), participant.getAlias()),
-                            new ParticipationData.NamedId(participant.getStudyGroupId(), studyGroupTitleById.get(participant.getStudyGroupId())),
+                            new ParticipationData.NamedId(participant.getStudyGroupId(), studyGroupById.get(participant.getStudyGroupId()).getTitle()),
                             false,
                             null)
                     );

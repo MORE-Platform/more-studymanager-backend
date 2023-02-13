@@ -10,9 +10,10 @@ public class StudyDataTransformer {
 
     public static ParticipationDataDTO toParticipationDataDTO_V1(ParticipationData participationData){
         return new ParticipationDataDTO()
-                .observationData(toIdTitleDTO_V1(participationData.observationData()))
-                .participantData(toIdTitleDTO_V1(participationData.participantData()))
-                .studyGroupData(toIdTitleDTO_V1(participationData.studyGroupData()))
+                .observationNamedId(toIdTitleDTO_V1(participationData.observationNamedId()))
+                .observationType(participationData.observationType())
+                .participantNamedId(toIdTitleDTO_V1(participationData.participantNamedId()))
+                .studyGroupNamedId(toIdTitleDTO_V1(participationData.studyGroupNamedId()))
                 .dataReceived(participationData.dataReceived())
                 .lastDataReceived(Transformers.toOffsetDateTime(participationData.lastDataReceived()));
     }
