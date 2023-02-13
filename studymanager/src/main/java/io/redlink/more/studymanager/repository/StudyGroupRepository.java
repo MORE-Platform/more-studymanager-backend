@@ -1,7 +1,6 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
-import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyGroup;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -80,8 +79,8 @@ public class StudyGroupRepository {
                 .setStudyGroupId(rs.getInt("study_group_id"))
                 .setTitle(rs.getString("title"))
                 .setPurpose(rs.getString("purpose"))
-                .setCreated(rs.getTimestamp("created"))
-                .setModified(rs.getTimestamp("modified"));
+                .setCreated(RepositoryUtils.readInstant(rs, "created"))
+                .setModified(RepositoryUtils.readInstant(rs, "modified"));
     }
 
     // for testing purpose only

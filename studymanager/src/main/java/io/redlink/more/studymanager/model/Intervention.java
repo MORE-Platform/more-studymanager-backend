@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.model;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 
 public class Intervention {

@@ -8,11 +8,6 @@ import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyService;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.util.EnumSet;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +16,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.EnumSet;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -63,8 +64,8 @@ class StudyControllerTest {
                 .setPlannedStartDate(((Study) invocationOnMock.getArgument(0)).getPlannedStartDate())
                 .setPlannedEndDate(((Study) invocationOnMock.getArgument(0)).getPlannedEndDate())
                 .setStudyState(Study.Status.DRAFT)
-                .setCreated(new Timestamp(System.currentTimeMillis()))
-                .setModified(new Timestamp(System.currentTimeMillis())));
+                .setCreated(Instant.ofEpochMilli(System.currentTimeMillis()))
+                .setModified(Instant.ofEpochMilli(System.currentTimeMillis())));
 
         StudyDTO studyRequest = new StudyDTO()
                 .title("Some title")
@@ -88,8 +89,8 @@ class StudyControllerTest {
                 Optional.of(
                         invocationOnMock.getArgument(0, Study.class)
                                 .setStudyState(Study.Status.DRAFT)
-                                .setCreated(new Timestamp(0))
-                                .setModified(new Timestamp(0))
+                                .setCreated(Instant.ofEpochMilli(0))
+                                .setModified(Instant.ofEpochMilli(0))
                 ));
 
         StudyDTO studyRequest = new StudyDTO()
