@@ -15,7 +15,7 @@ public record ParticipationData(
     public static final Comparator<ParticipationData> PARTICIPATION_DATA_COMPARATOR =
 
             Comparator.comparing(ParticipationData::observationNamedId)
-                    .thenComparing(ParticipationData::studyGroupNamedId)
+                    .thenComparing(ParticipationData::studyGroupNamedId, Comparator.nullsFirst(Comparator.naturalOrder()))
                     .thenComparing(ParticipationData::participantNamedId);
 
     @Override

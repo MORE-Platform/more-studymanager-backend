@@ -2,7 +2,6 @@
   "datapoint_id": "ff56eec8-2f60-4f43-a933-6024b070b652",
   "participant_id": "participant_2",
   "study_id": "study_123",
-  "study_group_id": "study_group_1",
   "observation_id": "3",
   "observation_type": "acc-mobile-observation",
   "data_type": "acc-mobile-observation",

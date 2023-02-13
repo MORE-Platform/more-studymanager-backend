@@ -53,12 +53,18 @@ public class DataProcessingService {
         for(StudyGroup studyGroup : studyGroupList){
             studyGroupById.put(studyGroup.getStudyGroupId(), studyGroup);
         }
+        ParticipationData.NamedId studyGroup;
         for(ParticipationData participationData : incompleteParticipationDataList){
+            studyGroup = null;
+            if(participationData.studyGroupNamedId() != null)
+                studyGroup = new ParticipationData.NamedId(
+                        participationData.studyGroupNamedId().id(),
+                        studyGroupById.get(participationData.studyGroupNamedId().id()).getTitle());
             participationDataList.add(new ParticipationData(
                     new ParticipationData.NamedId(participationData.observationNamedId().id(), observationById.get(participationData.observationNamedId().id()).getTitle()),
                     observationById.get(participationData.observationNamedId().id()).getType(),
                     new ParticipationData.NamedId(participationData.participantNamedId().id(), participantById.get(participationData.participantNamedId().id()).getAlias()),
-                    new ParticipationData.NamedId(participationData.studyGroupNamedId().id(), studyGroupById.get(participationData.studyGroupNamedId().id()).getTitle()),
+                    studyGroup,
                     participationData.dataReceived(),
                     participationData.lastDataReceived()
             ));
@@ -67,17 +73,24 @@ public class DataProcessingService {
         for(Observation observation : participantsByObservation.keySet()){
             for(Participant participant : participantsByObservation.get(observation)){
                 if(participationDataList.stream()
-                        .filter(p -> (p.observationNamedId().id() == (observation.getObservationId()) &&
-                                p.studyGroupNamedId().id() == (participant.getStudyGroupId()) &&
-                                p.participantNamedId().id() == (participant.getParticipantId()))).toList().isEmpty())
+                        .filter(p -> (
+                                p.observationNamedId().id() == (observation.getObservationId()) &&
+                                        (p.studyGroupNamedId() != null
+                                                ? (participant.getStudyGroupId() != null && p.studyGroupNamedId().id() == participant.getStudyGroupId())
+                                                : participant.getStudyGroupId() == null) &&
+                                        p.participantNamedId().id() == (participant.getParticipantId()))).toList().isEmpty()) {
+                    studyGroup = null;
+                    if(participant.getStudyGroupId() != null)
+                        studyGroup = new ParticipationData.NamedId(participant.getStudyGroupId(), studyGroupById.get(participant.getStudyGroupId()).getTitle());
                     participationDataList.add(new ParticipationData(
                             new ParticipationData.NamedId(observation.getObservationId(), observation.getTitle()),
                             observation.getType(),
                             new ParticipationData.NamedId(participant.getParticipantId(), participant.getAlias()),
-                            new ParticipationData.NamedId(participant.getStudyGroupId(), studyGroupById.get(participant.getStudyGroupId()).getTitle()),
+                            studyGroup,
                             false,
                             null)
                     );
+                }
             }
         }
         Collections.sort(participationDataList);

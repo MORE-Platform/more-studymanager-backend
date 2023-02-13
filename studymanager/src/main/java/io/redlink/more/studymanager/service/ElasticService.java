@@ -13,15 +13,16 @@ import io.redlink.more.studymanager.model.ElasticDataPoint;
 import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.properties.ElasticProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.stereotype.Service;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.stereotype.Service;
 
 @Service
 @EnableConfigurationProperties({ElasticProperties.class})
@@ -179,19 +180,26 @@ public class ElasticService {
                             .get("latest_data")
                             .max()
                             .valueAsString();
-                    StringTermsBucket studyGroupId = participant
+                    List<StringTermsBucket> studyGroupBuckets = participant
                             .aggregations()
                             .get("study_group_id")
                             .sterms()
                             .buckets()
-                            .array()
-                            .get(0);
+                            .array();
+                    ParticipationData.NamedId studyGroup = null;
+                    if(studyGroupBuckets.size() > 0)
+                             studyGroup = new ParticipationData.NamedId(Integer.parseInt(
+                                     studyGroupBuckets
+                                     .get(0)
+                                     .key()
+                                     .stringValue()
+                                     .substring(12)), null);
                     assert lastDataReceived != null;
                     participationDataList.add(new ParticipationData(
                             new ParticipationData.NamedId(Integer.parseInt(observation.key().stringValue()), null),
                             "observationType",
                             new ParticipationData.NamedId(Integer.parseInt(participant.key().stringValue().substring(12)), null),
-                            new ParticipationData.NamedId(Integer.parseInt(studyGroupId.key().stringValue().substring(12)), null),
+                            studyGroup,
                             true,
                             Instant.parse(lastDataReceived)));
                 }
@@ -202,5 +210,7 @@ public class ElasticService {
             return new ArrayList<>();
         }
     }
+
+
 
 }
