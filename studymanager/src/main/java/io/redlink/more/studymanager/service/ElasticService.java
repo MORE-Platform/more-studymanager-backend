@@ -189,6 +189,7 @@ public class ElasticService {
                     assert lastDataReceived != null;
                     participationDataList.add(new ParticipationData(
                             new ParticipationData.NamedId(Integer.parseInt(observation.key().stringValue()), null),
+                            "observationType",
                             new ParticipationData.NamedId(Integer.parseInt(participant.key().stringValue().substring(12)), null),
                             new ParticipationData.NamedId(Integer.parseInt(studyGroupId.key().stringValue().substring(12)), null),
                             true,
