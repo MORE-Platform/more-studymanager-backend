@@ -75,6 +75,11 @@ public class ComponentApiV1Controller implements ComponentsApi {
     }
 
     @Override
+    public ResponseEntity<String> createModuleSpecificEndpoint(String componentType, String componentId, String slug, Object body) {
+        return null;
+    }
+
+    @Override
     public ResponseEntity<String> getWebComponentScript(String componentType, String componentId) {
         return getComponentFactory(componentType, componentId)
                 .map(f -> getWebComponentScript(f, componentId))
