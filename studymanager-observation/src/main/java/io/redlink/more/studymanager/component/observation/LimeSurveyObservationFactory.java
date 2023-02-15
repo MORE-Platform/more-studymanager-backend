@@ -12,7 +12,7 @@ import java.util.Map;
 public class LimeSurveyObservationFactory<C extends Observation, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
 
-    public static final String ID_PROPERTY = "limeSurveyId";
+    private static final String ID_PROPERTY = "limeSurveyId";
 
     @Override
     public String getId() {
