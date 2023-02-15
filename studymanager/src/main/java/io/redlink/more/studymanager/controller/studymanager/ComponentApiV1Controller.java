@@ -1,10 +1,11 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.redlink.more.studymanager.api.v1.model.ComponentFactoryDTO;
 import io.redlink.more.studymanager.api.v1.model.ValidationReportDTO;
 import io.redlink.more.studymanager.api.v1.model.ValidationReportItemDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ComponentsApi;
-import io.redlink.more.studymanager.core.component.Component;
+import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.factory.ComponentFactory;
@@ -12,6 +13,8 @@ import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.properties.ComponentProperties;
 import io.redlink.more.studymanager.core.webcomponent.WebComponent;
+import io.redlink.more.studymanager.model.User;
+import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 @RestController
@@ -30,15 +32,18 @@ public class ComponentApiV1Controller implements ComponentsApi {
     private final Map<String, ObservationFactory> observationFactories;
     private final Map<String, TriggerFactory> triggertFactories;
     private final Map<String, ActionFactory> actionFactories;
+    private final OAuth2AuthenticationService authService;
 
     public ComponentApiV1Controller(
             Map<String, ObservationFactory> observationFactories,
             Map<String, TriggerFactory> triggertFactories,
-            Map<String, ActionFactory> actionFactories
+            Map<String, ActionFactory> actionFactories,
+            OAuth2AuthenticationService authService
     ) {
         this.observationFactories = observationFactories;
         this.triggertFactories = triggertFactories;
         this.actionFactories = actionFactories;
+        this.authService = authService;
     }
 
     @Override
@@ -75,8 +80,18 @@ public class ComponentApiV1Controller implements ComponentsApi {
     }
 
     @Override
-    public ResponseEntity<String> createModuleSpecificEndpoint(String componentType, String componentId, String slug, Object body) {
-        return null;
+    public ResponseEntity<Object> createModuleSpecificEndpoint(String componentType, String componentId, String slug, Object body) {
+        Optional<ComponentFactory> componentFactory = getComponentFactory(componentType, componentId);
+        try {
+            if (componentFactory.isPresent()) {
+                JsonNode jsonNodeBody = MapperUtils.MAPPER.valueToTree(body);
+                return ResponseEntity.ok(componentFactory.get().handleAPICall(slug, authService.getCurrentUser(), jsonNodeBody));
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
