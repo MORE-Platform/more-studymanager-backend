@@ -76,8 +76,8 @@ paths:
     post:
       tags:
         - components
-      operationId: createModuleSpecificEndpoint
-      description: create module specific endpoint
+      operationId: accessModuleSpecificEndpoint
+      description: access module specific endpoint
       parameters:
         - name: componentType
           in: path
@@ -106,13 +106,13 @@ paths:
               type: object
       responses:
         '201':
-          description: Endpoint successfully created
+          description: Success
           content:
             application/json:
               schema:
                 type: object
         '400':
-          description: Endpoint creation failed
+          description: Could not access endpoint
         '500':
           description: Error
 

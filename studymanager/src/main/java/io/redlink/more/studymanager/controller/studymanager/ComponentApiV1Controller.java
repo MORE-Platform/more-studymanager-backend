@@ -5,7 +5,6 @@ import io.redlink.more.studymanager.api.v1.model.ComponentFactoryDTO;
 import io.redlink.more.studymanager.api.v1.model.ValidationReportDTO;
 import io.redlink.more.studymanager.api.v1.model.ValidationReportItemDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ComponentsApi;
-import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.factory.ComponentFactory;
@@ -13,7 +12,6 @@ import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.properties.ComponentProperties;
 import io.redlink.more.studymanager.core.webcomponent.WebComponent;
-import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import org.springframework.http.MediaType;
@@ -80,7 +78,7 @@ public class ComponentApiV1Controller implements ComponentsApi {
     }
 
     @Override
-    public ResponseEntity<Object> createModuleSpecificEndpoint(String componentType, String componentId, String slug, Object body) {
+    public ResponseEntity<Object> accessModuleSpecificEndpoint(String componentType, String componentId, String slug, Object body) {
         Optional<ComponentFactory> componentFactory = getComponentFactory(componentType, componentId);
         try {
             if (componentFactory.isPresent()) {
