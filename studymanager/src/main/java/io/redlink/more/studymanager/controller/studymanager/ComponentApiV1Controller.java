@@ -5,11 +5,13 @@ import io.redlink.more.studymanager.api.v1.model.ComponentFactoryDTO;
 import io.redlink.more.studymanager.api.v1.model.ValidationReportDTO;
 import io.redlink.more.studymanager.api.v1.model.ValidationReportItemDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ComponentsApi;
+import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.factory.ComponentFactory;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
+import io.redlink.more.studymanager.core.model.User;
 import io.redlink.more.studymanager.core.properties.ComponentProperties;
 import io.redlink.more.studymanager.core.webcomponent.WebComponent;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
@@ -18,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -80,15 +83,15 @@ public class ComponentApiV1Controller implements ComponentsApi {
     @Override
     public ResponseEntity<Object> accessModuleSpecificEndpoint(String componentType, String componentId, String slug, Object body) {
         Optional<ComponentFactory> componentFactory = getComponentFactory(componentType, componentId);
-        try {
-            if (componentFactory.isPresent()) {
+        if (componentFactory.isPresent()) {
+            try {
                 JsonNode jsonNodeBody = MapperUtils.MAPPER.valueToTree(body);
-                return ResponseEntity.ok(componentFactory.get().handleAPICall(slug, authService.getCurrentUser(), jsonNodeBody));
-            } else {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.ok(componentFactory.get().handleAPICall(slug, new User(authService.getCurrentUser().id()), jsonNodeBody));
+            } catch (ApiCallException e) {
+                throw new ResponseStatusException(e.getStatus(), e.getMessage(), null);
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
 

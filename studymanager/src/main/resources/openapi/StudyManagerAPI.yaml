@@ -111,8 +111,8 @@ paths:
             application/json:
               schema:
                 type: object
-        '400':
-          description: Could not access endpoint
+        '404':
+          description: Endpoint not found
         '500':
           description: Error
 
