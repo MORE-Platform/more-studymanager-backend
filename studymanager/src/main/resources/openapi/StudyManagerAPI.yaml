@@ -72,6 +72,50 @@ paths:
         '404':
           description: Not found
 
+  /components/{componentType}/{componentId}/api/{slug}:
+    post:
+      tags:
+        - components
+      operationId: accessModuleSpecificEndpoint
+      description: access module specific endpoint
+      parameters:
+        - name: componentType
+          in: path
+          schema:
+            type: string
+            enum:
+              - action
+              - trigger
+              - observation
+          required: true
+        - name: componentId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: slug
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Endpoint not found
+        '500':
+          description: Error
+
   /components/{componentType}/{componentId}/web-component.js:
     get:
       tags:
