@@ -3,10 +3,12 @@ package io.redlink.more.studymanager.configuration;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
+import io.redlink.more.studymanager.properties.ComponentFactoriesProperties;
 import org.reflections.Reflections;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,13 +19,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Configuration
+@EnableConfigurationProperties({ComponentFactoriesProperties.class})
 public class ComponentFactoriesConfiguration implements BeanFactoryAware {
     private BeanFactory beanFactory;
 
     private final Reflections reflections;
+    private final ComponentFactoriesProperties componentFactoriesProperties;
 
-    public ComponentFactoriesConfiguration() {
+    public ComponentFactoriesConfiguration(ComponentFactoriesProperties componentFactoriesProperties) {
         this.reflections = new Reflections("io.redlink.more.studymanager.component");
+        this.componentFactoriesProperties = componentFactoriesProperties;
     }
 
     @Override
@@ -34,7 +39,8 @@ public class ComponentFactoriesConfiguration implements BeanFactoryAware {
     @Bean
     public Map<String, TriggerFactory> triggerFactoryMap() {
         Set<Class<? extends TriggerFactory>> triggerFactories = reflections.getSubTypesOf(TriggerFactory.class);
-        return triggerFactories.stream().map(this::instantiate).collect(Collectors.toMap(
+        return triggerFactories.stream().map(this::instantiate)
+                .collect(Collectors.toMap(
                 (trigger) -> trigger.getId(),
                 (trigger) -> trigger
         ));
@@ -45,7 +51,9 @@ public class ComponentFactoriesConfiguration implements BeanFactoryAware {
         ConfigurableBeanFactory configurableBeanFactory = (ConfigurableBeanFactory) beanFactory;
 
         Set<Class<? extends ObservationFactory>> observationFactories = reflections.getSubTypesOf(ObservationFactory.class);
-        observationFactories.stream().map(this::instantiate).forEach(m ->
+        observationFactories.stream().map(this::instantiate)
+                .map(f -> f.init(componentFactoriesProperties.get(f.getId())))
+                .forEach(m ->
                 configurableBeanFactory.registerSingleton(m.getId(), m)
         );
 

@@ -7,7 +7,11 @@ import io.redlink.more.studymanager.core.webcomponent.WebComponent;
 import java.util.Map;
 
 public abstract class ComponentFactory<C extends Component, P extends ComponentProperties> {
-
+    public ComponentFactoryProperties componentProperties;
+    public ComponentFactory init(ComponentFactoryProperties componentProperties){
+        this.componentProperties = componentProperties;
+        return this;
+    }
     public abstract String getId();
 
     public abstract String getTitle();

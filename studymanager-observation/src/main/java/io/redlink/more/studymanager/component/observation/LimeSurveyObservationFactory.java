@@ -2,6 +2,8 @@ package io.redlink.more.studymanager.component.observation;
 
 import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.factory.ComponentFactory;
+import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
@@ -13,6 +15,16 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
         extends ObservationFactory<C, P> {
 
     private static final String ID_PROPERTY = "limeSurveyId";
+
+    private LimeSurveyRequestService limeSurveyRequestService;
+
+
+    @Override
+    public ComponentFactory init(ComponentFactoryProperties componentProperties){
+        this.componentProperties = componentProperties;
+        limeSurveyRequestService = new LimeSurveyRequestService(componentProperties);
+        return this;
+    }
 
     @Override
     public String getId() {
@@ -46,6 +58,6 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
 
     @Override
     public LimeSurveyObservation create(MorePlatformSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new LimeSurveyObservation(sdk, validate(properties));
+        return new LimeSurveyObservation(sdk, validate(properties), limeSurveyRequestService);
     }
 }
