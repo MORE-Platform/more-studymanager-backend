@@ -24,8 +24,6 @@ public class DataProcessingService {
     }
 
     public List<ParticipationData> getParticipationData(Long studyId){
-        List<ParticipationData> incompleteParticipationDataList = elasticService.getParticipationData(studyId);
-        List<ParticipationData> participationDataList = new ArrayList<>();
         List<Observation> observationList = observationService.listObservations(studyId);
         List<Participant> participantList = participantService.listParticipants(studyId);
         List<StudyGroup> studyGroupList = studyGroupService.listStudyGroups(studyId);
@@ -40,7 +38,6 @@ public class DataProcessingService {
                         .toList());
             }
         }
-
         Map<Integer, Observation> observationById = new HashMap<>();
         Map<Integer, Participant> participantById = new HashMap<>();
         Map<Integer, StudyGroup> studyGroupById = new HashMap<>();
@@ -53,6 +50,11 @@ public class DataProcessingService {
         for(StudyGroup studyGroup : studyGroupList){
             studyGroupById.put(studyGroup.getStudyGroupId(), studyGroup);
         }
+
+        List<ParticipationData> incompleteParticipationDataList = elasticService.getParticipationData(studyId)
+                .stream().filter(p -> observationById.get(p.observationNamedId().id()) != null).toList();
+        List<ParticipationData> participationDataList = new ArrayList<>();
+
         ParticipationData.NamedId studyGroup;
         for(ParticipationData participationData : incompleteParticipationDataList){
             studyGroup = null;
