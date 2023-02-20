@@ -5,12 +5,6 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -27,10 +21,10 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     public void activate(){
         Set<Integer> participantIds = sdk.participantIds();
         participantIds.removeIf(id -> sdk.getValue("participant" + id + "_token", String.class).isPresent());
-        List<String> returnData = limeSurveyRequestService.createParticipants(participantIds, sdk.getStudyId());
+        List<String> returnData = limeSurveyRequestService.activateParticipants(participantIds, properties.getString("limeSurveyId"));
         for(String data: returnData){
             String[] dataFields = data.split(",");
-            sdk.setValue("participant" + dataFields[0] + "_token", dataFields[3]);
+            sdk.setValue("participant" + dataFields[0] + "_token", dataFields[1]);
         }
     }
 }

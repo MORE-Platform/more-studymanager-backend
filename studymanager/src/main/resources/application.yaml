@@ -85,8 +85,8 @@ management:
 more:
   components:
     lime-survey-observation:
-      username: admin
-      password: admin
+      username: 'more-admin'
+      password: 'hBqRPy9dLRLyvxp25M'
       url: ${https://lime.platform-test.more.redlink.io/admin/remotecontrol}
   auth:
     global-roles:
