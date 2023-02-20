@@ -86,7 +86,7 @@ public class ComponentApiV1Controller implements ComponentsApi {
         if (componentFactory.isPresent()) {
             try {
                 JsonNode jsonNodeBody = MapperUtils.MAPPER.valueToTree(body);
-                return ResponseEntity.ok(componentFactory.get().handleAPICall(slug, new User(authService.getCurrentUser().id()), jsonNodeBody));
+                return ResponseEntity.ok(componentFactory.get().handleAPICall(slug, new User(authService.getCurrentUser().email()), jsonNodeBody));
             } catch (ApiCallException e) {
                 throw new ResponseStatusException(e.getStatus(), e.getMessage(), null);
             }
