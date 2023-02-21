@@ -26,16 +26,18 @@ public class StudyService {
     private final StudyAclRepository aclRepository;
     private final UserRepository userRepo;
     private final InterventionService interventionService;
+    private final ObservationService observationService;
     private final ParticipantService participantService;
     private final StudyStateService studyStateService;
 
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
-                        StudyStateService studyStateService, InterventionService interventionService, ParticipantService participantService) {
+                        StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService, ParticipantService participantService) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
         this.studyStateService = studyStateService;
         this.interventionService = interventionService;
+        this.observationService = observationService;
         this.participantService = participantService;
     }
 
@@ -80,11 +82,13 @@ public class StudyService {
         if (study.getStudyState().equals(status)) {
             throw BadRequestException.StateChange(study.getStudyState(), status);
         }
+
         studyRepository.setStateById(studyId, status);
 
         studyRepository.getById(studyId).ifPresent(s -> {
             interventionService.alignInterventionsWithStudyState(s);
             participantService.alignParticipantsWithStudyState(s);
+            observationService.alignObservationsWithStudyState(s);
         });
     }
 
