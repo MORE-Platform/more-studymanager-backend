@@ -1,28 +1,22 @@
 package io.redlink.more.studymanager.component.observation;
 
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
 
 import java.net.http.HttpClient;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@ContextConfiguration(classes = LimeSurveyRequestService.class)
+import static org.mockito.Mockito.mock;
+
+
 public class LimeSurveyRequestServiceTest {
 
-    @MockBean
-    ComponentFactoryProperties properties;
-    @MockBean
-    HttpClient client;
-    @Autowired
-    LimeSurveyRequestService service;
+    private final ComponentFactoryProperties properties = new ComponentFactoryProperties();
+    private final HttpClient client = mock(HttpClient.class);
+    private final LimeSurveyRequestService service = new LimeSurveyRequestService(client, properties);
 
     @Test
-    void testListSurveysByUser() throws Exception {
-        System.out.println();
-        service.listSurveysByUser("", "", 0, 0);
+    void activateParticipantsTest(){
+        //TODO
     }
 }

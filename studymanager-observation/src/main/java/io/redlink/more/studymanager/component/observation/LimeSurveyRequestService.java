@@ -3,6 +3,11 @@ package io.redlink.more.studymanager.component.observation;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.gson.*;
 import io.redlink.more.studymanager.component.observation.model.LimeSurveyRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.redlink.more.studymanager.component.observation.model.LimeSurveyKeyResponse;
+import io.redlink.more.studymanager.component.observation.model.LimeSurveyRequest;
+import io.redlink.more.studymanager.component.observation.model.LimeSurveyResponse;
+import io.redlink.more.studymanager.component.observation.model.ParticipantData;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 
 import java.io.IOException;
@@ -30,11 +35,18 @@ public class LimeSurveyRequestService {
     private final TypeReference<Map<String, String>> mapStringStringRef
             = new TypeReference<>() {
     };
+    private final ObjectMapper objectMapper;
 
     protected LimeSurveyRequestService(ComponentFactoryProperties properties) {
         this.properties = properties;
         client = HttpClient.newHttpClient();
-        gson = new Gson();
+        objectMapper = new ObjectMapper();
+    }
+
+    protected LimeSurveyRequestService(HttpClient client, ComponentFactoryProperties properties){
+        this.properties = properties;
+        this.client = client;
+        objectMapper = new ObjectMapper();
     }
 
     protected List<String> activateParticipants(Set<Integer> participantIds, String surveyId) {
@@ -42,99 +54,89 @@ public class LimeSurveyRequestService {
         if (createParticipantTable(surveyId, sessionKey))
             return createParticipants(participantIds, surveyId, sessionKey);
         return new ArrayList<>();
+        createParticipantTable(surveyId, sessionKey);
+        return createParticipants(participantIds, surveyId, sessionKey);
     }
 
     private boolean createParticipantTable(String surveyId, String sessionKey) {
         HttpRequest request = HttpRequest.newBuilder()
+    protected void createParticipantTable(String surveyId, String sessionKey){
+        LimeSurveyRequest request = new LimeSurveyRequest(
+                "activate_tokens",
+                Map.of(
+                        "SessionKey", sessionKey,
+                        "SurveyId", surveyId
+                ),
+                1
+        );
+        try{
+            HttpRequest createTableRequest = HttpRequest.newBuilder()
                 .uri(URI.create(getUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(
-                        "\"method\": \"activate_tokens\"," +
-                                "\"params\": [" +
-                                "\"sSessionKey\": \"" + sessionKey + "\"" +
-                                "\"iSurveyID\": " + surveyId +
-                                "]," +
-                                "\"id\": 1"
+                        objectMapper.writeValueAsString(request)
                 ))
                 .build();
-        try {
-            if (parseToString(client.send(request, HttpResponse.BodyHandlers.ofString()).body()).contains("OK"))
-                return true;
-        } catch (IOException | InterruptedException ignored) {
-        }
-        return false;
+            client.send(createTableRequest, HttpResponse.BodyHandlers.ofString()).body();
+        }catch (IOException | InterruptedException ignored){}
     }
 
-    private List<String> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey) {
-        String participantData = String.join("},{", participantIds.stream().map(s -> toDataFormat(s.toString())).toList());
-        HttpRequest createParticipantsRequest = HttpRequest.newBuilder()
+    protected List<String> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
+        LimeSurveyRequest request = new LimeSurveyRequest(
+                "add_participants",
+                Map.of(
+                        "SessionKey", sessionKey,
+                        "SurveyId", surveyId,
+                        "ParticipantData", participantIds.stream().map(i ->
+                                new ParticipantData(i.toString(), i.toString())
+                        ).toList()),
+                1
+        );
+        try{
+            HttpRequest createParticipantsRequest = HttpRequest.newBuilder()
                 .uri(URI.create(getUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(
-                        "\"method\": \"add_participants\"," +
-                                "\"params\": [" +
-                                "\"sSessionKey\": \"" + sessionKey + "\"" +
-                                "\"iSurveyID\": " + surveyId +
-                                "\"aParticipantData\": " +
-                                "[ {" +
-                                participantData +
-                                "] }" +
-                                "]," +
-                                "\"id\": 1"
-                ))
-                .build();
-        try {
-            return parseToList(client.send(createParticipantsRequest, HttpResponse.BodyHandlers.ofString()).body())
-                    .stream().map(
-                            entry -> getId(entry) +
+                        objectMapper.writeValueAsString(request)
+                )).build();
+            return objectMapper.readValue(client.send(createParticipantsRequest, HttpResponse.BodyHandlers.ofString()).body(),
+                            LimeSurveyResponse.class)
+                    .result().stream().map(
+                            entry -> entry.get("firstname") +
                                     "," +
-                                    getToken(entry)
+                                    entry.get("token")
                     ).toList();
         } catch (IOException | InterruptedException e) {
             return new ArrayList<>();
         }
     }
 
-    private String parseToString(String jsonResponse) {
-        return gson
-                .fromJson(jsonResponse, JsonObject.class)
-                .get("result")
-                .getAsString();
-    }
-
-    private List<String> parseToList(String jsonResponse) {
-        JsonArray array = gson
-                .fromJson(jsonResponse, JsonObject.class)
-                .get("result")
-                .getAsJsonArray();
-        List<String> entries = new ArrayList<>();
-        for (JsonElement el : array) {
-            entries.add(el.getAsString());
+    protected String getSessionKey(){
+        LimeSurveyRequest request = new LimeSurveyRequest(
+                "get_session_key",
+                Map.of("username", properties.get("username"),
+                        "password", properties.get("password")),
+                1
+        );
+        try {
+            HttpRequest sessionKeyRequest = HttpRequest.newBuilder()
+                .uri(URI.create(getUrl()))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(
+                        objectMapper.writeValueAsString(request)
+                ))
+                .build();
+            return objectMapper.readValue(
+                    client.send(sessionKeyRequest, HttpResponse.BodyHandlers.ofString()).body(),
+                    LimeSurveyKeyResponse.class)
+                    .result();
+        }catch(IOException | InterruptedException e){
+            e.printStackTrace();
+            return "";
         }
-        return entries;
     }
 
-    private String getId(String json) {
-        return gson
-                .fromJson(json, JsonObject.class)
-                .get("firstname")
-                .getAsString();
-    }
-
-    private String getToken(String json) {
-        return gson
-                .fromJson(json, JsonObject.class)
-                .get("token")
-                .getAsString();
-    }
-
-
-    private String toDataFormat(String id) {
-        return "\"lastname\":" + id + "," +
-                "\"firstname\":" + id;
-    }
-
-    private String getUrl() {
+    protected String getUrl(){
         return properties.get("url").toString();
     }
 

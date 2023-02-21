@@ -1,9 +1,9 @@
 package io.redlink.more.studymanager.component.observation.model;
 
-import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
 
-public record LimeSurveyResponse(
-        Object result,
-        String error
-) {
-}
+public record LimeSurveyResponse (
+  List<HashMap<String, String>> result,
+  String error
+){}
