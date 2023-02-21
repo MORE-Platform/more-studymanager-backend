@@ -17,6 +17,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class LimeSurveyRequestService {
@@ -24,41 +25,52 @@ public class LimeSurveyRequestService {
     private final ComponentFactoryProperties properties;
     private final HttpClient client;
     private final Gson gson;
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final TypeReference<Map<String, String>> mapStringStringRef
+            = new TypeReference<>() {
+    };
 
-    protected LimeSurveyRequestService(ComponentFactoryProperties properties){
+    protected LimeSurveyRequestService(ComponentFactoryProperties properties, HttpClient client) {
+        this.properties = properties;
+        this.client = client;
+        gson = new Gson();
+    }
+
+    protected LimeSurveyRequestService(ComponentFactoryProperties properties) {
         this.properties = properties;
         client = HttpClient.newHttpClient();
         gson = new Gson();
     }
 
-    protected List<String> activateParticipants(Set<Integer> participantIds, String surveyId){
+    protected List<String> activateParticipants(Set<Integer> participantIds, String surveyId) {
         String sessionKey = getSessionKey();
-        if(createParticipantTable(surveyId, sessionKey))
+        if (createParticipantTable(surveyId, sessionKey))
             return createParticipants(participantIds, surveyId, sessionKey);
         return new ArrayList<>();
     }
 
-    private boolean createParticipantTable(String surveyId, String sessionKey){
+    private boolean createParticipantTable(String surveyId, String sessionKey) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(getUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(
                         "\"method\": \"activate_tokens\"," +
                                 "\"params\": [" +
-                                    "\"sSessionKey\": \""+sessionKey+"\"" +
-                                    "\"iSurveyID\": "+ surveyId +
+                                "\"sSessionKey\": \"" + sessionKey + "\"" +
+                                "\"iSurveyID\": " + surveyId +
                                 "]," +
                                 "\"id\": 1"
                 ))
                 .build();
-        try{
-            if(parseToString(client.send(request, HttpResponse.BodyHandlers.ofString()).body()).contains("OK"))
+        try {
+            if (parseToString(client.send(request, HttpResponse.BodyHandlers.ofString()).body()).contains("OK"))
                 return true;
-        }catch (IOException | InterruptedException ignored){}
+        } catch (IOException | InterruptedException ignored) {
+        }
         return false;
     }
 
-    private List<String> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
+    private List<String> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey) {
         String participantData = String.join("},{", participantIds.stream().map(s -> toDataFormat(s.toString())).toList());
         HttpRequest createParticipantsRequest = HttpRequest.newBuilder()
                 .uri(URI.create(getUrl()))
@@ -66,77 +78,55 @@ public class LimeSurveyRequestService {
                 .POST(HttpRequest.BodyPublishers.ofString(
                         "\"method\": \"add_participants\"," +
                                 "\"params\": [" +
-                                    "\"sSessionKey\": \""+sessionKey+"\"" +
-                                    "\"iSurveyID\": "+ surveyId +
-                                    "\"aParticipantData\": " +
-                                    "[ {" +
-                                        participantData +
-                                    "] }" +
+                                "\"sSessionKey\": \"" + sessionKey + "\"" +
+                                "\"iSurveyID\": " + surveyId +
+                                "\"aParticipantData\": " +
+                                "[ {" +
+                                participantData +
+                                "] }" +
                                 "]," +
                                 "\"id\": 1"
                 ))
                 .build();
-        try{
+        try {
             return parseToList(client.send(createParticipantsRequest, HttpResponse.BodyHandlers.ofString()).body())
                     .stream().map(
                             entry -> getId(entry) +
                                     "," +
                                     getToken(entry)
                     ).toList();
-        }catch(IOException | InterruptedException e){
+        } catch (IOException | InterruptedException e) {
             return new ArrayList<>();
         }
     }
 
-    private String getSessionKey(){
-        HttpRequest sessionKeyRequest = HttpRequest.newBuilder()
-                .uri(URI.create(getUrl()))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(
-                        "{\"method\": \"get_session_key\"," +
-                                "\"params\": [" +
-                                    "\"username\"" + properties.get("username").toString() + "," +
-                                    "\"password\"" + properties.get("password").toString() +
-                                "]," +
-                                "\"id\": 1" +
-                                "}"
-                ))
-                .build();
-        try {
-            return client.send(sessionKeyRequest, HttpResponse.BodyHandlers.ofString()).body();
-        }catch(IOException | InterruptedException e){
-            e.printStackTrace();
-            return "";
-        }
-    }
-
-    private String parseToString(String jsonResponse){
+    private String parseToString(String jsonResponse) {
         return gson
                 .fromJson(jsonResponse, JsonObject.class)
                 .get("result")
                 .getAsString();
     }
 
-    private List<String> parseToList(String jsonResponse){
+    private List<String> parseToList(String jsonResponse) {
         JsonArray array = gson
                 .fromJson(jsonResponse, JsonObject.class)
                 .get("result")
                 .getAsJsonArray();
         List<String> entries = new ArrayList<>();
-        for(JsonElement el : array){
+        for (JsonElement el : array) {
             entries.add(el.getAsString());
         }
         return entries;
     }
 
-    private String getId(String json){
+    private String getId(String json) {
         return gson
                 .fromJson(json, JsonObject.class)
                 .get("firstname")
                 .getAsString();
     }
 
-    private String getToken(String json){
+    private String getToken(String json) {
         return gson
                 .fromJson(json, JsonObject.class)
                 .get("token")
@@ -144,36 +134,16 @@ public class LimeSurveyRequestService {
     }
 
 
-    private String toDataFormat(String id){
+    private String toDataFormat(String id) {
         return "\"lastname\":" + id + "," +
                 "\"firstname\":" + id;
     }
 
-    private String getUrl(){
+    private String getUrl() {
         return properties.get("url").toString();
-import java.util.Map;
-
-public class LimeSurveyRequestService {
-
-    private static LimeSurveyRequestService instance;
-    private static HttpClient client;
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final TypeReference<Map<String, String>> mapStringStringRef
-            = new TypeReference<>() {
-    };
-
-    private LimeSurveyRequestService() {
-        client = HttpClient.newHttpClient();
     }
 
-    public static LimeSurveyRequestService getInstance() {
-        if (LimeSurveyRequestService.instance == null) {
-            LimeSurveyRequestService.instance = new LimeSurveyRequestService();
-        }
-        return LimeSurveyRequestService.instance;
-    }
-
-    private String getSessionKey() {
+    private String getSessionKey () {
         HttpRequest sessionKeyRequest = createHttpRequest(
                 "{\"method\": \"get_session_key\", \"params\": [\"more-admin\", \"\"], \"id\": 1}");
         try {
@@ -184,14 +154,14 @@ public class LimeSurveyRequestService {
         }
     }
 
-    private Map<String, Object> transformResultToMap(String content) throws JsonProcessingException {
+    private Map<String, Object> transformResultToMap (String content) throws JsonProcessingException {
         TypeReference<Map<String, Object>> typeRef
                 = new TypeReference<>() {
         };
         return mapper.readValue(content, typeRef);
     }
 
-    public JsonNode listSurveysByUser(String username, String filter, Integer start, Integer size) {
+    public JsonNode listSurveysByUser (String username, String filter, Integer start, Integer size){
         try {
             HttpRequest listSurveysRequest = createHttpRequest(
                     String.format("{\"method\": \"list_surveys\", \"params\": [\"%s\", \"%s\"], \"id\": 1}",
@@ -217,7 +187,8 @@ public class LimeSurveyRequestService {
         }
     }
 
-    private List<Map<String, Object>> handlePagination(List<Map<String, Object>> list, Integer start, Integer size) {
+    private List<Map<String, Object>> handlePagination (List < Map < String, Object >> list, Integer start, Integer
+    size){
         if (start != null && size != null) {
             List<Map<String, Object>> sublist = list.subList(start, list.size());
             list = size < sublist.size() ? sublist.subList(0, size) : sublist;
@@ -225,7 +196,7 @@ public class LimeSurveyRequestService {
         return list;
     }
 
-    private HttpRequest createHttpRequest(String body) {
+    private HttpRequest createHttpRequest (String body){
         return HttpRequest.newBuilder()
                 .uri(URI.create("https://lime.platform-test.more.redlink.io/admin/remotecontrol"))
                 .header("Content-Type", "application/json")
@@ -235,7 +206,7 @@ public class LimeSurveyRequestService {
                 .build();
     }
 
-    private boolean isInFilter(String filter, String text) {
+    private boolean isInFilter (String filter, String text){
         if (filter == null)
             return true;
         return text.toLowerCase().contains(filter.toLowerCase());
