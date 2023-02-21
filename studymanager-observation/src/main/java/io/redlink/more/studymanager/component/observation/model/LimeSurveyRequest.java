@@ -5,6 +5,6 @@ import java.util.Map;
 
 public record LimeSurveyRequest (
     String method,
-    List<String> params,
+    Map<Object, Object> params,
     int id
 ){}

@@ -14,6 +14,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class LimeSurveyRequestService {
@@ -43,9 +44,9 @@ public class LimeSurveyRequestService {
     protected void createParticipantTable(String surveyId, String sessionKey){
         LimeSurveyRequest request = new LimeSurveyRequest(
                 "activate_tokens",
-                List.of(
-                        "SessionKey: " + sessionKey,
-                        "SurveyId: " +   surveyId
+                Map.of(
+                        "SessionKey", sessionKey,
+                        "SurveyId", surveyId
                 ),
                 1
         );
@@ -64,10 +65,10 @@ public class LimeSurveyRequestService {
     protected List<String> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
         LimeSurveyRequest request = new LimeSurveyRequest(
                 "add_participants",
-                List.of(
-                        "SessionKey: " + sessionKey,
-                        "SurveyId: " + surveyId,
-                        "ParticipantData: " + participantIds.stream().map(i ->
+                Map.of(
+                        "SessionKey", sessionKey,
+                        "SurveyId", surveyId,
+                        "ParticipantData", participantIds.stream().map(i ->
                                 new ParticipantData(i.toString(), i.toString())
                         ).toList()),
                 1
@@ -94,8 +95,8 @@ public class LimeSurveyRequestService {
     protected String getSessionKey(){
         LimeSurveyRequest request = new LimeSurveyRequest(
                 "get_session_key",
-                List.of("username: " + properties.get("username"),
-                        "password: " + properties.get("password")),
+                Map.of("username", properties.get("username"),
+                        "password", properties.get("password")),
                 1
         );
         try {
