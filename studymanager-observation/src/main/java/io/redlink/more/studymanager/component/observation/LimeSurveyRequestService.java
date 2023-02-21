@@ -24,6 +24,12 @@ public class LimeSurveyRequestService {
         gson = new Gson();
     }
 
+    protected LimeSurveyRequestService(HttpClient client, ComponentFactoryProperties properties){
+        this.properties = properties;
+        this.client = client;
+        gson = new Gson();
+    }
+
     protected List<String> activateParticipants(Set<Integer> participantIds, String surveyId){
         String sessionKey = getSessionKey();
         if(createParticipantTable(surveyId, sessionKey))
@@ -31,7 +37,7 @@ public class LimeSurveyRequestService {
         return new ArrayList<>();
     }
 
-    private boolean createParticipantTable(String surveyId, String sessionKey){
+    protected boolean createParticipantTable(String surveyId, String sessionKey){
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(getUrl()))
                 .header("Content-Type", "application/json")
@@ -51,7 +57,7 @@ public class LimeSurveyRequestService {
         return false;
     }
 
-    private List<String> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
+    protected List<String> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
         String participantData = String.join("},{", participantIds.stream().map(s -> toDataFormat(s.toString())).toList());
         HttpRequest createParticipantsRequest = HttpRequest.newBuilder()
                 .uri(URI.create(getUrl()))
@@ -81,7 +87,7 @@ public class LimeSurveyRequestService {
         }
     }
 
-    private String getSessionKey(){
+    protected String getSessionKey(){
         HttpRequest sessionKeyRequest = HttpRequest.newBuilder()
                 .uri(URI.create(getUrl()))
                 .header("Content-Type", "application/json")
@@ -103,33 +109,33 @@ public class LimeSurveyRequestService {
         }
     }
 
-    private String parseToString(String jsonResponse){
+    protected String parseToString(String jsonResponse){
         return gson
                 .fromJson(jsonResponse, JsonObject.class)
                 .get("result")
-                .getAsString();
+                .toString();
     }
 
-    private List<String> parseToList(String jsonResponse){
+    protected List<String> parseToList(String jsonResponse){
         JsonArray array = gson
                 .fromJson(jsonResponse, JsonObject.class)
                 .get("result")
                 .getAsJsonArray();
         List<String> entries = new ArrayList<>();
         for(JsonElement el : array){
-            entries.add(el.getAsString());
+            entries.add(el.toString());
         }
         return entries;
     }
 
-    private String getId(String json){
+    protected String getId(String json){
         return gson
                 .fromJson(json, JsonObject.class)
                 .get("firstname")
                 .getAsString();
     }
 
-    private String getToken(String json){
+    protected String getToken(String json){
         return gson
                 .fromJson(json, JsonObject.class)
                 .get("token")
@@ -137,12 +143,12 @@ public class LimeSurveyRequestService {
     }
 
 
-    private String toDataFormat(String id){
+    protected String toDataFormat(String id){
         return "\"lastname\":" + id + "," +
                 "\"firstname\":" + id;
     }
 
-    private String getUrl(){
+    protected String getUrl(){
         return properties.get("url").toString();
     }
 }
