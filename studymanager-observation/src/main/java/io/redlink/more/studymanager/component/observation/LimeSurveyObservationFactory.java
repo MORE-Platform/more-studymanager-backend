@@ -22,7 +22,10 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
 
     private LimeSurveyRequestService limeSurveyRequestService;
 
-
+    protected LimeSurveyObservationFactory(ComponentFactoryProperties properties, LimeSurveyRequestService limeSurveyRequestService) {
+        this.componentProperties = properties;
+        this.limeSurveyRequestService = limeSurveyRequestService;
+    }
     @Override
     public ComponentFactory init(ComponentFactoryProperties componentProperties){
         this.componentProperties = componentProperties;
@@ -67,14 +70,13 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
 
     @Override
     public JsonNode handleAPICall(String slug, User user, JsonNode input) throws ApiCallException {
-        LimeSurveyRequestService client = LimeSurveyRequestService.getInstance();
         String filter = input.get("filter") != null ? input.get("filter").asText() : null;
         Integer size = input.get("size") != null ? input.get("size").asInt() : null;
         Integer start = input.get("start") != null ? input.get("start").asInt() : null;
         if (Objects.equals(slug, "surveys")) {
             JsonNode response;
-            response = client.listSurveysByUser(user.username(), filter, start, size);
-            if (response.get("error") != null) {
+            response = limeSurveyRequestService.listSurveysByUser(user.username(), filter, start, size);
+            if (response != null && response.get("error") != null) {
                 throw new ApiCallException(400, response.get("error").asText());
             }
             return response;
