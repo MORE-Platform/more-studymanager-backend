@@ -1,6 +1,8 @@
 package io.redlink.more.studymanager.component.observation;
 
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.gson.*;
+import io.redlink.more.studymanager.component.observation.model.LimeSurveyRequest;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 
 import java.io.IOException;
@@ -10,7 +12,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-import java.io.*;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -29,12 +30,6 @@ public class LimeSurveyRequestService {
     private final TypeReference<Map<String, String>> mapStringStringRef
             = new TypeReference<>() {
     };
-
-    protected LimeSurveyRequestService(ComponentFactoryProperties properties, HttpClient client) {
-        this.properties = properties;
-        this.client = client;
-        gson = new Gson();
-    }
 
     protected LimeSurveyRequestService(ComponentFactoryProperties properties) {
         this.properties = properties;
@@ -163,9 +158,11 @@ public class LimeSurveyRequestService {
 
     public JsonNode listSurveysByUser (String username, String filter, Integer start, Integer size){
         try {
-            HttpRequest listSurveysRequest = createHttpRequest(
-                    String.format("{\"method\": \"list_surveys\", \"params\": [\"%s\", \"%s\"], \"id\": 1}",
-                            getSessionKey(), username));
+            LimeSurveyRequest request = new LimeSurveyRequest("list_surveys", List.of(getSessionKey(), username), 1);
+            ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+            String json = ow.writeValueAsString(request);
+
+            HttpRequest listSurveysRequest = createHttpRequest(json);
             String response = client.send(listSurveysRequest, HttpResponse.BodyHandlers.ofString()).body();
             Map<String, Object> responseAsMap = transformResultToMap(response);
             if (responseAsMap.get("error") != null) {
