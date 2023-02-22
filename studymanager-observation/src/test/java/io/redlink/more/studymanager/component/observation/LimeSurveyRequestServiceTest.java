@@ -1,20 +1,18 @@
 package io.redlink.more.studymanager.component.observation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.redlink.more.studymanager.component.observation.model.LimeSurveyParticipantResponse;
 import io.redlink.more.studymanager.component.observation.model.ParticipantData;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 
 public class LimeSurveyRequestServiceTest {
@@ -25,23 +23,98 @@ public class LimeSurveyRequestServiceTest {
 
     @Test
     void parseRequestTest() throws JsonProcessingException {
-        System.out.println(service.parseRequest("get_session_key",
-                Map.of("username", "username",
-                        "password", "password"),
-                1));
+        Assertions.assertEquals(service.parseRequest("get_session_key",
+                List.of("username",
+                        "password"),
+                1),
+                """
+                        {
+                          "method" : "get_session_key",
+                          "params" : [ "username", "password" ],
+                          "id" : 1
+                        }""");
 
-        System.out.println(service.parseRequest("add_participants",
-                        Map.of(
-                                "SessionKey", 123,
-                                "SurveyId", 123,
-                                "ParticipantData", List.of(
-                                        new ParticipantData("123", "456"),
-                                        new ParticipantData("123", "456"))),
-                        1));
+        Assertions.assertEquals(service.parseRequest("add_participants",
+                        List.of(
+                                1,
+                                2,
+                                List.of(
+                                        new ParticipantData("3", "4", null),
+                                        new ParticipantData("5", "6", null))),
+                        1),
+                """
+                        {
+                          "method" : "add_participants",
+                          "params" : [ 1, 2, [ {
+                            "firstname" : "3",
+                            "lastname" : "4"
+                          }, {
+                            "firstname" : "5",
+                            "lastname" : "6"
+                          } ] ],
+                          "id" : 1
+                        }""");
 
-        System.out.println(service.parseRequest("get_session_key",
-                Map.of("username", "username",
-                        "password", "password"),
-                1));
+        Assertions.assertEquals(service.parseRequest("activate_tokens", List.of("1", "2"), 1),
+                """
+                        {
+                          "method" : "activate_tokens",
+                          "params" : [ "1", "2" ],
+                          "id" : 1
+                        }""");
+    }
+
+    @Test
+    void responseTest() throws JsonProcessingException {
+        String response = """
+                {
+                    "id": 1,
+                    	"result": [
+                    		{
+                    			"sent": "N",
+                    			"remindersent": "N",
+                    			"remindercount": 0,
+                    			"completed": "N",
+                    			"usesleft": 1,
+                    			"emailstatus": "OK",
+                    			"lastname": "test1",
+                    			"firstname": "test1",
+                    			"token": "1",
+                    			"language": "",
+                    			"email": "",
+                    			"tid": "1",
+                    			"participant_id": null,
+                    			"blacklisted": null,
+                    			"validfrom": null,
+                    			"validuntil": null,
+                    			"mpid": null
+                    		},
+                    		{
+                    			"sent": "N",
+                    			"remindersent": "N",
+                    			"remindercount": 0,
+                    			"completed": "N",
+                    			"usesleft": 1,
+                    			"emailstatus": "OK",
+                    			"lastname": "test2",
+                    			"firstname": "test2",
+                    			"token": "2",
+                    			"language": "",
+                    			"email": "",
+                    			"tid": "1",
+                    			"participant_id": null,
+                    			"blacklisted": null,
+                    			"validfrom": null,
+                    			"validuntil": null,
+                    			"mpid": null
+                    		}
+                    	],
+                    	"error": null
+                }""";
+        List<ParticipantData> expectedList = new ArrayList<>();
+        expectedList.add(new ParticipantData("test1", "test1", "1"));
+        expectedList.add(new ParticipantData("test2", "test2", "2"));
+        Assertions.assertEquals(new ObjectMapper().readValue(response, LimeSurveyParticipantResponse.class).result(),
+                expectedList);
     }
 }

@@ -4,6 +4,6 @@ import java.util.List;
 
 public record LimeSurveyRequest (
     String method,
-    Object params,
+    List<Object> params,
     Integer id
 ){}
