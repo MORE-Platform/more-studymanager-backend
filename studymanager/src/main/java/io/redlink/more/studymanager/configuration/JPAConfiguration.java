@@ -3,12 +3,14 @@ package io.redlink.more.studymanager.configuration;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import javax.sql.DataSource;
 
 @Configuration
 public class JPAConfiguration {
     @Bean
+    @Profile("test-containers-flyway")
     public DataSource dataSource()
     {
         DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
