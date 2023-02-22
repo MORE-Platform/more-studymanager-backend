@@ -1,9 +1,6 @@
 spring:
-  datasource:
-    url: jdbc:tc:postgresql:15-alpine:///test_database
-    username: user
-    password: password
-
   session:
     # Disable session-store during tests
     store-type: none
+  hikari:
+    minimum-idle: 5
