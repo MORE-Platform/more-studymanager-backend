@@ -29,7 +29,6 @@ public class LimeSurveyRequestService {
     private final TypeReference<Map<String, String>> mapStringStringRef
             = new TypeReference<>() {
     };
-    private final ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
 
 
     protected LimeSurveyRequestService(ComponentFactoryProperties properties) {

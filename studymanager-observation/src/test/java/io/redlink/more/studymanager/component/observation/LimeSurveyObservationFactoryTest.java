@@ -7,7 +7,6 @@ import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import io.redlink.more.studymanager.core.model.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
@@ -18,17 +17,16 @@ import static org.mockito.Mockito.*;
 @ContextConfiguration(classes = LimeSurveyObservationFactory.class)
 public class LimeSurveyObservationFactoryTest {
 
-    @Autowired
-    LimeSurveyObservationFactory factory;
+
     @MockBean
     LimeSurveyRequestService service;
     @MockBean
     ComponentFactoryProperties properties;
-
     ObjectMapper mapper = new ObjectMapper();
 
     @Test
     void testListSurveysIsCalled() throws Exception {
+        LimeSurveyObservationFactory factory = new LimeSurveyObservationFactory(properties, service);
         String slug = "surveys";
         User user = new User("username");
         JsonNode input = mapper.readTree("{}");
@@ -38,6 +36,7 @@ public class LimeSurveyObservationFactoryTest {
 
     @Test
     void testSurveyIsNotCalled() throws Exception {
+        LimeSurveyObservationFactory factory = new LimeSurveyObservationFactory(properties, service);
         String slug = "something-else";
         Exception exception = Assertions.assertThrows(ApiCallException.class,
                 () -> factory.handleAPICall(slug, null, mapper.readTree("{}")));
@@ -46,9 +45,11 @@ public class LimeSurveyObservationFactoryTest {
 
     @Test
     void testListSurveysHasError() throws Exception {
+        LimeSurveyObservationFactory factory = new LimeSurveyObservationFactory(properties, service);
         when(service.listSurveysByUser(anyString(), anyString(), anyInt(), anyInt()))
                 .thenReturn(mapper.readTree("{\"error\": \"some error\"}"));
-        Assertions.assertThrows(ApiCallException.class,
-                () -> factory.handleAPICall("", null, mapper.readTree("{}")));
+        ApiCallException exception = Assertions.assertThrows(ApiCallException.class,
+                () -> factory.handleAPICall("surveys", new User("username"), mapper.readTree("{\"filter\":  \"some-filter\", \"size\": 0, \"start\":  0}")));
+        Assertions.assertEquals(400, exception.getStatus());
     }
 }
