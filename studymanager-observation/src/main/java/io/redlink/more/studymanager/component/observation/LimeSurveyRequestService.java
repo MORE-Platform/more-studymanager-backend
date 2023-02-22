@@ -1,20 +1,14 @@
 package io.redlink.more.studymanager.component.observation;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.google.gson.*;
-import io.redlink.more.studymanager.component.observation.model.LimeSurveyRequest;
+import io.redlink.more.studymanager.component.observation.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.redlink.more.studymanager.component.observation.model.LimeSurveyKeyResponse;
-import io.redlink.more.studymanager.component.observation.model.LimeSurveyRequest;
-import io.redlink.more.studymanager.component.observation.model.LimeSurveyResponse;
-import io.redlink.more.studymanager.component.observation.model.ParticipantData;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 
 import java.io.IOException;
-import com.fasterxml.jackson.core.JsonProcessingException;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.net.URI;
@@ -30,43 +24,34 @@ public class LimeSurveyRequestService {
 
     private final ComponentFactoryProperties properties;
     private final HttpClient client;
-    private final Gson gson;
     private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
     private final TypeReference<Map<String, String>> mapStringStringRef
             = new TypeReference<>() {
     };
-    private final ObjectMapper objectMapper;
+    private final ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+
 
     protected LimeSurveyRequestService(ComponentFactoryProperties properties) {
         this.properties = properties;
         client = HttpClient.newHttpClient();
-        objectMapper = new ObjectMapper();
     }
 
     protected LimeSurveyRequestService(HttpClient client, ComponentFactoryProperties properties){
         this.properties = properties;
         this.client = client;
-        objectMapper = new ObjectMapper();
     }
 
     protected List<String> activateParticipants(Set<Integer> participantIds, String surveyId) {
         String sessionKey = getSessionKey();
-        if (createParticipantTable(surveyId, sessionKey))
-            return createParticipants(participantIds, surveyId, sessionKey);
-        return new ArrayList<>();
         createParticipantTable(surveyId, sessionKey);
         return createParticipants(participantIds, surveyId, sessionKey);
     }
 
-    private boolean createParticipantTable(String surveyId, String sessionKey) {
-        HttpRequest request = HttpRequest.newBuilder()
     protected void createParticipantTable(String surveyId, String sessionKey){
         LimeSurveyRequest request = new LimeSurveyRequest(
                 "activate_tokens",
-                Map.of(
-                        "SessionKey", sessionKey,
-                        "SurveyId", surveyId
-                ),
+                List.of(sessionKey, surveyId),
                 1
         );
         try{
@@ -74,7 +59,7 @@ public class LimeSurveyRequestService {
                 .uri(URI.create(getUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(
-                        objectMapper.writeValueAsString(request)
+                        objectWriter.writeValueAsString(request)
                 ))
                 .build();
             client.send(createTableRequest, HttpResponse.BodyHandlers.ofString()).body();
@@ -84,10 +69,7 @@ public class LimeSurveyRequestService {
     protected List<String> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
         LimeSurveyRequest request = new LimeSurveyRequest(
                 "add_participants",
-                Map.of(
-                        "SessionKey", sessionKey,
-                        "SurveyId", surveyId,
-                        "ParticipantData", participantIds.stream().map(i ->
+                List.of(sessionKey, surveyId, participantIds.stream().map(i ->
                                 new ParticipantData(i.toString(), i.toString())
                         ).toList()),
                 1
@@ -97,14 +79,17 @@ public class LimeSurveyRequestService {
                 .uri(URI.create(getUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(
-                        objectMapper.writeValueAsString(request)
+                        objectWriter.writeValueAsString(request)
                 )).build();
-            return objectMapper.readValue(client.send(createParticipantsRequest, HttpResponse.BodyHandlers.ofString()).body(),
-                            LimeSurveyResponse.class)
+            return mapper.readValue(client.send(createParticipantsRequest, HttpResponse.BodyHandlers.ofString()).body(),
+                            LimeSurveyListResponse.class)
                     .result().stream().map(
-                            entry -> entry.get("firstname") +
-                                    "," +
-                                    entry.get("token")
+                            entry -> {
+                                Map<String, String> entryMap = mapper.convertValue(entry, mapStringStringRef);
+                                return entryMap.get("firstname") +
+                                "," +
+                                entryMap.get("token");
+                            }
                     ).toList();
         } catch (IOException | InterruptedException e) {
             return new ArrayList<>();
@@ -114,22 +99,15 @@ public class LimeSurveyRequestService {
     protected String getSessionKey(){
         LimeSurveyRequest request = new LimeSurveyRequest(
                 "get_session_key",
-                Map.of("username", properties.get("username"),
-                        "password", properties.get("password")),
+                List.of(properties.get("username"), properties.get("password")),
                 1
         );
         try {
-            HttpRequest sessionKeyRequest = HttpRequest.newBuilder()
-                .uri(URI.create(getUrl()))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(
-                        objectMapper.writeValueAsString(request)
-                ))
-                .build();
-            return objectMapper.readValue(
+            HttpRequest sessionKeyRequest = createHttpRequest(objectWriter.writeValueAsString(request));
+            return mapper.readValue(
                     client.send(sessionKeyRequest, HttpResponse.BodyHandlers.ofString()).body(),
-                    LimeSurveyKeyResponse.class)
-                    .result();
+                    LimeSurveyObjectResponse.class)
+                    .result().toString();
         }catch(IOException | InterruptedException e){
             e.printStackTrace();
             return "";
@@ -139,38 +117,17 @@ public class LimeSurveyRequestService {
     protected String getUrl(){
         return properties.get("url").toString();
     }
-
-    private String getSessionKey () {
-        HttpRequest sessionKeyRequest = createHttpRequest(
-                "{\"method\": \"get_session_key\", \"params\": [\"more-admin\", \"\"], \"id\": 1}");
-        try {
-            String response = client.send(sessionKeyRequest, HttpResponse.BodyHandlers.ofString()).body();
-            return mapper.readValue(response, mapStringStringRef).get("result");
-        } catch (InterruptedException | IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Map<String, Object> transformResultToMap (String content) throws JsonProcessingException {
-        TypeReference<Map<String, Object>> typeRef
-                = new TypeReference<>() {
-        };
-        return mapper.readValue(content, typeRef);
-    }
-
     public JsonNode listSurveysByUser (String username, String filter, Integer start, Integer size){
         try {
             LimeSurveyRequest request = new LimeSurveyRequest("list_surveys", List.of(getSessionKey(), username), 1);
-            ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-            String json = ow.writeValueAsString(request);
-
-            HttpRequest listSurveysRequest = createHttpRequest(json);
-            String response = client.send(listSurveysRequest, HttpResponse.BodyHandlers.ofString()).body();
-            Map<String, Object> responseAsMap = transformResultToMap(response);
-            if (responseAsMap.get("error") != null) {
-                return mapper.convertValue(responseAsMap, JsonNode.class);
+            HttpRequest listSurveysRequest = createHttpRequest(objectWriter.writeValueAsString(request));
+            LimeSurveyListResponse response =
+                    mapper.readValue(client.send(listSurveysRequest, HttpResponse.BodyHandlers.ofString()).body(),
+                            LimeSurveyListResponse.class);
+            if (response.error() != null) {
+                return mapper.convertValue(response.result(), JsonNode.class);
             }
-            ArrayNode studies = mapper.convertValue(responseAsMap.get("result"), ArrayNode.class);
+            ArrayNode studies = mapper.convertValue(response.result(), ArrayNode.class);
             List<Map<String, Object>> transformedResult = new ArrayList<>();
             studies.forEach(entry -> {
                 if (isInFilter(filter, entry.get("surveyls_title").asText())) {
@@ -197,7 +154,7 @@ public class LimeSurveyRequestService {
 
     private HttpRequest createHttpRequest (String body){
         return HttpRequest.newBuilder()
-                .uri(URI.create("https://lime.platform-test.more.redlink.io/admin/remotecontrol"))
+                .uri(URI.create(getUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest
                         .BodyPublishers

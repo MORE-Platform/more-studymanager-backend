@@ -22,7 +22,9 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
 
     private LimeSurveyRequestService limeSurveyRequestService;
 
-    protected LimeSurveyObservationFactory(ComponentFactoryProperties properties, LimeSurveyRequestService limeSurveyRequestService) {
+    public LimeSurveyObservationFactory() {}
+
+    public LimeSurveyObservationFactory(ComponentFactoryProperties properties, LimeSurveyRequestService limeSurveyRequestService) {
         this.componentProperties = properties;
         this.limeSurveyRequestService = limeSurveyRequestService;
     }
