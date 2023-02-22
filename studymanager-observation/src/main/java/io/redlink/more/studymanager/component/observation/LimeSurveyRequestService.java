@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.component.observation;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.component.observation.model.LimeSurveyKeyResponse;
 import io.redlink.more.studymanager.component.observation.model.LimeSurveyRequest;
@@ -42,20 +43,17 @@ public class LimeSurveyRequestService {
     }
 
     protected void createParticipantTable(String surveyId, String sessionKey){
-        LimeSurveyRequest request = new LimeSurveyRequest(
-                "activate_tokens",
-                Map.of(
-                        "SessionKey", sessionKey,
-                        "SurveyId", surveyId
-                ),
-                1
-        );
         try{
             HttpRequest createTableRequest = HttpRequest.newBuilder()
                 .uri(URI.create(getUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(
-                        objectMapper.writeValueAsString(request)
+                        parseRequest("activate_tokens",
+                                Map.of(
+                                        "SessionKey", sessionKey,
+                                        "SurveyId", surveyId
+                                ),
+                                1)
                 ))
                 .build();
             client.send(createTableRequest, HttpResponse.BodyHandlers.ofString()).body();
@@ -63,29 +61,26 @@ public class LimeSurveyRequestService {
     }
 
     protected List<String> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
-        LimeSurveyRequest request = new LimeSurveyRequest(
-                "add_participants",
-                Map.of(
-                        "SessionKey", sessionKey,
-                        "SurveyId", surveyId,
-                        "ParticipantData", participantIds.stream().map(i ->
-                                new ParticipantData(i.toString(), i.toString())
-                        ).toList()),
-                1
-        );
         try{
             HttpRequest createParticipantsRequest = HttpRequest.newBuilder()
                 .uri(URI.create(getUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(
-                        objectMapper.writeValueAsString(request)
+                        parseRequest("add_participants",
+                                Map.of(
+                                        "SessionKey", sessionKey,
+                                        "SurveyId", surveyId,
+                                        "ParticipantData", participantIds.stream().map(i ->
+                                                new ParticipantData(i.toString(), i.toString())
+                                        ).toList()),
+                                1)
                 )).build();
             return objectMapper.readValue(client.send(createParticipantsRequest, HttpResponse.BodyHandlers.ofString()).body(),
                             LimeSurveyResponse.class)
                     .result().stream().map(
-                            entry -> entry.get("firstname") +
+                            entry -> ((Map<String, String>) entry).get("firstname") +
                                     "," +
-                                    entry.get("token")
+                                    ((Map<String,String>)entry).get("token")
                     ).toList();
         }catch(IOException | InterruptedException e){
             return new ArrayList<>();
@@ -93,18 +88,15 @@ public class LimeSurveyRequestService {
     }
 
     protected String getSessionKey(){
-        LimeSurveyRequest request = new LimeSurveyRequest(
-                "get_session_key",
-                Map.of("username", properties.get("username"),
-                        "password", properties.get("password")),
-                1
-        );
         try {
             HttpRequest sessionKeyRequest = HttpRequest.newBuilder()
                 .uri(URI.create(getUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(
-                        objectMapper.writeValueAsString(request)
+                        parseRequest("get_session_key",
+                                Map.of("username", properties.get("username"),
+                                        "password", properties.get("password")),
+                                1)
                 ))
                 .build();
             return objectMapper.readValue(
@@ -116,6 +108,13 @@ public class LimeSurveyRequestService {
             return "";
         }
     }
+
+    protected String parseRequest(String method, Object params, Integer id) throws JsonProcessingException {
+        return objectMapper.writeValueAsString(
+                new LimeSurveyRequest(method, params, id)
+        );
+    }
+
 
     protected String getUrl(){
         return properties.get("url").toString();
