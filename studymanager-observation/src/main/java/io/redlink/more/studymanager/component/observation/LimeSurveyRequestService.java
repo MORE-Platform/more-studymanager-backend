@@ -2,7 +2,13 @@ package io.redlink.more.studymanager.component.observation;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.redlink.more.studymanager.component.observation.model.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import io.redlink.more.studymanager.component.observation.model.*;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 
 import java.io.IOException;
@@ -30,8 +36,7 @@ public class LimeSurveyRequestService {
             = new TypeReference<>() {
     };
 
-
-    protected LimeSurveyRequestService(ComponentFactoryProperties properties) {
+    protected LimeSurveyRequestService(ComponentFactoryProperties properties){
         this.properties = properties;
         client = HttpClient.newHttpClient();
     }
@@ -41,72 +46,51 @@ public class LimeSurveyRequestService {
         this.client = client;
     }
 
-    protected List<String> activateParticipants(Set<Integer> participantIds, String surveyId) {
+    protected List<ParticipantData> activateParticipants(Set<Integer> participantIds, String surveyId){
         String sessionKey = getSessionKey();
         createParticipantTable(surveyId, sessionKey);
         return createParticipants(participantIds, surveyId, sessionKey);
     }
 
     protected void createParticipantTable(String surveyId, String sessionKey){
-        LimeSurveyRequest request = new LimeSurveyRequest(
-                "activate_tokens",
-                List.of(sessionKey, surveyId),
-                1
-        );
         try{
-            HttpRequest createTableRequest = HttpRequest.newBuilder()
-                .uri(URI.create(getUrl()))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(
-                        objectWriter.writeValueAsString(request)
-                ))
-                .build();
-            client.send(createTableRequest, HttpResponse.BodyHandlers.ofString()).body();
+            HttpRequest request = createHttpRequest(
+                        parseRequest("activate_tokens",
+                                List.of(sessionKey, surveyId),
+                                1)
+                );
+            client.send(request, HttpResponse.BodyHandlers.ofString()).body();
         }catch (IOException | InterruptedException ignored){}
     }
 
-    protected List<String> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
-        LimeSurveyRequest request = new LimeSurveyRequest(
-                "add_participants",
-                List.of(sessionKey, surveyId, participantIds.stream().map(i ->
-                                new ParticipantData(i.toString(), i.toString())
-                        ).toList()),
-                1
-        );
+    protected List<ParticipantData> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
         try{
-            HttpRequest createParticipantsRequest = HttpRequest.newBuilder()
-                .uri(URI.create(getUrl()))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(
-                        objectWriter.writeValueAsString(request)
-                )).build();
-            return mapper.readValue(client.send(createParticipantsRequest, HttpResponse.BodyHandlers.ofString()).body(),
-                            LimeSurveyListResponse.class)
-                    .result().stream().map(
-                            entry -> {
-                                Map<String, String> entryMap = mapper.convertValue(entry, mapStringStringRef);
-                                return entryMap.get("firstname") +
-                                "," +
-                                entryMap.get("token");
-                            }
-                    ).toList();
-        } catch (IOException | InterruptedException e) {
+            HttpRequest request = createHttpRequest(
+                        parseRequest("add_participants",
+                                List.of(sessionKey, surveyId, participantIds.stream().map(i ->
+                                                new ParticipantData(i.toString(), i.toString(), null)
+                                        ).toList()),
+                                1)
+                );
+            return mapper.readValue(client.send(request, HttpResponse.BodyHandlers.ofString()).body(),
+                            LimeSurveyParticipantResponse.class)
+                    .result();
+        }catch(IOException | InterruptedException e){
             return new ArrayList<>();
         }
     }
 
     protected String getSessionKey(){
-        LimeSurveyRequest request = new LimeSurveyRequest(
-                "get_session_key",
-                List.of(properties.get("username"), properties.get("password")),
-                1
-        );
         try {
-            HttpRequest sessionKeyRequest = createHttpRequest(objectWriter.writeValueAsString(request));
+            HttpRequest request = createHttpRequest(
+                        parseRequest("get_session_key",
+                                List.of(properties.get("username"), properties.get("password")),
+                                1)
+                );
             return mapper.readValue(
-                    client.send(sessionKeyRequest, HttpResponse.BodyHandlers.ofString()).body(),
-                    LimeSurveyObjectResponse.class)
-                    .result().toString();
+                    client.send(request, HttpResponse.BodyHandlers.ofString()).body(),
+                    LimeSurveyKeyResponse.class)
+                    .result();
         }catch(IOException | InterruptedException e){
             e.printStackTrace();
             return "";
