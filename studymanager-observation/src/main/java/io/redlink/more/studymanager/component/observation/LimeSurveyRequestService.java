@@ -77,7 +77,7 @@ public class LimeSurveyRequestService {
         try {
             HttpRequest request = createHttpRequest(
                         parseRequest("get_session_key",
-                                List.of(properties.get("username"), properties.get("password")),
+                                List.of(properties.get("username"), "hBqRPy9dLRLyvxp25M"),
                                 1)
                 );
             return mapper.readValue(
@@ -96,8 +96,7 @@ public class LimeSurveyRequestService {
 
     public JsonNode listSurveysByUser (String username, String filter, Integer start, Integer size){
         try {
-            LimeSurveyRequest request = new LimeSurveyRequest("list_surveys", List.of(getSessionKey(), username), 1);
-            HttpRequest listSurveysRequest = createHttpRequest(objectWriter.writeValueAsString(request));
+            HttpRequest listSurveysRequest = createHttpRequest(parseRequest("list_surveys", List.of(getSessionKey(), username), 1));
             LimeSurveyListSurveyResponse response =
                     mapper.readValue(client.send(listSurveysRequest, HttpResponse.BodyHandlers.ofString()).body(),
                             LimeSurveyListSurveyResponse.class);
