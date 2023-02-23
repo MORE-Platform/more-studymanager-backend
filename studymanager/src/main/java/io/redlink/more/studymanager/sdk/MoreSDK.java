@@ -98,7 +98,7 @@ public class MoreSDK {
     public Set<Integer> listParticipants(long studyId, Integer studyGroupId, Set<Participant.Status> status) {
         return participantService.listParticipants(studyId).stream()
                 .filter(p -> studyGroupId == null || studyGroupId.equals(p.getStudyGroupId()))
-                .filter(p -> studyGroupId == null || status.contains(p.getStatus()))
+                .filter(p -> status == null || status.contains(p.getStatus()))
                 .map(Participant::getParticipantId)
                 .collect(Collectors.toSet());
     }
