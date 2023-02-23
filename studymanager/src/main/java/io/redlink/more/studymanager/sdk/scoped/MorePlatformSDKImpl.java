@@ -30,7 +30,7 @@ public abstract class MorePlatformSDKImpl implements MorePlatformSDK {
     }
 
     @Override
-    public Set<Integer> participantIds(){ return sdk.listActiveParticipants(studyId, studyGroupId); }
+    public Set<Integer> participantIds(){ return sdk.listParticipants(studyId, studyGroupId, null); }
 
     @Override
     public <T extends Serializable> void setValue(String name, T value) {

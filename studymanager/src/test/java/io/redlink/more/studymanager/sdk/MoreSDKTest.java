@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.service.ElasticService;
 import io.redlink.more.studymanager.service.InterventionService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -105,9 +106,9 @@ class MoreSDKTest {
                 new Participant().setParticipantId(6).setStatus(Participant.Status.NEW)
         ));
 
-        assertThat(moreSDK.listActiveParticipants(1L, null)).hasSize(4);
-        assertThat(moreSDK.listActiveParticipants(1L, 1)).hasSize(1);
-        assertThat(moreSDK.listActiveParticipants(1L, 2)).hasSize(1);
+        assertThat(moreSDK.listParticipants(1L, null, Set.of(Participant.Status.ACTIVE))).hasSize(4);
+        assertThat(moreSDK.listParticipants(1L, 1, Set.of(Participant.Status.ACTIVE))).hasSize(1);
+        assertThat(moreSDK.listParticipants(1L, 2, Set.of(Participant.Status.ACTIVE))).hasSize(1);
 
         when(elasticService.participantsThatMapQuery(any(), any(), any(), any())).thenReturn(
                List.of(1,5)
