@@ -1,9 +1,7 @@
 package io.redlink.more.studymanager.component.observation;
 
-import com.fasterxml.jackson.databind.ObjectWriter;
 import io.redlink.more.studymanager.component.observation.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
@@ -16,7 +14,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class LimeSurveyRequestService {
@@ -24,10 +21,6 @@ public class LimeSurveyRequestService {
     private final ComponentFactoryProperties properties;
     private final HttpClient client;
     private final ObjectMapper mapper = new ObjectMapper();
-    private final ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
-    private final TypeReference<Map<String, String>> mapStringStringRef
-            = new TypeReference<>() {
-    };
 
     protected LimeSurveyRequestService(ComponentFactoryProperties properties){
         this.properties = properties;
@@ -77,7 +70,7 @@ public class LimeSurveyRequestService {
         try {
             HttpRequest request = createHttpRequest(
                         parseRequest("get_session_key",
-                                List.of(properties.get("username"), "hBqRPy9dLRLyvxp25M"),
+                                List.of(properties.get("username"), properties.get("password")),
                                 1)
                 );
             return mapper.readValue(
@@ -129,7 +122,7 @@ public class LimeSurveyRequestService {
     }
 
     protected String parseRequest(String method, List<Object> params, Integer id) throws JsonProcessingException {
-        return objectWriter.writeValueAsString(
+        return mapper.writeValueAsString(
                 new LimeSurveyRequest(method, params, id)
         );
     }
