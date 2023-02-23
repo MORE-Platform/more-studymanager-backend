@@ -14,6 +14,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,9 +67,12 @@ public class LimeSurveyRequestService {
                                                 new ParticipantData(i.toString(), i.toString(), null)
                                         ).toList()))
                 );
-            return mapper.readValue(client.send(request, HttpResponse.BodyHandlers.ofString()).body(),
+            LOGGER.info("sent {} participants to lime", participantIds.size());
+            List<ParticipantData> data = mapper.readValue(client.send(request, HttpResponse.BodyHandlers.ofString()).body(),
                             LimeSurveyParticipantResponse.class)
                     .result();
+            LOGGER.info("result: {}", data.stream().map(ParticipantData::toString).collect(Collectors.joining()));
+            return data;
         }catch(IOException | InterruptedException e){
             LOGGER.error("Error creating participants for survey {}", surveyId);
             throw new RuntimeException(e);

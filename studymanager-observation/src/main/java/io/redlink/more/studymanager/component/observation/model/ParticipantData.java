@@ -10,4 +10,13 @@ public record ParticipantData (
     String lastname,
     @JsonInclude(JsonInclude.Include.NON_NULL)
     String token
-){}
+){
+    @Override
+    public String toString() {
+        return "ParticipantData{" +
+                "firstname='" + firstname + '\'' +
+                ", lastname='" + lastname + '\'' +
+                ", token='" + token + '\'' +
+                '}';
+    }
+}
