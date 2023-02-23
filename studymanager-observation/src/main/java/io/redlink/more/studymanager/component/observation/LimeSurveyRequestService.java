@@ -4,8 +4,6 @@ import io.redlink.more.studymanager.component.observation.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import io.redlink.more.studymanager.component.observation.model.*;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 
 import java.io.IOException;
@@ -14,15 +12,18 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LimeSurveyRequestService {
 
     private final ComponentFactoryProperties properties;
     private final HttpClient client;
     private final ObjectMapper mapper = new ObjectMapper();
+    private static final Logger LOGGER = LoggerFactory.getLogger(LimeSurveyRequestService.class);
+
 
     protected LimeSurveyRequestService(ComponentFactoryProperties properties){
         this.properties = properties;
@@ -47,13 +48,16 @@ public class LimeSurveyRequestService {
                                 List.of(sessionKey, surveyId))
                 );
             client.send(request, HttpResponse.BodyHandlers.ofString()).body();
-        }catch (IOException | InterruptedException ignored){}
+        }catch (IOException | InterruptedException e) {
+            LOGGER.error("Error creating participant table for survey {}", surveyId);
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * This method sets both firstname and lastname of lime-participants as the id of more-participants
      */
-    protected List<ParticipantData> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
+    private List<ParticipantData> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
         try{
             HttpRequest request = createHttpRequest(
                         parseRequest("add_participants",
@@ -65,11 +69,12 @@ public class LimeSurveyRequestService {
                             LimeSurveyParticipantResponse.class)
                     .result();
         }catch(IOException | InterruptedException e){
-            return new ArrayList<>();
+            LOGGER.error("Error creating participants for survey {}", surveyId);
+            throw new RuntimeException(e);
         }
     }
 
-    protected String getSessionKey(){
+    private String getSessionKey(){
         try {
             HttpRequest request = createHttpRequest(
                         parseRequest("get_session_key",
@@ -79,9 +84,9 @@ public class LimeSurveyRequestService {
                     client.send(request, HttpResponse.BodyHandlers.ofString()).body(),
                     LimeSurveyObjectResponse.class)
                     .result().toString();
-        }catch(IOException | InterruptedException e){
-            e.printStackTrace();
-            return "";
+        } catch(IOException | InterruptedException e){
+            LOGGER.error("Error getting session key for Limesurvey remote control");
+            throw new RuntimeException(e);
         }
     }
 
@@ -91,7 +96,7 @@ public class LimeSurveyRequestService {
 
     public JsonNode listSurveysByUser (String username, String filter, Integer start, Integer size){
         try {
-            HttpRequest listSurveysRequest = createHttpRequest(parseRequest("list_surveys", List.of(getSessionKey(), username), 1));
+            HttpRequest listSurveysRequest = createHttpRequest(parseRequest("list_surveys", List.of(getSessionKey(), username)));
             LimeSurveyListSurveyResponse response =
                     mapper.readValue(client.send(listSurveysRequest, HttpResponse.BodyHandlers.ofString()).body(),
                             LimeSurveyListSurveyResponse.class);
@@ -100,6 +105,7 @@ public class LimeSurveyRequestService {
             });
             return mapper.convertValue(handlePagination(response.result(), start, size), JsonNode.class);
         } catch (IOException | InterruptedException e) {
+            LOGGER.error("Error getting surveys for user");
             throw new RuntimeException(e);
         }
     }
@@ -123,9 +129,9 @@ public class LimeSurveyRequestService {
                 .build();
     }
 
-    protected String parseRequest(String method, List<Object> params, Integer id) throws JsonProcessingException {
+    protected String parseRequest(String method, List<Object> params) throws JsonProcessingException {
         return mapper.writeValueAsString(
-                new LimeSurveyRequest(method, params, id)
+                new LimeSurveyRequest(method, params, 1)
         );
     }
 
