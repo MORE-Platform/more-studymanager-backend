@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.service;
 
-import io.micrometer.core.instrument.Metrics;
 import io.redlink.more.studymanager.core.component.Component;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
@@ -14,8 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 
 @Service
 public class ObservationService {
@@ -61,9 +58,9 @@ public class ObservationService {
         else deactivateObservationsFor(study);
     }
 
-    public void activateObservationsFor(Study study){ listObservationsFor(study).forEach(Component::activate); }
+    private void activateObservationsFor(Study study){ listObservationsFor(study).forEach(Component::activate); }
 
-    public void deactivateObservationsFor(Study study){ listObservationsFor(study).forEach(Component::deactivate); }
+    private void deactivateObservationsFor(Study study){ listObservationsFor(study).forEach(Component::deactivate); }
 
     public List<io.redlink.more.studymanager.core.component.Observation> listObservationsFor(Study study){
         return listObservations(study.getStudyId()).stream()
@@ -72,7 +69,6 @@ public class ObservationService {
                                 sdk.scopedPlatformSDK(observation.getStudyId(), observation.getStudyGroupId(), observation.getObservationId()),
                                 observation.getProperties()
                         ))
-                .filter(Objects::nonNull)
                 .toList();
     }
 

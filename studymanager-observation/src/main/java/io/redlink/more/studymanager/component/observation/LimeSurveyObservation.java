@@ -1,12 +1,10 @@
 package io.redlink.more.studymanager.component.observation;
 
-import io.redlink.more.studymanager.component.observation.model.ParticipantData;
 import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 
-import java.util.List;
 import java.util.Set;
 
 public class LimeSurveyObservation<C extends ObservationProperties> extends Observation<C> {
@@ -22,9 +20,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     public void activate(){
         Set<Integer> participantIds = sdk.participantIds();
         participantIds.removeIf(id -> sdk.getValue("participant" + id + "_token", String.class).isPresent());
-        List<ParticipantData> returnData = limeSurveyRequestService.activateParticipants(participantIds, properties.getString("limeSurveyId"));
-        for(ParticipantData data: returnData){
-            sdk.setValue("participant" + data.firstname() + "_token", data.token());
-        }
+        limeSurveyRequestService.activateParticipants(participantIds, properties.getString("limeSurveyId"))
+                .forEach(data -> sdk.setValue("participant" + data.firstname() + "_token", data.token()));
     }
 }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.redlink.more.studymanager.component.observation.model.*;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
@@ -24,7 +23,6 @@ public class LimeSurveyRequestService {
     private final ComponentFactoryProperties properties;
     private final HttpClient client;
     private final ObjectMapper mapper = new ObjectMapper();
-    private final ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
     private final TypeReference<Map<String, String>> mapStringStringRef
             = new TypeReference<>() {
     };
@@ -45,25 +43,26 @@ public class LimeSurveyRequestService {
         return createParticipants(participantIds, surveyId, sessionKey);
     }
 
-    protected void createParticipantTable(String surveyId, String sessionKey){
+    private void createParticipantTable(String surveyId, String sessionKey){
         try{
             HttpRequest request = createHttpRequest(
                         parseRequest("activate_tokens",
-                                List.of(sessionKey, surveyId),
-                                1)
+                                List.of(sessionKey, surveyId))
                 );
             client.send(request, HttpResponse.BodyHandlers.ofString()).body();
         }catch (IOException | InterruptedException ignored){}
     }
 
+    /**
+     * This method sets both firstname and lastname of lime-participants as the id of more-participants
+     */
     protected List<ParticipantData> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey){
         try{
             HttpRequest request = createHttpRequest(
                         parseRequest("add_participants",
                                 List.of(sessionKey, surveyId, participantIds.stream().map(i ->
                                                 new ParticipantData(i.toString(), i.toString(), null)
-                                        ).toList()),
-                                1)
+                                        ).toList()))
                 );
             return mapper.readValue(client.send(request, HttpResponse.BodyHandlers.ofString()).body(),
                             LimeSurveyParticipantResponse.class)
@@ -77,8 +76,7 @@ public class LimeSurveyRequestService {
         try {
             HttpRequest request = createHttpRequest(
                         parseRequest("get_session_key",
-                                List.of(properties.get("username"), properties.get("password")),
-                                1)
+                                List.of(properties.get("username"), properties.get("password")))
                 );
             return mapper.readValue(
                     client.send(request, HttpResponse.BodyHandlers.ofString()).body(),
@@ -97,7 +95,7 @@ public class LimeSurveyRequestService {
     public JsonNode listSurveysByUser (String username, String filter, Integer start, Integer size){
         try {
             LimeSurveyRequest request = new LimeSurveyRequest("list_surveys", List.of(getSessionKey(), username), 1);
-            HttpRequest listSurveysRequest = createHttpRequest(objectWriter.writeValueAsString(request));
+            HttpRequest listSurveysRequest = createHttpRequest(mapper.writeValueAsString(request));
             LimeSurveyListResponse response =
                     mapper.readValue(client.send(listSurveysRequest, HttpResponse.BodyHandlers.ofString()).body(),
                             LimeSurveyListResponse.class);
@@ -139,9 +137,9 @@ public class LimeSurveyRequestService {
                 .build();
     }
 
-    protected String parseRequest(String method, List<Object> params, Integer id) throws JsonProcessingException {
-        return objectWriter.writeValueAsString(
-                new LimeSurveyRequest(method, params, id)
+    protected String parseRequest(String method, List<Object> params) throws JsonProcessingException {
+        return mapper.writeValueAsString(
+                new LimeSurveyRequest(method, params, 1)
         );
     }
 

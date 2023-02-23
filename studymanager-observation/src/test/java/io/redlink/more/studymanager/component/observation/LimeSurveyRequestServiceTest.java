@@ -25,8 +25,7 @@ public class LimeSurveyRequestServiceTest {
     void parseRequestTest() throws JsonProcessingException {
         Assertions.assertEquals(service.parseRequest("get_session_key",
                 List.of("username",
-                        "password"),
-                1),
+                        "password")),
                 """
                         {
                           "method" : "get_session_key",
@@ -40,8 +39,7 @@ public class LimeSurveyRequestServiceTest {
                                 2,
                                 List.of(
                                         new ParticipantData("3", "4", null),
-                                        new ParticipantData("5", "6", null))),
-                        1),
+                                        new ParticipantData("5", "6", null)))),
                 """
                         {
                           "method" : "add_participants",
@@ -55,7 +53,7 @@ public class LimeSurveyRequestServiceTest {
                           "id" : 1
                         }""");
 
-        Assertions.assertEquals(service.parseRequest("activate_tokens", List.of("1", "2"), 1),
+        Assertions.assertEquals(service.parseRequest("activate_tokens", List.of("1", "2")),
                 """
                         {
                           "method" : "activate_tokens",
