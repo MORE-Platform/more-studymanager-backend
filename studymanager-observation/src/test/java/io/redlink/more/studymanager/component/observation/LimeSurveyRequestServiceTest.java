@@ -28,11 +28,7 @@ public class LimeSurveyRequestServiceTest {
                         "password"),
                 1),
                 """
-                        {
-                          "method" : "get_session_key",
-                          "params" : [ "username", "password" ],
-                          "id" : 1
-                        }""");
+                        {"method":"get_session_key","params":["username","password"],"id":1}""");
 
         Assertions.assertEquals(service.parseRequest("add_participants",
                         List.of(
@@ -43,33 +39,17 @@ public class LimeSurveyRequestServiceTest {
                                         new ParticipantData("5", "6", null))),
                         1),
                 """
-                        {
-                          "method" : "add_participants",
-                          "params" : [ 1, 2, [ {
-                            "firstname" : "3",
-                            "lastname" : "4"
-                          }, {
-                            "firstname" : "5",
-                            "lastname" : "6"
-                          } ] ],
-                          "id" : 1
-                        }""");
+                        {"method":"add_participants","params":[1,2,[{"firstname":"3","lastname":"4"},{"firstname":"5","lastname":"6"}]],"id":1}""");
 
         Assertions.assertEquals(service.parseRequest("activate_tokens", List.of("1", "2"), 1),
                 """
-                        {
-                          "method" : "activate_tokens",
-                          "params" : [ "1", "2" ],
-                          "id" : 1
-                        }""");
+                        {"method":"activate_tokens","params":["1","2"],"id":1}""");
     }
 
     @Test
     void responseTest() throws JsonProcessingException {
         String response = """
-                {
-                    "id": 1,
-                    	"result": [
+                {"id":1,"result": [
                     		{
                     			"sent": "N",
                     			"remindersent": "N",
