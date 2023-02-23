@@ -5,6 +5,7 @@ import io.redlink.more.studymanager.sdk.MoreSDK;
 
 import java.io.Serializable;
 import java.util.Optional;
+import java.util.Set;
 
 public abstract class MorePlatformSDKImpl implements MorePlatformSDK {
 
@@ -27,6 +28,9 @@ public abstract class MorePlatformSDKImpl implements MorePlatformSDK {
     public Integer getStudyGroupId() {
         return studyGroupId;
     }
+
+    @Override
+    public Set<Integer> participantIds(){ return sdk.listActiveParticipants(studyId, studyGroupId); }
 
     @Override
     public <T extends Serializable> void setValue(String name, T value) {
