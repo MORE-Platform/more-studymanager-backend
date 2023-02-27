@@ -13,4 +13,11 @@ public abstract class Component<C extends ComponentProperties> {
     public abstract void activate();
 
     public abstract void deactivate();
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{" +
+                "properties=" + properties +
+                '}';
+    }
 }

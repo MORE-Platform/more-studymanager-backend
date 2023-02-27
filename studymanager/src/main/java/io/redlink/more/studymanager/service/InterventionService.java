@@ -131,7 +131,14 @@ public class InterventionService {
     }
 
     public void activateInterventionsFor(Study study) {
-        listTriggersFor(study).forEach(Component::activate);
+        listTriggersFor(study).forEach((Component component) -> {
+            try(var ctx = LoggingUtils.createContext(study)) {
+                component.activate();
+                LOGGER.info("Component {} activated", component);
+            } catch (RuntimeException e) {
+                LOGGER.error("Cannot activate {} study", component, e);
+            }
+        });
     }
 
     public void deactivateInterventionsFor(Study study) {
