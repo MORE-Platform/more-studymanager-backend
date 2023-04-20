@@ -6,6 +6,17 @@ import org.slf4j.LoggerFactory;
 
 public class FirebaseMessagingService {
     private final FirebaseMessaging firebaseMessaging;
+    private enum apnsPriority{
+        LOW(1),
+        MEDIUM(5),
+        HIGH(10);
+
+        public final int value;
+        apnsPriority(int value) {
+            this.value = value;
+        }
+    }
+
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseMessagingService.class);
 
@@ -21,10 +32,13 @@ public class FirebaseMessagingService {
                 .setBody(body)
                 .build();
 
+        String apnsPriorityHeader = "apns-priority";
+        String apsCategory = "NEW_MESSAGE_CATEGORY";
+
         ApnsConfig apnsConfig = ApnsConfig
                 .builder()
-                .putHeader("apns-priority", "5")
-                .setAps(Aps.builder().setCategory("NEW_MESSAGE_CATEGORY").build())
+                .putHeader(apnsPriorityHeader, String.valueOf(apnsPriority.MEDIUM.value))
+                .setAps(Aps.builder().setCategory(apsCategory).build())
                 .build();
 
         Message message = Message
