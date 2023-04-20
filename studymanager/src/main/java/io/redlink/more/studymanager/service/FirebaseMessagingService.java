@@ -1,9 +1,6 @@
 package io.redlink.more.studymanager.service;
 
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,10 +21,17 @@ public class FirebaseMessagingService {
                 .setBody(body)
                 .build();
 
+        ApnsConfig apnsConfig = ApnsConfig
+                .builder()
+                .putHeader("apns-priority", "5")
+                .setAps(Aps.builder().setCategory("NEW_MESSAGE_CATEGORY").build())
+                .build();
+
         Message message = Message
                 .builder()
                 .setToken(token)
                 .setNotification(notification)
+                .setApnsConfig(apnsConfig)
 //                .putAllData()
                 .build();
         if (firebaseMessaging == null) {
