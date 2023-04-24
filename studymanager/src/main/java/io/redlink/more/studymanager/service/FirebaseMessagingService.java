@@ -16,7 +16,8 @@ public class FirebaseMessagingService {
             this.value = value;
         }
     }
-
+    private static final String apnsPriorityHeader = "apns-priority";
+    private static final String apsCategory = "NEW_MESSAGE_CATEGORY";
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseMessagingService.class);
 
@@ -31,9 +32,6 @@ public class FirebaseMessagingService {
                 .setTitle(title)
                 .setBody(body)
                 .build();
-
-        String apnsPriorityHeader = "apns-priority";
-        String apsCategory = "NEW_MESSAGE_CATEGORY";
 
         ApnsConfig apnsConfig = ApnsConfig
                 .builder()
