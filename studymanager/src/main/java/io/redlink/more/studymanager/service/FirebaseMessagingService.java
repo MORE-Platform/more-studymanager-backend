@@ -49,7 +49,8 @@ public class FirebaseMessagingService {
         if (firebaseMessaging == null) {
             log.warn("Not sending Message {}", title);
         } else {
-            firebaseMessaging.send(message);
+            final String msgId = firebaseMessaging.send(message);
+            log.debug("Successfully sent FCM Message {} ({})", title, msgId);
         }
     }
 }
