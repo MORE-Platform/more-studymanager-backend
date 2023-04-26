@@ -3,7 +3,6 @@
  */
 package io.redlink.more.studymanager.utils;
 
-import io.redlink.more.studymanager.core.component.Trigger;
 import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Participant;
@@ -69,8 +68,12 @@ public final class LoggingUtils {
         }
 
         public void putAction(Action action) {
-            MDC.put(MDC_KEY_ACTION, String.valueOf(action.getActionId()));
-            MDC.put(MDC_KEY_ACTION_TYPE, action.getType());
+            putAction(action.getActionId(), action.getType());
+        }
+
+        public void putAction(Integer actionId, String actionType) {
+            MDC.put(MDC_KEY_ACTION, String.valueOf(actionId));
+            MDC.put(MDC_KEY_ACTION_TYPE, actionType);
         }
 
         public void putIntervention(Intervention intervention) {

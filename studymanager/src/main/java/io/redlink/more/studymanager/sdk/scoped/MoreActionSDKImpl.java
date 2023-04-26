@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.sdk.scoped;
 
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.sdk.MoreSDK;
+import io.redlink.more.studymanager.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +28,16 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
 
     @Override
     public void sendPushNotification(String title, String message) {
-        if(sdk.sendPushNotification(studyId, participantId, title, message)) {
-            sdk.storeActionDatapoint(studyId, studyGroupId, participantId, actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
+        try (var ctx = LoggingUtils.createContext()) {
+            ctx.putStudy(studyId);
+            ctx.putStudyGroup(studyGroupId);
+            ctx.putParticipant(participantId);
+            ctx.putIntervention(interventionId);
+            ctx.putAction(actionId, actionType);
+
+            if (sdk.sendPushNotification(studyId, participantId, title, message)) {
+                sdk.storeActionDatapoint(studyId, studyGroupId, participantId, actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
+            }
         }
     }
 
