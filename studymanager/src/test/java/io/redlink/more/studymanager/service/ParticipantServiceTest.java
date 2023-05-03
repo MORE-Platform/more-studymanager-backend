@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.service;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
@@ -8,11 +9,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ParticipantServiceTest {
@@ -22,6 +27,9 @@ class ParticipantServiceTest {
 
     @Mock
     StudyStateService studyStateService;
+
+    @Spy
+    ElasticService elasticService = new ElasticService(mock(ElasticsearchClient.class));
 
     @InjectMocks
     ParticipantService participantService;
@@ -45,5 +53,21 @@ class ParticipantServiceTest {
         assertThat(participantResponse.getStudyId()).isEqualTo(1L);
         assertThat(participantResponse.getParticipantId()).isEqualTo(1);
         assertThat(participantResponse.getAlias()).isSameAs(participant.getAlias());
+    }
+
+    @Test
+    void testDeleteParticipant() {
+        Participant participant = new Participant()
+                .setParticipantId(1);
+
+        when(participantRepository.deleteParticipant(any(), any())).thenReturn(Optional.of(participant));
+
+        participantService.deleteParticipant(1L, 1, true);
+        participantService.deleteParticipant(1L, 1, false);
+        verify(elasticService, times(1)).removeDataForParticipant(any(), any());
+
+        participantService.deleteParticipant(1L, 1, true);
+        verify(elasticService, times(2)).removeDataForParticipant(any(), any());
+
     }
 }

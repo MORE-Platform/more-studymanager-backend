@@ -18,10 +18,13 @@ public class ParticipantService {
 
     private final StudyStateService studyStateService;
     private final ParticipantRepository participantRepository;
+    private final ElasticService elasticService;
 
-    public ParticipantService(StudyStateService studyStateService, ParticipantRepository repository) {
+    public ParticipantService(
+            StudyStateService studyStateService, ParticipantRepository repository, ElasticService elasticService) {
         this.studyStateService = studyStateService;
         this.participantRepository = repository;
+        this.elasticService = elasticService;
     }
 
     public Participant createParticipant(Participant participant) {
@@ -38,9 +41,13 @@ public class ParticipantService {
         return participantRepository.getByIds(studyId, participantId);
     }
 
-    public Optional<Participant> deleteParticipant(Long studyId, Integer participantId) {
+    public Optional<Participant> deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
-        return participantRepository.deleteParticipant(studyId, participantId);
+        Optional<Participant> participant = participantRepository.deleteParticipant(studyId, participantId);
+        if(includeData && participant.isPresent()) {
+               elasticService.removeDataForParticipant(studyId, participant.get());
+        }
+        return participant;
     }
 
     public Participant updateParticipant(Participant participant) {

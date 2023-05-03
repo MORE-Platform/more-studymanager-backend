@@ -1,15 +1,18 @@
 package io.redlink.more.studymanager.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Conflicts;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.model.ElasticDataPoint;
+import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.properties.ElasticProperties;
@@ -113,6 +116,24 @@ public class ElasticService {
         } catch (IOException | ElasticsearchException e) {
             LOG.warn("Error when deleting elastic index. Error message: ", e);
             return false;
+        }
+    }
+
+    public void removeDataForParticipant(Long studyId, Participant participant) {
+        try {
+            DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
+                    .index(getStudyIdString(studyId))
+                    .query(q -> q
+                            .bool(b -> b
+                                    .filter(f -> f.term(t -> t
+                                            .field("participant_id.keyword")
+                                            .value("participant_" + participant.getParticipantId())))))
+                    .conflicts(Conflicts.Proceed)
+                    .build();
+            client.deleteByQuery(deleteByQueryRequest);
+        } catch (IOException | ElasticsearchException e) {
+            LOG.warn("Error when deleting participant from elastic index. Error message: ", e);
+            throw new RuntimeException(e);
         }
     }
 
