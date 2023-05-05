@@ -73,8 +73,8 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
     @Override
     public JsonNode handleAPICall(String slug, User user, JsonNode input) throws ApiCallException {
         String filter = input.get("filter") != null ? input.get("filter").asText() : null;
-        Integer size = input.get("size") != null ? input.get("size").asInt() : null;
-        Integer start = input.get("start") != null ? input.get("start").asInt() : null;
+        Integer size = input.get("size") != null ? input.get("size").asInt() : 10;
+        Integer start = input.get("start") != null ? input.get("start").asInt() : 0;
         if (Objects.equals(slug, "surveys")) {
             JsonNode response;
             response = limeSurveyRequestService.listSurveysByUser(user.username(), filter, start, size);

@@ -13,6 +13,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -105,21 +106,22 @@ public class LimeSurveyRequestService {
             LimeSurveyListSurveyResponse response =
                     mapper.readValue(client.send(listSurveysRequest, HttpResponse.BodyHandlers.ofString()).body(),
                             LimeSurveyListSurveyResponse.class);
-            response.result().forEach(entry -> {
-                if (!isInFilter(filter, entry.surveyTitle())) { response.result().remove(entry); }
-            });
-            return mapper.convertValue(handlePagination(response.result(), start, size), JsonNode.class);
+            List<SurveyData> result = response.result().stream()
+                    .filter(res -> matchesFilter(filter, res.surveyTitle()))
+                    .collect(Collectors.toList());
+            return mapper.convertValue(sublist(result, start, size), JsonNode.class);
         } catch (IOException | InterruptedException e) {
             LOGGER.error("Error getting surveys for user");
             throw new RuntimeException(e);
         }
     }
 
-    private List<SurveyData> handlePagination (List <SurveyData> list, Integer start, Integer
-    size){
+    private List<SurveyData> sublist(List <SurveyData> list, Integer start, Integer size){
+        if(start != null && start > list.size()-1) {
+            return List.of();
+        }
         if (start != null && size != null) {
-            List<SurveyData> sublist = list.subList(start, list.size());
-            list = size < sublist.size() ? sublist.subList(0, size) : sublist;
+            return list.subList(start, Math.min(list.size(), start + size));
         }
         return list;
     }
@@ -140,9 +142,9 @@ public class LimeSurveyRequestService {
         );
     }
 
-    private boolean isInFilter (String filter, String text){
-        if (filter == null)
-            return true;
-        return text.toLowerCase().contains(filter.toLowerCase());
+    private boolean matchesFilter(String filter, String text){
+        return Optional.ofNullable(filter)
+                .map(f -> text.toLowerCase().contains(f.toLowerCase()))
+                .orElse(true);
     }
 }
