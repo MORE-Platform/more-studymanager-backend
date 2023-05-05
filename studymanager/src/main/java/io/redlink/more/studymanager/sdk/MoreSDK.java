@@ -1,13 +1,15 @@
 package io.redlink.more.studymanager.sdk;
 
+import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
-import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
+import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
 import io.redlink.more.studymanager.model.ElasticDataPoint;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.repository.NameValuePairRepository;
+import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.scheduling.SchedulingService;
 import io.redlink.more.studymanager.scheduling.TriggerJob;
 import io.redlink.more.studymanager.sdk.scoped.MoreActionSDKImpl;
@@ -40,17 +42,20 @@ public class MoreSDK {
 
     private final PushNotificationService pushNotificationService;
 
+    private final ObservationRepository observationRepository;
+
     public MoreSDK(
             NameValuePairRepository nvpairs,
             SchedulingService schedulingService,
             ParticipantService participantService,
             ElasticService elasticService,
-            PushNotificationService pushNotificationService) {
+            PushNotificationService pushNotificationService, ObservationRepository observationRepository) {
         this.nvpairs = nvpairs;
         this.schedulingService = schedulingService;
         this.participantService = participantService;
         this.elasticService = elasticService;
         this.pushNotificationService = pushNotificationService;
+        this.observationRepository = observationRepository;
     }
 
     public <T extends Serializable> void setValue(String issuer, String name, T value) {
@@ -69,7 +74,7 @@ public class MoreSDK {
         return new MoreActionSDKImpl(this, studyId, studyGroupId, interventionId, actionId, actionType, participantId);
     }
 
-    public MorePlatformSDK scopedPlatformSDK(Long studyId, Integer studyGroupId, int observationId) {
+    public MoreObservationSDK scopedObservationSDK(Long studyId, Integer studyGroupId, int observationId) {
         return new MoreObservationSDKImpl(this, studyId, studyGroupId, observationId);
     }
 
@@ -141,5 +146,17 @@ public class MoreSDK {
                 Instant.now(),
                 data
         ));
+    }
+
+    public void setPropertiesForParticipant(long studyId, Integer participantId, int observationId, ObservationProperties properties) {
+        observationRepository.setParticipantProperties(studyId, participantId, observationId, properties);
+    }
+
+    public Optional<ObservationProperties> getPropertiesForParticipant(long studyId, Integer participantId, int observationId) {
+        return observationRepository.getParticipantProperties(studyId, participantId, observationId);
+    }
+
+    public void removePropertiesForParticipant(long studyId, Integer participantId, int observationId) {
+        observationRepository.removeParticipantProperties(studyId, participantId, observationId);
     }
 }

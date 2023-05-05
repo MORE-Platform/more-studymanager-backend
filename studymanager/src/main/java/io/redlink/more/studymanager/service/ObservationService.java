@@ -66,7 +66,7 @@ public class ObservationService {
         return listObservations(study.getStudyId()).stream()
                 .map(observation -> factory(observation)
                         .create(
-                                sdk.scopedPlatformSDK(observation.getStudyId(), observation.getStudyGroupId(), observation.getObservationId()),
+                                sdk.scopedObservationSDK(observation.getStudyId(), observation.getStudyGroupId(), observation.getObservationId()),
                                 observation.getProperties()
                         ))
                 .toList();

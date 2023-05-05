@@ -4,7 +4,7 @@ import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
-import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
+import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
 public class PolarVerityObservationFactory<C extends Observation, P extends ObservationProperties> extends ObservationFactory<C, P> {
 
@@ -29,7 +29,7 @@ public class PolarVerityObservationFactory<C extends Observation, P extends Obse
     }
 
     @Override
-    public PolarVerityObservation create(MorePlatformSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+    public PolarVerityObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
         return new PolarVerityObservation(sdk, validate(properties));
     }
 }

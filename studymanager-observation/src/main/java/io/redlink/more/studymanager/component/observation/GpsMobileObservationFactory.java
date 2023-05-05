@@ -4,7 +4,7 @@ import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
-import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
+import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
 import java.util.Map;
@@ -54,7 +54,7 @@ This observation enables you to collect GPS data via the smartphone sensor.
     }
 
     @Override
-    public GpsMobileObservation create(MorePlatformSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+    public GpsMobileObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
         return new GpsMobileObservation(sdk, validate(properties));
     }
 }

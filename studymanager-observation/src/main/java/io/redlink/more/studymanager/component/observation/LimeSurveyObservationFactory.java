@@ -9,6 +9,7 @@ import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.model.User;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
+import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
@@ -66,7 +67,7 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
     }
 
     @Override
-    public LimeSurveyObservation create(MorePlatformSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+    public LimeSurveyObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
         return new LimeSurveyObservation(sdk, validate(properties), limeSurveyRequestService);
     }
 
@@ -74,7 +75,7 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
     public JsonNode handleAPICall(String slug, User user, JsonNode input) throws ApiCallException {
         String filter = Optional.ofNullable(input.get("filter")).map(JsonNode::asText).orElse(null);
         Integer size = Optional.ofNullable(input.get("size")).map(JsonNode::asInt).orElse(10);
-        Integer start = Optional.ofNullable(input.get("start")).map(JsonNode::asInt).orElse(10);
+        Integer start = Optional.ofNullable(input.get("start")).map(JsonNode::asInt).orElse(0);
         if ("surveys".equals(slug)) {
             try {
                 return limeSurveyRequestService.listSurveysByUser(user.username(), filter, start, size);

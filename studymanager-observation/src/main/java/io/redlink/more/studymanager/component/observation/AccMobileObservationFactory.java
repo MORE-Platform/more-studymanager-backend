@@ -4,7 +4,7 @@ import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
-import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
+import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
 public class AccMobileObservationFactory<C extends Observation, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
@@ -31,7 +31,7 @@ public class AccMobileObservationFactory<C extends Observation, P extends Observ
     }
 
     @Override
-    public AccMobileObservation create(MorePlatformSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+    public AccMobileObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
         return new AccMobileObservation(sdk, validate(properties));
     }
 }

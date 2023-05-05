@@ -31,7 +31,7 @@ public class LimeSurveyObservationFactoryTest {
         User user = new User("username");
         JsonNode input = mapper.readTree("{}");
         factory.handleAPICall(slug, user, input);
-        verify(service, times(1)).listSurveysByUser("username", null, null, null);
+        verify(service, times(1)).listSurveysByUser("username", null, 0, 10);
     }
 
     @Test
@@ -47,9 +47,9 @@ public class LimeSurveyObservationFactoryTest {
     void testListSurveysHasError() throws Exception {
         LimeSurveyObservationFactory factory = new LimeSurveyObservationFactory(properties, service);
         when(service.listSurveysByUser(anyString(), anyString(), anyInt(), anyInt()))
-                .thenReturn(mapper.readTree("{\"error\": \"some error\"}"));
+                .thenThrow(new RuntimeException("some error"));
         ApiCallException exception = Assertions.assertThrows(ApiCallException.class,
                 () -> factory.handleAPICall("surveys", new User("username"), mapper.readTree("{\"filter\":  \"some-filter\", \"size\": 0, \"start\":  0}")));
-        Assertions.assertEquals(400, exception.getStatus());
+        Assertions.assertEquals(500, exception.getStatus());
     }
 }
