@@ -106,12 +106,18 @@ public class LimeSurveyRequestService {
             LimeSurveyListSurveyResponse response =
                     mapper.readValue(client.send(listSurveysRequest, HttpResponse.BodyHandlers.ofString()).body(),
                             LimeSurveyListSurveyResponse.class);
+
+            if(response.error() != null) {
+                LOGGER.error("Error getting surveys for user: {}", response.error());
+                throw new RuntimeException(response.error());
+            }
+
             List<SurveyData> result = response.result().stream()
                     .filter(res -> matchesFilter(filter, res.surveyTitle()))
-                    .collect(Collectors.toList());
+                    .toList();
             return mapper.convertValue(sublist(result, start, size), JsonNode.class);
         } catch (IOException | InterruptedException e) {
-            LOGGER.error("Error getting surveys for user");
+            LOGGER.error("Error getting surveys for user", e);
             throw new RuntimeException(e);
         }
     }

@@ -13,7 +13,7 @@ import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 
 public class LimeSurveyObservationFactory<C extends Observation, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
@@ -72,16 +72,15 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
 
     @Override
     public JsonNode handleAPICall(String slug, User user, JsonNode input) throws ApiCallException {
-        String filter = input.get("filter") != null ? input.get("filter").asText() : null;
-        Integer size = input.get("size") != null ? input.get("size").asInt() : 10;
-        Integer start = input.get("start") != null ? input.get("start").asInt() : 0;
-        if (Objects.equals(slug, "surveys")) {
-            JsonNode response;
-            response = limeSurveyRequestService.listSurveysByUser(user.username(), filter, start, size);
-            if (response != null && response.get("error") != null) {
-                throw new ApiCallException(400, response.get("error").asText());
+        String filter = Optional.ofNullable(input.get("filter")).map(JsonNode::asText).orElse(null);
+        Integer size = Optional.ofNullable(input.get("size")).map(JsonNode::asInt).orElse(10);
+        Integer start = Optional.ofNullable(input.get("start")).map(JsonNode::asInt).orElse(10);
+        if ("surveys".equals(slug)) {
+            try {
+                return limeSurveyRequestService.listSurveysByUser(user.username(), filter, start, size);
+            } catch (RuntimeException e) {
+                throw new ApiCallException(500, e.getMessage());
             }
-            return response;
         } else {
             throw new ApiCallException(404, "Not found");
         }
