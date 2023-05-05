@@ -1,6 +1,7 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
+import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,9 @@ class ObservationRepositoryTest {
 
     @Autowired
     private StudyRepository studyRepository;
+
+    @Autowired
+    private ParticipantRepository participantRepository;
 
     @Autowired
     private StudyGroupRepository studyGroupRepository;
@@ -86,5 +90,29 @@ class ObservationRepositoryTest {
         assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(1);
         observationRepository.deleteObservation(studyId, observationResponse2.getObservationId());
         assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Participant Observations are inserted, returned, updated and deleted")
+    public void testParticipantObservationProperties() {
+        Long s1 = studyRepository.insert(new Study()).getStudyId();
+        Integer o1 = observationRepository.insert(new Observation().setStudyId(s1).setType("t1")).getObservationId();
+        Integer o2 = observationRepository.insert(new Observation().setStudyId(s1).setType("t2")).getObservationId();
+        Integer p1 = participantRepository.insert(new Participant().setStudyId(s1).setRegistrationToken("t")).getParticipantId();
+
+        ObservationProperties op1 = new ObservationProperties(Map.of("hello", "world"));
+        ObservationProperties op2 = new ObservationProperties(Map.of("hello", "world2"));
+
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o1)).isEmpty();
+        observationRepository.setParticipantProperties(s1, p1, o1, op1);
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o1).get().getString("hello")).isEqualTo("world");
+        observationRepository.setParticipantProperties(s1, p1, o1, op2);
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o1).get().getString("hello")).isEqualTo("world2");
+        observationRepository.setParticipantProperties(s1, p1, o2, op1);
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o1).get().getString("hello")).isEqualTo("world2");
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o2).get().getString("hello")).isEqualTo("world");
+        observationRepository.removeParticipantProperties(s1, p1, o2);
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o2)).isEmpty();
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o1)).isPresent();
     }
 }

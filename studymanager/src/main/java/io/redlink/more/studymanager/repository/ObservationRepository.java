@@ -7,6 +7,8 @@ import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,6 +30,9 @@ public class ObservationRepository {
     private static final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = ?";
     private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now() WHERE study_id=:study_id AND observation_id=:observation_id";
     private static final String DELETE_ALL = "DELETE FROM observations";
+    private static final String SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "INSERT INTO participant_observation_properties(study_id,participant_id,observation_id,properties) VALUES (:study_id,:participant_id,:observation_id,:properties::jsonb) ON CONFLICT (study_id, participant_id, observation_id) DO UPDATE SET properties = EXCLUDED.properties";
+    private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT properties FROM participant_observation_properties WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
+    private static final String DELETE_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "DELETE FROM participant_observation_properties WHERE study_id = ? AND participant_id = ? AND observation_id = ?";
 
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -77,6 +82,33 @@ public class ObservationRepository {
         template.execute(DELETE_ALL);
     }
 
+    public void setParticipantProperties(Long studyId, Integer participantId, Integer observationId, ObservationProperties properties) {
+        MapSqlParameterSource data = new MapSqlParameterSource()
+                .addValue("study_id", studyId)
+                .addValue("participant_id", participantId)
+                .addValue("observation_id", observationId)
+                .addValue("properties", MapperUtils.writeValueAsString(properties));
+
+        namedTemplate.update(SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT, data);
+    }
+
+    public Optional<ObservationProperties> getParticipantProperties(Long studyId, Integer participantId, Integer observationId) {
+        try {
+            return Optional.ofNullable(template.queryForObject(
+                    GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT,
+                    getParticipantObservationPropertiesRowMapper(),
+                    studyId,
+                    participantId,
+                    observationId));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    public void removeParticipantProperties(Long studyId, Integer participantId, Integer observationId) {
+        template.update(DELETE_OBSERVATION_PROPERTIES_FOR_PARTICIPANT, studyId, participantId, observationId);
+    }
+
     private static MapSqlParameterSource toParams(Observation observation) throws JsonProcessingException {
         return new MapSqlParameterSource()
                 .addValue("study_id", observation.getStudyId())
@@ -87,6 +119,10 @@ public class ObservationRepository {
                 .addValue("study_group_id", observation.getStudyGroupId())
                 .addValue("properties", MapperUtils.writeValueAsString(observation.getProperties()))
                 .addValue("schedule", MapperUtils.writeValueAsString(observation.getSchedule()));
+    }
+
+    private static RowMapper<ObservationProperties> getParticipantObservationPropertiesRowMapper() {
+        return (rs, rowNum) -> MapperUtils.readValue(rs.getString("properties"), ObservationProperties.class);
     }
 
     private static RowMapper<Observation> getObservationRowMapper() {

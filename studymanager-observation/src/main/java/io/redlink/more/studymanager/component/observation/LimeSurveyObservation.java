@@ -19,8 +19,11 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     @Override
     public void activate(){
         Set<Integer> participantIds = sdk.participantIds();
+        //TODO disable keys fromm removed?
         participantIds.removeIf(id -> sdk.getValue("participant" + id + "_token", String.class).isPresent());
         limeSurveyRequestService.activateParticipants(participantIds, properties.getString("limeSurveyId"))
-                .forEach(data -> sdk.setValue("participant" + data.firstname() + "_token", data.token()));
+                .forEach(data -> {
+                    sdk.setValue("participant" + data.firstname() + "_token", data.token());
+                });
     }
 }
