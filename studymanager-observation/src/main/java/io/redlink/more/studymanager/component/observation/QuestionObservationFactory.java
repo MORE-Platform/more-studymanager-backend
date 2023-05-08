@@ -10,7 +10,7 @@ import io.redlink.more.studymanager.core.validation.ConfigurationValidationRepor
 import java.util.List;
 import java.util.Map;
 
-public class QuestionObservationFactory<C extends Observation, P extends ObservationProperties>
+public class QuestionObservationFactory<C extends Observation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
     @Override
     public String getId() {

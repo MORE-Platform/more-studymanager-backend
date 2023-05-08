@@ -1,4 +1,4 @@
-package io.redlink.more.studymanager.component.observation;
+package io.redlink.more.studymanager.component.observation.lime;
 
 import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
@@ -8,7 +8,7 @@ import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import java.util.Map;
 import java.util.Set;
 
-public class LimeSurveyObservation<C extends ObservationProperties> extends Observation<C> {
+public class LimeSurveyObservation<C extends LimeSurveyProperties> extends Observation<C> {
 
     private final LimeSurveyRequestService limeSurveyRequestService;
 
@@ -29,5 +29,6 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
                             new ObservationProperties(Map.of("token", data.token()))
                     );
                 });
+        //limeSurveyRequestService.activateSurvey();
     }
 }

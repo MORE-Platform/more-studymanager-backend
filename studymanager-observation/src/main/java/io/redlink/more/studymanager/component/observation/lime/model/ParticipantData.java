@@ -1,4 +1,4 @@
-package io.redlink.more.studymanager.component.observation.model;
+package io.redlink.more.studymanager.component.observation.lime.model;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

@@ -5,7 +5,7 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
-public abstract class ObservationFactory<C extends Observation, P extends ObservationProperties> extends ComponentFactory<C, P> {
+public abstract class ObservationFactory<C extends Observation<P>, P extends ObservationProperties> extends ComponentFactory<C, P> {
     public abstract C create(MoreObservationSDK sdk, P properties) throws ConfigurationValidationException;
 
     @Override

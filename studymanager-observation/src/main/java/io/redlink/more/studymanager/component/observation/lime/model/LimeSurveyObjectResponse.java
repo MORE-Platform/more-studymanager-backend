@@ -1,4 +1,4 @@
-package io.redlink.more.studymanager.component.observation.model;
+package io.redlink.more.studymanager.component.observation.lime.model;
 
 public record LimeSurveyObjectResponse(
         Object result,

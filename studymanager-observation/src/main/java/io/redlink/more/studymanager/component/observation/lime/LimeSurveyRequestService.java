@@ -1,13 +1,14 @@
-package io.redlink.more.studymanager.component.observation;
+package io.redlink.more.studymanager.component.observation.lime;
 
-import io.redlink.more.studymanager.component.observation.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.redlink.more.studymanager.component.observation.lime.model.*;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -16,9 +17,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class LimeSurveyRequestService {
 
@@ -36,6 +34,19 @@ public class LimeSurveyRequestService {
     protected LimeSurveyRequestService(HttpClient client, ComponentFactoryProperties properties){
         this.properties = properties;
         this.client = client;
+    }
+
+    protected void activateSurvey(String surveyId) {
+        try{
+            HttpRequest request = createHttpRequest(
+                    parseRequest("activate_survey",
+                            List.of(getSessionKey(), surveyId))
+            );
+            client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+        }catch (IOException | InterruptedException e) {
+            LOGGER.error("Error activating survey {}", surveyId);
+            throw new RuntimeException(e);
+        }
     }
 
     protected List<ParticipantData> activateParticipants(Set<Integer> participantIds, String surveyId){

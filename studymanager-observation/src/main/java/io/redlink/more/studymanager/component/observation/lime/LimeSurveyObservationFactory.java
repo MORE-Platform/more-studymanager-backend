@@ -1,22 +1,18 @@
-package io.redlink.more.studymanager.component.observation;
+package io.redlink.more.studymanager.component.observation.lime;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
-import io.redlink.more.studymanager.core.factory.ComponentFactory;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.model.User;
-import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
-import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
 import java.util.Map;
 import java.util.Optional;
 
-public class LimeSurveyObservationFactory<C extends Observation, P extends ObservationProperties>
+public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P extends LimeSurveyProperties>
         extends ObservationFactory<C, P> {
 
     private static final String ID_PROPERTY = "limeSurveyId";
@@ -25,12 +21,13 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
 
     public LimeSurveyObservationFactory() {}
 
-    public LimeSurveyObservationFactory(ComponentFactoryProperties properties, LimeSurveyRequestService limeSurveyRequestService) {
+    public LimeSurveyObservationFactory(
+            ComponentFactoryProperties properties, LimeSurveyRequestService limeSurveyRequestService) {
         this.componentProperties = properties;
         this.limeSurveyRequestService = limeSurveyRequestService;
     }
     @Override
-    public ComponentFactory init(ComponentFactoryProperties componentProperties){
+    public LimeSurveyObservationFactory<C, P> init(ComponentFactoryProperties componentProperties){
         this.componentProperties = componentProperties;
         limeSurveyRequestService = new LimeSurveyRequestService(componentProperties);
         return this;
@@ -56,7 +53,7 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
         return Map.of(ID_PROPERTY, "limeSurveyObservation");
     }
     @Override
-    public ObservationProperties validate(ObservationProperties properties) {
+    public LimeSurveyProperties validate(LimeSurveyProperties properties) {
         ConfigurationValidationReport report = ConfigurationValidationReport.init();
         if(!properties.containsKey(ID_PROPERTY))
             report.missingProperty(ID_PROPERTY);
@@ -68,7 +65,7 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
     }
 
     @Override
-    public LimeSurveyObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+    public LimeSurveyObservation<LimeSurveyProperties> create(MoreObservationSDK sdk, LimeSurveyProperties properties) throws ConfigurationValidationException {
         return new LimeSurveyObservation(sdk, validate(properties), limeSurveyRequestService);
     }
 
