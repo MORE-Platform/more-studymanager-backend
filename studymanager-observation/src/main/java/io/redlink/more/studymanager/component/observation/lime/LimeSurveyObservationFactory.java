@@ -6,13 +6,14 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.model.User;
+import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
 import java.util.Map;
 import java.util.Optional;
 
-public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P extends LimeSurveyProperties>
+public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
 
     private static final String ID_PROPERTY = "limeSurveyId";
@@ -53,7 +54,7 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
         return Map.of(ID_PROPERTY, "limeSurveyObservation");
     }
     @Override
-    public LimeSurveyProperties validate(LimeSurveyProperties properties) {
+    public ObservationProperties validate(ObservationProperties properties) {
         ConfigurationValidationReport report = ConfigurationValidationReport.init();
         if(!properties.containsKey(ID_PROPERTY))
             report.missingProperty(ID_PROPERTY);
@@ -65,7 +66,7 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
     }
 
     @Override
-    public LimeSurveyObservation<LimeSurveyProperties> create(MoreObservationSDK sdk, LimeSurveyProperties properties) throws ConfigurationValidationException {
+    public LimeSurveyObservation<ObservationProperties> create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
         return new LimeSurveyObservation(sdk, validate(properties), limeSurveyRequestService);
     }
 

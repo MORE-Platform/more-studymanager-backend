@@ -8,7 +8,7 @@ import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import java.util.Map;
 import java.util.Set;
 
-public class LimeSurveyObservation<C extends LimeSurveyProperties> extends Observation<C> {
+public class LimeSurveyObservation<C extends ObservationProperties> extends Observation<C> {
 
     private final LimeSurveyRequestService limeSurveyRequestService;
 
@@ -29,6 +29,6 @@ public class LimeSurveyObservation<C extends LimeSurveyProperties> extends Obser
                             new ObservationProperties(Map.of("token", data.token()))
                     );
                 });
-        //limeSurveyRequestService.activateSurvey();
+        limeSurveyRequestService.activateSurvey(properties.getString("limeSurveyId"));
     }
 }
