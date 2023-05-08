@@ -2,8 +2,6 @@ package io.redlink.more.studymanager.component.observation.lime;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.redlink.more.studymanager.component.observation.lime.LimeSurveyProperties;
-import io.redlink.more.studymanager.component.observation.lime.LimeSurveyRequestService;
 import io.redlink.more.studymanager.component.observation.lime.model.LimeSurveyParticipantResponse;
 import io.redlink.more.studymanager.component.observation.lime.model.ParticipantData;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
