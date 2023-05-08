@@ -60,9 +60,10 @@ public class LimeSurveyObservationFactory<C extends Observation, P extends Obser
         ConfigurationValidationReport report = ConfigurationValidationReport.init();
         if(!properties.containsKey(ID_PROPERTY))
             report.missingProperty(ID_PROPERTY);
-        if(report.isValid())
+        if(report.isValid()) {
+            properties.put("limeUrl", limeSurveyRequestService.getSurveyUrl());
             return properties;
-        else
+        } else
             throw new ConfigurationValidationException(report);
     }
 

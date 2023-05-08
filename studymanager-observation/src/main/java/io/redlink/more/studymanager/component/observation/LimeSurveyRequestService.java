@@ -96,8 +96,11 @@ public class LimeSurveyRequestService {
         }
     }
 
-    protected String getUrl(){
-        return properties.get("url").toString();
+    protected String getRemoteUrl(){
+        return properties.get("remoteUrl").toString();
+    }
+    public String getSurveyUrl(){
+        return properties.get("surveyUrl").toString();
     }
 
     public JsonNode listSurveysByUser (String username, String filter, Integer start, Integer size){
@@ -134,7 +137,7 @@ public class LimeSurveyRequestService {
 
     private HttpRequest createHttpRequest (String body){
         return HttpRequest.newBuilder()
-                .uri(URI.create(getUrl()))
+                .uri(URI.create(getRemoteUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest
                         .BodyPublishers
