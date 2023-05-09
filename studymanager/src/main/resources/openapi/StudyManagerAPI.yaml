@@ -669,6 +669,117 @@ paths:
         '500':
           description: Error
 
+  /studies/{studyId}/observations/{observationId}/endpoint:
+    parameters:
+      - $ref: '#components/parameters/StudyId'
+      - $ref: '#components/parameters/ObservationId'
+
+    post:
+      tags:
+        - observations
+      description: Create observation endpoint and set or replace access key
+      operationId: setEndpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#components/schemas/TokenLabel'
+      responses:
+        '201':
+          description: Endpoint successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#components/schemas/EndpointSecretInfo'
+        '400':
+          description: bad request
+
+    get:
+      tags:
+        - observations
+      description: Get endpoint info
+      operationId: getEndpoint
+      responses:
+        '200':
+          description: Endpoint info successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#components/schemas/EndpointInfo'
+        '404':
+          description: not found
+
+    delete:
+      tags:
+        - observations
+      description: Delete api key and tokens for observation
+      operationId: deleteEndpoint
+      responses:
+        '204':
+          description: Endpoint successfully deleted
+        '404':
+          description: not found
+
+  /studies/{studyId}/observations/{observationId}/endpoint/token:
+    parameters:
+      - $ref: '#components/parameters/StudyId'
+      - $ref: '#components/parameters/ObservationId'
+    post:
+      tags:
+        - observations
+      description: Create external observation endpoint token
+      operationId: addToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenLabel'
+      responses:
+        '201':
+          description: Token created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FullToken'
+        '404':
+          description: not found
+
+    get:
+      tags:
+        - observations
+      description: Get external observation endpoint token
+      operationId: getTokens
+      responses:
+        '201':
+          description: List Tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#components/schemas/Token'
+
+
+    delete:
+      tags:
+        - observations
+      description: Get external observation endpoint token
+      operationId: Delete Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#components/schemas/TokenLabel'
+      responses:
+        '204':
+          description: Token successfully deleted
+        '404':
+          description: not found
+
+
   /studies/{studyId}/interventions:
     post:
       tags:
@@ -1190,6 +1301,57 @@ components:
           type: string
           format: date-time
           readOnly: true
+
+    EndpointSecretInfo:
+      type: object
+      properties:
+        endpointId:
+          type: string
+        url:
+          type: string
+          format: uri
+        token:
+          type: array
+          items:
+            $ref: '#components/schemas/FullToken'
+
+    EndpointInfo:
+      type: object
+      properties:
+        endpointId:
+          type: string
+        url:
+          type: string
+          format: uri
+        token:
+          type: array
+          items:
+            $ref: '#components/schemas/Token'
+
+    Token:
+      type: object
+      properties:
+        tokenLabel:
+          type: string
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+
+    FullToken:
+      type: object
+      properties:
+        tokenLabel:
+          type: string
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        secret:
+          type: string
+
+    TokenLabel:
+      type: string
 
     ParticipationData:
       type: object
