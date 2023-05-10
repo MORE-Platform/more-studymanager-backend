@@ -691,7 +691,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Endpoint'
+                $ref: '#/components/schemas/ObservationEndpoint'
         '400':
           description: bad request
 
@@ -706,7 +706,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Endpoint'
+                $ref: '#/components/schemas/ObservationEndpoint'
         '404':
           description: not found
 
@@ -1302,7 +1302,7 @@ components:
           format: date-time
           readOnly: true
 
-    Endpoint:
+    ObservationEndpoint:
       type: object
       properties:
         endpointId:
