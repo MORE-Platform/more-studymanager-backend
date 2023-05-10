@@ -691,7 +691,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EndpointDetails'
+                $ref: '#/components/schemas/Endpoint'
         '400':
           description: bad request
 
@@ -706,7 +706,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EndpointDetails'
+                $ref: '#/components/schemas/Endpoint'
         '404':
           description: not found
 
@@ -1302,7 +1302,7 @@ components:
           format: date-time
           readOnly: true
 
-    EndpointDetails:
+    Endpoint:
       type: object
       properties:
         endpointId:
