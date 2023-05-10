@@ -691,7 +691,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EndpointSecretInfo'
+                $ref: '#/components/schemas/EndpointDetails'
         '400':
           description: bad request
 
@@ -706,7 +706,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EndpointInfo'
+                $ref: '#/components/schemas/EndpointDetails'
         '404':
           description: not found
 
@@ -742,7 +742,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FullToken'
+                $ref: '#/components/schemas/EndpointToken'
         '404':
           description: not found
 
@@ -759,7 +759,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Token'
+                  $ref: '#/components/schemas/EndpointToken'
 
 
     delete:
@@ -1302,7 +1302,7 @@ components:
           format: date-time
           readOnly: true
 
-    EndpointSecretInfo:
+    EndpointDetails:
       type: object
       properties:
         endpointId:
@@ -1313,22 +1313,13 @@ components:
         token:
           type: array
           items:
-            $ref: '#/components/schemas/FullToken'
+            $ref: '#/components/schemas/EndpointToken'
+      required:
+        - endpointId
+        - url
+        - token
 
-    EndpointInfo:
-      type: object
-      properties:
-        endpointId:
-          $ref: '#/components/schemas/Id'
-        url:
-          type: string
-          format: uri
-        token:
-          type: array
-          items:
-            $ref: '#/components/schemas/Token'
-
-    Token:
+    EndpointToken:
       type: object
       properties:
         tokenLabel:
@@ -1337,18 +1328,11 @@ components:
           type: string
           format: date-time
           readOnly: true
-
-    FullToken:
-      type: object
-      properties:
-        tokenLabel:
-          type: string
-        created:
-          type: string
-          format: date-time
-          readOnly: true
         secret:
           type: string
+      required:
+        - tokenLabel
+        - created
 
     TokenLabel:
       type: string
