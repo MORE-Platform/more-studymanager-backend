@@ -671,12 +671,12 @@ paths:
 
   /studies/{studyId}/observations/{observationId}/endpoint:
     parameters:
-      - $ref: '#components/parameters/StudyId'
-      - $ref: '#components/parameters/ObservationId'
+      - $ref: '#/components/parameters/StudyId'
+      - $ref: '#/components/parameters/ObservationId'
 
     post:
       tags:
-        - observations
+        - integrations
       description: Create observation endpoint and set or replace access key
       operationId: setEndpoint
       requestBody:
@@ -684,20 +684,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#components/schemas/TokenLabel'
+              $ref: '#/components/schemas/TokenLabel'
       responses:
         '201':
           description: Endpoint successfully created
           content:
             application/json:
               schema:
-                $ref: '#components/schemas/EndpointSecretInfo'
+                $ref: '#/components/schemas/EndpointSecretInfo'
         '400':
           description: bad request
 
     get:
       tags:
-        - observations
+        - integrations
       description: Get endpoint info
       operationId: getEndpoint
       responses:
@@ -706,13 +706,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#components/schemas/EndpointInfo'
+                $ref: '#/components/schemas/EndpointInfo'
         '404':
           description: not found
 
     delete:
       tags:
-        - observations
+        - integrations
       description: Delete api key and tokens for observation
       operationId: deleteEndpoint
       responses:
@@ -723,11 +723,11 @@ paths:
 
   /studies/{studyId}/observations/{observationId}/endpoint/token:
     parameters:
-      - $ref: '#components/parameters/StudyId'
-      - $ref: '#components/parameters/ObservationId'
+      - $ref: '#/components/parameters/StudyId'
+      - $ref: '#/components/parameters/ObservationId'
     post:
       tags:
-        - observations
+        - integrations
       description: Create external observation endpoint token
       operationId: addToken
       requestBody:
@@ -748,7 +748,7 @@ paths:
 
     get:
       tags:
-        - observations
+        - integrations
       description: Get external observation endpoint token
       operationId: getTokens
       responses:
@@ -759,12 +759,12 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#components/schemas/Token'
+                  $ref: '#/components/schemas/Token'
 
 
     delete:
       tags:
-        - observations
+        - integrations
       description: Get external observation endpoint token
       operationId: Delete Token
       requestBody:
@@ -772,7 +772,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#components/schemas/TokenLabel'
+              $ref: '#/components/schemas/TokenLabel'
       responses:
         '204':
           description: Token successfully deleted
@@ -1306,33 +1306,33 @@ components:
       type: object
       properties:
         endpointId:
-          type: string
+          $ref: '#/components/schemas/Id'
         url:
           type: string
           format: uri
         token:
           type: array
           items:
-            $ref: '#components/schemas/FullToken'
+            $ref: '#/components/schemas/FullToken'
 
     EndpointInfo:
       type: object
       properties:
         endpointId:
-          type: string
+          $ref: '#/components/schemas/Id'
         url:
           type: string
           format: uri
         token:
           type: array
           items:
-            $ref: '#components/schemas/Token'
+            $ref: '#/components/schemas/Token'
 
     Token:
       type: object
       properties:
         tokenLabel:
-          type: string
+          $ref: '#/components/schemas/TokenLabel'
         created:
           type: string
           format: date-time
