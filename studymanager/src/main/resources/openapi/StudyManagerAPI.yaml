@@ -677,8 +677,8 @@ paths:
     post:
       tags:
         - integrations
-      description: Create observation endpoint toke and set
-      operationId: addEndpointToken
+      description: Create and add observation endpoint token
+      operationId: addToken
       requestBody:
         required: true
         content:
@@ -698,11 +698,11 @@ paths:
     get:
       tags:
         - integrations
-      description: Get endpoint tokens
-      operationId: getEndpointTokens
+      description: Get all observation endpoint tokens
+      operationId: getTokens
       responses:
         '200':
-          description: Endpoint tokens successfully returned
+          description: Tokens successfully returned
           content:
             application/json:
               schema:
@@ -721,7 +721,7 @@ paths:
     get:
       tags:
         - integrations
-      description: Get endpoint token
+      description: Get observation endpoint token
       operationId: getToken
       responses:
         '201':
@@ -729,7 +729,7 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/EndpointToken'
+                $ref: '#/components/schemas/EndpointToken'
         '404':
           description: not found
 
@@ -737,8 +737,8 @@ paths:
     delete:
       tags:
         - integrations
-      description: Delete endpoint token
-      operationId: Delete Token
+      description: Delete observation endpoint token
+      operationId: deleteToken
       requestBody:
         required: true
         content:
