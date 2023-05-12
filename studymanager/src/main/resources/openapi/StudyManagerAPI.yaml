@@ -669,7 +669,7 @@ paths:
         '500':
           description: Error
 
-  /studies/{studyId}/observations/{observationId}/endpoint:
+  /studies/{studyId}/observations/{observationId}/tokens:
     parameters:
       - $ref: '#/components/parameters/StudyId'
       - $ref: '#/components/parameters/ObservationId'
@@ -677,8 +677,8 @@ paths:
     post:
       tags:
         - integrations
-      description: Create observation endpoint and set or replace access key
-      operationId: setEndpoint
+      description: Create observation endpoint toke and set
+      operationId: addEndpointToken
       requestBody:
         required: true
         content:
@@ -687,85 +687,57 @@ paths:
               $ref: '#/components/schemas/TokenLabel'
       responses:
         '201':
-          description: Endpoint successfully created
+          description: Token successfully added
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ObservationEndpoint'
+                $ref: '#/components/schemas/EndpointToken'
         '400':
           description: bad request
 
     get:
       tags:
         - integrations
-      description: Get endpoint info
-      operationId: getEndpoint
+      description: Get endpoint tokens
+      operationId: getEndpointTokens
       responses:
         '200':
-          description: Endpoint info successfully returned
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ObservationEndpoint'
-        '404':
-          description: not found
-
-    delete:
-      tags:
-        - integrations
-      description: Delete api key and tokens for observation
-      operationId: deleteEndpoint
-      responses:
-        '204':
-          description: Endpoint successfully deleted
-        '404':
-          description: not found
-
-  /studies/{studyId}/observations/{observationId}/endpoint/token:
-    parameters:
-      - $ref: '#/components/parameters/StudyId'
-      - $ref: '#/components/parameters/ObservationId'
-    post:
-      tags:
-        - integrations
-      description: Create external observation endpoint token
-      operationId: addToken
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TokenLabel'
-      responses:
-        '201':
-          description: Token created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EndpointToken'
-        '404':
-          description: not found
-
-    get:
-      tags:
-        - integrations
-      description: Get external observation endpoint token
-      operationId: getTokens
-      responses:
-        '201':
-          description: List Tokens
+          description: Endpoint tokens successfully returned
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/EndpointToken'
+        '404':
+          description: not found
+
+  /studies/{studyId}/observations/{observationId}/tokens/{tokenId}:
+    parameters:
+      - $ref: '#/components/parameters/StudyId'
+      - $ref: '#/components/parameters/ObservationId'
+      - $ref: '#/components/parameters/TokenId'
+
+    get:
+      tags:
+        - integrations
+      description: Get endpoint token
+      operationId: getToken
+      responses:
+        '201':
+          description: Token successfully returned
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/EndpointToken'
+        '404':
+          description: not found
 
 
     delete:
       tags:
         - integrations
-      description: Get external observation endpoint token
+      description: Delete endpoint token
       operationId: Delete Token
       requestBody:
         required: true
@@ -1302,35 +1274,21 @@ components:
           format: date-time
           readOnly: true
 
-    ObservationEndpoint:
-      type: object
-      properties:
-        endpointId:
-          $ref: '#/components/schemas/Id'
-        url:
-          type: string
-          format: uri
-        token:
-          type: array
-          items:
-            $ref: '#/components/schemas/EndpointToken'
-      required:
-        - endpointId
-        - url
-        - token
-
     EndpointToken:
       type: object
       properties:
+        tokenId:
+          $ref: '#/components/schemas/Id'
         tokenLabel:
           $ref: '#/components/schemas/TokenLabel'
         created:
           type: string
           format: date-time
           readOnly: true
-        secret:
+        token:
           type: string
       required:
+        - tokenId
         - tokenLabel
         - created
 
@@ -1643,6 +1601,13 @@ components:
       required: true
     ActionId:
       name: actionId
+      in: path
+      schema:
+        type: integer
+        format: int32
+      required: true
+    TokenId:
+      name: tokenId
       in: path
       schema:
         type: integer
