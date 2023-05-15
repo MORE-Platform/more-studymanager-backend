@@ -7,21 +7,30 @@ import java.util.stream.Collectors;
 public class ConfigurationValidationReport {
     private final List<ValidationIssue> issues;
 
-    private ConfigurationValidationReport() {
-        this.issues = new ArrayList<>();
+    private ConfigurationValidationReport(List<ValidationIssue> issues) {
+        this.issues = issues;
     }
 
     public static ConfigurationValidationReport init() {
-        return new ConfigurationValidationReport();
+        return new ConfigurationValidationReport(new ArrayList<>());
+    }
+
+    public static ConfigurationValidationReport of(List<ValidationIssue> issues) {
+        //TODO copy
+        return new ConfigurationValidationReport(issues);
+    }
+
+    public static ConfigurationValidationReport of(ValidationIssue issue) {
+        return new ConfigurationValidationReport(List.of(issue));
     }
 
     public ConfigurationValidationReport error(String message) {
-        this.issues.add(ValidationIssue.error(message));
+        this.issues.add(ValidationIssue.error(null,message));
         return this;
     }
 
     public ConfigurationValidationReport warning(String message) {
-        this.issues.add(ValidationIssue.warning(message));
+        this.issues.add(ValidationIssue.warning(null, message));
         return this;
     }
 

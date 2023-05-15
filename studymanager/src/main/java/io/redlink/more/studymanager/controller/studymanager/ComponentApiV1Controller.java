@@ -68,10 +68,10 @@ public class ComponentApiV1Controller implements ComponentsApi {
                         return new ValidationReportDTO()
                                 .valid(false)
                                 .errors(e.getReport().getErrors().stream()
-                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).type("error"))
+                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).propertyId(i.getPropertyId()).type("error"))
                                         .toList()
                                 ).warnings(e.getReport().getWarnings().stream()
-                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).type("warning"))
+                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).propertyId(i.getPropertyId()).type("warning"))
                                         .toList()
                                 );
                     }
@@ -138,6 +138,7 @@ public class ComponentApiV1Controller implements ComponentsApi {
         return new ComponentFactoryDTO()
                 .componentId(factory.getId())
                 .title(factory.getTitle())
+                .properties(factory.getProperties())
                 .defaultProperties(factory.getDefaultProperties())
                 .description(factory.getDescription())
                 .hasWebComponent(factory.hasWebComponent());

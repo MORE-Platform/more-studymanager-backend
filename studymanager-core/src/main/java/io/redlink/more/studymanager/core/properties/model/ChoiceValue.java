@@ -4,8 +4,18 @@ import java.util.List;
 
 public class ChoiceValue extends Value<String> {
     private List<String> options;
+
+    public ChoiceValue(String id) {
+        super(id);
+    }
+
     @Override
     public String getType() {
-        return null;
+        return "CHOICE";
+    }
+
+    @Override
+    public Class<String> getValueType() {
+        return String.class;
     }
 }

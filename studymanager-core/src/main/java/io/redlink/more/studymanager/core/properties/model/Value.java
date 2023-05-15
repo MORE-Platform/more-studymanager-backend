@@ -1,5 +1,9 @@
 package io.redlink.more.studymanager.core.properties.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.redlink.more.studymanager.core.exception.ValueCastException;
+import io.redlink.more.studymanager.core.exception.ValueNonNullException;
+import io.redlink.more.studymanager.core.properties.ComponentProperties;
 import io.redlink.more.studymanager.core.validation.ValidationIssue;
 
 public abstract class Value<T> {
@@ -8,21 +12,40 @@ public abstract class Value<T> {
     private String description;
     private T defaultValue;
     private boolean required = false;
+    private boolean immutable = false;
+
+    public Value(String id) {
+        this.id = id;
+    }
+
     public ValidationIssue validate(T t) {
         return null;
     }
+
+    public T getValue(ComponentProperties properties) {
+        if(properties.containsKey(id)) {
+            try {
+                return getValueType().cast(properties.get(id));
+            } catch (ClassCastException e) {
+                throw new ValueCastException(this, getValueType());
+            }
+        } else {
+            if(required && defaultValue == null) {
+                throw new ValueNonNullException(this);
+            } else {
+                return defaultValue;
+            }
+        }
+    }
+
+    @JsonIgnore
+    public abstract Class<T> getValueType();
 
     public abstract String getType();
 
     public String getId() {
         return id;
     }
-
-    public Value<T> setId(String id) {
-        this.id = id;
-        return this;
-    }
-
     public String getName() {
         return name;
     }
@@ -56,6 +79,15 @@ public abstract class Value<T> {
 
     public Value<T> setRequired(boolean required) {
         this.required = required;
+        return this;
+    }
+
+    public boolean isImmutable() {
+        return immutable;
+    }
+
+    public Value<T> setImmutable(boolean immutable) {
+        this.immutable = immutable;
         return this;
     }
 }

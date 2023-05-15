@@ -12,4 +12,5 @@ public abstract class ObservationFactory<C extends Observation<P>, P extends Obs
     public Class<ObservationProperties> getPropertyClass() {
         return ObservationProperties.class;
     }
+
 }
