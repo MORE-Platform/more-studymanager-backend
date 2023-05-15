@@ -10,7 +10,7 @@ import java.util.Map;
 
 public abstract class ComponentFactory<C extends Component, P extends ComponentProperties> {
     public ComponentFactoryProperties componentProperties;
-    public ComponentFactory init(ComponentFactoryProperties componentProperties){
+    public ComponentFactory<C,P> init(ComponentFactoryProperties componentProperties){
         this.componentProperties = componentProperties;
         return this;
     }

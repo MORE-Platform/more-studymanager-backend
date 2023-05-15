@@ -1,6 +1,6 @@
 package io.redlink.more.studymanager.configuration;
 
-import io.redlink.more.studymanager.component.observation.LimeSurveyObservationFactory;
+import io.redlink.more.studymanager.component.observation.lime.LimeSurveyObservationFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

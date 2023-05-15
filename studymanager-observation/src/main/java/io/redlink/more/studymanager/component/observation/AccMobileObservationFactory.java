@@ -6,7 +6,7 @@ import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
-public class AccMobileObservationFactory<C extends Observation, P extends ObservationProperties>
+public class AccMobileObservationFactory<C extends Observation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
     @Override
     public String getId() {

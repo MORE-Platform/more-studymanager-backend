@@ -1,24 +1,23 @@
-package io.redlink.more.studymanager.component.observation;
+package io.redlink.more.studymanager.component.observation.lime;
 
-import io.redlink.more.studymanager.component.observation.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.redlink.more.studymanager.component.observation.lime.model.*;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class LimeSurveyRequestService {
 
@@ -36,6 +35,36 @@ public class LimeSurveyRequestService {
     protected LimeSurveyRequestService(HttpClient client, ComponentFactoryProperties properties){
         this.properties = properties;
         this.client = client;
+    }
+
+    protected void activateSurvey(String surveyId) {
+        try{
+            HttpRequest request = createHttpRequest(
+                    parseRequest("activate_survey",
+                            List.of(getSessionKey(), surveyId))
+            );
+            client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+        }catch (IOException | InterruptedException e) {
+            LOGGER.error("Error activating survey {}", surveyId);
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected void setSurveyEndUrl(String surveyId) {
+        try{
+            HttpRequest request = createHttpRequest(
+                    parseRequest("set_language_properties",
+                            List.of(getSessionKey(), surveyId,
+                                    Map.of("surveyls_url", properties.get("endUrl")),
+                                    properties.computeIfAbsent("lang", (k) -> "en")
+                            ))
+            );
+            String b = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+            LOGGER.info(b);
+        }catch (IOException | InterruptedException e) {
+            LOGGER.error("Error setting ref url for survey {}", surveyId, e);
+            throw new RuntimeException(e);
+        }
     }
 
     protected List<ParticipantData> activateParticipants(Set<Integer> participantIds, String surveyId){
@@ -96,8 +125,11 @@ public class LimeSurveyRequestService {
         }
     }
 
-    protected String getUrl(){
-        return properties.get("url").toString();
+    protected String getRemoteUrl(){
+        return properties.get("remoteUrl").toString();
+    }
+    public String getSurveyUrl(){
+        return properties.get("surveyUrl").toString();
     }
 
     public JsonNode listSurveysByUser (String username, String filter, Integer start, Integer size){
@@ -134,7 +166,7 @@ public class LimeSurveyRequestService {
 
     private HttpRequest createHttpRequest (String body){
         return HttpRequest.newBuilder()
-                .uri(URI.create(getUrl()))
+                .uri(URI.create(getRemoteUrl()))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest
                         .BodyPublishers

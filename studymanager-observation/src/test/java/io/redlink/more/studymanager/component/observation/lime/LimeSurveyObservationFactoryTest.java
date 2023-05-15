@@ -1,7 +1,9 @@
-package io.redlink.more.studymanager.component.observation;
+package io.redlink.more.studymanager.component.observation.lime;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.redlink.more.studymanager.component.observation.lime.LimeSurveyObservationFactory;
+import io.redlink.more.studymanager.component.observation.lime.LimeSurveyRequestService;
 import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import io.redlink.more.studymanager.core.model.User;

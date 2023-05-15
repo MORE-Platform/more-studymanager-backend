@@ -9,7 +9,7 @@ import io.redlink.more.studymanager.core.validation.ConfigurationValidationRepor
 
 import java.util.Map;
 
-public class GpsMobileObservationFactory<C extends Observation, P extends ObservationProperties> extends ObservationFactory<C, P> {
+public class GpsMobileObservationFactory<C extends Observation<P>, P extends ObservationProperties> extends ObservationFactory<C, P> {
 
     @Override
     public String getId() {
