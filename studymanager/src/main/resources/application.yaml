@@ -89,6 +89,7 @@ more:
       password: '${LIME_ADMIN_PWD:more-admin}'
       remoteUrl: '${LIME_URL:https://lime.platform-test.more.redlink.io/admin/remotecontrol}'
       surveyUrl: '${LIME_SURVEY_URL:https://lime.platform-test.more.redlink.io/index.php}'
+      endUrl: '${LIME_END_SURVEY_URL:https://lime.platform-test.more.redlink.io/end.php?savedid={SAVEDID}&surveyid={SID}}'
   auth:
     global-roles:
       more-viewer:

@@ -14,6 +14,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,6 +46,23 @@ public class LimeSurveyRequestService {
             client.send(request, HttpResponse.BodyHandlers.ofString()).body();
         }catch (IOException | InterruptedException e) {
             LOGGER.error("Error activating survey {}", surveyId);
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected void setSurveyEndUrl(String surveyId) {
+        try{
+            HttpRequest request = createHttpRequest(
+                    parseRequest("set_language_properties",
+                            List.of(getSessionKey(), surveyId,
+                                    Map.of("surveyls_url", properties.get("endUrl")),
+                                    properties.computeIfAbsent("lang", (k) -> "en")
+                            ))
+            );
+            String b = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+            LOGGER.info(b);
+        }catch (IOException | InterruptedException e) {
+            LOGGER.error("Error setting ref url for survey {}", surveyId, e);
             throw new RuntimeException(e);
         }
     }
