@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.sdk.scoped;
 
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
+import io.redlink.more.studymanager.model.data.ElasticDataPoint;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 
 import java.time.Instant;
@@ -57,6 +58,6 @@ public class MoreObservationSDKImpl extends MorePlatformSDKImpl implements MoreO
 
     @Override
     public void storeDataPoint(Integer participantId, String observationType, Map data) {
-        sdk.storeDatapoint(studyId, studyGroupId, participantId, "observation_"+observationId, observationType, Instant.now(), data);
+        sdk.storeDatapoint(ElasticDataPoint.Type.observation, studyId, studyGroupId, participantId, "observation_"+observationId, observationType, Instant.now(), data);
     }
 }

@@ -15,6 +15,7 @@ import io.redlink.more.studymanager.model.data.ElasticActionDataPoint;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.data.ElasticDataPoint;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +150,7 @@ public class ElasticService {
         return "study_" + id;
     }
 
-    public void setDataPoint(Long studyId, ElasticActionDataPoint elasticActionDataPoint) {
+    public void setDataPoint(Long studyId, ElasticDataPoint elasticActionDataPoint) {
         try {
             client.index(i -> i.index(getStudyIdString(studyId)).document(elasticActionDataPoint));
         } catch (IOException e) {

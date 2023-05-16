@@ -36,11 +36,13 @@ public class LimeSurveyRequestService {
 
     protected void activateSurvey(String surveyId) {
         try{
+            String sessionKey = getSessionKey();
             HttpRequest request = createHttpRequest(
                     parseRequest("activate_survey",
-                            List.of(getSessionKey(), surveyId))
+                            List.of(sessionKey, surveyId))
             );
             client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+            releaseSessionKey(sessionKey);
         }catch (IOException | InterruptedException e) {
             LOGGER.error("Error activating survey {}", surveyId);
             throw new RuntimeException(e);
@@ -49,15 +51,19 @@ public class LimeSurveyRequestService {
 
     protected void setSurveyEndUrl(String surveyId, Long studyId, int observationId) {
         try{
+            String sessionKey = getSessionKey();
+            String lang = getLanguage(surveyId, sessionKey);
             HttpRequest request = createHttpRequest(
                     parseRequest("set_language_properties",
-                            List.of(getSessionKey(), surveyId,
-                                    Map.of("surveyls_url",
+                            List.of(sessionKey, surveyId,
+                                    Map.of(
+                                            "surveyls_url",
                                             properties.get("endUrl") + getSurveyEndUrlQuery(studyId, observationId)),
-                                    properties.computeIfAbsent("lang", (k) -> "en")
+                                    lang
                             ))
             );
             String b = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+            releaseSessionKey(sessionKey);
             LOGGER.info(b);
         }catch (IOException | InterruptedException e) {
             LOGGER.error("Error setting ref url for survey {}", surveyId, e);
@@ -89,6 +95,24 @@ public class LimeSurveyRequestService {
         }
     }
 
+    public String getLanguage(String surveyId, String sessionKey) {
+        try{
+            HttpRequest request = createHttpRequest(
+                    parseRequest("get_language_properties",
+                            List.of(sessionKey, surveyId, List.of("surveyls_language")))
+            );
+            client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+
+            JsonNode node = mapper.readTree(client.send(request, HttpResponse.BodyHandlers.ofString()).body());
+
+            return node.get("result").get("surveyls_language").asText();
+
+        }catch (IOException | InterruptedException e) {
+            LOGGER.error("Error creating participant table for survey {}", surveyId);
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * This method sets both firstname and lastname of lime-participants as the id of more-participants
      */
@@ -101,9 +125,13 @@ public class LimeSurveyRequestService {
                                         ).toList()))
                 );
             LOGGER.info("sent {} participants to lime", participantIds.size());
+
             List<ParticipantData> data = mapper.readValue(client.send(request, HttpResponse.BodyHandlers.ofString()).body(),
                             LimeSurveyParticipantResponse.class)
                     .result();
+
+            releaseSessionKey(sessionKey);
+
             LOGGER.info("result: {}", data.stream().map(ParticipantData::toString).collect(Collectors.joining()));
             return data;
         }catch(IOException | InterruptedException e){
@@ -128,6 +156,18 @@ public class LimeSurveyRequestService {
         }
     }
 
+    private void releaseSessionKey(String sessionKey){
+        try {
+            HttpRequest request = createHttpRequest(
+                    parseRequest("release_session_key",
+                            List.of(sessionKey)));
+            client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch(IOException | InterruptedException e){
+            LOGGER.error("Error releasing session key for Limesurvey remote control");
+            throw new RuntimeException(e);
+        }
+    }
+
     protected String getRemoteUrl(){
         return properties.get("remoteUrl").toString();
     }
@@ -137,10 +177,12 @@ public class LimeSurveyRequestService {
 
     public JsonNode listSurveysByUser (String username, String filter, Integer start, Integer size){
         try {
-            HttpRequest listSurveysRequest = createHttpRequest(parseRequest("list_surveys", List.of(getSessionKey(), username)));
+            String sessionKey = getSessionKey();
+            HttpRequest listSurveysRequest = createHttpRequest(parseRequest("list_surveys", List.of(sessionKey, username)));
             LimeSurveyListSurveyResponse response =
                     mapper.readValue(client.send(listSurveysRequest, HttpResponse.BodyHandlers.ofString()).body(),
                             LimeSurveyListSurveyResponse.class);
+            releaseSessionKey(sessionKey);
 
             if(response.error() != null) {
                 LOGGER.error("Error getting surveys for user: {}", response.error());
@@ -191,11 +233,14 @@ public class LimeSurveyRequestService {
 
     public Optional<Map> getAnswer(String token, int surveyId, int savedId) {
         try{
+            String sessionKey = getSessionKey();
+            String lang = getLanguage(String.valueOf(surveyId), sessionKey);
             HttpRequest request = createHttpRequest(
                     parseRequest("export_responses_by_token",
-                            List.of(getSessionKey(), surveyId, "json", token, "en"))
+                            List.of(sessionKey, surveyId, "json", token, lang))
             );
             var responseBody = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+            releaseSessionKey(sessionKey);
 
             JsonNode responseNode = mapper.readTree(responseBody);
 

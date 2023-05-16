@@ -8,6 +8,8 @@ import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
 import io.redlink.more.studymanager.model.data.ElasticActionDataPoint;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.core.io.Timeframe;
+import io.redlink.more.studymanager.model.data.ElasticDataPoint;
+import io.redlink.more.studymanager.model.data.ElasticObservationDataPoint;
 import io.redlink.more.studymanager.repository.NameValuePairRepository;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.scheduling.SchedulingService;
@@ -126,6 +128,7 @@ public class MoreSDK {
     }
 
     public void storeDatapoint(
+            ElasticDataPoint.Type type,
             long studyId,
             Integer studyGroupId,
             int participantId,
@@ -134,18 +137,32 @@ public class MoreSDK {
             Instant time,
             Map<String,Object> data
     ) {
-        elasticService.setDataPoint(studyId, new ElasticActionDataPoint(
-                "SYS-" + UUID.randomUUID(),
-                "participant_" + participantId,
-                "study_" + studyId,
-                studyGroupId != null ? "study_group_" + studyGroupId : null,
-                extendedComponentId,
-                componentType,
-                componentType,
-                time,
-                Instant.now(),
-                data
-        ));
+        switch (type) {
+            case action -> elasticService.setDataPoint(studyId, new ElasticActionDataPoint(
+                    "SYS-" + UUID.randomUUID(),
+                    "participant_" + participantId,
+                    "study_" + studyId,
+                    studyGroupId != null ? "study_group_" + studyGroupId : null,
+                    extendedComponentId,
+                    componentType,
+                    componentType,
+                    time,
+                    Instant.now(),
+                    data
+            ));
+            case observation -> elasticService.setDataPoint(studyId, new ElasticObservationDataPoint(
+                    "SYS-" + UUID.randomUUID(),
+                    "participant_" + participantId,
+                    "study_" + studyId,
+                    studyGroupId != null ? "study_group_" + studyGroupId : null,
+                    extendedComponentId,
+                    componentType,
+                    componentType,
+                    time,
+                    Instant.now(),
+                    data
+            ));
+        }
     }
 
     public void setPropertiesForParticipant(long studyId, Integer participantId, int observationId, ObservationProperties properties) {

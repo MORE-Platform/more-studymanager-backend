@@ -1,6 +1,7 @@
 package io.redlink.more.studymanager.sdk.scoped;
 
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
+import io.redlink.more.studymanager.model.data.ElasticDataPoint;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.utils.LoggingUtils;
 
@@ -32,7 +33,7 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
             ctx.putAction(actionId, actionType);
 
             if (sdk.sendPushNotification(studyId, participantId, title, message)) {
-                sdk.storeDatapoint(studyId, studyGroupId, participantId, "action_"+actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
+                sdk.storeDatapoint(ElasticDataPoint.Type.action, studyId, studyGroupId, participantId, "action_"+actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
             }
         }
     }
