@@ -11,10 +11,10 @@ import java.util.List;
 
 @Component
 public class IntegrationRepository {
-
+//TODO reg_token anschauen
     private static final String ADD_TOKEN =
-            "INSERT INTO observation_api_tokens(study_id, observation_id, token_id, token_label, token) " +
-            "VALUES (:study_id, :observation_id, :token_id, :token_label, :token) " +
+            "INSERT INTO observation_api_tokens(study_id, observation_id, token_label, token) " +
+            "VALUES (:study_id, :observation_id, :token_label, :token) " +
             "ON CONFLICT (study_id, observation_id) DO NOTHING " +
             "RETURNING *";
     private static final String LIST_TOKENS =
@@ -24,10 +24,10 @@ public class IntegrationRepository {
     private static final String GET_TOKEN =
             "SELECT token_id, token_label, token, created " +
             "FROM observation_api_tokens " +
-            "WHERE study_id = ? AND observation_id = ? AND token_label = ?";
+            "WHERE study_id = ? AND observation_id = ? AND token_id = ?";
     private static final String DELETE_TOKEN =
             "DELETE FROM observation_api_tokens " +
-            "WHERE study_id = ? AND observation_id = ? AND token_label = ?";
+            "WHERE study_id = ? AND observation_id = ? AND token_id = ?";
 
     private final JdbcTemplate template;
 
@@ -40,7 +40,9 @@ public class IntegrationRepository {
 
     public EndpointToken addToken(Long studyId, Integer observationId, EndpointToken token) {
         return namedTemplate.queryForObject(ADD_TOKEN,
-                tokenToParams(token)
+                new MapSqlParameterSource()
+                        .addValue("token_label", token.getTokenLabel())
+                        .addValue("token", token.getToken())
                         .addValue("study_id", studyId)
                         .addValue("observation_id", observationId),
                 getTokenRowMapper());
@@ -50,12 +52,12 @@ public class IntegrationRepository {
         return template.query(LIST_TOKENS, getTokenRowMapper(), studyId, observationId);
     }
 
-    public EndpointToken getToken(Long studyId, Integer observationId, String tokenLabel) {
-        return template.queryForObject(GET_TOKEN, getTokenRowMapper(), studyId, observationId, tokenLabel);
+    public EndpointToken getToken(Long studyId, Integer observationId, Integer tokenId) {
+        return template.queryForObject(GET_TOKEN, getTokenRowMapper(), studyId, observationId, tokenId);
     }
 
-    public void deleteToken(Long studyId, Integer observationId, String tokenLabel) {
-        template.update(DELETE_TOKEN, studyId, observationId, tokenLabel);
+    public void deleteToken(Long studyId, Integer observationId, Integer tokenId) {
+        template.update(DELETE_TOKEN, studyId, observationId, tokenId);
     }
 
     private static RowMapper<EndpointToken> getTokenRowMapper() {
@@ -64,12 +66,5 @@ public class IntegrationRepository {
                 .setTokenLabel(rs.getString("token_label"))
                 .setToken(rs.getString("token"))
                 .setCreated(RepositoryUtils.readInstant(rs, "created"));
-    }
-
-    private static MapSqlParameterSource tokenToParams(EndpointToken token) {
-        return new MapSqlParameterSource()
-                .addValue("token_id", token.getTokenId())
-                .addValue("token_label", token.getTokenLabel())
-                .addValue("token", token.getToken());
     }
 }

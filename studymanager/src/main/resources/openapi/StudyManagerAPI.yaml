@@ -739,12 +739,6 @@ paths:
         - integrations
       description: Delete observation endpoint token
       operationId: deleteToken
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TokenLabel'
       responses:
         '204':
           description: Token successfully deleted
