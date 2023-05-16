@@ -5,7 +5,7 @@ import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
-import io.redlink.more.studymanager.model.ElasticDataPoint;
+import io.redlink.more.studymanager.model.data.ElasticActionDataPoint;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.repository.NameValuePairRepository;
@@ -125,23 +125,23 @@ public class MoreSDK {
         return pushNotificationService.sendPushNotification(studyId, participantId, title, message);
     }
 
-    public void storeActionDatapoint(
+    public void storeDatapoint(
             long studyId,
             Integer studyGroupId,
             int participantId,
-            int actionId,
-            String actionType,
+            String extendedComponentId,
+            String componentType,
             Instant time,
             Map<String,Object> data
     ) {
-        elasticService.setDataPoint(studyId, new ElasticDataPoint(
+        elasticService.setDataPoint(studyId, new ElasticActionDataPoint(
                 "SYS-" + UUID.randomUUID(),
                 "participant_" + participantId,
                 "study_" + studyId,
                 studyGroupId != null ? "study_group_" + studyGroupId : null,
-                "action_" + actionId,
-                actionType,
-                actionType,
+                extendedComponentId,
+                componentType,
+                componentType,
                 time,
                 Instant.now(),
                 data

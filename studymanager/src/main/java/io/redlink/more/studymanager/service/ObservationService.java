@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ObservationService {
@@ -41,6 +42,14 @@ public class ObservationService {
     public void deleteObservation(Long studyId, Integer observationId) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         repository.deleteObservation(studyId, observationId);
+    }
+
+    public Optional<Observation> getObservation(Long studyId, Integer observationId) {
+        try {
+            return Optional.ofNullable(repository.getById(studyId, observationId));
+        } catch (BadRequestException e) {
+            return Optional.empty();
+        }
     }
 
     public List<Observation> listObservations(Long studyId) {

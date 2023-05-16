@@ -4,6 +4,8 @@ import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 
+import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 
 public class MoreObservationSDKImpl extends MorePlatformSDKImpl implements MoreObservationSDK {
@@ -18,6 +20,11 @@ public class MoreObservationSDKImpl extends MorePlatformSDKImpl implements MoreO
     @Override
     public String getIssuer() {
         return studyId + "-" + studyGroupId + '-' + observationId + "-observation";
+    }
+
+    @Override
+    public int getObservationId() {
+        return observationId;
     }
 
     @Override
@@ -46,5 +53,10 @@ public class MoreObservationSDKImpl extends MorePlatformSDKImpl implements MoreO
                 participantId,
                 this.observationId
         );
+    }
+
+    @Override
+    public void storeDataPoint(Integer participantId, String observationType, Map data) {
+        sdk.storeDatapoint(studyId, studyGroupId, participantId, "observation_"+observationId, observationType, Instant.now(), data);
     }
 }

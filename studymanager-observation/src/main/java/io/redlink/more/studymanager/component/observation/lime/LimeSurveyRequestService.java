@@ -26,7 +26,6 @@ public class LimeSurveyRequestService {
     private final ObjectMapper mapper = new ObjectMapper();
     private static final Logger LOGGER = LoggerFactory.getLogger(LimeSurveyRequestService.class);
 
-
     protected LimeSurveyRequestService(ComponentFactoryProperties properties){
         this.properties = properties;
         client = HttpClient.newHttpClient();
@@ -50,12 +49,13 @@ public class LimeSurveyRequestService {
         }
     }
 
-    protected void setSurveyEndUrl(String surveyId) {
+    protected void setSurveyEndUrl(String surveyId, Long studyId, int observationId) {
         try{
             HttpRequest request = createHttpRequest(
                     parseRequest("set_language_properties",
                             List.of(getSessionKey(), surveyId,
-                                    Map.of("surveyls_url", properties.get("endUrl")),
+                                    Map.of("surveyls_url",
+                                            properties.get("endUrl") + getSurveyEndUrlQuery(studyId, observationId)),
                                     properties.computeIfAbsent("lang", (k) -> "en")
                             ))
             );
@@ -65,6 +65,11 @@ public class LimeSurveyRequestService {
             LOGGER.error("Error setting ref url for survey {}", surveyId, e);
             throw new RuntimeException(e);
         }
+    }
+
+    private String getSurveyEndUrlQuery(Long studyId, int observationId) {
+        return String.format("?savedid={SAVEDID}&surveyid={SID}&token={TOKEN}&studyId=%s&observationId=%s",
+                studyId, observationId);
     }
 
     protected List<ParticipantData> activateParticipants(Set<Integer> participantIds, String surveyId){

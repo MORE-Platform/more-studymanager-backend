@@ -30,7 +30,12 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
                             new ObservationProperties(Map.of("token", data.token()))
                     );
                 });
-        limeSurveyRequestService.setSurveyEndUrl(surveyId);
+        limeSurveyRequestService.setSurveyEndUrl(surveyId, sdk.getStudyId(), sdk.getObservationId());
         limeSurveyRequestService.activateSurvey(surveyId);
+    }
+
+    public boolean writeDataPoints(String token, String surveyId, String savedId) {
+        //TODO get data and write
+        return true;
     }
 }
