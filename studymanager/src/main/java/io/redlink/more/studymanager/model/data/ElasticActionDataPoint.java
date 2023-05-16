@@ -1,4 +1,4 @@
-package io.redlink.more.studymanager.model;
+package io.redlink.more.studymanager.model.data;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public record ElasticDataPoint(
+public record ElasticActionDataPoint (
         @JsonProperty("datapoint_id")
         String datapointId,
         @JsonProperty("participant_id")
@@ -30,12 +30,12 @@ public record ElasticDataPoint(
         Instant effectiveTimeFrame,
         @JsonIgnore
         Map<String, Object> data
-) {
+) implements ElasticDataPoint {
 
     private static final String DATA_FIELD_PREFIX = "data_";
 
     @JsonCreator
-    public ElasticDataPoint {
+    public ElasticActionDataPoint {
         data = Map.copyOf(data);
     }
 

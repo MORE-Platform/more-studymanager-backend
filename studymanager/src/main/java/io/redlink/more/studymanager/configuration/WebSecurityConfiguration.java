@@ -62,6 +62,8 @@ public class WebSecurityConfiguration {
         // Restricted Paths
         http.authorizeHttpRequests()
                 .requestMatchers("/api", "/api/v1/me").permitAll()
+                //TODO specific handling of temporary sidecar
+                .requestMatchers("/api/v1/components/observation/lime-survey-observation/end.html").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
                 .requestMatchers("/kibana/**").authenticated()
                 .requestMatchers("/login/init").authenticated()

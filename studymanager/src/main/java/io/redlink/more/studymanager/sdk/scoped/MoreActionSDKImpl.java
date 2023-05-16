@@ -1,17 +1,14 @@
 package io.redlink.more.studymanager.sdk.scoped;
 
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
+import io.redlink.more.studymanager.model.data.ElasticDataPoint;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.utils.LoggingUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Map;
 
 public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreActionSDK {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MoreActionSDKImpl.class);
     private final int interventionId;
     private final int actionId;
     private final String actionType;
@@ -36,7 +33,7 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
             ctx.putAction(actionId, actionType);
 
             if (sdk.sendPushNotification(studyId, participantId, title, message)) {
-                sdk.storeActionDatapoint(studyId, studyGroupId, participantId, actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
+                sdk.storeDatapoint(ElasticDataPoint.Type.action, studyId, studyGroupId, participantId, "action_"+actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
             }
         }
     }

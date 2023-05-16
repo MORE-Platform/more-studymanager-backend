@@ -49,10 +49,10 @@ public class ObservationRepository {
         } catch (DataIntegrityViolationException | JsonProcessingException e) {
             throw new BadRequestException("Study group " + observation.getStudyGroupId() + " does not exist on study " + observation.getStudyId());
         }
-        return getByIds(observation.getStudyId(), keyHolder.getKey().intValue());
+        return getById(observation.getStudyId(), keyHolder.getKey().intValue());
     }
 
-    private Observation getByIds(Long studyId, Integer observationId) {
+    public Observation getById(Long studyId, Integer observationId) {
         try {
             return template.queryForObject(GET_OBSERVATION_BY_IDS, getObservationRowMapper(), studyId, observationId);
         } catch (EmptyResultDataAccessException e) {
@@ -72,7 +72,7 @@ public class ObservationRepository {
         try {
             namedTemplate.update(UPDATE_OBSERVATION,
                     toParams(observation).addValue("observation_id", observation.getObservationId()));
-            return getByIds(observation.getStudyId(), observation.getObservationId());
+            return getById(observation.getStudyId(), observation.getObservationId());
         } catch (JsonProcessingException e) {
             return null;
         }

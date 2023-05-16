@@ -5,7 +5,7 @@ import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.json.JsonData;
 import com.google.common.io.Resources;
 import io.redlink.more.studymanager.configuration.ElasticConfiguration;
-import io.redlink.more.studymanager.model.ElasticDataPoint;
+import io.redlink.more.studymanager.model.data.ElasticActionDataPoint;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import java.util.Map;
@@ -76,7 +76,7 @@ class ElasticSearchServiceTest {
     @Test
     void testRecordAction() {
         assertThatNoException().isThrownBy(() ->
-                elasticService.setDataPoint(25L, new ElasticDataPoint(
+                elasticService.setDataPoint(25L, new ElasticActionDataPoint(
                         UUID.randomUUID().toString(),
                         "participant_1",
                         "study_25",
