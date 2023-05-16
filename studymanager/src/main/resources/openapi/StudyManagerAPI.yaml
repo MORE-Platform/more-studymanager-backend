@@ -694,6 +694,8 @@ paths:
                 $ref: '#/components/schemas/EndpointToken'
         '400':
           description: bad request
+        '404':
+          description: not found
 
     get:
       tags:
@@ -1285,6 +1287,7 @@ components:
         - tokenId
         - tokenLabel
         - created
+        - token
 
     TokenLabel:
       type: string

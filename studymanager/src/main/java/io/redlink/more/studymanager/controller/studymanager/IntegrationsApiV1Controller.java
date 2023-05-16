@@ -6,6 +6,7 @@ import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.EndpointTokenTransformer;
 import io.redlink.more.studymanager.service.IntegrationService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +25,9 @@ public class IntegrationsApiV1Controller implements IntegrationsApi {
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<EndpointTokenDTO> addToken(Long studyId, Integer observationId, String tokenLabel) {
-        return ResponseEntity.ok().body(
+        if(tokenLabel.isBlank()) { return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
                 EndpointTokenTransformer.toEndpointTokenDTO(
                         service.addToken(studyId, observationId, tokenLabel)
                 )
