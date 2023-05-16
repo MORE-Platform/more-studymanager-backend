@@ -3,6 +3,7 @@ package io.redlink.more.studymanager.component.observation.lime;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.redlink.more.studymanager.component.observation.lime.model.*;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import org.slf4j.Logger;
@@ -13,10 +14,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LimeSurveyRequestService {
@@ -189,5 +187,37 @@ public class LimeSurveyRequestService {
         return Optional.ofNullable(filter)
                 .map(f -> text.toLowerCase().contains(f.toLowerCase()))
                 .orElse(true);
+    }
+
+    public Optional<Map> getAnswer(String token, int surveyId, int savedId) {
+        try{
+            HttpRequest request = createHttpRequest(
+                    parseRequest("export_responses_by_token",
+                            List.of(getSessionKey(), surveyId, "json", token, "en"))
+            );
+            var responseBody = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+
+            JsonNode responseNode = mapper.readTree(responseBody);
+
+            if(!responseNode.get("error").isEmpty()) {
+                return Optional.empty();
+            }
+
+            if(responseNode.get("result").isTextual()) {
+                JsonNode result = mapper.readTree(Base64.getDecoder().decode(responseNode.get("result").asText()));
+                Iterator<JsonNode> responses = result.get("responses").elements();
+                while(responses.hasNext()) {
+                    JsonNode response = responses.next();
+                    if(response.get("id").asInt() == savedId) {
+                        return Optional.of(mapper.treeToValue(response, Map.class));
+                    }
+                }
+            }
+            return Optional.empty();
+
+        }catch (IOException | InterruptedException e) {
+            LOGGER.error("Error reading results for {}", surveyId);
+            return Optional.empty();
+        }
     }
 }

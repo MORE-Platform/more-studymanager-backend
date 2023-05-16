@@ -38,8 +38,8 @@ public class LimeSurveySidecarController {
             @RequestParam("studyId") Long studyId,
             @RequestParam("observationId") Integer observationId,
             @RequestParam("token") String token,
-            @RequestParam("surveyid") String surveyid,
-            @RequestParam("savedid") String savedid
+            @RequestParam("surveyid") Integer surveyid,
+            @RequestParam("savedid") Integer savedid
     ) {
         return observationService.getObservation(studyId, observationId)
                 .map(o -> factory.create(sdk.scopedObservationSDK(o.getStudyId(), o.getStudyGroupId(), o.getObservationId()), o.getProperties()))

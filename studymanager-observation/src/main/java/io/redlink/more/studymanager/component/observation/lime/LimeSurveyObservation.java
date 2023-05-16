@@ -6,6 +6,8 @@ import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 public class LimeSurveyObservation<C extends ObservationProperties> extends Observation<C> {
@@ -34,8 +36,23 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
         limeSurveyRequestService.activateSurvey(surveyId);
     }
 
-    public boolean writeDataPoints(String token, String surveyId, String savedId) {
-        //TODO get data and write
+    public boolean writeDataPoints(String token, int surveyId, int savedId) {
+        //check if token exists, get participant and answer and store as datapoint
+        getParticipantForToken(token).ifPresent(participantId -> {
+            limeSurveyRequestService.getAnswer(token, surveyId, savedId).ifPresent(m -> {
+                sdk.storeDataPoint(participantId, "lime-survey-observation", m);
+            });
+        });
         return true;
+    }
+
+    public Optional<Integer> getParticipantForToken(String token) {
+        return sdk.participantIds().stream().filter(id -> {
+            return sdk.getPropertiesForParticipant(id)
+                    .map(o -> o.getString("token"))
+                    .map(t -> t.equals(token))
+                    .orElse(false);
+        }).findFirst();
+
     }
 }
