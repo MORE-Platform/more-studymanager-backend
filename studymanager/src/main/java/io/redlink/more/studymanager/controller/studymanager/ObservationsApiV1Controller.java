@@ -78,7 +78,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
     public ResponseEntity<EndpointTokenDTO> createToken(Long studyId, Integer observationId, String tokenLabel) {
         if(tokenLabel.isBlank()) { return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); }
 
-        Optional<EndpointToken> addedToken = integrationService.addToken(studyId, observationId, tokenLabel);
+        Optional<EndpointToken> addedToken = integrationService.addToken(studyId, observationId, tokenLabel.replace("\"", ""));
         if(addedToken.isEmpty()) {
             throw new BadRequestException("Token with given label already exists for given observation");
         }

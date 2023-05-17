@@ -2,12 +2,12 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.EndpointToken;
 import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.IntegrationRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class IntegrationService {
@@ -25,7 +25,7 @@ public class IntegrationService {
         return repository.addToken(studyId, observationId,
         new EndpointToken(
                 tokenLabel,
-                RandomTokenGenerator.generate()
+                UUID.randomUUID().toString()
                 )
         ); //TODO Token zu kurz, reg_token anschauen, oder datagateway
     }
