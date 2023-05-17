@@ -89,7 +89,7 @@ public class IntegrationRepositoryTest {
 
         assertThat(integrationResponse3.get().tokenId()).isNotNull();
         assertThat(integrationResponse3.get().tokenLabel()).isEqualTo(endpointToken1.tokenLabel());
-        assertThat(integrationResponse3.get().token()).isEqualTo(endpointToken1.token());
+        assertThat(integrationResponse3.get().token()).isEqualTo("");
         assertThat(integrationResponse3.get().created()).isNotNull();
 
 
@@ -98,12 +98,12 @@ public class IntegrationRepositoryTest {
         assertThat(integrationResponse4.size()).isEqualTo(2);
         assertThat(integrationResponse4.get(0).tokenId()).isNotNull();
         assertThat(integrationResponse4.get(0).tokenLabel()).isEqualTo(endpointToken1.tokenLabel());
-        assertThat(integrationResponse4.get(0).token()).isEqualTo(endpointToken1.token());
+        assertThat(integrationResponse4.get(0).token()).isEqualTo("");
         assertThat(integrationResponse4.get(0).created()).isNotNull();
 
         assertThat(integrationResponse4.get(1).token()).isNotNull();
         assertThat(integrationResponse4.get(1).tokenLabel()).isEqualTo(endpointToken2.tokenLabel());
-        assertThat(integrationResponse4.get(1).token()).isEqualTo(endpointToken2.token());
+        assertThat(integrationResponse4.get(1).token()).isEqualTo("");
         assertThat(integrationResponse4.get(1).created()).isNotNull();
 
         integrationRepository.deleteToken(studyId, finalObservation.getObservationId(), integrationResponse2.get().tokenId());
@@ -114,10 +114,59 @@ public class IntegrationRepositoryTest {
         assertThat(integrationResponse5.size()).isEqualTo(1);
         assertThat(integrationResponse5.get(0).tokenId()).isNotNull();
         assertThat(integrationResponse5.get(0).tokenLabel()).isEqualTo(endpointToken1.tokenLabel());
-        assertThat(integrationResponse5.get(0).token()).isEqualTo(endpointToken1.token());
+        assertThat(integrationResponse5.get(0).token()).isEqualTo("");
         assertThat(integrationResponse5.get(0).created()).isNotNull();
 
         integrationRepository.deleteToken(studyId, finalObservation.getObservationId(), integrationResponse1.get().tokenId());
         assertThat(integrationRepository.getAllTokens(studyId, finalObservation.getObservationId()).size()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Testing token deletion, when corresponding observation or study gets deleted")
+    public void testRepositoryCascade() {
+        String type = "accelerometer";
+        Long studyId1 = studyRepository.insert(new Study()).getStudyId();
+        Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId1)).getStudyGroupId();
+        Instant startTime = Instant.now();
+        Instant endTime = Instant.now().plus(2, ChronoUnit.HOURS);
+
+        Observation observation = new Observation()
+                .setStudyId(studyId1)
+                .setType(type)
+                .setTitle("some title")
+                .setStudyGroupId(studyGroupId)
+                .setProperties(new ObservationProperties(Map.of("testProperty", "testValue")))
+                .setSchedule(new Event()
+                        .setDateStart(startTime)
+                        .setDateEnd(endTime)
+                        .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)));
+
+        final Observation finalObservation = observationRepository.insert(observation);
+
+        EndpointToken endpointToken = new EndpointToken(
+                "token1",
+                "123"
+        );
+
+        integrationRepository.addToken(studyId1, finalObservation.getObservationId(), endpointToken);
+        assertThat(integrationRepository.getAllTokens(studyId1, finalObservation.getObservationId()).size()).isEqualTo(1);
+        observationRepository.deleteObservation(studyId1, finalObservation.getObservationId());
+        assertThat(integrationRepository.getAllTokens(studyId1, finalObservation.getObservationId()).size()).isEqualTo(0);
+
+        final Observation finalObservation2 = observationRepository.insert(observation);
+
+        integrationRepository.addToken(studyId1, finalObservation2.getObservationId(), endpointToken);
+        assertThat(integrationRepository.getAllTokens(studyId1, finalObservation.getObservationId()).size()).isEqualTo(1);
+        studyRepository.deleteById(studyId1);
+        assertThat(integrationRepository.getAllTokens(studyId1, finalObservation.getObservationId()).size()).isEqualTo(0);
+
+        Long studyId2 = studyRepository.insert(new Study()).getStudyId();
+        observation.setStudyGroupId(studyGroupRepository.insert(new StudyGroup().setStudyId(studyId2)).getStudyGroupId());
+        observation.setStudyId(studyId2);
+        final Observation finalObservation3 = observationRepository.insert(observation);
+
+        integrationRepository.addToken(studyId2, finalObservation3.getObservationId(), endpointToken);
+        integrationRepository.clearForStudyId(studyId2);
+        assertThat(integrationRepository.getAllTokens(studyId2, finalObservation3.getObservationId()).size()).isEqualTo(0);
     }
 }

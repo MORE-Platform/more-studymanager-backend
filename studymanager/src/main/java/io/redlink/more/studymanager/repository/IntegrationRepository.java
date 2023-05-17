@@ -23,17 +23,21 @@ public class IntegrationRepository {
             "ON CONFLICT (study_id, observation_id, token_id) DO NOTHING " +
             "RETURNING *";
     private static final String LIST_TOKENS =
-            "SELECT token_id, token_label, token, created " +
+            "SELECT token_id, token_label, created " +
             "FROM observation_api_tokens " +
             "WHERE study_id = ? AND observation_id = ?";
     private static final String GET_TOKEN =
-            "SELECT token_id, token_label, token, created " +
+            "SELECT token_id, token_label, created " +
             "FROM observation_api_tokens " +
             "WHERE study_id = ? AND observation_id = ? AND token_id = ?";
     private static final String DELETE_TOKEN =
             "DELETE FROM observation_api_tokens " +
             "WHERE study_id = ? AND observation_id = ? AND token_id = ?";
     private static final String DELETE_ALL = "DELETE FROM observation_api_tokens";
+
+    private static final String DELETE_ALL_FOR_STUDY_ID =
+            "DELETE FROM observation_api_tokens " +
+            "WHERE study_id = ?";
 
     private final JdbcTemplate template;
 
@@ -45,6 +49,10 @@ public class IntegrationRepository {
     }
 
     public void clear() { template.execute(DELETE_ALL);}
+
+    public void clearForStudyId(long studyId) {
+        template.update(DELETE_ALL_FOR_STUDY_ID, studyId);
+    }
 
     public Optional<EndpointToken> addToken(Long studyId, Integer observationId, EndpointToken token) {
         try {
@@ -61,12 +69,12 @@ public class IntegrationRepository {
     }
 
     public List<EndpointToken> getAllTokens(Long studyId, Integer observationId) {
-        return template.query(LIST_TOKENS, getTokenRowMapper(), studyId, observationId);
+        return template.query(LIST_TOKENS, getHiddenTokenRowMapper(), studyId, observationId);
     }
 
     public Optional<EndpointToken> getToken(Long studyId, Integer observationId, Integer tokenId) {
         try {
-            return Optional.ofNullable(template.queryForObject(GET_TOKEN, getTokenRowMapper(), studyId, observationId, tokenId));
+            return Optional.ofNullable(template.queryForObject(GET_TOKEN, getHiddenTokenRowMapper(), studyId, observationId, tokenId));
         } catch(EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -82,6 +90,15 @@ public class IntegrationRepository {
                 rs.getString("token_label"),
                 RepositoryUtils.readInstant(rs, "created"),
                 rs.getString("token")
+        );
+    }
+
+    private static RowMapper<EndpointToken> getHiddenTokenRowMapper() {
+        return (rs, rowNum) -> new EndpointToken(
+                rs.getInt("token_id"),
+                rs.getString("token_label"),
+                RepositoryUtils.readInstant(rs, "created"),
+                ""
         );
     }
 }

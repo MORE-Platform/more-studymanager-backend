@@ -44,4 +44,10 @@ public class IntegrationService {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         repository.deleteToken(studyId, observationId, tokenId);
     }
+
+    public void alignIntegrationsWithStudyState(Study study) {
+        if(study.getStudyState() == Study.Status.CLOSED) {
+            repository.clearForStudyId(study.getStudyId());
+        }
+    }
 }
