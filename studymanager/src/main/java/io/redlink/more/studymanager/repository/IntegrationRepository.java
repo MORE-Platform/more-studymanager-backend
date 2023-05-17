@@ -2,6 +2,8 @@ package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.EndpointToken;
+import org.checkerframework.checker.nullness.Opt;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -10,6 +12,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class IntegrationRepository {
@@ -17,7 +20,7 @@ public class IntegrationRepository {
     private static final String ADD_TOKEN =
             "INSERT INTO observation_api_tokens(study_id, observation_id, token_label, token) " +
             "VALUES (:study_id, :observation_id, :token_label, :token) " +
-            "ON CONFLICT (study_id, observation_id, token_label) DO NOTHING " +
+            "ON CONFLICT (study_id, observation_id, token_id) DO NOTHING " +
             "RETURNING *";
     private static final String LIST_TOKENS =
             "SELECT token_id, token_label, token, created " +
@@ -43,17 +46,17 @@ public class IntegrationRepository {
 
     public void clear() { template.execute(DELETE_ALL);}
 
-    public EndpointToken addToken(Long studyId, Integer observationId, EndpointToken token) {
+    public Optional<EndpointToken> addToken(Long studyId, Integer observationId, EndpointToken token) {
         try {
-            return namedTemplate.queryForObject(ADD_TOKEN,
+            return Optional.ofNullable(namedTemplate.queryForObject(ADD_TOKEN,
                     new MapSqlParameterSource()
-                            .addValue("token_label", token.getTokenLabel())
-                            .addValue("token", token.getToken())
+                            .addValue("token_label", token.tokenLabel())
+                            .addValue("token", token.token())
                             .addValue("study_id", studyId)
                             .addValue("observation_id", observationId),
-                    getTokenRowMapper());
-        } catch (EmptyResultDataAccessException e) {
-            throw new BadRequestException("Token with given token label already exists for given observation");
+                    getTokenRowMapper()));
+        } catch(DuplicateKeyException e) {
+            return Optional.empty();
         }
     }
 
@@ -61,11 +64,11 @@ public class IntegrationRepository {
         return template.query(LIST_TOKENS, getTokenRowMapper(), studyId, observationId);
     }
 
-    public EndpointToken getToken(Long studyId, Integer observationId, Integer tokenId) {
+    public Optional<EndpointToken> getToken(Long studyId, Integer observationId, Integer tokenId) {
         try {
-            return template.queryForObject(GET_TOKEN, getTokenRowMapper(), studyId, observationId, tokenId);
+            return Optional.ofNullable(template.queryForObject(GET_TOKEN, getTokenRowMapper(), studyId, observationId, tokenId));
         } catch(EmptyResultDataAccessException e) {
-            throw new BadRequestException("Token with id " + tokenId + " does not exist");
+            return Optional.empty();
         }
     }
 
@@ -74,10 +77,11 @@ public class IntegrationRepository {
     }
 
     private static RowMapper<EndpointToken> getTokenRowMapper() {
-        return (rs, rowNum) -> new EndpointToken()
-                .setTokenId(rs.getInt("token_id"))
-                .setTokenLabel(rs.getString("token_label"))
-                .setToken(rs.getString("token"))
-                .setCreated(RepositoryUtils.readInstant(rs, "created"));
+        return (rs, rowNum) -> new EndpointToken(
+                rs.getInt("token_id"),
+                rs.getString("token_label"),
+                RepositoryUtils.readInstant(rs, "created"),
+                rs.getString("token")
+        );
     }
 }

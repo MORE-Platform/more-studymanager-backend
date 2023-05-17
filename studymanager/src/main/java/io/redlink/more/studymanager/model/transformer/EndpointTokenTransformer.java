@@ -12,11 +12,12 @@ public class EndpointTokenTransformer {
     private EndpointTokenTransformer() {}
 
     public static EndpointToken fromEndpointTokenDTO(EndpointTokenDTO dto) {
-        return new EndpointToken()
-                .setTokenId(dto.getTokenId())
-                .setTokenLabel(dto.getTokenLabel())
-                .setCreated(Transformers.toInstant(dto.getCreated()))
-                .setToken(dto.getToken());
+        return new EndpointToken(
+                dto.getTokenId(),
+                dto.getTokenLabel(),
+                Transformers.toInstant(dto.getCreated()),
+                dto.getToken()
+        );
     }
 
     public static List<EndpointToken> fromEndpointTokensDTO(Collection<EndpointTokenDTO> dto) {
@@ -31,10 +32,10 @@ public class EndpointTokenTransformer {
 
     public static EndpointTokenDTO toEndpointTokenDTO(EndpointToken token) {
         return new EndpointTokenDTO()
-                .tokenId(token.getTokenId())
-                .tokenLabel(token.getTokenLabel())
-                .created(Transformers.toOffsetDateTime(token.getCreated()))
-                .token(token.getToken());
+                .tokenId(token.tokenId())
+                .tokenLabel(token.tokenLabel())
+                .created(Transformers.toOffsetDateTime(token.created()))
+                .token(token.token());
     }
 
     public static List<EndpointTokenDTO> toEndpointTokensDTO(Collection<EndpointToken> tokens) {

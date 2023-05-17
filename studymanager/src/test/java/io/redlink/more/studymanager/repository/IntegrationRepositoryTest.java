@@ -1,7 +1,6 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
-import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,9 +14,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Testcontainers
@@ -61,59 +60,64 @@ public class IntegrationRepositoryTest {
 
         final Observation finalObservation = observationRepository.insert(observation);
 
-        EndpointToken endpointToken1 = new EndpointToken()
-                .setTokenLabel("token1")
-                .setToken("123");
+        EndpointToken endpointToken1 = new EndpointToken(
+                "token1",
+                "123"
+        );
 
-        EndpointToken endpointToken2 = new EndpointToken()
-                .setTokenLabel("token2")
-                .setToken("456");
+        EndpointToken endpointToken2 = new EndpointToken(
+                "token2",
+                "456"
+        );
 
-        EndpointToken integrationResponse1 = integrationRepository.addToken(studyId, finalObservation.getObservationId(), endpointToken1);
-        assertThrows(BadRequestException.class, () -> integrationRepository.addToken(studyId, finalObservation.getObservationId(), endpointToken1));
+        Optional<EndpointToken> integrationResponse1 = integrationRepository.addToken(studyId, finalObservation.getObservationId(), endpointToken1);
+        assertThat(integrationResponse1).isPresent();
+        assertThat(integrationRepository.addToken(studyId, finalObservation.getObservationId(), endpointToken1)).isEmpty();
 
-        assertThat(integrationResponse1.getTokenId()).isNotNull();
-        assertThat(integrationResponse1.getTokenLabel()).isEqualTo(endpointToken1.getTokenLabel());
-        assertThat(integrationResponse1.getToken()).isEqualTo(endpointToken1.getToken());
-        assertThat(integrationResponse1.getCreated()).isNotNull();
+        assertThat(integrationResponse1.get().tokenId()).isNotNull();
+        assertThat(integrationResponse1.get().tokenLabel()).isEqualTo(endpointToken1.tokenLabel());
+        assertThat(integrationResponse1.get().token()).isEqualTo(endpointToken1.token());
+        assertThat(integrationResponse1.get().created()).isNotNull();
 
-        EndpointToken integrationResponse2 = integrationRepository.addToken(studyId, finalObservation.getObservationId(), endpointToken2);
-        assertThat(integrationResponse2.getTokenId()).isNotEqualTo(integrationResponse1.getTokenId());
+        Optional<EndpointToken> integrationResponse2 = integrationRepository.addToken(studyId, finalObservation.getObservationId(), endpointToken2);
+        assertThat(integrationResponse2).isPresent();
+        assertThat(integrationResponse2.get().tokenId()).isNotEqualTo(integrationResponse1.get().tokenId());
 
 
-        EndpointToken integrationResponse3 = integrationRepository.getToken(studyId, finalObservation.getObservationId(), integrationResponse1.getTokenId());
+        Optional<EndpointToken> integrationResponse3 = integrationRepository.getToken(studyId, finalObservation.getObservationId(), integrationResponse1.get().tokenId());
+        assertThat(integrationResponse3).isPresent();
 
-        assertThat(integrationResponse3.getTokenId()).isNotNull();
-        assertThat(integrationResponse3.getTokenLabel()).isEqualTo(endpointToken1.getTokenLabel());
-        assertThat(integrationResponse3.getToken()).isEqualTo(endpointToken1.getToken());
-        assertThat(integrationResponse3.getCreated()).isNotNull();
+        assertThat(integrationResponse3.get().tokenId()).isNotNull();
+        assertThat(integrationResponse3.get().tokenLabel()).isEqualTo(endpointToken1.tokenLabel());
+        assertThat(integrationResponse3.get().token()).isEqualTo(endpointToken1.token());
+        assertThat(integrationResponse3.get().created()).isNotNull();
 
 
         List<EndpointToken> integrationResponse4 = integrationRepository.getAllTokens(studyId, finalObservation.getObservationId());
 
         assertThat(integrationResponse4.size()).isEqualTo(2);
-        assertThat(integrationResponse4.get(0).getTokenId()).isNotNull();
-        assertThat(integrationResponse4.get(0).getTokenLabel()).isEqualTo(endpointToken1.getTokenLabel());
-        assertThat(integrationResponse4.get(0).getToken()).isEqualTo(endpointToken1.getToken());
-        assertThat(integrationResponse4.get(0).getCreated()).isNotNull();
+        assertThat(integrationResponse4.get(0).tokenId()).isNotNull();
+        assertThat(integrationResponse4.get(0).tokenLabel()).isEqualTo(endpointToken1.tokenLabel());
+        assertThat(integrationResponse4.get(0).token()).isEqualTo(endpointToken1.token());
+        assertThat(integrationResponse4.get(0).created()).isNotNull();
 
-        assertThat(integrationResponse4.get(1).getTokenId()).isNotNull();
-        assertThat(integrationResponse4.get(1).getTokenLabel()).isEqualTo(endpointToken2.getTokenLabel());
-        assertThat(integrationResponse4.get(1).getToken()).isEqualTo(endpointToken2.getToken());
-        assertThat(integrationResponse4.get(1).getCreated()).isNotNull();
+        assertThat(integrationResponse4.get(1).token()).isNotNull();
+        assertThat(integrationResponse4.get(1).tokenLabel()).isEqualTo(endpointToken2.tokenLabel());
+        assertThat(integrationResponse4.get(1).token()).isEqualTo(endpointToken2.token());
+        assertThat(integrationResponse4.get(1).created()).isNotNull();
 
-        integrationRepository.deleteToken(studyId, finalObservation.getObservationId(), integrationResponse2.getTokenId());
-        integrationRepository.deleteToken(studyId, finalObservation.getObservationId(), integrationResponse2.getTokenId());
-        assertThrows(BadRequestException.class, () -> integrationRepository.getToken(studyId, finalObservation.getObservationId(), integrationResponse2.getTokenId()));
+        integrationRepository.deleteToken(studyId, finalObservation.getObservationId(), integrationResponse2.get().tokenId());
+        integrationRepository.deleteToken(studyId, finalObservation.getObservationId(), integrationResponse2.get().tokenId());
+        assertThat(integrationRepository.getToken(studyId, finalObservation.getObservationId(), integrationResponse2.get().tokenId())).isEmpty();
 
         List<EndpointToken> integrationResponse5 = integrationRepository.getAllTokens(studyId , finalObservation.getObservationId());
         assertThat(integrationResponse5.size()).isEqualTo(1);
-        assertThat(integrationResponse5.get(0).getTokenId()).isNotNull();
-        assertThat(integrationResponse5.get(0).getTokenLabel()).isEqualTo(endpointToken1.getTokenLabel());
-        assertThat(integrationResponse5.get(0).getToken()).isEqualTo(endpointToken1.getToken());
-        assertThat(integrationResponse5.get(0).getCreated()).isNotNull();
+        assertThat(integrationResponse5.get(0).tokenId()).isNotNull();
+        assertThat(integrationResponse5.get(0).tokenLabel()).isEqualTo(endpointToken1.tokenLabel());
+        assertThat(integrationResponse5.get(0).token()).isEqualTo(endpointToken1.token());
+        assertThat(integrationResponse5.get(0).created()).isNotNull();
 
-        integrationRepository.deleteToken(studyId, finalObservation.getObservationId(), integrationResponse1.getTokenId());
+        integrationRepository.deleteToken(studyId, finalObservation.getObservationId(), integrationResponse1.get().tokenId());
         assertThat(integrationRepository.getAllTokens(studyId, finalObservation.getObservationId()).size()).isEqualTo(0);
     }
 }

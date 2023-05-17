@@ -7,6 +7,7 @@ import io.redlink.more.studymanager.repository.IntegrationRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class IntegrationService {
@@ -19,16 +20,17 @@ public class IntegrationService {
         this.repository = repository;
     }
 
-    public EndpointToken addToken(Long studyId, Integer observationId, String tokenLabel) {
+    public Optional<EndpointToken> addToken(Long studyId, Integer observationId, String tokenLabel) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         return repository.addToken(studyId, observationId,
-                new EndpointToken()
-                        .setTokenLabel(tokenLabel)
-                        .setToken(RandomTokenGenerator.generate())
+        new EndpointToken(
+                tokenLabel,
+                RandomTokenGenerator.generate()
+                )
         ); //TODO Token zu kurz, reg_token anschauen, oder datagateway
     }
 
-    public EndpointToken getToken(Long studyId, Integer observationId, Integer tokenId) {
+    public Optional<EndpointToken> getToken(Long studyId, Integer observationId, Integer tokenId) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         return repository.getToken(studyId, observationId, tokenId);
     }

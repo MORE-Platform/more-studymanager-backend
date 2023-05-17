@@ -676,9 +676,9 @@ paths:
 
     post:
       tags:
-        - integrations
+        - observations
       description: Create and add observation endpoint token
-      operationId: addToken
+      operationId: createToken
       requestBody:
         required: true
         content:
@@ -699,7 +699,7 @@ paths:
 
     get:
       tags:
-        - integrations
+        - observations
       description: Get all observation endpoint tokens
       operationId: getTokens
       responses:
@@ -722,7 +722,7 @@ paths:
 
     get:
       tags:
-        - integrations
+        - observations
       description: Get observation endpoint token
       operationId: getToken
       responses:
@@ -738,7 +738,7 @@ paths:
 
     delete:
       tags:
-        - integrations
+        - observations
       description: Delete observation endpoint token
       operationId: deleteToken
       responses:

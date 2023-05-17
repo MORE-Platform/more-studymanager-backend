@@ -7,6 +7,6 @@ CREATE TABLE observation_api_tokens (
 
     created TIMESTAMP NOT NULL DEFAULT now(),
 
-    PRIMARY KEY (study_id, observation_id, token_label),
+    PRIMARY KEY (study_id, observation_id, token_id),
     FOREIGN KEY (study_id, observation_id) REFERENCES observations(study_id, observation_id) ON DELETE CASCADE
 );
