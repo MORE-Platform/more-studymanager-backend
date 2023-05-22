@@ -6,6 +6,8 @@ import io.redlink.more.studymanager.core.exception.ValueNonNullException;
 import io.redlink.more.studymanager.core.properties.ComponentProperties;
 import io.redlink.more.studymanager.core.validation.ValidationIssue;
 
+import java.util.function.Function;
+
 public abstract class Value<T> {
     private String id;
     private String name;
@@ -13,13 +15,14 @@ public abstract class Value<T> {
     private T defaultValue;
     private boolean required = false;
     private boolean immutable = false;
+    protected Function<T, ValidationIssue> validationFunction = (T t) -> null;
 
     public Value(String id) {
         this.id = id;
     }
 
     public ValidationIssue validate(T t) {
-        return null;
+        return validationFunction != null ? validationFunction.apply(t) : ValidationIssue.NONE;
     }
 
     public T getValue(ComponentProperties properties) {
@@ -88,6 +91,11 @@ public abstract class Value<T> {
 
     public Value<T> setImmutable(boolean immutable) {
         this.immutable = immutable;
+        return this;
+    }
+
+    public Value<T> setValidationFunction(Function<T, ValidationIssue> validationFunction) {
+        this.validationFunction = validationFunction;
         return this;
     }
 }

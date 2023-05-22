@@ -23,8 +23,10 @@ public class GpsMobileObservationFactory<C extends Observation<P>, P extends Obs
     private static List<Value> properties = List.of(
             new IntegerValue("location_interval_millis")
                     .setMax(600000)
+                    .setMin(30000)
+                    .setDefaultValue(60000)
                     .setName("Measurement Interval")
-                    .setDescription("Measurement Interval in Milliseconds, 0 to 600k")
+                    .setDescription("Measurement Interval in Milliseconds, 30K to 600k")
                     .setRequired(true)
     );
 
@@ -52,39 +54,7 @@ This observation enables you to collect GPS data via the smartphone sensor.
     }
 
     @Override
-    public Map<String, Object> getDefaultProperties() {
-        return Map.of(
-                "location_interval_millis", 60000
-        );
-    }
-
-    @Override
-    public ObservationProperties validate(ObservationProperties values) {
-        try {
-            ConfigurationValidationReport report = ConfigurationValidationReport.of(
-                    properties.stream()
-                            .map(p -> p.validate(p.getValue(values)))
-                            .filter(ValidationIssue::nonNone)
-                            .collect(Collectors.toList())
-            );
-
-            if(report.isValid()) {
-                return values;
-            } else {
-                throw new ConfigurationValidationException(report);
-            }
-        } catch (ValueCastException | ValueNonNullException e) {
-            throw new ConfigurationValidationException(
-                    ConfigurationValidationReport.of(ValidationIssue.error(
-                            e.getValue(),
-                            e.getMessage()
-                    ))
-            );
-        }
-    }
-
-    @Override
     public GpsMobileObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new GpsMobileObservation(sdk, validate(properties));
+        return new GpsMobileObservation(sdk, validate((P)properties));
     }
 }

@@ -24,12 +24,7 @@ public class PolarVerityObservationFactory<C extends Observation<P>, P extends O
     }
 
     @Override
-    public ObservationProperties validate(ObservationProperties properties) {
-        return properties;
-    }
-
-    @Override
     public PolarVerityObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new PolarVerityObservation(sdk, validate(properties));
+        return new PolarVerityObservation(sdk, validate((P)properties));
     }
 }

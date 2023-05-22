@@ -4,6 +4,9 @@ import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
+import io.redlink.more.studymanager.core.properties.model.StringListValue;
+import io.redlink.more.studymanager.core.properties.model.StringValue;
+import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
@@ -12,6 +15,22 @@ import java.util.Map;
 
 public class QuestionObservationFactory<C extends Observation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
+
+    private static List<Value> properties = List.of(
+        new StringValue("question")
+                .setName("Question")
+                .setDescription("The question you want to ask")
+                .setRequired(true),
+            new StringListValue("answers")
+                    .setMinSize(2)
+                    .setMaxSize(5)
+                    .setName("Answers")
+                    .setDescription("Possible answers (min 2, max 5")
+                    .setDefaultValue(List.of(
+                            "No",
+                            "Yes"
+                    ))
+    );
     @Override
     public String getId() {
         return "question-observation";
@@ -24,47 +43,15 @@ public class QuestionObservationFactory<C extends Observation<P>, P extends Obse
 
     @Override
     public String getDescription() {
-        return
-"""
-This observation enables you to create a simple MultipleChoice question.
-""";
+        return "This observation enables you to create a simple MultipleChoice question.";
     }
 
-    @Override
-    public Map<String, Object> getDefaultProperties() {
-        return Map.of(
-                "question", "Are you fine?",
-                "answers", List.of(
-                        "No",
-                        "Yes"
-                )
-        );
-    }
-
-    @Override
-    public ObservationProperties validate(ObservationProperties properties) {
-        ConfigurationValidationReport report = ConfigurationValidationReport.init();
-        if(!properties.containsKey("question")) {
-            report.missingProperty("question");
-        }
-        if(!properties.containsKey("answers")) {
-            report.missingProperty("answers");
-        }
-        if(properties.containsKey("answers") && !List.class.isAssignableFrom(properties.get("answers").getClass())) {
-            report.error("Value of answers must be a list");
-        }
-        if(properties.containsKey("answers") && ((List)properties.get("answers")).size() < 2) {
-            report.warning("Value answers must contain at least 2 values");
-        }
-        if(report.isValid()) {
-            return properties;
-        } else {
-            throw new ConfigurationValidationException(report);
-        }
+    public List<Value> getProperties() {
+        return properties;
     }
 
     @Override
     public QuestionObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new QuestionObservation(sdk, validate(properties));
+        return new QuestionObservation(sdk, validate((P)properties));
     }
 }

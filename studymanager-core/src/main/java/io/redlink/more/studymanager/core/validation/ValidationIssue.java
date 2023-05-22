@@ -2,6 +2,8 @@ package io.redlink.more.studymanager.core.validation;
 
 import io.redlink.more.studymanager.core.properties.model.Value;
 
+import java.util.Optional;
+
 public class ValidationIssue {
     public enum Type {
         None,
@@ -26,11 +28,11 @@ public class ValidationIssue {
     }
 
     public static ValidationIssue error(Value value, String message) {
-        return new ValidationIssue(Type.ERROR, value.getId(), message);
+        return new ValidationIssue(Type.ERROR, Optional.ofNullable(value).map(Value::getId).orElse(null), message);
     }
 
     public static ValidationIssue warning(Value value, String message) {
-        return new ValidationIssue(Type.WARNING, value.getId(), message);
+        return new ValidationIssue(Type.WARNING, Optional.ofNullable(value).map(Value::getId).orElse(null), message);
     }
 
     public Type getType() {

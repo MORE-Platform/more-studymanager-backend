@@ -26,12 +26,7 @@ public class AccMobileObservationFactory<C extends Observation<P>, P extends Obs
     }
 
     @Override
-    public ObservationProperties validate(ObservationProperties properties) {
-        return properties;
-    }
-
-    @Override
     public AccMobileObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new AccMobileObservation(sdk, validate(properties));
+        return new AccMobileObservation(sdk, validate((P)properties));
     }
 }

@@ -40,7 +40,7 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
 
         return properties.getQuery().map(query ->
                 TriggerResult.withParams(
-                        sdk.participantIdsMatchingQuery(query, timeframe, properties.isInverse().orElse(false)).stream()
+                        sdk.participantIdsMatchingQuery(query, timeframe).stream()
                                 .map(id -> new ActionParameter(sdk.getStudyId(), id))
                                 .collect(Collectors.toSet())
                 )

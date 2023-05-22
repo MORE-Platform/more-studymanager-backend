@@ -116,11 +116,7 @@ class MoreSDKTest {
 
         assertThat(
                 moreSDK.listActiveParticipantsByQuery(
-                        1L, null, "*", mock(Timeframe.class), false)
+                        1L, null, "*", mock(Timeframe.class))
         ).containsExactlyInAnyOrder(1);
-        assertThat(
-                moreSDK.listActiveParticipantsByQuery(
-                        1L, null, "*", mock(Timeframe.class), true)
-        ).containsExactlyInAnyOrder(2,3,4);
     }
 }

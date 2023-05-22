@@ -26,7 +26,7 @@ public class IntegerValue extends Value<Integer> {
         if(integer != null && (integer < getMin() || integer > getMax())) {
             return ValidationIssue.error(this, "Value must between " + getMin() + " and " + getMax());
         }
-        return ValidationIssue.NONE;
+        return validationFunction != null ? validationFunction.apply(integer) : ValidationIssue.NONE;
     }
 
     public int getMin() {

@@ -3,12 +3,23 @@ package io.redlink.more.studymanager.component.action;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
+import io.redlink.more.studymanager.core.properties.model.StringListValue;
+import io.redlink.more.studymanager.core.properties.model.StringValue;
+import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
+import java.util.List;
 import java.util.Map;
 
 public class PushNotificationActionFactory extends ActionFactory<PushNotificationAction, ActionProperties> {
+
+    private static List<Value> properties = List.of(
+            new StringValue("title")
+                    .setRequired(true),
+            new StringValue("message")
+                    .setRequired(true)
+    );
     @Override
     public PushNotificationAction create(MoreActionSDK sdk, ActionProperties properties) throws ConfigurationValidationException {
         return new PushNotificationAction(sdk, validate(properties));
@@ -30,26 +41,7 @@ public class PushNotificationActionFactory extends ActionFactory<PushNotificatio
     }
 
     @Override
-    public Map<String, Object> getDefaultProperties() {
-        return Map.of(
-                "title", "Hello",
-                "message", "A message"
-        );
-    }
-
-    @Override
-    public ActionProperties validate(ActionProperties properties) {
-        ConfigurationValidationReport report = ConfigurationValidationReport.init();
-        if(!properties.containsKey("title")) {
-            report.missingProperty("title");
-        }
-        if(!properties.containsKey("message")) {
-            report.missingProperty("message");
-        }
-        if(report.isValid()) {
-            return properties;
-        } else {
-            throw new ConfigurationValidationException(report);
-        }
+    public List<Value> getProperties() {
+        return properties;
     }
 }

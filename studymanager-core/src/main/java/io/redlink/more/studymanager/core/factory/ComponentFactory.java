@@ -3,13 +3,18 @@ package io.redlink.more.studymanager.core.factory;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.redlink.more.studymanager.core.component.Component;
 import io.redlink.more.studymanager.core.exception.ApiCallException;
+import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.exception.ValueCastException;
+import io.redlink.more.studymanager.core.exception.ValueNonNullException;
 import io.redlink.more.studymanager.core.model.User;
 import io.redlink.more.studymanager.core.properties.ComponentProperties;
 import io.redlink.more.studymanager.core.properties.model.Value;
+import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
+import io.redlink.more.studymanager.core.validation.ValidationIssue;
 import io.redlink.more.studymanager.core.webcomponent.WebComponent;
 
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 public abstract class ComponentFactory<C extends Component, P extends ComponentProperties> {
     public ComponentFactoryProperties componentProperties;
@@ -29,10 +34,28 @@ public abstract class ComponentFactory<C extends Component, P extends ComponentP
 
     public abstract String getDescription();
 
-    public abstract P validate(P properties);
+    public P validate(P values) {
+        try {
+            ConfigurationValidationReport report = ConfigurationValidationReport.of(
+                    getProperties().stream()
+                            .map(p -> p.validate(p.getValue(values)))
+                            .filter(ValidationIssue::nonNone)
+                            .collect(Collectors.toList())
+            );
 
-    public Map<String,Object> getDefaultProperties() {
-        return Map.of();
+            if(report.isValid()) {
+                return values;
+            } else {
+                throw new ConfigurationValidationException(report);
+            }
+        } catch (ValueCastException | ValueNonNullException e) {
+            throw new ConfigurationValidationException(
+                    ConfigurationValidationReport.of(ValidationIssue.error(
+                            e.getValue(),
+                            e.getMessage()
+                    ))
+            );
+        }
     }
 
     public WebComponent getWebComponent() {
