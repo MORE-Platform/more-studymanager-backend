@@ -29,9 +29,11 @@ public class StudyService {
     private final ObservationService observationService;
     private final ParticipantService participantService;
     private final StudyStateService studyStateService;
+    private final IntegrationService integrationService;
 
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
-                        StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService, ParticipantService participantService) {
+                        StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService,
+                        ParticipantService participantService, IntegrationService integrationService) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
@@ -39,6 +41,7 @@ public class StudyService {
         this.interventionService = interventionService;
         this.observationService = observationService;
         this.participantService = participantService;
+        this.integrationService = integrationService;
     }
 
     public Study createStudy(Study study, User currentUser) {
@@ -89,6 +92,7 @@ public class StudyService {
             interventionService.alignInterventionsWithStudyState(s);
             participantService.alignParticipantsWithStudyState(s);
             observationService.alignObservationsWithStudyState(s);
+            integrationService.alignIntegrationsWithStudyState(s);
         });
     }
 
