@@ -16,7 +16,6 @@ import java.util.Optional;
 
 @Component
 public class IntegrationRepository {
-//TODO reg_token anschauen wegen verchlüsselung
     private static final String ADD_TOKEN =
             "INSERT INTO observation_api_tokens(study_id, observation_id, token_label, token) " +
             "VALUES (:study_id, :observation_id, :token_label, :token) " +

@@ -27,7 +27,8 @@ public class IntegrationService {
                 tokenLabel,
                 UUID.randomUUID().toString()
                 )
-        ); //TODO Token zu kurz, reg_token anschauen, oder datagateway
+        );
+        //TODO token encryption for database storage
     }
 
     public Optional<EndpointToken> getToken(Long studyId, Integer observationId, Integer tokenId) {
