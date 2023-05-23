@@ -8,7 +8,14 @@ public record EndpointToken(
     Instant created,
     String token
 ) {
-    public EndpointToken(String tokenLabel, String token) {
-        this(Integer.MIN_VALUE, tokenLabel, null, token);
+
+
+    public EndpointToken withToken(String secret) {
+        return new EndpointToken(
+                tokenId,
+                tokenLabel,
+                created,
+                secret
+        );
     }
 }

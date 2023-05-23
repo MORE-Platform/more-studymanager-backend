@@ -17,8 +17,8 @@ import java.util.Optional;
 @Component
 public class IntegrationRepository {
     private static final String ADD_TOKEN =
-            "INSERT INTO observation_api_tokens(study_id, observation_id, token_label, token) " +
-            "VALUES (:study_id, :observation_id, :token_label, :token) " +
+            "INSERT INTO observation_api_tokens(study_id, observation_id, token_id, token_label, token) " +
+            "VALUES (:study_id, :observation_id, (SELECT COALESCE(MAX(token_id),0)+1 FROM observation_api_tokens WHERE study_id = :study_id AND observation_id = :observation_id), :token_label, :token) " +
             "ON CONFLICT (study_id, observation_id, token_id) DO NOTHING " +
             "RETURNING *";
     private static final String LIST_TOKENS =
@@ -53,15 +53,15 @@ public class IntegrationRepository {
         template.update(DELETE_ALL_FOR_STUDY_ID, studyId);
     }
 
-    public Optional<EndpointToken> addToken(Long studyId, Integer observationId, EndpointToken token) {
+    public Optional<EndpointToken> addToken(Long studyId, Integer observationId, String tokenLabel, String encryptedSecret) {
         try {
             return Optional.ofNullable(namedTemplate.queryForObject(ADD_TOKEN,
                     new MapSqlParameterSource()
-                            .addValue("token_label", token.tokenLabel())
-                            .addValue("token", token.token())
+                            .addValue("token_label", tokenLabel)
+                            .addValue("token", encryptedSecret)
                             .addValue("study_id", studyId)
                             .addValue("observation_id", observationId),
-                    getTokenRowMapper()));
+                    getHiddenTokenRowMapper()));
         } catch(DuplicateKeyException e) {
             return Optional.empty();
         }
@@ -83,21 +83,12 @@ public class IntegrationRepository {
         template.update(DELETE_TOKEN, studyId, observationId, tokenId);
     }
 
-    private static RowMapper<EndpointToken> getTokenRowMapper() {
-        return (rs, rowNum) -> new EndpointToken(
-                rs.getInt("token_id"),
-                rs.getString("token_label"),
-                RepositoryUtils.readInstant(rs, "created"),
-                rs.getString("token")
-        );
-    }
-
     private static RowMapper<EndpointToken> getHiddenTokenRowMapper() {
         return (rs, rowNum) -> new EndpointToken(
                 rs.getInt("token_id"),
                 rs.getString("token_label"),
                 RepositoryUtils.readInstant(rs, "created"),
-                ""
+                null
         );
     }
 }

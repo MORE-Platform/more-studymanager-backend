@@ -3,8 +3,10 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.model.EndpointToken;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.IntegrationRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,21 +16,34 @@ public class IntegrationService {
 
     private final StudyStateService studyStateService;
     private final IntegrationRepository repository;
+    private final PasswordEncoder passwordEncoder;
 
-    public IntegrationService(StudyStateService studyStateService, IntegrationRepository repository) {
+    public IntegrationService(StudyStateService studyStateService, IntegrationRepository repository,
+                              PasswordEncoder passwordEncoder) {
         this.studyStateService = studyStateService;
         this.repository = repository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Optional<EndpointToken> addToken(Long studyId, Integer observationId, String tokenLabel) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
-        return repository.addToken(studyId, observationId,
-        new EndpointToken(
+        String secret = UUID.randomUUID().toString();
+
+        Optional<EndpointToken> newToken = repository.addToken(studyId, observationId,
                 tokenLabel,
-                UUID.randomUUID().toString()
+                passwordEncoder.encode(secret)
+        );
+
+        return newToken.map(token ->
+                token.withToken(
+                        String.format("%s.%s",
+                                Base64.getEncoder().encodeToString(
+                                        String.format("%s-%s-%s", studyId, observationId, token.tokenId()).getBytes()),
+                                Base64.getEncoder().encodeToString(
+                                        secret.getBytes())
+                        )
                 )
         );
-        //TODO token encryption for database storage
     }
 
     public Optional<EndpointToken> getToken(Long studyId, Integer observationId, Integer tokenId) {

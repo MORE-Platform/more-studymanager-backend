@@ -4,6 +4,8 @@ import io.redlink.more.studymanager.properties.MoreAuthProperties;
 import io.redlink.more.studymanager.repository.UserRepository;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -13,6 +15,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
+import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.core.GrantedAuthority;
@@ -164,6 +172,20 @@ public class WebSecurityConfiguration {
     protected RequestRejectedHandler requestRejectedHandler() {
         // Use a specific status-code for the Firewall to identify denied requests
         return new HttpStatusRequestRejectedHandler(HttpStatus.I_AM_A_TEAPOT.value());
+    }
+
+    @Bean
+    @SuppressWarnings("deprecation")
+    public PasswordEncoder passwordEncoder() {
+        final String encodingId = "bcrypt";
+        Map<String, PasswordEncoder> encoders = new HashMap<>();
+        encoders.put(encodingId, new BCryptPasswordEncoder());
+        encoders.put("noop", org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance());
+        encoders.put(null, org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance());
+        encoders.put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());
+        encoders.put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8());
+        encoders.put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());
+        return new DelegatingPasswordEncoder(encodingId, encoders);
     }
 
     static class UserSyncingOAuth2AuthorizedClientService implements OAuth2AuthorizedClientService {
