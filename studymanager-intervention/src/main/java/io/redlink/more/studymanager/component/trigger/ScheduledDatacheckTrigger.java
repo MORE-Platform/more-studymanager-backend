@@ -9,6 +9,8 @@ import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTriggerProperties> {
@@ -21,6 +23,8 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
 
     @Override
     public void activate() {
+        sdk.participantIds().forEach(id -> setParticipantActive(id, false));
+
         properties.getCronSchedule()
                 .map(CronSchedule::new)
                 .map(sdk::addSchedule)
@@ -38,12 +42,30 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
                 .map(window -> new Timeframe(Instant.now().minusMillis(window), Instant.now()))
                 .orElse(null);
 
-        return properties.getQuery().map(query ->
+        Set<Integer> notMatchingParticipantIds = sdk.participantIds();
+
+        TriggerResult result = properties.getQuery().map(query ->
                 TriggerResult.withParams(
                         sdk.participantIdsMatchingQuery(query, timeframe, properties.isInverse().orElse(false)).stream()
+                                .peek(notMatchingParticipantIds::remove)
+                                .filter(id -> !isParticipantActive(id))
+                                .peek(id -> setParticipantActive(id, true))
                                 .map(id -> new ActionParameter(sdk.getStudyId(), id))
                                 .collect(Collectors.toSet())
                 )
         ).orElse(TriggerResult.NOOP);
+
+        notMatchingParticipantIds.forEach(id -> setParticipantActive(id, false));
+
+        return result;
     }
+
+    public boolean isParticipantActive(int participantId) {
+        return sdk.getValue(participantId + "_active", Boolean.class).orElse(false);
+    }
+
+    public void setParticipantActive(int participantId, Boolean isActive) {
+        sdk.setValue(participantId + "_active", isActive);
+    }
+
 }
