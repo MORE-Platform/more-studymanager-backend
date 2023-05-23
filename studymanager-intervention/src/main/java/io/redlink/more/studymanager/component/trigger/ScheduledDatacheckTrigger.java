@@ -46,7 +46,7 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
 
         TriggerResult result = properties.getQuery().map(query ->
                 TriggerResult.withParams(
-                        sdk.participantIdsMatchingQuery(query, timeframe, properties.isInverse().orElse(false)).stream()
+                        sdk.participantIdsMatchingQuery(query, timeframe).stream()
                                 .peek(notMatchingParticipantIds::remove)
                                 .filter(id -> !isParticipantActive(id))
                                 .peek(id -> setParticipantActive(id, true))
