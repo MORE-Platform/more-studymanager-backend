@@ -27,7 +27,7 @@ public class ParticipantRepository {
     private static final String LIST_PARTICIPANTS_BY_STUDY = "SELECT p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, p.modified FROM participants p LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id WHERE p.study_id = ?";
     private static final String DELETE_PARTICIPANT =
             "DELETE FROM participants " +
-            "WHERE study_id=? AND participant_id=? AND status = 'new'";
+            "WHERE study_id=? AND participant_id=?";
     private static final String UPDATE_PARTICIPANT =
             "UPDATE participants " +
             "SET alias = :alias, study_group_id = :study_group_id, modified = now() " +
@@ -74,28 +74,8 @@ public class ParticipantRepository {
     }
 
     @Transactional
-    public Optional<Participant> deleteParticipant(Long studyId, Integer participantId) {
-        var deletedCount = template.update(DELETE_PARTICIPANT, studyId, participantId);
-        if (deletedCount > 0) {
-            // Successfully deleted participant with state "new"
-            return Optional.empty();
-        }
-
-        // Not deleted, so we try to transition status from "active" to "kicked_out"
-        final Optional<Participant> kickedOut = namedTemplate.query(SET_STATUS_IF,
-                toParams(studyId, participantId)
-                        .addValue("current_status", toParam(Participant.Status.ACTIVE))
-                        .addValue("new_status", toParam(Participant.Status.KICKED_OUT)),
-                getParticipantRowMapper()
-        ).stream().findFirst();
-        if (kickedOut.isPresent()) {
-            // "transition was successful, let's do some cleanup
-            cleanupParticipant(studyId, participantId);
-            return kickedOut;
-        }
-
-        // Else
-        return Optional.ofNullable(getByIds(studyId, participantId));
+    public void deleteParticipant(Long studyId, Integer participantId) {
+        template.update(DELETE_PARTICIPANT, studyId, participantId);
     }
 
     public Participant update(Participant participant) {

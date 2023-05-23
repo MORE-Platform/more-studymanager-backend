@@ -60,8 +60,6 @@ class ParticipantServiceTest {
         Participant participant = new Participant()
                 .setParticipantId(1);
 
-        when(participantRepository.deleteParticipant(any(), any())).thenReturn(Optional.of(participant));
-
         participantService.deleteParticipant(1L, 1, true);
         participantService.deleteParticipant(1L, 1, false);
         verify(elasticService, times(1)).removeDataForParticipant(any(), any());

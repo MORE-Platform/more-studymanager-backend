@@ -120,7 +120,7 @@ public class ElasticService {
         }
     }
 
-    public void removeDataForParticipant(Long studyId, Participant participant) {
+    public void removeDataForParticipant(Long studyId, Integer participantId) {
         try {
             DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
                     .index(getStudyIdString(studyId))
@@ -128,7 +128,7 @@ public class ElasticService {
                             .bool(b -> b
                                     .filter(f -> f.term(t -> t
                                             .field("participant_id.keyword")
-                                            .value("participant_" + participant.getParticipantId())))))
+                                            .value("participant_" + participantId)))))
                     .conflicts(Conflicts.Proceed)
                     .build();
             client.deleteByQuery(deleteByQueryRequest);

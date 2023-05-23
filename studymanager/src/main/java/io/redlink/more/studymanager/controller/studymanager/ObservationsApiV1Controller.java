@@ -1,11 +1,16 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
+import io.redlink.more.studymanager.api.v1.model.EndpointTokenDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ObservationsApi;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
+import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.model.EndpointToken;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.transformer.EndpointTokenTransformer;
 import io.redlink.more.studymanager.model.transformer.ObservationTransformer;
+import io.redlink.more.studymanager.service.IntegrationService;
 import io.redlink.more.studymanager.service.ObservationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -14,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -21,8 +27,11 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     private final ObservationService service;
 
-    public ObservationsApiV1Controller(ObservationService service) {
+    private final IntegrationService integrationService;
+
+    public ObservationsApiV1Controller(ObservationService service, IntegrationService integrationService) {
         this.service = service;
+        this.integrationService = integrationService;
     }
 
     @Override
@@ -62,5 +71,54 @@ public class ObservationsApiV1Controller implements ObservationsApi {
         return ResponseEntity.status(HttpStatus.OK).body(
                 ObservationTransformer.toObservationDTO_V1(observation)
         );
+    }
+
+    @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    public ResponseEntity<EndpointTokenDTO> createToken(Long studyId, Integer observationId, String tokenLabel) {
+        if(tokenLabel.isBlank()) { return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); }
+
+        Optional<EndpointToken> addedToken = integrationService.addToken(studyId, observationId, tokenLabel.replace("\"", ""));
+        if(addedToken.isEmpty()) {
+            throw new BadRequestException("Token with given label already exists for given observation");
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                EndpointTokenTransformer.toEndpointTokenDTO(
+                        addedToken.get()
+                )
+        );
+    }
+
+    @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    public ResponseEntity<EndpointTokenDTO> getToken(Long studyId, Integer observationId, Integer tokenId) {
+
+        Optional<EndpointToken> token = integrationService.getToken(studyId, observationId, tokenId);
+        if(token.isEmpty()) {
+            throw new BadRequestException("Token with given id doesn't exist for given observation");
+        }
+        return ResponseEntity.ok().body(
+                EndpointTokenTransformer.toEndpointTokenDTO(
+                        token.get()
+                )
+        );
+    }
+
+    @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    public ResponseEntity<List<EndpointTokenDTO>> getTokens(Long studyId, Integer observationId) {
+        return ResponseEntity.ok().body(
+                EndpointTokenTransformer.toEndpointTokensDTO(
+                        integrationService.getTokens(studyId, observationId)
+                )
+        );
+    }
+
+    @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    public ResponseEntity<Void> deleteToken(Long studyId, Integer observationId, Integer tokenId) {
+        integrationService.deleteToken(studyId, observationId, tokenId);
+        return ResponseEntity.noContent().build();
     }
 }
