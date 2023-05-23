@@ -60,12 +60,12 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
-    public ResponseEntity<ParticipantDTO> deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
-        return service.deleteParticipant(studyId, participantId, includeData)
-                .map(ParticipantTransformer::toParticipantDTO_V1)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.noContent().build());
+    public ResponseEntity<Void> deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
+        service.deleteParticipant(studyId, participantId, includeData);
+        return ResponseEntity.noContent().build();
     }
+
+
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})

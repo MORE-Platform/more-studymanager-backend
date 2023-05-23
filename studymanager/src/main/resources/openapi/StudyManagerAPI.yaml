@@ -571,13 +571,6 @@ paths:
             type: boolean
             default: false
       responses:
-        '200':
-          description: >
-            participant could not be deleted because it was already activated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Participant'
         '204':
           description: participant deleted
         '500':
@@ -1106,11 +1099,11 @@ components:
         errors:
           type: array
           items:
-            $ref: ValidationReportItem
+            $ref: '#/components/schemas/ValidationReportItem'
         warnings:
           type: array
           items:
-            $ref: ValidationReportItem
+            $ref: '#/components/schemas/ValidationReportItem'
 
     ValidationReportItem:
       type: object

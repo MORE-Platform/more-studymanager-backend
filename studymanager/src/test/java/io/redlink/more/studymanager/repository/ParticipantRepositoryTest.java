@@ -85,49 +85,18 @@ class ParticipantRepositoryTest {
 
         assertThat(participantRepository.listParticipants(studyId))
                 .hasSize(3);
-        assertThat(participantRepository.deleteParticipant(studyId, s1.getParticipantId()))
-                .isEmpty();
+        participantRepository.deleteParticipant(studyId, s1.getParticipantId());
         assertThat(participantRepository.listParticipants(studyId))
                 .hasSize(2);
-        assertThat(participantRepository.deleteParticipant(studyId, s2.getParticipantId()))
-                .isEmpty();
+        participantRepository.deleteParticipant(studyId, s2.getParticipantId());
         assertThat(participantRepository.listParticipants(studyId))
                 .hasSize(1);
-        assertThat(participantRepository.deleteParticipant(studyId, s2.getParticipantId()))
-                .isEmpty();
+        participantRepository.deleteParticipant(studyId, s2.getParticipantId());
         assertThat(participantRepository.listParticipants(studyId))
                 .hasSize(1);
-        assertThat(participantRepository.deleteParticipant(studyId, s3.getParticipantId()))
-                .isEmpty();
+        participantRepository.deleteParticipant(studyId, s3.getParticipantId());
         assertThat(participantRepository.listParticipants(studyId))
                 .isEmpty();
-
-        var p4 = createParticipant(studyId, Participant.Status.ACTIVE);
-        var p5 = createParticipant(studyId);
-        var p6 = createParticipant(studyId, Participant.Status.ABANDONED);
-        var p7 = createParticipant(studyId, Participant.Status.KICKED_OUT);
-        assertThat(participantRepository.listParticipants(studyId))
-                .hasSize(4);
-        assertThat(participantRepository.deleteParticipant(studyId, p4.getParticipantId()))
-                .isPresent()
-                .hasValueSatisfying(p -> assertThat(p).hasFieldOrPropertyWithValue("status", Participant.Status.KICKED_OUT));
-        assertThat(participantRepository.listParticipants(studyId))
-                .hasSize(4);
-        assertThat(participantRepository.deleteParticipant(studyId, p5.getParticipantId()))
-                .isEmpty();
-        assertThat(participantRepository.listParticipants(studyId))
-                .hasSize(3);
-        assertThat(participantRepository.deleteParticipant(studyId, p6.getParticipantId()))
-                .isPresent()
-                .hasValueSatisfying(p -> assertThat(p).hasFieldOrPropertyWithValue("status", Participant.Status.ABANDONED));
-        assertThat(participantRepository.listParticipants(studyId))
-                .hasSize(3);
-        assertThat(participantRepository.deleteParticipant(studyId, p7.getParticipantId()))
-                .isPresent()
-                .hasValueSatisfying(p -> assertThat(p).hasFieldOrPropertyWithValue("status", Participant.Status.KICKED_OUT));
-        assertThat(participantRepository.listParticipants(studyId))
-                .hasSize(3);
-
     }
 
     private Participant createParticipant(Long studyId, Participant.Status status) {

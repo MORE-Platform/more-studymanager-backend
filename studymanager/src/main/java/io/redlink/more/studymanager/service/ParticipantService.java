@@ -41,13 +41,12 @@ public class ParticipantService {
         return participantRepository.getByIds(studyId, participantId);
     }
 
-    public Optional<Participant> deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
+    public void deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
-        Optional<Participant> participant = participantRepository.deleteParticipant(studyId, participantId);
-        if(includeData && participant.isPresent()) {
-               elasticService.removeDataForParticipant(studyId, participant.get());
+        participantRepository.deleteParticipant(studyId, participantId);
+        if(Boolean.TRUE.equals(includeData)) {
+               elasticService.removeDataForParticipant(studyId, participantId);
         }
-        return participant;
     }
 
     public Participant updateParticipant(Participant participant) {
