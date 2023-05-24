@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -62,6 +63,8 @@ public class WebSecurityConfiguration {
         // Restricted Paths
         http.authorizeHttpRequests()
                 .requestMatchers("/api", "/api/v1/me").permitAll()
+                // Allow unauthenticated access to the ui-/auth-settings
+                .requestMatchers(HttpMethod.GET, "/api/v1/config/ui").permitAll()
                 //TODO specific handling of temporary sidecar
                 .requestMatchers("/api/v1/components/observation/lime-survey-observation/end.html").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
