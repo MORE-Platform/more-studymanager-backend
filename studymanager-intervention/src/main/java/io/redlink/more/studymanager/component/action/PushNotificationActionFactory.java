@@ -3,14 +3,11 @@ package io.redlink.more.studymanager.component.action;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
-import io.redlink.more.studymanager.core.properties.model.StringListValue;
 import io.redlink.more.studymanager.core.properties.model.StringValue;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
-import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
 import java.util.List;
-import java.util.Map;
 
 public class PushNotificationActionFactory extends ActionFactory<PushNotificationAction, ActionProperties> {
 

@@ -4,7 +4,6 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.core.properties.model.IntegerValue;
-import io.redlink.more.studymanager.core.properties.model.StringListValue;
 import io.redlink.more.studymanager.core.properties.model.StringValue;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
@@ -31,7 +30,7 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
                 .setDefaultValue("0 0 12 * * ?")
                 .setDescription("Triggers and action based on a <a target=\"_blank\" href=\"http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html\">cron trigger.</a>\n"));
 
-        properties.add(new StringListValue("query")
+        properties.add(new StringValue("query")
                 .setName("Query")
                 .setDescription("The query for values in <a target=\"_blank\" href=\"https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-simple-query-string-query.html#simple-query-string-syntax\">simple query syntax.</a>.")
         );

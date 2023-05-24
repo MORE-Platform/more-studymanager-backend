@@ -1091,7 +1091,15 @@ components:
           type: array
           items:
             type: object
-
+        measurements:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              type:
+                type: string
         defaultProperties:
           type: object
         hasWebComponent:

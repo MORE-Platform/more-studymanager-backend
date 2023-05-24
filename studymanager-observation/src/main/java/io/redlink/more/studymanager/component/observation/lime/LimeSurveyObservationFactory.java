@@ -1,10 +1,12 @@
 package io.redlink.more.studymanager.component.observation.lime;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.redlink.more.studymanager.component.observation.measurement.GenericMeasurementSets;
 import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
+import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.model.User;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.properties.model.IntegerValue;
@@ -82,5 +84,10 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
         } else {
             throw new ApiCallException(404, "Not found");
         }
+    }
+
+    @Override
+    public MeasurementSet getMeasurementSet() {
+        return GenericMeasurementSets.NOT_SPECIFIED;
     }
 }
