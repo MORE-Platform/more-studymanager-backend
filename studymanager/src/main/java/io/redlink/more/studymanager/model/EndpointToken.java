@@ -10,12 +10,12 @@ public record EndpointToken(
 ) {
 
 
-    public EndpointToken withToken(String secret) {
+    public EndpointToken withToken(String newToken) {
         return new EndpointToken(
                 tokenId,
                 tokenLabel,
                 created,
-                secret
+                newToken
         );
     }
 }

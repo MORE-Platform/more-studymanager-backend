@@ -6,6 +6,7 @@ import io.redlink.more.studymanager.repository.IntegrationRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -38,9 +39,9 @@ public class IntegrationService {
                 token.withToken(
                         String.format("%s.%s",
                                 Base64.getEncoder().encodeToString(
-                                        String.format("%s-%s-%s", studyId, observationId, token.tokenId()).getBytes()),
+                                        String.format("%s-%s-%s", studyId, observationId, token.tokenId()).getBytes(StandardCharsets.UTF_8)),
                                 Base64.getEncoder().encodeToString(
-                                        secret.getBytes())
+                                        secret.getBytes(StandardCharsets.UTF_8))
                         )
                 )
         );

@@ -19,7 +19,6 @@ public class IntegrationRepository {
     private static final String ADD_TOKEN =
             "INSERT INTO observation_api_tokens(study_id, observation_id, token_id, token_label, token) " +
             "VALUES (:study_id, :observation_id, (SELECT COALESCE(MAX(token_id),0)+1 FROM observation_api_tokens WHERE study_id = :study_id AND observation_id = :observation_id), :token_label, :token) " +
-            "ON CONFLICT (study_id, observation_id, token_id) DO NOTHING " +
             "RETURNING *";
     private static final String LIST_TOKENS =
             "SELECT token_id, token_label, created " +

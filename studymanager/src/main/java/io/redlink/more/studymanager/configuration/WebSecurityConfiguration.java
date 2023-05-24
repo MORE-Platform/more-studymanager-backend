@@ -179,7 +179,7 @@ public class WebSecurityConfiguration {
     public PasswordEncoder passwordEncoder() {
         final String encodingId = "bcrypt";
         Map<String, PasswordEncoder> encoders = new HashMap<>();
-        encoders.put(encodingId, new BCryptPasswordEncoder());
+        encoders.put(encodingId, new BCryptPasswordEncoder(5));
         encoders.put("noop", org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance());
         encoders.put(null, org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance());
         encoders.put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());
