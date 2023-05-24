@@ -107,6 +107,3 @@ more:
       server: "${MORE_FE_KC_SERVER:https://auth.more.redlink.io/}"
       realm: "${MORE_FE_KC_REALM:Auth-Client-Test}"
       client-id: "${MORE_FE_KC_CLIENT_ID:oauth2-pkce-client}"
-    accounts:
-      profile: "${MORE_FE_PROFILE_LINK:}"
-      user-management: "${MORE_FE_USER_MGMT_LINK:}"
