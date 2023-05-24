@@ -13,7 +13,9 @@ import io.redlink.more.studymanager.core.validation.ConfigurationValidationRepor
 import io.redlink.more.studymanager.core.validation.ValidationIssue;
 import io.redlink.more.studymanager.core.webcomponent.WebComponent;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class ComponentFactory<C extends Component, P extends ComponentProperties> {
@@ -33,6 +35,15 @@ public abstract class ComponentFactory<C extends Component, P extends ComponentP
     public abstract <P extends  ComponentProperties> Class<P> getPropertyClass();
 
     public abstract String getDescription();
+
+    //TODO remove in a next step (as soon as interventions impl is done in FE for new props
+    public Map<String, Object> getDefaultProperties() {
+        HashMap<String, Object> map = new HashMap<>();
+        for (Value property : this.getProperties()) {
+            map.put(property.getId(), property.getDefaultValue());
+        }
+        return map;
+    }
 
     public P validate(P values) {
         try {

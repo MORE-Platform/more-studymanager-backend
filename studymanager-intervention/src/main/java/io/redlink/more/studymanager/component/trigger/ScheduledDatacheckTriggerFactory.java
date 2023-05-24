@@ -8,12 +8,10 @@ import io.redlink.more.studymanager.core.properties.model.StringListValue;
 import io.redlink.more.studymanager.core.properties.model.StringValue;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
-import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 import io.redlink.more.studymanager.core.validation.ValidationIssue;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDatacheckTrigger, TriggerProperties> {
 
@@ -30,6 +28,7 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
 
         properties.add(prop.setRequired(true)
                 .setName("Cron Schedule")
+                .setDefaultValue("0 0 12 * * ?")
                 .setDescription("Triggers and action based on a <a target=\"_blank\" href=\"http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html\">cron trigger.</a>\n"));
 
         properties.add(new StringListValue("query")

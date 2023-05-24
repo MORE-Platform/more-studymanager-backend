@@ -139,6 +139,7 @@ public class ComponentApiV1Controller implements ComponentsApi {
                 .componentId(factory.getId())
                 .title(factory.getTitle())
                 .properties(factory.getProperties())
+                .defaultProperties(factory.getDefaultProperties())
                 .description(factory.getDescription())
                 .hasWebComponent(factory.hasWebComponent());
     }
