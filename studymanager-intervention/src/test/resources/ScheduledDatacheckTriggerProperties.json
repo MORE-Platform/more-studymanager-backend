@@ -1,0 +1,54 @@
+{
+  "queryObject": [
+    {
+      "nextGroupCondition": "or",
+      "parameter": [
+        {
+          "observationId": 17,
+          "observationType": "acc-mobile-observation",
+          "observationProperty": "x",
+          "operator": ">",
+          "propertyValue": 75,
+          "editMode": false
+        },
+        {
+          "observationId": 17,
+          "observationType": "acc-mobile-observation",
+          "observationProperty": "y",
+          "operator": "=",
+          "propertyValue": 23,
+          "editMode": false
+        },
+        {
+          "observationId": 17,
+          "observationType": "acc-mobile-observation",
+          "observationProperty": "x",
+          "operator": "=",
+          "propertyValue": 23,
+          "editMode": false
+        }
+      ]
+    },
+    {
+      "nextGroupCondition": null,
+      "parameter": [
+        {
+          "observationId": 15,
+          "observationType": "gps-mobile-observation",
+          "observationProperty": "lat",
+          "operator": "=",
+          "propertyValue": 47.80702,
+          "editMode": false
+        },
+        {
+          "observationId": 15,
+          "observationType": "gps-mobile-observation",
+          "observationProperty": "long",
+          "operator": "=",
+          "propertyValue": 13.04694,
+          "editMode": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,6 @@
-package io.redlink.more.studymanager.component.trigger;
+package io.redlink.more.studymanager.component.trigger.datacheck;
 
+import io.redlink.more.studymanager.component.trigger.QuartzCronExpressionValidator;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
