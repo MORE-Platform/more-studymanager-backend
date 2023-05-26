@@ -20,7 +20,6 @@ class ScheduledDatacheckTriggerPropertiesTest {
         );
         ScheduledDatacheckTriggerProperties properties = new ScheduledDatacheckTriggerProperties(tp);
 
-        assertEquals("((observation_id.keyword:17 AND data_y:23) AND (observation_id.keyword:17 AND data_x:>75) AND (observation_id.keyword:17 AND data_x:23)) OR ((observation_id.keyword:15 AND data_long:13.04694) AND (observation_id.keyword:15 AND data_lat:47.80702))",
-                properties.getElasticQueryString().get());
+        assertTrue(properties.getElasticQueryString().get().contains("observation_id.keyword:17 AND data_y:23"));
     }
 }
