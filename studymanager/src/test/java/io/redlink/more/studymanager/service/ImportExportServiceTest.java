@@ -30,6 +30,15 @@ public class ImportExportServiceTest {
     @Mock
     private StudyStateService studyStateService;
 
+    @Mock
+    private ObservationService observationService;
+
+    @Mock
+    private InterventionService interventionService;
+
+    @Mock
+    private StudyGroupService studyGroupService;
+
 
     @Captor
     private ArgumentCaptor<Participant> participantsCaptor;
@@ -38,7 +47,7 @@ public class ImportExportServiceTest {
     @DisplayName("CSV should be imported line by line as Participant (header line skipped)")
     void testImportParticipants() throws FileNotFoundException {
         File file = ResourceUtils.getFile("classpath:import/participants-groups-test2.csv");
-        ImportExportService service = new ImportExportService(participantService, studyService, studyStateService);
+        ImportExportService service = new ImportExportService(participantService, studyService, studyStateService, observationService, interventionService, studyGroupService);
 
         service.importParticipants(1L, new FileInputStream(file));
 

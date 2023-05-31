@@ -1,18 +1,15 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.NotFoundException;
-import io.redlink.more.studymanager.model.Participant;
-import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.User;
-
-import java.io.InputStream;
-
+import io.redlink.more.studymanager.model.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
@@ -22,11 +19,18 @@ public class ImportExportService {
     private final ParticipantService participantService;
     private final StudyService studyService;
     private final StudyStateService studyStateService;
+    private final ObservationService observationService;
+    private final InterventionService interventionService;
+    private final StudyGroupService studyGroupService;
 
-    public ImportExportService(ParticipantService participantService, StudyService studyService, StudyStateService studyStateService) {
+    public ImportExportService(ParticipantService participantService, StudyService studyService, StudyStateService studyStateService,
+                               ObservationService observationService, InterventionService interventionService, StudyGroupService studyGroupService) {
         this.participantService = participantService;
         this.studyService = studyService;
         this.studyStateService = studyStateService;
+        this.observationService = observationService;
+        this.interventionService = interventionService;
+        this.studyGroupService = studyGroupService;
     }
 
     public Resource exportParticipants(Long studyId, User user) {
@@ -56,6 +60,29 @@ public class ImportExportService {
     private String writeToParticipantCsv(Participant participant, Study study) {
         return "%d;%s;%s;%d;%s\n".formatted(study.getStudyId(), study.getTitle(), participant.getAlias(),
                 participant.getParticipantId(), participant.getRegistrationToken());
+    }
+
+    public StudyImportExport exportStudy(Long studyId, User user) {
+        StudyImportExport export = new StudyImportExport()
+                .setStudy(studyService.getStudy(studyId, user)
+                        .orElseThrow(() -> new NotFoundException("study", studyId)))
+                .setStudyGroups(studyGroupService.listStudyGroups(studyId))
+                .setObservations(observationService.listObservations(studyId))
+                .setInterventions(interventionService.listInterventions(studyId))
+                .setActions(new HashMap<>())
+                .setTriggers(new HashMap<>());
+
+        for(Integer interventionId: export.getInterventions().stream().map(Intervention::getInterventionId).toList()) {
+            export.getActions()
+                    .put(interventionId, interventionService.listActions(studyId, interventionId));
+            export.getTriggers()
+                    .put(interventionId, interventionService.getTriggerByIds(studyId, interventionId));
+        }
+        return export;
+    }
+
+    public void importStudy(Long studyId, StudyImportExport studyImport) {
+
     }
 
 }
