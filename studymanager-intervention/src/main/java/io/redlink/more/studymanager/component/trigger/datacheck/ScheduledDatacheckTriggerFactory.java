@@ -6,6 +6,7 @@ import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.core.properties.model.IntegerValue;
 import io.redlink.more.studymanager.core.properties.model.StringValue;
+import io.redlink.more.studymanager.core.properties.model.StringListValue;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.validation.ValidationIssue;
@@ -34,6 +35,11 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
         properties.add(new StringValue("query")
                 .setName("Query")
                 .setDescription("The query for values in <a target=\"_blank\" href=\"https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-simple-query-string-query.html#simple-query-string-syntax\">simple query syntax.</a>.")
+        );
+
+        properties.add(new StringListValue("queryObject")
+        .setName("Query Object")
+        .setDescription("A more complex variant of query")
         );
 
         properties.add(new IntegerValue("window")
