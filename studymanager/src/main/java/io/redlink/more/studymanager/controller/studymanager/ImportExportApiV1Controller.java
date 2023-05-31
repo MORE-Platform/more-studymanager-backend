@@ -64,11 +64,11 @@ public class ImportExportApiV1Controller implements ImportExportApi {
         );
     }
     @Override
-    public ResponseEntity<Void> importStudy(Long studyId, StudyImportExportDTO studyImportExportDTO) {
+    public ResponseEntity<Void> importStudy(StudyImportExportDTO studyImportExportDTO) {
         service.importStudy(
-                studyId,
                 ImportExportTransformer
-                        .fromStudyImportExportDTO_V1(studyImportExportDTO)
+                        .fromStudyImportExportDTO_V1(studyImportExportDTO),
+                authService.getCurrentUser()
         );
         return ResponseEntity.status(201).build();
     }

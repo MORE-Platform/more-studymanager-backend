@@ -972,9 +972,7 @@ paths:
           description: bad request
 
 
-  /studies/{studyId}/import/study:
-    parameters:
-      - $ref: '#/components/parameters/StudyId'
+  /studies/import/study:
     post:
       tags:
         - importExport
@@ -1480,20 +1478,8 @@ components:
             $ref: '#/components/schemas/Intervention'
         triggers:
           type: object
-          properties:
-            interventionId:
-              $ref: '#/components/schemas/Id'
-            trigger:
-              $ref: '#/components/schemas/Trigger'
         actions:
           type: object
-          properties:
-            interventionId:
-              $ref: '#/components/schemas/Id'
-            action:
-              type: array
-              items:
-                $ref: '#/components/schemas/Action'
 
     UserSearchResultList:
       type: object

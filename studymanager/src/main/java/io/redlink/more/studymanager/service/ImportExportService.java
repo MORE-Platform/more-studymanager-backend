@@ -81,8 +81,16 @@ public class ImportExportService {
         return export;
     }
 
-    public void importStudy(Long studyId, StudyImportExport studyImport) {
-
+    public void importStudy(StudyImportExport studyImport, AuthenticatedUser user) {
+        Study newStudy = studyService.createStudy(studyImport.getStudy(), user);
+        studyImport.getStudyGroups().forEach(studyGroupService::createStudyGroup);
+        studyImport.getObservations().forEach(observationService::addObservation);
+        studyImport.getInterventions().forEach(interventionService::addIntervention);
+        studyImport.getTriggers().forEach((interventionId, trigger) ->
+                interventionService.updateTrigger(newStudy.getStudyId(), interventionId, trigger));
+        studyImport.getActions().forEach((interventionId, actionList) ->
+                actionList.forEach(action ->
+                        interventionService.createAction(newStudy.getStudyId(), interventionId, action)));
     }
 
 }
