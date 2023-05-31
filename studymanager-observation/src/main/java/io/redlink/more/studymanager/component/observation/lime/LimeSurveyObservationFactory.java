@@ -1,22 +1,33 @@
 package io.redlink.more.studymanager.component.observation.lime;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.redlink.more.studymanager.component.observation.measurement.GenericMeasurementSets;
 import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
+import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.model.User;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
+import io.redlink.more.studymanager.core.properties.model.IntegerValue;
+import io.redlink.more.studymanager.core.properties.model.StringValue;
+import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
 
-    private static final String ID_PROPERTY = "limeSurveyId";
+    private static List<Value> properties = List.of(
+            new StringValue("limeSurveyId")
+                    .setName("Survey")
+                    .setDescription("The id of the survey")
+                    .setRequired(true)
+    );
 
     private LimeSurveyRequestService limeSurveyRequestService;
 
@@ -50,24 +61,13 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
     }
 
     @Override
-    public Map<String, Object> getDefaultProperties(){
-        return Map.of(ID_PROPERTY, "limeSurveyObservation");
-    }
-    @Override
-    public ObservationProperties validate(ObservationProperties properties) {
-        ConfigurationValidationReport report = ConfigurationValidationReport.init();
-        if(!properties.containsKey(ID_PROPERTY))
-            report.missingProperty(ID_PROPERTY);
-        if(report.isValid()) {
-            properties.put("limeUrl", limeSurveyRequestService.getSurveyUrl());
-            return properties;
-        } else
-            throw new ConfigurationValidationException(report);
+    public List<Value> getProperties() {
+        return properties;
     }
 
     @Override
     public LimeSurveyObservation<ObservationProperties> create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new LimeSurveyObservation(sdk, validate(properties), limeSurveyRequestService);
+        return new LimeSurveyObservation(sdk, validate((P)properties), limeSurveyRequestService);
     }
 
     @Override
@@ -84,5 +84,10 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
         } else {
             throw new ApiCallException(404, "Not found");
         }
+    }
+
+    @Override
+    public MeasurementSet getMeasurementSet() {
+        return GenericMeasurementSets.NOT_SPECIFIED;
     }
 }

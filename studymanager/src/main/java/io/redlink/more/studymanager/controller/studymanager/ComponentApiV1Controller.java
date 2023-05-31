@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.redlink.more.studymanager.api.v1.model.ComponentFactoryDTO;
+import io.redlink.more.studymanager.api.v1.model.ComponentFactoryMeasurementsInnerDTO;
 import io.redlink.more.studymanager.api.v1.model.ValidationReportDTO;
 import io.redlink.more.studymanager.api.v1.model.ValidationReportItemDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ComponentsApi;
@@ -25,6 +26,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -68,10 +71,10 @@ public class ComponentApiV1Controller implements ComponentsApi {
                         return new ValidationReportDTO()
                                 .valid(false)
                                 .errors(e.getReport().getErrors().stream()
-                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).type("error"))
+                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).propertyId(i.getPropertyId()).type("error"))
                                         .toList()
                                 ).warnings(e.getReport().getWarnings().stream()
-                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).type("warning"))
+                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).propertyId(i.getPropertyId()).type("warning"))
                                         .toList()
                                 );
                     }
@@ -138,8 +141,21 @@ public class ComponentApiV1Controller implements ComponentsApi {
         return new ComponentFactoryDTO()
                 .componentId(factory.getId())
                 .title(factory.getTitle())
+                .properties(factory.getProperties())
+                .measurements(getMeasurements(factory))
                 .defaultProperties(factory.getDefaultProperties())
                 .description(factory.getDescription())
                 .hasWebComponent(factory.hasWebComponent());
+    }
+
+    private List<ComponentFactoryMeasurementsInnerDTO> getMeasurements(ComponentFactory factory) {
+        if(ObservationFactory.class.isAssignableFrom(factory.getClass())) {
+            return ((ObservationFactory) factory).getMeasurementSet().values()
+                    .stream().map(m -> new ComponentFactoryMeasurementsInnerDTO()
+                            .id(m.getId()).type(m.getType().name()))
+                    .collect(Collectors.toList());
+        } else {
+            return List.of();
+        }
     }
 }

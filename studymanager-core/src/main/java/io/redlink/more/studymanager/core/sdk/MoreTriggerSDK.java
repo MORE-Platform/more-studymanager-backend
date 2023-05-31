@@ -8,7 +8,7 @@ import java.util.Set;
 public interface MoreTriggerSDK extends MorePlatformSDK {
     String addSchedule(Schedule schedule);
     void removeSchedule(String id);
-    Set<Integer> participantIdsMatchingQuery(String query, Timeframe timeframe, boolean inverse);
+    Set<Integer> participantIdsMatchingQuery(String query, Timeframe timeframe);
     String addWebhook();
     void removeWebhook();
 }

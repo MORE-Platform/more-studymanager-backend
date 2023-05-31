@@ -110,15 +110,10 @@ public class MoreSDK {
                 .collect(Collectors.toSet());
     }
 
-    public Set<Integer> listActiveParticipantsByQuery(long studyId, Integer studyGroupId, String query, Timeframe timeframe, boolean inverse) {
+    public Set<Integer> listActiveParticipantsByQuery(long studyId, Integer studyGroupId, String query, Timeframe timeframe) {
         Set<Integer> participants = listParticipants(studyId, studyGroupId, Set.of(Participant.Status.ACTIVE));
         Set<Integer> allThatMatchQuery = new HashSet<>(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timeframe));
-        if(inverse) {
-            participants.removeAll(allThatMatchQuery);
-
-        } else {
-            participants.retainAll(allThatMatchQuery);
-        }
+        participants.retainAll(allThatMatchQuery);
         return participants;
     }
 

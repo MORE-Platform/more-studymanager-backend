@@ -33,8 +33,8 @@ public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTrigg
         return sdk.listParticipants(studyId, studyGroupId, Set.of(Participant.Status.ACTIVE));
     }
 
-    public Set<Integer> participantIdsMatchingQuery(String query, Timeframe timeframe, boolean inverse) {
-        return sdk.listActiveParticipantsByQuery(studyId, studyGroupId, query, timeframe, inverse);
+    public Set<Integer> participantIdsMatchingQuery(String query, Timeframe timeframe) {
+        return sdk.listActiveParticipantsByQuery(studyId, studyGroupId, query, timeframe);
     }
 
     @Override

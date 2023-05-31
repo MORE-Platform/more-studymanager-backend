@@ -8,32 +8,30 @@ import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
-public class AccMobileObservationFactory<C extends Observation<P>, P extends ObservationProperties>
+public class ExternalObservationFactory<C extends Observation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
     @Override
     public String getId() {
-        return "acc-mobile-observation";
+        return "external-observation";
     }
 
     @Override
     public String getTitle() {
-        return "Accelerometer Mobile";
+        return "External Observation";
     }
 
     @Override
     public String getDescription() {
-        return """
-                This observation enables you to collect accelerometer data via the smartphone sensor.
-                """;
+        return "A stub observation for data that is collected via the external data api.";
     }
 
     @Override
-    public AccMobileObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new AccMobileObservation(sdk, validate((P)properties));
+    public ExternalObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+        return new ExternalObservation(sdk, validate((P)properties));
     }
 
     @Override
     public MeasurementSet getMeasurementSet() {
-        return GenericMeasurementSets.ACCELEROMETER;
+        return GenericMeasurementSets.NOT_SPECIFIED;
     }
 }
