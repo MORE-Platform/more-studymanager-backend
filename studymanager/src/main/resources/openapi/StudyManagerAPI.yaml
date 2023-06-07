@@ -1321,6 +1321,7 @@ components:
           type: string
         properties:
           type: object
+          additionalProperties: true
         schedule:
           $ref: './Event.yaml/#/components/schemas/Event'
         created:
@@ -1418,6 +1419,7 @@ components:
           type: string
         properties:
           type: object
+          additionalProperties: true
         created:
           type: string
           format: date-time
@@ -1436,6 +1438,7 @@ components:
           type: string
         properties:
           type: object
+          additionalProperties: true
         created:
           type: string
           format: date-time

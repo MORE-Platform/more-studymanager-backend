@@ -1,4 +1,4 @@
-package io.redlink.more.studymanager.component.trigger;
+package io.redlink.more.studymanager.component.trigger.datacheck;
 
 import io.redlink.more.studymanager.core.component.Trigger;
 import io.redlink.more.studymanager.core.io.ActionParameter;
@@ -9,7 +9,7 @@ import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
 
 import java.time.Instant;
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -44,7 +44,7 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
 
         Set<Integer> notMatchingParticipantIds = sdk.participantIds();
 
-        TriggerResult result = properties.getQuery().map(query ->
+        TriggerResult result = getQueryString().map(query ->
                 TriggerResult.withParams(
                         sdk.participantIdsMatchingQuery(query, timeframe).stream()
                                 .peek(notMatchingParticipantIds::remove)
@@ -58,6 +58,10 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
         notMatchingParticipantIds.forEach(id -> setParticipantActive(id, false));
 
         return result;
+    }
+
+    private Optional<String> getQueryString() {
+        return this.properties.getQuery().or(this.properties::getElasticQueryString);
     }
 
     public boolean isParticipantActive(int participantId) {
