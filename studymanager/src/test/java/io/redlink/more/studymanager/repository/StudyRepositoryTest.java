@@ -34,25 +34,33 @@ class StudyRepositoryTest {
     @DisplayName("Study is inserted in database and returned")
     void testInsert() {
         Study study = new Study()
-                .setTitle("some title");
+                .setTitle("some title")
+                .setContactPerson("test person")
+                .setContactEmail("test mail");
 
         Study studyResponse = studyRepository.insert(study);
 
         assertThat(studyResponse.getStudyId()).isNotNull();
         assertThat(studyResponse.getTitle()).isEqualTo(study.getTitle());
         assertThat(studyResponse.getStudyState()).isEqualTo(Study.Status.DRAFT);
+        assertThat(studyResponse.getContactPerson()).isEqualTo(study.getContactPerson());
+        assertThat(studyResponse.getContactEmail()).isEqualTo(study.getContactEmail());
     }
     @Test
     @DisplayName("Study is updated in database and returned")
     void testUpdate() {
         Study insert = new Study()
-                .setTitle("some title");
+                .setTitle("some title")
+                .setContactPerson("test person")
+                .setContactEmail("test mail");
 
         Study inserted = studyRepository.insert(insert);
 
         Study update = new Study()
                 .setStudyId(inserted.getStudyId())
-                .setTitle("some new title");
+                .setTitle("some new title")
+                .setContactPerson("new test person")
+                .setContactEmail("new test mail");
 
         Optional<Study> optUpdated = studyRepository.update(update, null);
         assertThat(optUpdated).isPresent();
@@ -66,19 +74,23 @@ class StudyRepositoryTest {
         assertThat(queried.getTitle()).isEqualTo(updated.getTitle());
         assertThat(queried.getStudyId()).isEqualTo(updated.getStudyId());
         assertThat(queried.getCreated()).isEqualTo(updated.getCreated());
+        assertThat(queried.getContactPerson()).isEqualTo(updated.getContactPerson());
+        assertThat(queried.getContactEmail()).isEqualTo(updated.getContactEmail());
 
         assertThat(update.getTitle()).isEqualTo(updated.getTitle());
         assertThat(inserted.getStudyId()).isEqualTo(updated.getStudyId());
         assertThat(inserted.getCreated()).isEqualTo(updated.getCreated());
         assertThat(inserted.getModified().toEpochMilli()).isLessThan(updated.getModified().toEpochMilli());
+        assertThat(inserted.getContactPerson()).isNotEqualTo(updated.getContactPerson());
+        assertThat(inserted.getContactEmail()).isNotEqualTo(updated.getContactEmail());
     }
 
     @Test
     @DisplayName("Studies are deleted and listed correctly")
     void testListAndDelete() {
-        Study s1 = studyRepository.insert(new Study());
-        Study s2 = studyRepository.insert(new Study());
-        Study s3 = studyRepository.insert(new Study());
+        Study s1 = studyRepository.insert(new Study().setContactPerson("test person").setContactEmail("test mail"));
+        Study s2 = studyRepository.insert(new Study().setContactPerson("test person").setContactEmail("test mail"));
+        Study s3 = studyRepository.insert(new Study().setContactPerson("test person").setContactEmail("test mail"));
 
         assertThat(studyRepository.listStudyOrderByModifiedDesc()).hasSize(3);
         studyRepository.deleteById(s1.getStudyId());
@@ -94,7 +106,7 @@ class StudyRepositoryTest {
     @Test
     @DisplayName("Study states are set correctly")
     void testSetState() {
-        Study study = studyRepository.insert(new Study());
+        Study study = studyRepository.insert(new Study().setContactPerson("test person").setContactEmail("test mail"));
         assertThat(study.getStudyState()).isEqualTo(Study.Status.DRAFT);
         assertThat(study.getStartDate()).isNull();
 
@@ -125,7 +137,7 @@ class StudyRepositoryTest {
         Set<Study.Status> statusSet2 = Set.of(Study.Status.CLOSED);
         Set<Study.Status> statusSet3 = Collections.emptySet();
 
-        Study study = studyRepository.insert(new Study());
+        Study study = studyRepository.insert(new Study().setContactPerson("test person").setContactEmail("test mail"));
         assertTrue(studyRepository.hasState(study.getStudyId(), statusSet1));
         assertFalse(studyRepository.hasState(study.getStudyId(), statusSet2));
         assertFalse(studyRepository.hasState(study.getStudyId(), statusSet3));

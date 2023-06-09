@@ -35,7 +35,7 @@ class ParticipantRepositoryTest {
     @Test
     @DisplayName("Participant is inserted and returned")
     void testInsert() {
-        Long studyId = studyRepository.insert(new Study()).getStudyId();
+        Long studyId = studyRepository.insert(new Study().setContactPerson("test").setContactEmail("test")).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup()
                 .setStudyId(studyId)).getStudyGroupId();
 
@@ -71,7 +71,7 @@ class ParticipantRepositoryTest {
     @Test
     @DisplayName("Participants are deleted and listed correctly")
     void testListAndDelete() {
-        Long studyId = studyRepository.insert(new Study()).getStudyId();
+        Long studyId = studyRepository.insert(new Study().setContactPerson("test").setContactEmail("test")).getStudyId();
 
         Participant s1 = participantRepository.insert(new Participant()
                 .setStudyId(studyId)
@@ -119,7 +119,7 @@ class ParticipantRepositoryTest {
     @Test
     @DisplayName("Participant states are set correctly")
     void testSetState() {
-        Long studyId = studyRepository.insert(new Study()).getStudyId();
+        Long studyId = studyRepository.insert(new Study().setContactPerson("test").setContactEmail("test")).getStudyId();
 
         Participant participant = participantRepository.insert(new Participant().setStudyId(studyId).setRegistrationToken("TEST123"));
         assertThat(participant.getStatus()).isEqualTo(Participant.Status.NEW);
@@ -136,7 +136,7 @@ class ParticipantRepositoryTest {
     @Test
     @DisplayName("Participants study group must be undefined")
     void testUndefinedStudyGroup() {
-        Long studyId = studyRepository.insert(new Study()).getStudyId();
+        Long studyId = studyRepository.insert(new Study().setContactPerson("test").setContactEmail("test")).getStudyId();
         Participant participant = participantRepository
                 .insert(new Participant().setStudyId(studyId).setRegistrationToken("abc"));
         assertThat(participant.getStudyGroupId()).isNull();

@@ -43,7 +43,7 @@ class ObservationRepositoryTest {
     @DisplayName("Observations are inserted, updated, listed and deleted from database")
     public void testInsertListUpdateDelete() {
         String type = "accelerometer";
-        Long studyId = studyRepository.insert(new Study()).getStudyId();
+        Long studyId = studyRepository.insert(new Study().setContactPerson("test").setContactEmail("test")).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
         Instant startTime = Instant.now();
         Instant endTime = Instant.now().plus(2, ChronoUnit.HOURS);
@@ -95,7 +95,7 @@ class ObservationRepositoryTest {
     @Test
     @DisplayName("Participant Observations are inserted, returned, updated and deleted")
     public void testParticipantObservationProperties() {
-        Long s1 = studyRepository.insert(new Study()).getStudyId();
+        Long s1 = studyRepository.insert(new Study().setContactPerson("test").setContactEmail("test")).getStudyId();
         Integer o1 = observationRepository.insert(new Observation().setStudyId(s1).setType("t1")).getObservationId();
         Integer o2 = observationRepository.insert(new Observation().setStudyId(s1).setType("t2")).getObservationId();
         Integer p1 = participantRepository.insert(new Participant().setStudyId(s1).setRegistrationToken("t")).getParticipantId();
