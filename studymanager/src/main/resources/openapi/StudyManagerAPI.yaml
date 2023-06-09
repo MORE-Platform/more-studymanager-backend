@@ -1189,6 +1189,18 @@ components:
           uniqueItems: true
           readOnly: true
           minItems: 1
+        institute:
+          type: string
+          readOnly: true
+        contactPerson:
+          type: string
+          readOnly: true
+        contactEmail:
+          type: string
+          readOnly: true
+        contactPhoneNumber:
+          type: string
+          readOnly: true
 
     StatusChange:
       type: object

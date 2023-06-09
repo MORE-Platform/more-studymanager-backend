@@ -3,21 +3,14 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.exception.NotFoundException;
-import io.redlink.more.studymanager.model.MoreUser;
-import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.StudyRole;
-import io.redlink.more.studymanager.model.StudyUserRoles;
-import io.redlink.more.studymanager.model.User;
+import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 public class StudyService {
@@ -47,26 +40,31 @@ public class StudyService {
     public Study createStudy(Study study, User currentUser) {
         // TODO: Workaround until proper auth is available
         var user = userRepo.save(currentUser);
-        var savedStudy = studyRepository.insert(study);
+        var savedStudy = studyRepository.insert(encodeContactInfo(study));
         aclRepository.setRoles(savedStudy.getStudyId(), user.id(), EnumSet.allOf(StudyRole.class), null);
-        return getStudy(savedStudy.getStudyId(), user).orElse(savedStudy);
+        return getStudy(savedStudy.getStudyId(), user)
+                .map(this::decodeContactInfo)
+                .orElse(decodeContactInfo(savedStudy));
     }
 
     public List<Study> listStudies(User user) {
-        return listStudies(user, EnumSet.allOf(StudyRole.class));
+        return listStudies(user, EnumSet.allOf(StudyRole.class))
+                .stream().map(this::decodeContactInfo).toList();
     }
 
     public List<Study> listStudies(User user, Set<StudyRole> allowedRoles) {
-        return studyRepository.listStudiesByAclOrderByModifiedDesc(user, allowedRoles);
+        return studyRepository.listStudiesByAclOrderByModifiedDesc(user, allowedRoles)
+                .stream().map(this::decodeContactInfo).toList();
     }
 
     public Optional<Study> getStudy(Long studyId, User user) {
-        return (studyRepository.getById(studyId, user));
+        return (studyRepository.getById(studyId, user))
+                .map(this::decodeContactInfo);
     }
 
     public Optional<Study> updateStudy(Study study, User user) {
         studyStateService.assertStudyNotInState(study, Study.Status.CLOSED);
-        return studyRepository.update(study, user);
+        return studyRepository.update(encodeContactInfo(study), user);
     }
 
     public void deleteStudy(Long studyId) {
@@ -125,5 +123,21 @@ public class StudyService {
                         aclRepository.getRoleDetails(studyId, userId)
                 )
         );
+    }
+
+    private Study encodeContactInfo(Study study) {
+        Base64.Encoder encoder = Base64.getEncoder();
+        return study.setInstitute(encoder.encodeToString(study.getInstitute().getBytes()))
+                .setContactPerson(encoder.encodeToString(study.getContactPerson().getBytes()))
+                .setContactEmail(encoder.encodeToString(study.getContactEmail().getBytes()))
+                .setContactPhoneNumber(encoder.encodeToString(study.getContactPhoneNumber().getBytes()));
+    }
+
+    private Study decodeContactInfo(Study study) {
+        Base64.Decoder decoder = Base64.getDecoder();
+        return study.setInstitute(Arrays.toString(decoder.decode(study.getInstitute())))
+                .setContactEmail(Arrays.toString(decoder.decode(study.getContactEmail())))
+                .setContactPerson(Arrays.toString(decoder.decode(study.getContactPerson())))
+                .setContactPhoneNumber(Arrays.toString(decoder.decode(study.getContactPhoneNumber())));
     }
 }
