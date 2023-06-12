@@ -1206,8 +1206,8 @@ components:
         phoneNumber:
           type: string
       required:
-        - contactPerson
-        - contactEmail
+        - person
+        - email
 
 
     StatusChange:

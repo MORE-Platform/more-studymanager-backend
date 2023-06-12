@@ -41,10 +41,10 @@ public class StudyService {
         // TODO: Workaround until proper auth is available
         validateContact(study.getContact());
         var user = userRepo.save(currentUser);
-        var savedStudy = studyRepository.insert(encodeContactInfo(study));
+        var savedStudy = studyRepository.insert(study);
         aclRepository.setRoles(savedStudy.getStudyId(), user.id(), EnumSet.allOf(StudyRole.class), null);
         return getStudy(savedStudy.getStudyId(), user)
-                .orElseGet(() -> decodeContactInfo(savedStudy));
+                .orElse(savedStudy);
     }
 
     public List<Study> listStudies(User user) {
@@ -52,19 +52,17 @@ public class StudyService {
     }
 
     public List<Study> listStudies(User user, Set<StudyRole> allowedRoles) {
-        return studyRepository.listStudiesByAclOrderByModifiedDesc(user, allowedRoles)
-                .stream().map(this::decodeContactInfo).toList();
+        return studyRepository.listStudiesByAclOrderByModifiedDesc(user, allowedRoles);
     }
 
     public Optional<Study> getStudy(Long studyId, User user) {
-        return (studyRepository.getById(studyId, user))
-                .map(this::decodeContactInfo);
+        return studyRepository.getById(studyId, user);
     }
 
     public Optional<Study> updateStudy(Study study, User user) {
         validateContact(study.getContact());
         studyStateService.assertStudyNotInState(study, Study.Status.CLOSED);
-        return studyRepository.update(encodeContactInfo(study), user).map(this::decodeContactInfo);
+        return studyRepository.update(study, user);
     }
 
     public void deleteStudy(Long studyId) {
@@ -129,31 +127,5 @@ public class StudyService {
         if(contact == null || StringUtils.isEmpty(contact.getPerson()) || StringUtils.isEmpty(contact.getEmail())) {
             throw new BadRequestException("Contact person and email required");
         }
-    }
-
-    private Study encodeContactInfo(Study study) {
-        Base64.Encoder encoder = Base64.getEncoder();
-        if(study.getContact().getInstitute() != null) {
-            study.getContact().setInstitute(encoder.encodeToString(study.getContact().getInstitute().getBytes()));
-        }
-        if(study.getContact().getPhoneNumber() != null) {
-            study.getContact().setPhoneNumber(encoder.encodeToString(study.getContact().getPhoneNumber().getBytes()));
-        }
-        return study.setContact(study.getContact()
-                .setPerson(encoder.encodeToString(study.getContact().getPerson().getBytes()))
-                .setEmail(encoder.encodeToString(study.getContact().getEmail().getBytes())));
-    }
-
-    private Study decodeContactInfo(Study study) {
-        Base64.Decoder decoder = Base64.getDecoder();
-        if(study.getContact().getInstitute() != null) {
-            study.getContact().setInstitute(new String(decoder.decode(study.getContact().getInstitute())));
-        }
-        if(study.getContact().getPhoneNumber() != null) {
-            study.getContact().setPhoneNumber(new String(decoder.decode(study.getContact().getPhoneNumber())));
-        }
-        return study.setContact(study.getContact()
-                .setEmail(new String(decoder.decode(study.getContact().getEmail())))
-                .setPerson(new String(decoder.decode(study.getContact().getPerson()))));
     }
 }
