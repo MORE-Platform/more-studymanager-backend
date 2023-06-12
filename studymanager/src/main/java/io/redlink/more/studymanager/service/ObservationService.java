@@ -36,7 +36,10 @@ public class ObservationService {
 
     public Observation addObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
-        return repository.insert(validate(observation));
+        observation.setHidden(
+                factory(validate(observation))
+                        .getHidden(observation.getHidden()));
+        return repository.insert(observation);
     }
 
     public void deleteObservation(Long studyId, Integer observationId) {
@@ -58,6 +61,9 @@ public class ObservationService {
 
     public Observation updateObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
+        observation.setHidden(
+                factory(validate(observation))
+                        .getHidden(observation.getHidden()));
         return repository.updateObservation(validate(observation));
     }
 

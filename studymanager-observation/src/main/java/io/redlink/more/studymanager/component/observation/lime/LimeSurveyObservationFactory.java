@@ -90,4 +90,8 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
     public MeasurementSet getMeasurementSet() {
         return GenericMeasurementSets.NOT_SPECIFIED;
     }
+
+    public Boolean getDefaultHidden() { return false; }
+
+    public Boolean getHidden(Boolean hidden) { return getDefaultHidden(); }
 }

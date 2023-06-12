@@ -34,4 +34,13 @@ public class PolarVerityObservationFactory<C extends Observation<P>, P extends O
     public MeasurementSet getMeasurementSet() {
         return GenericMeasurementSets.HEART_RATE;
     }
+
+    public Boolean getDefaultHidden() { return true; }
+
+    public Boolean getHidden(Boolean hidden) {
+        if(hidden == null) {
+            return getDefaultHidden();
+        }
+        return hidden;
+    }
 }

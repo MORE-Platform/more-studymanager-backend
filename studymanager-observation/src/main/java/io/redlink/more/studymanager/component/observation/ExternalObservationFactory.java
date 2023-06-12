@@ -34,4 +34,8 @@ public class ExternalObservationFactory<C extends Observation<P>, P extends Obse
     public MeasurementSet getMeasurementSet() {
         return GenericMeasurementSets.NOT_SPECIFIED;
     }
+
+    public Boolean getDefaultHidden() { return true; }
+
+    public Boolean getHidden(Boolean hidden) { return getDefaultHidden(); }
 }

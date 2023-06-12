@@ -2,11 +2,14 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
+import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.repository.ObservationRepository;
+
+import java.time.Instant;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -53,5 +56,33 @@ class ObservationServiceTest {
                 observationService.addObservation(new Observation().setStudyId(1L).setObservationId(1).setType("my-observation"))
         );
         Assertions.assertEquals("ConfigurationValidationReport: [ERROR] My error", badRequestException.getMessage());
+    }
+
+    @Test
+    void testHidden() {
+        when(observationRepository.insert(any(Observation.class)))
+                .thenAnswer(invocationOnMock -> new Observation()
+                        .setHidden(((Observation) invocationOnMock.getArgument(0)).getHidden()));
+        when(observationRepository.updateObservation(any(Observation.class)))
+                .thenAnswer(invocationOnMock -> new Observation()
+                        .setHidden(((Observation) invocationOnMock.getArgument(0)).getHidden()));
+        Observation acc = new Observation()
+                .setType("accelerometer")
+                .setHidden(null);
+        Observation pol = new Observation()
+                .setType("polar-verity-observation")
+                .setHidden(null);
+        Observation gps = new Observation()
+                .setType("gps-mobile-observation")
+                .setHidden(null);
+        Observation lim = new Observation()
+                .setType("lime-survey-observation")
+                .setHidden(null);
+        Observation qst = new Observation()
+                .setType("question-observation")
+                .setHidden(null);
+        Observation ext = new Observation()
+                .setType("external-observation")
+                .setHidden(null);
     }
 }
