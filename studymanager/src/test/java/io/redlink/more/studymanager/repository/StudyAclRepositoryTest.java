@@ -1,10 +1,8 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.exception.DataConstraintException;
-import io.redlink.more.studymanager.model.MoreUser;
-import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.StudyRole;
-import io.redlink.more.studymanager.model.StudyUserRoles;
+import io.redlink.more.studymanager.model.*;
+
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
@@ -54,7 +52,7 @@ class StudyAclRepositoryTest {
         user1 = userRepository.save(new MoreUser("user1", "User One", null, null));
         user2 = userRepository.save(new MoreUser("user2", "User Two", null, null));
 
-        study = studyRepository.insert(new Study().setTitle("ACL-Test"));
+        study = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test")).setTitle("ACL-Test"));
         studyAclRepository.setRoles(study.getStudyId(), admin.id(), null, StudyRole.STUDY_ADMIN);
     }
 
@@ -109,7 +107,7 @@ class StudyAclRepositoryTest {
         studyAclRepository.setRoles(study.getStudyId(), user1.id(), EnumSet.allOf(StudyRole.class), null);
 
         // second study is for user 2
-        var study2 = studyRepository.insert(new Study().setTitle("Study 2"));
+        var study2 = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test")).setTitle("Study 2"));
         studyAclRepository.setRoles(study2.getStudyId(), user2.id(), EnumSet.allOf(StudyRole.class), null);
         // user2 has view-rights on study1
         studyAclRepository.setRoles(study.getStudyId(), user2.id(), EnumSet.of(StudyRole.STUDY_VIEWER), null);

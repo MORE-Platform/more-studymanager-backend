@@ -42,7 +42,9 @@ public class IntegrationRepositoryTest {
     @DisplayName("Testing all operations on IntegrationRepository")
     public void testAddGetListDelete() {
         String type = "accelerometer";
-        Long studyId = studyRepository.insert(new Study()).getStudyId();
+        Long studyId = studyRepository.insert(new Study()
+                        .setContact(new Contact().setPerson("test").setEmail("test")))
+                .getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
         Instant startTime = Instant.now();
         Instant endTime = Instant.now().plus(2, ChronoUnit.HOURS);
@@ -120,7 +122,8 @@ public class IntegrationRepositoryTest {
     @DisplayName("Testing token deletion, when corresponding observation or study gets deleted")
     public void testRepositoryCascade() {
         String type = "accelerometer";
-        Long studyId1 = studyRepository.insert(new Study()).getStudyId();
+        Long studyId1 = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test")))
+                .getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId1)).getStudyGroupId();
         Instant startTime = Instant.now();
         Instant endTime = Instant.now().plus(2, ChronoUnit.HOURS);
@@ -153,7 +156,7 @@ public class IntegrationRepositoryTest {
         studyRepository.deleteById(studyId1);
         assertThat(integrationRepository.getAllTokens(studyId1, finalObservation.getObservationId()).size()).isEqualTo(0);
 
-        Long studyId2 = studyRepository.insert(new Study()).getStudyId();
+        Long studyId2 = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
         observation.setStudyGroupId(studyGroupRepository.insert(new StudyGroup().setStudyId(studyId2)).getStudyGroupId());
         observation.setStudyId(studyId2);
         final Observation finalObservation3 = observationRepository.insert(observation);

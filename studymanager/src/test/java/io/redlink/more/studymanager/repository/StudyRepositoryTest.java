@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.repository;
 
+import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,25 +35,30 @@ class StudyRepositoryTest {
     @DisplayName("Study is inserted in database and returned")
     void testInsert() {
         Study study = new Study()
-                .setTitle("some title");
+                .setTitle("some title")
+                .setContact(new Contact().setPerson("test").setEmail("test"));
 
         Study studyResponse = studyRepository.insert(study);
 
         assertThat(studyResponse.getStudyId()).isNotNull();
         assertThat(studyResponse.getTitle()).isEqualTo(study.getTitle());
         assertThat(studyResponse.getStudyState()).isEqualTo(Study.Status.DRAFT);
+        assertThat(studyResponse.getContact().getPerson()).isEqualTo(study.getContact().getPerson());
+        assertThat(studyResponse.getContact().getEmail()).isEqualTo(study.getContact().getEmail());
     }
     @Test
     @DisplayName("Study is updated in database and returned")
     void testUpdate() {
         Study insert = new Study()
-                .setTitle("some title");
+                .setTitle("some title")
+                .setContact(new Contact().setPerson("test").setEmail("test"));
 
         Study inserted = studyRepository.insert(insert);
 
         Study update = new Study()
                 .setStudyId(inserted.getStudyId())
-                .setTitle("some new title");
+                .setTitle("some new title")
+                .setContact(new Contact().setPerson("test2").setEmail("test2"));
 
         Optional<Study> optUpdated = studyRepository.update(update, null);
         assertThat(optUpdated).isPresent();
@@ -66,19 +72,23 @@ class StudyRepositoryTest {
         assertThat(queried.getTitle()).isEqualTo(updated.getTitle());
         assertThat(queried.getStudyId()).isEqualTo(updated.getStudyId());
         assertThat(queried.getCreated()).isEqualTo(updated.getCreated());
+        assertThat(queried.getContact().getPerson()).isEqualTo(updated.getContact().getPerson());
+        assertThat(queried.getContact().getEmail()).isEqualTo(updated.getContact().getEmail());
 
         assertThat(update.getTitle()).isEqualTo(updated.getTitle());
         assertThat(inserted.getStudyId()).isEqualTo(updated.getStudyId());
         assertThat(inserted.getCreated()).isEqualTo(updated.getCreated());
         assertThat(inserted.getModified().toEpochMilli()).isLessThan(updated.getModified().toEpochMilli());
+        assertThat(inserted.getContact().getPerson()).isNotEqualTo(updated.getContact().getPerson());
+        assertThat(inserted.getContact().getEmail()).isNotEqualTo(updated.getContact().getEmail());
     }
 
     @Test
     @DisplayName("Studies are deleted and listed correctly")
     void testListAndDelete() {
-        Study s1 = studyRepository.insert(new Study());
-        Study s2 = studyRepository.insert(new Study());
-        Study s3 = studyRepository.insert(new Study());
+        Study s1 = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test")));
+        Study s2 = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test")));
+        Study s3 = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test")));
 
         assertThat(studyRepository.listStudyOrderByModifiedDesc()).hasSize(3);
         studyRepository.deleteById(s1.getStudyId());
@@ -94,7 +104,7 @@ class StudyRepositoryTest {
     @Test
     @DisplayName("Study states are set correctly")
     void testSetState() {
-        Study study = studyRepository.insert(new Study());
+        Study study = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test")));
         assertThat(study.getStudyState()).isEqualTo(Study.Status.DRAFT);
         assertThat(study.getStartDate()).isNull();
 
@@ -125,7 +135,7 @@ class StudyRepositoryTest {
         Set<Study.Status> statusSet2 = Set.of(Study.Status.CLOSED);
         Set<Study.Status> statusSet3 = Collections.emptySet();
 
-        Study study = studyRepository.insert(new Study());
+        Study study = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test")));
         assertTrue(studyRepository.hasState(study.getStudyId(), statusSet1));
         assertFalse(studyRepository.hasState(study.getStudyId(), statusSet2));
         assertFalse(studyRepository.hasState(study.getStudyId(), statusSet3));
