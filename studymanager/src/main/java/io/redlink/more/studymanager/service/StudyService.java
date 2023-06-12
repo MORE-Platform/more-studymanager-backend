@@ -68,7 +68,7 @@ public class StudyService {
             throw new BadRequestException("Contact person and email required");
         }
         studyStateService.assertStudyNotInState(study, Study.Status.CLOSED);
-        return studyRepository.update(encodeContactInfo(study), user);
+        return studyRepository.update(encodeContactInfo(study), user).map(this::decodeContactInfo);
     }
 
     public void deleteStudy(Long studyId) {
