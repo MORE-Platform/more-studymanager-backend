@@ -56,7 +56,8 @@ public class IntegrationRepositoryTest {
                 .setSchedule(new Event()
                         .setDateStart(startTime)
                         .setDateEnd(endTime)
-                        .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)));
+                        .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)))
+                .setHidden(true);
 
         final Observation finalObservation = observationRepository.insert(observation);
 
@@ -134,7 +135,8 @@ public class IntegrationRepositoryTest {
                 .setSchedule(new Event()
                         .setDateStart(startTime)
                         .setDateEnd(endTime)
-                        .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)));
+                        .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)))
+                .setHidden(true);
 
         final Observation finalObservation = observationRepository.insert(observation);
 
