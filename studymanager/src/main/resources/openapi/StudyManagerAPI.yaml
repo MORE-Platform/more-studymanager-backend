@@ -1189,18 +1189,26 @@ components:
           uniqueItems: true
           readOnly: true
           minItems: 1
+        contact:
+          $ref: '#/components/schemas/Contact'
+      required:
+        - contact
+
+    Contact:
+      type: object
+      properties:
         institute:
           type: string
-          readOnly: true
-        contactPerson:
+        person:
           type: string
-          readOnly: true
-        contactEmail:
+        email:
           type: string
-          readOnly: true
-        contactPhoneNumber:
+        phoneNumber:
           type: string
-          readOnly: true
+      required:
+        - contactPerson
+        - contactEmail
+
 
     StatusChange:
       type: object

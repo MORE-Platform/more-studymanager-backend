@@ -20,10 +20,7 @@ public class StudyTransformer {
                 .setConsentInfo(studyDTO.getConsentInfo())
                 .setPlannedStartDate(studyDTO.getPlannedStart())
                 .setPlannedEndDate(studyDTO.getPlannedEnd())
-                .setInstitute(studyDTO.getInstitute())
-                .setContactPerson(studyDTO.getContactPerson())
-                .setContactEmail(studyDTO.getContactEmail())
-                .setContactPhoneNumber(studyDTO.getContactPhoneNumber());
+                .setContact(ContactTransformer.fromContactDTO_V1(studyDTO.getContact()));
     }
 
     public static StudyDTO toStudyDTO_V1(Study study) {
@@ -41,11 +38,7 @@ public class StudyTransformer {
                 .created(Transformers.toOffsetDateTime(study.getCreated()))
                 .modified(Transformers.toOffsetDateTime(study.getModified()))
                 .userRoles(RoleTransformer.toStudyRolesDTO(study.getUserRoles()))
-                .institute(study.getInstitute())
-                .contactPerson(study.getContactPerson())
-                .contactEmail(study.getContactEmail())
-                .contactPhoneNumber(study.getContactPhoneNumber())
-                ;
+                .contact(ContactTransformer.toContactDTO_V1(study.getContact()));
     }
 
     public static Study.Status fromStatusChangeDTO_V1(StatusChangeDTO statusChangeDTO) {

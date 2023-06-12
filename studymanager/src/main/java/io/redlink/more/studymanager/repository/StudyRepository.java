@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.repository;
 
+import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.User;
@@ -120,10 +121,10 @@ public class StudyRepository {
                 .addValue("consent_info", study.getConsentInfo())
                 .addValue("planned_start_date", study.getPlannedStartDate())
                 .addValue("planned_end_date", study.getPlannedEndDate())
-                .addValue("institute", study.getInstitute())
-                .addValue("contact_person", study.getContactPerson())
-                .addValue("contact_email", study.getContactEmail())
-                .addValue("contact_phone", study.getContactPhoneNumber())
+                .addValue("institute", study.getContact().getInstitute())
+                .addValue("contact_person", study.getContact().getPerson())
+                .addValue("contact_email", study.getContact().getEmail())
+                .addValue("contact_phone", study.getContact().getPhoneNumber())
                 ;
     }
 
@@ -141,11 +142,11 @@ public class StudyRepository {
                 .setCreated(RepositoryUtils.readInstant(rs, "created"))
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setStudyState(Study.Status.valueOf(rs.getString("status").toUpperCase()))
-                .setInstitute(rs.getString("institute"))
-                .setContactPerson(rs.getString("contact_person"))
-                .setContactEmail(rs.getString("contact_email"))
-                .setContactPhoneNumber(rs.getString("contact_phone"))
-                ;
+                .setContact(new Contact()
+                        .setInstitute(rs.getString("institute"))
+                        .setPerson(rs.getString("contact_person"))
+                        .setEmail(rs.getString("contact_email"))
+                        .setPhoneNumber(rs.getString("contact_phone")));
     }
 
     private static RowMapper<Study> getStudyRowMapperWithUserRoles() {

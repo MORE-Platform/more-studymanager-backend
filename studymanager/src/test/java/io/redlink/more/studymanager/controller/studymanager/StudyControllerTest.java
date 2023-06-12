@@ -1,11 +1,9 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.redlink.more.studymanager.api.v1.model.ContactDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
-import io.redlink.more.studymanager.model.AuthenticatedUser;
-import io.redlink.more.studymanager.model.PlatformRole;
-import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.User;
+import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyService;
 import org.junit.jupiter.api.DisplayName;
@@ -65,12 +63,14 @@ class StudyControllerTest {
                 .setPlannedEndDate(((Study) invocationOnMock.getArgument(0)).getPlannedEndDate())
                 .setStudyState(Study.Status.DRAFT)
                 .setCreated(Instant.ofEpochMilli(System.currentTimeMillis()))
-                .setModified(Instant.ofEpochMilli(System.currentTimeMillis())));
+                .setModified(Instant.ofEpochMilli(System.currentTimeMillis()))
+                .setContact(((Study) invocationOnMock.getArgument(0)).getContact()));
 
         StudyDTO studyRequest = new StudyDTO()
                 .title("Some title")
                 .plannedStart(LocalDate.now())
-                .plannedEnd(LocalDate.now());
+                .plannedEnd(LocalDate.now())
+                .contact(new ContactDTO().person("test").email("test"));
 
         mvc.perform(post("/api/v1/studies")
                         .content(mapper.writeValueAsString(studyRequest))
@@ -79,7 +79,8 @@ class StudyControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value(studyRequest.getTitle()))
                 .andExpect(jsonPath("$.studyId").value(1L))
-                .andExpect(jsonPath("$.status").value("draft"));
+                .andExpect(jsonPath("$.status").value("draft"))
+                .andExpect(jsonPath("$.contact").exists());
     }
 
     @Test
@@ -91,6 +92,7 @@ class StudyControllerTest {
                                 .setStudyState(Study.Status.DRAFT)
                                 .setCreated(Instant.ofEpochMilli(0))
                                 .setModified(Instant.ofEpochMilli(0))
+                                .setContact(((Study) invocationOnMock.getArgument(0)).getContact())
                 ));
 
         StudyDTO studyRequest = new StudyDTO()
@@ -100,7 +102,8 @@ class StudyControllerTest {
                 .consentInfo("ci")
                 .participantInfo("pi")
                 .plannedStart(LocalDate.now())
-                .plannedEnd(LocalDate.now());
+                .plannedEnd(LocalDate.now())
+                .contact(new ContactDTO().person("test").email("test"));
 
         mvc.perform(put("/api/v1/studies/1")
                         .content(mapper.writeValueAsString(studyRequest))
@@ -115,6 +118,8 @@ class StudyControllerTest {
                 .andExpect(jsonPath("$.plannedStart").exists())
                 .andExpect(jsonPath("$.plannedEnd").exists())
                 .andExpect(jsonPath("$.modified").exists())
-                .andExpect(jsonPath("$.created").exists());
+                .andExpect(jsonPath("$.created").exists())
+                .andExpect(jsonPath("$.contact").exists())
+        ;
     }
 }

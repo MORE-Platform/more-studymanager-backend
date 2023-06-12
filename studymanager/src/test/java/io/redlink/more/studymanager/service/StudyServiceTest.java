@@ -1,12 +1,7 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
-import io.redlink.more.studymanager.model.AuthenticatedUser;
-import io.redlink.more.studymanager.model.MoreUser;
-import io.redlink.more.studymanager.model.PlatformRole;
-import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.StudyRole;
-import io.redlink.more.studymanager.model.User;
+import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
@@ -61,13 +56,11 @@ class StudyServiceTest {
     void testSaveStudy() {
         Study study = new Study();
         study.setTitle("test study")
-                .setContactPerson("test person")
-                .setContactEmail("test@mail.tst");
+                .setContact(new Contact().setPerson("testPerson").setEmail("testMail"));
 
         when(studyRepository.insert(any(Study.class)))
                 .thenAnswer(invocationOnMock -> new Study().setStudyId(1L).setTitle(study.getTitle())
-                        .setContactPerson(((Study) invocationOnMock.getArgument(0)).getContactPerson())
-                        .setContactEmail(((Study) invocationOnMock.getArgument(0)).getContactEmail()));
+                        .setContact(((Study) invocationOnMock.getArgument(0)).getContact()));
         when(userRepository.save(any(User.class)))
                 .thenAnswer(i -> {
                     var u = i.getArgument(0, User.class);
@@ -76,15 +69,14 @@ class StudyServiceTest {
         when(studyRepository.getById(eq(1L), any(User.class)))
                 .thenAnswer(invocationOnMock ->
                         Optional.of(new Study().setStudyId(1L).setTitle(study.getTitle())
-                                .setContactPerson(study.getContactPerson())
-                                .setContactEmail(study.getContactEmail())));
+                                .setContact(study.getContact())));
 
         Study studyResponse = studyService.createStudy(study, currentUser);
 
         assertThat(studyResponse.getStudyId()).isEqualTo(1L);
         assertThat(studyResponse.getTitle()).isSameAs(study.getTitle());
-        assertThat(studyResponse.getContactPerson()).isEqualTo("test person");
-        assertThat(studyResponse.getContactEmail()).isEqualTo("test@mail.tst");
+        assertThat(studyResponse.getContact().getPerson()).isEqualTo("testPerson");
+        assertThat(studyResponse.getContact().getEmail()).isEqualTo("testMail");
 
         verify(studyAclRepository, times(1).description("Initial ACL should be set"))
                 .setRoles(studyResponse.getStudyId(), currentUser.id(), EnumSet.allOf(StudyRole.class), null);
@@ -94,8 +86,9 @@ class StudyServiceTest {
     void testListStudies() {
         when(studyRepository.listStudiesByAclOrderByModifiedDesc(any(), any()))
                 .thenAnswer(i -> List.of(new Study()
-                        .setContactPerson(Base64.getEncoder().encodeToString("test person".getBytes()))
-                        .setContactEmail(Base64.getEncoder().encodeToString("test@mail.tst".getBytes()))));
+                        .setContact(new Contact()
+                                .setPerson(Base64.getEncoder().encodeToString("test person".getBytes()))
+                                .setEmail(Base64.getEncoder().encodeToString("test@mail.tst".getBytes())))));
 
         assertThat(studyService.listStudies(currentUser, EnumSet.of(StudyRole.STUDY_VIEWER))).isNotEmpty();
         verify(studyRepository, times(1))
@@ -118,8 +111,10 @@ class StudyServiceTest {
 
     private void testForbiddenSetStatus(Study.Status statusBefore, Study.Status statusAfter) {
         Study study = new Study().setStudyId(1L).setStudyState(statusBefore)
-                .setContactPerson(Base64.getEncoder().encodeToString("test person".getBytes()))
-                .setContactEmail(Base64.getEncoder().encodeToString("test@mail.tst".getBytes()));
+                .setContact(new Contact()
+                        .setPerson(Base64.getEncoder().encodeToString("test person".getBytes()))
+                        .setEmail(Base64.getEncoder().encodeToString("test@mail.tst".getBytes()))
+                );
         when(studyRepository.getById(any(Long.class), any())).thenReturn(Optional.of(study));
         Assertions.assertThrows(BadRequestException.class,
                 () -> studyService.setStatus(1L, statusAfter, currentUser));

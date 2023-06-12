@@ -17,10 +17,7 @@ public class Study {
     private LocalDate plannedEndDate;
     private Instant created;
     private Instant modified;
-    private String institute;
-    private String contactPerson;
-    private String contactEmail;
-    private String contactPhoneNumber;
+    private Contact contact;
     private Set<StudyRole> userRoles;
 
     public enum Status {
@@ -157,31 +154,10 @@ public class Study {
         return this;
     }
 
-    public String getInstitute() { return institute; }
+    public Contact getContact() { return contact; }
 
-    public Study setInstitute(String institute) {
-        this.institute = institute;
-        return this;
-    }
-
-    public String getContactPerson() { return contactPerson; }
-
-    public Study setContactPerson(String contactPerson) {
-        this.contactPerson = contactPerson;
-        return this;
-    }
-
-    public String getContactEmail() { return contactEmail; }
-
-    public Study setContactEmail(String contactEmail) {
-        this.contactEmail = contactEmail;
-        return this;
-    }
-
-    public String getContactPhoneNumber() { return contactPhoneNumber; }
-
-    public Study setContactPhoneNumber(String contactPhoneNumber) {
-        this.contactPhoneNumber = contactPhoneNumber;
+    public Study setContact(Contact contact) {
+        this.contact = contact;
         return this;
     }
 
@@ -200,10 +176,10 @@ public class Study {
                 ", plannedEndDate=" + plannedEndDate +
                 ", created=" + created +
                 ", modified=" + modified +
-                ", institute=" + institute +
-                ", contactPerson=" + contactPerson +
-                ", contactEmail=" + contactEmail +
-                ", contactPhoneNumber=" + contactPhoneNumber +
+                ", institute=" + contact.getInstitute() +
+                ", contactPerson=" + contact.getPerson() +
+                ", contactEmail=" + contact.getEmail() +
+                ", contactPhoneNumber=" + contact.getPhoneNumber() +
                 '}';
     }
 }

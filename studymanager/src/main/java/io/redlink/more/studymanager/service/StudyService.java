@@ -39,14 +39,12 @@ public class StudyService {
 
     public Study createStudy(Study study, User currentUser) {
         // TODO: Workaround until proper auth is available
-        if(StringUtils.isEmpty(study.getContactPerson()) || StringUtils.isEmpty(study.getContactEmail())) {
-            throw new BadRequestException("Contact person and email required");
-        }
+        validateContact(study.getContact());
         var user = userRepo.save(currentUser);
         var savedStudy = studyRepository.insert(encodeContactInfo(study));
         aclRepository.setRoles(savedStudy.getStudyId(), user.id(), EnumSet.allOf(StudyRole.class), null);
         return getStudy(savedStudy.getStudyId(), user)
-                .orElse(decodeContactInfo(savedStudy));
+                .orElseGet(() -> decodeContactInfo(savedStudy));
     }
 
     public List<Study> listStudies(User user) {
@@ -64,9 +62,7 @@ public class StudyService {
     }
 
     public Optional<Study> updateStudy(Study study, User user) {
-        if(StringUtils.isEmpty(study.getContactPerson()) || StringUtils.isEmpty(study.getContactEmail())) {
-            throw new BadRequestException("Contact person and email required");
-        }
+        validateContact(study.getContact());
         studyStateService.assertStudyNotInState(study, Study.Status.CLOSED);
         return studyRepository.update(encodeContactInfo(study), user).map(this::decodeContactInfo);
     }
@@ -129,28 +125,35 @@ public class StudyService {
         );
     }
 
+    private void validateContact(Contact contact) {
+        if(contact == null || StringUtils.isEmpty(contact.getPerson()) || StringUtils.isEmpty(contact.getEmail())) {
+            throw new BadRequestException("Contact person and email required");
+        }
+    }
+
     private Study encodeContactInfo(Study study) {
         Base64.Encoder encoder = Base64.getEncoder();
-        if(study.getInstitute() != null) {
-            study.setInstitute(encoder.encodeToString(study.getInstitute().getBytes()));
+        if(study.getContact().getInstitute() != null) {
+            study.getContact().setInstitute(encoder.encodeToString(study.getContact().getInstitute().getBytes()));
         }
-        if(study.getContactPhoneNumber() != null) {
-            study.setContactPhoneNumber(encoder.encodeToString(study.getContactPhoneNumber().getBytes()));
+        if(study.getContact().getPhoneNumber() != null) {
+            study.getContact().setPhoneNumber(encoder.encodeToString(study.getContact().getPhoneNumber().getBytes()));
         }
-        return study.setContactPerson(encoder.encodeToString(study.getContactPerson().getBytes()))
-                .setContactEmail(encoder.encodeToString(study.getContactEmail().getBytes()));
+        return study.setContact(study.getContact()
+                .setPerson(encoder.encodeToString(study.getContact().getPerson().getBytes()))
+                .setEmail(encoder.encodeToString(study.getContact().getEmail().getBytes())));
     }
 
     private Study decodeContactInfo(Study study) {
         Base64.Decoder decoder = Base64.getDecoder();
-        if(study.getInstitute() != null) {
-            study.setInstitute(new String(decoder.decode(study.getInstitute())));
+        if(study.getContact().getInstitute() != null) {
+            study.getContact().setInstitute(new String(decoder.decode(study.getContact().getInstitute())));
         }
-        if(study.getContactPhoneNumber() != null) {
-            study.setContactPhoneNumber(new String(decoder.decode(study.getContactPhoneNumber())));
+        if(study.getContact().getPhoneNumber() != null) {
+            study.getContact().setPhoneNumber(new String(decoder.decode(study.getContact().getPhoneNumber())));
         }
-        return study
-                .setContactEmail(new String(decoder.decode(study.getContactEmail())))
-                .setContactPerson(new String(decoder.decode(study.getContactPerson())));
+        return study.setContact(study.getContact()
+                .setEmail(new String(decoder.decode(study.getContact().getEmail())))
+                .setPerson(new String(decoder.decode(study.getContact().getPerson()))));
     }
 }

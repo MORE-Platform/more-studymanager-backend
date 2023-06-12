@@ -39,7 +39,7 @@ class InterventionRepositoryTest {
     @Test
     @DisplayName("Interventions are inserted, updated, listed and deleted from database")
     void testInsertListUpdateDelete() {
-        Long studyId = studyRepository.insert(new Study().setContactPerson("test").setContactEmail("test")).getStudyId();
+        Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
         Instant startTime = Instant.now();
         Instant endTime = Instant.now().plus(2, ChronoUnit.HOURS);
@@ -92,7 +92,7 @@ class InterventionRepositoryTest {
     @Test
     @DisplayName("Test insert, list and update for actions")
     void testInsertListUpdateForActions() {
-        Long studyId = studyRepository.insert(new Study().setContactPerson("test").setContactEmail("test")).getStudyId();
+        Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
         Integer interventionId = interventionRepository.insert(new Intervention()
                 .setStudyId(studyId).setStudyGroupId(studyGroupId)).getInterventionId();
@@ -132,7 +132,7 @@ class InterventionRepositoryTest {
     @Test
     @DisplayName("Triggers can be updated")
     public void testUpdateTrigger() {
-        Long studyId = studyRepository.insert(new Study().setContactPerson("test").setContactEmail("test")).getStudyId();
+        Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
         Integer interventionId = interventionRepository.insert(new Intervention().setStudyId(studyId)
                         .setStudyGroupId(studyGroupId)).getInterventionId();
