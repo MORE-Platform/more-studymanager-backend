@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.repository;
 
+import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.User;
@@ -16,8 +17,8 @@ import org.springframework.stereotype.Component;
 public class StudyRepository {
 
     private static final String INSERT_STUDY =
-            "INSERT INTO studies (title,purpose,participant_info,consent_info,planned_start_date,planned_end_date) " +
-            "VALUES (:title,:purpose,:participant_info,:consent_info,:planned_start_date,:planned_end_date) " +
+            "INSERT INTO studies (title,purpose,participant_info,consent_info,planned_start_date,planned_end_date,institute,contact_person,contact_email,contact_phone) " +
+            "VALUES (:title,:purpose,:participant_info,:consent_info,:planned_start_date,:planned_end_date,:institute,:contact_person,:contact_email,:contact_phone) " +
             "RETURNING *";
     private static final String GET_STUDY_BY_ID =
             "SELECT *, " +
@@ -33,7 +34,8 @@ public class StudyRepository {
             "    ON (studies.study_id = acl.study_id) " +
             "ORDER BY modified DESC";
     private static final String UPDATE_STUDY =
-            "UPDATE studies SET title = :title, purpose = :purpose, participant_info = :participant_info, consent_info = :consent_info, planned_start_date = :planned_start_date, planned_end_date = :planned_end_date, modified = now() " +
+            "UPDATE studies SET title = :title, purpose = :purpose, participant_info = :participant_info, consent_info = :consent_info, planned_start_date = :planned_start_date, " +
+                    "planned_end_date = :planned_end_date, modified = now(), institute = :institute, contact_person = :contact_person, contact_email = :contact_email, contact_phone = :contact_phone " +
             "WHERE study_id = :study_id " +
             "RETURNING *, (SELECT user_roles FROM study_roles_by_user WHERE study_roles_by_user.study_id = studies.study_id AND user_id = :userId) AS user_roles";
 
@@ -119,6 +121,10 @@ public class StudyRepository {
                 .addValue("consent_info", study.getConsentInfo())
                 .addValue("planned_start_date", study.getPlannedStartDate())
                 .addValue("planned_end_date", study.getPlannedEndDate())
+                .addValue("institute", study.getContact().getInstitute())
+                .addValue("contact_person", study.getContact().getPerson())
+                .addValue("contact_email", study.getContact().getEmail())
+                .addValue("contact_phone", study.getContact().getPhoneNumber())
                 ;
     }
 
@@ -136,7 +142,11 @@ public class StudyRepository {
                 .setCreated(RepositoryUtils.readInstant(rs, "created"))
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setStudyState(Study.Status.valueOf(rs.getString("status").toUpperCase()))
-                ;
+                .setContact(new Contact()
+                        .setInstitute(rs.getString("institute"))
+                        .setPerson(rs.getString("contact_person"))
+                        .setEmail(rs.getString("contact_email"))
+                        .setPhoneNumber(rs.getString("contact_phone")));
     }
 
     private static RowMapper<Study> getStudyRowMapperWithUserRoles() {
