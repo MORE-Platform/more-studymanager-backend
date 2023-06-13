@@ -35,7 +35,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <java.version>17</java.version>
-        <spring-boot.version>3.0.2</spring-boot.version>
+        <spring-boot.version>3.1.0</spring-boot.version>
         <testcontainers.version>1.18.3</testcontainers.version>
 
         <docker.namespace>more-project</docker.namespace>
@@ -386,6 +386,11 @@
                 <groupId>com.google.firebase</groupId>
                 <artifactId>firebase-admin</artifactId>
                 <version>9.1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.14</version>
             </dependency>
 
             <dependency>
