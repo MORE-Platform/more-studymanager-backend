@@ -37,6 +37,9 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     public ResponseEntity<StudyDTO> createStudy(StudyDTO studyDTO) {
+        if(studyDTO.getContact() == null) {
+            throw new BadRequestException("Contact data required");
+        }
         final var currentUser = authService.getCurrentUser();
         Study study = service.createStudy(StudyTransformer.fromStudyDTO_V1(studyDTO), currentUser);
         LOGGER.debug("{} created a study {}", currentUser, study);
