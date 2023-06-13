@@ -119,11 +119,4 @@ class StudyServiceTest {
         Assertions.assertThrows(BadRequestException.class,
                 () -> studyService.setStatus(1L, statusAfter, currentUser));
     }
-
-    @Test
-    @DisplayName("When contact person or mail are missing it should fail")
-    void testMissingContact() {
-        Assertions.assertThrows(BadRequestException.class, () ->
-                studyService.createStudy(new Study(), currentUser));
-    }
 }

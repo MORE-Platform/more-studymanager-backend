@@ -39,7 +39,9 @@ public class StudyService {
 
     public Study createStudy(Study study, User currentUser) {
         // TODO: Workaround until proper auth is available
-        validateContact(study.getContact());
+        if(study.getContact() == null) {
+            study.setContact(new Contact());
+        }
         var user = userRepo.save(currentUser);
         var savedStudy = studyRepository.insert(study);
         aclRepository.setRoles(savedStudy.getStudyId(), user.id(), EnumSet.allOf(StudyRole.class), null);
@@ -60,8 +62,10 @@ public class StudyService {
     }
 
     public Optional<Study> updateStudy(Study study, User user) {
-        validateContact(study.getContact());
         studyStateService.assertStudyNotInState(study, Study.Status.CLOSED);
+        if(study.getContact() == null) {
+            study.setContact(new Contact());
+        }
         return studyRepository.update(study, user);
     }
 
@@ -121,11 +125,5 @@ public class StudyService {
                         aclRepository.getRoleDetails(studyId, userId)
                 )
         );
-    }
-
-    private void validateContact(Contact contact) {
-        if(contact == null || StringUtils.isEmpty(contact.getPerson()) || StringUtils.isEmpty(contact.getEmail())) {
-            throw new BadRequestException("Contact person and email required");
-        }
     }
 }
