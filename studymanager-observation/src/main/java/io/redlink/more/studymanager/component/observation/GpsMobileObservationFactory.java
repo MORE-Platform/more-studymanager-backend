@@ -58,10 +58,4 @@ This observation enables you to collect GPS data via the smartphone sensor.
     }
 
     public Boolean getDefaultHidden() { return true; }
-
-    public Boolean getHidden(Boolean hidden) {
-        if(hidden == null) {
-            return getDefaultHidden();
-        }
-        return hidden; }
 }

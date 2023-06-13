@@ -69,5 +69,6 @@ public class QuestionObservationFactory<C extends Observation<P>, P extends Obse
 
     public Boolean getDefaultHidden() { return false; }
 
+    @Override
     public Boolean getHidden(Boolean hidden) { return getDefaultHidden(); }
 }

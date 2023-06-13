@@ -36,10 +36,7 @@ public class ObservationService {
 
     public Observation addObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
-        observation.setHidden(
-                factory(validate(observation))
-                        .getHidden(observation.getHidden()));
-        return repository.insert(observation);
+        return repository.insert(validate(observation));
     }
 
     public void deleteObservation(Long studyId, Integer observationId) {
@@ -61,9 +58,6 @@ public class ObservationService {
 
     public Observation updateObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
-        observation.setHidden(
-                factory(validate(observation))
-                        .getHidden(observation.getHidden()));
         return repository.updateObservation(validate(observation));
     }
 
@@ -97,6 +91,7 @@ public class ObservationService {
         }
         try {
             observationFactories.get(observation.getType()).validate(observation.getProperties());
+            observation.setHidden(factory(observation).getHidden(observation.getHidden()));
         } catch (ConfigurationValidationException e) {
             throw new BadRequestException(e.getMessage());
         }
