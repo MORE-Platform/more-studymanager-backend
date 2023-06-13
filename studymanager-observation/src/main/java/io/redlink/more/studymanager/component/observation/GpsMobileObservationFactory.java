@@ -56,4 +56,6 @@ This observation enables you to collect GPS data via the smartphone sensor.
     public MeasurementSet getMeasurementSet() {
         return GenericMeasurementSets.GEOLOCATION;
     }
+
+    public Boolean getDefaultHidden() { return true; }
 }

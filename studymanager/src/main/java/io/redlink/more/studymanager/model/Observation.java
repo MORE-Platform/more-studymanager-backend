@@ -16,6 +16,7 @@ public class Observation {
     private Event schedule;
     private Instant created;
     private Instant modified;
+    private Boolean hidden;
 
 
     public Long getStudyId() {
@@ -114,6 +115,13 @@ public class Observation {
 
     public Observation setModified(Instant modified) {
         this.modified = modified;
+        return this;
+    }
+
+    public Boolean getHidden() { return hidden; }
+
+    public Observation setHidden(Boolean hidden) {
+        this.hidden = hidden;
         return this;
     }
 }
