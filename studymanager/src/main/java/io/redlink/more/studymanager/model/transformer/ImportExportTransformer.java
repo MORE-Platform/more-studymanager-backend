@@ -1,15 +1,15 @@
 package io.redlink.more.studymanager.model.transformer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyImportExportDTO;
-import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.StudyImportExport;
-import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.utils.MapperUtils;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ImportExportTransformer {
 
@@ -24,20 +24,35 @@ public class ImportExportTransformer {
                 .setObservations(dto.getObservations().stream().map(
                         ObservationTransformer::fromObservationDTO_V1
                 ).toList())
-                .setTriggers(MapperUtils.MAPPER.convertValue(dto.getTriggers(), new TypeReference<>(){}))
-                .setActions(MapperUtils.MAPPER.convertValue(dto.getActions(), new TypeReference<>(){}));
+                .setInterventions(dto.getInterventions().stream().map(
+                        InterventionTransformer::fromInterventionDTO_V1
+                ).toList())
+                .setTriggers(
+                        dto.getInterventions().stream().collect(Collectors.toMap(
+                                InterventionDTO::getInterventionId, interventionDTO ->
+                                        TriggerTransformer.fromTriggerDTO_V1(interventionDTO.getTrigger()))))
+                .setActions(
+                        dto.getInterventions().stream().collect(Collectors.toMap(
+                                InterventionDTO::getInterventionId, interventionDTO ->
+                                        interventionDTO.getActions().stream().map(ActionTransformer::fromActionDTO_V1).toList()))
+                );
     }
 
     public static StudyImportExportDTO toStudyImportExportDTO_V1(StudyImportExport studyImportExport) {
         return new StudyImportExportDTO()
                 .study(StudyTransformer.toStudyDTO_V1(studyImportExport.getStudy()))
                 .studyGroups(studyImportExport.getStudyGroups().stream().map(
-                        StudyGroupTransformer::toStudyGroupDTO_V1
-                ).toList())
+                        StudyGroupTransformer::toStudyGroupDTO_V1).toList())
                 .observations(studyImportExport.getObservations().stream().map(
-                        ObservationTransformer::toObservationDTO_V1
-                ).toList())
-                .triggers(studyImportExport.getTriggers())
-                .actions(studyImportExport.getActions());
+                        ObservationTransformer::toObservationDTO_V1).toList())
+                .interventions(studyImportExport.getInterventions().stream().map( intervention ->
+                    InterventionTransformer.toInterventionDTO_V1(intervention)
+                            .trigger(
+                                    TriggerTransformer.toTriggerDTO_V1(
+                                            studyImportExport.getTriggers().get(intervention.getInterventionId())
+                                    )
+                            )
+                            .actions(studyImportExport.getActions().get(intervention.getInterventionId())
+                                    .stream().map(ActionTransformer::toActionDTO_V1).toList())).toList());
     }
 }

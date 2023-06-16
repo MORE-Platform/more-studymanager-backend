@@ -980,13 +980,21 @@ paths:
       operationId: importStudy
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/StudyImportExport'
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
 
       responses:
          '201':
            description: import was successful
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Study'
          '400':
            description: bad request
 
@@ -1002,7 +1010,7 @@ paths:
         '200':
           description: foo
           content:
-            multipart/form-data:
+            application/json:
               schema:
                 $ref: '#/components/schemas/StudyImportExport'
         '400':
@@ -1479,10 +1487,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Intervention'
-        triggers:
-          type: object
-        actions:
-          type: object
 
     UserSearchResultList:
       type: object
