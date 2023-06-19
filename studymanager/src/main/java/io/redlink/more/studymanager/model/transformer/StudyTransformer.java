@@ -1,8 +1,10 @@
 package io.redlink.more.studymanager.model.transformer;
 
+import io.redlink.more.studymanager.api.v1.model.ContactDTO;
 import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyStatusDTO;
+import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
 
 public class StudyTransformer {
@@ -12,6 +14,8 @@ public class StudyTransformer {
     public static Study fromStudyDTO_V1(StudyDTO studyDTO) {
         //NOTE: status, start, end, created and modified are never set directly but by status update
         //TODO some assertions? which throws validation exception
+        if(studyDTO.getContact() == null)
+            studyDTO.contact(new ContactDTO());
         return new Study()
                 .setStudyId(studyDTO.getStudyId())
                 .setTitle(studyDTO.getTitle())
@@ -24,6 +28,8 @@ public class StudyTransformer {
     }
 
     public static StudyDTO toStudyDTO_V1(Study study) {
+        if(study.getContact() == null)
+            study.setContact(new Contact());
         return new StudyDTO()
                 .studyId(study.getStudyId())
                 .title(study.getTitle())
