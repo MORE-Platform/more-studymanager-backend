@@ -18,4 +18,13 @@ public abstract class ObservationFactory<C extends Observation<P>, P extends Obs
     }
 
     public abstract MeasurementSet getMeasurementSet();
+
+    public abstract Boolean getDefaultHidden();
+
+    public Boolean getHidden(Boolean hidden) {
+        if(hidden == null) {
+            return getDefaultHidden();
+        }
+        return hidden;
+    }
 }

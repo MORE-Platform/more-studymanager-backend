@@ -4,6 +4,7 @@ import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.api.v1.webservices.StudiesApi;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
+import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyTransformer;

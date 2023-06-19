@@ -1235,6 +1235,21 @@ components:
           uniqueItems: true
           readOnly: true
           minItems: 1
+        contact:
+          $ref: '#/components/schemas/Contact'
+
+    Contact:
+      type: object
+      properties:
+        institute:
+          type: string
+        person:
+          type: string
+        email:
+          type: string
+        phoneNumber:
+          type: string
+
 
     StatusChange:
       type: object
@@ -1340,6 +1355,8 @@ components:
           type: string
           format: date-time
           readOnly: true
+        hidden:
+          type: boolean
 
     EndpointToken:
       type: object

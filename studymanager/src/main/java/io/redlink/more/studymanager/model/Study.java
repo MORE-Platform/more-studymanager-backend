@@ -17,7 +17,7 @@ public class Study {
     private LocalDate plannedEndDate;
     private Instant created;
     private Instant modified;
-
+    private Contact contact;
     private Set<StudyRole> userRoles;
 
     public enum Status {
@@ -154,6 +154,13 @@ public class Study {
         return this;
     }
 
+    public Contact getContact() { return contact; }
+
+    public Study setContact(Contact contact) {
+        this.contact = contact;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "Study{" +
@@ -169,6 +176,10 @@ public class Study {
                 ", plannedEndDate=" + plannedEndDate +
                 ", created=" + created +
                 ", modified=" + modified +
+                ", institute=" + contact.getInstitute() +
+                ", contactPerson=" + contact.getPerson() +
+                ", contactEmail=" + contact.getEmail() +
+                ", contactPhoneNumber=" + contact.getPhoneNumber() +
                 '}';
     }
 }
