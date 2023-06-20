@@ -1,0 +1,68 @@
+package io.redlink.more.studymanager.model;
+
+import java.util.List;
+import java.util.Map;
+
+public class StudyImportExport {
+
+    private Study study;
+    private List<StudyGroup> studyGroups;
+    private List<Observation> observations;
+    private List<Intervention> interventions;
+    private Map<Integer, Trigger> triggers;
+    private Map<Integer, List<Action>> actions;
+
+    public Study getStudy() {
+        return study;
+    }
+
+    public StudyImportExport setStudy(Study study) {
+        this.study = study;
+        return this;
+    }
+
+    public List<StudyGroup> getStudyGroups() {
+        return studyGroups;
+    }
+
+    public StudyImportExport setStudyGroups(List<StudyGroup> studyGroups) {
+        this.studyGroups = studyGroups;
+        return this;
+    }
+
+    public List<Observation> getObservations() {
+        return observations;
+    }
+
+    public StudyImportExport setObservations(List<Observation> observations) {
+        this.observations = observations;
+        return this;
+    }
+
+    public List<Intervention> getInterventions() {
+        return interventions;
+    }
+
+    public StudyImportExport setInterventions(List<Intervention> interventions) {
+        this.interventions = interventions;
+        return this;
+    }
+
+    public Map<Integer, Trigger> getTriggers() {
+        return triggers;
+    }
+
+    public StudyImportExport setTriggers(Map<Integer, Trigger> triggers) {
+        this.triggers = triggers;
+        return this;
+    }
+
+    public Map<Integer, List<Action>> getActions() {
+        return actions;
+    }
+
+    public StudyImportExport setActions(Map<Integer, List<Action>> actions) {
+        this.actions = actions;
+        return this;
+    }
+}
