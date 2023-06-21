@@ -71,6 +71,6 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
 
     @Override
     public ScheduledDatacheckTrigger create(MoreTriggerSDK sdk, TriggerProperties properties) throws ConfigurationValidationException {
-        return new ScheduledDatacheckTrigger(sdk, (ScheduledDatacheckTriggerProperties) validate(properties));
+        return new ScheduledDatacheckTrigger(sdk, new ScheduledDatacheckTriggerProperties(validate(properties)));
     }
 }

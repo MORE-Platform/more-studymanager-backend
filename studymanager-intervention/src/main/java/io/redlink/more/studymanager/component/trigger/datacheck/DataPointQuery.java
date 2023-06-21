@@ -37,13 +37,22 @@ public class DataPointQuery {
 
     private String getDataSelector() {
         if("=".equals(operator) || "==".equals(operator)) {
-            return "data_" + observationProperty + ":" + propertyValue;
+            return "data_" + observationProperty + ":" + getSanitizedPropertyValue();
         } else if("!=".equals(operator)) {
-            return "!(data_" + observationProperty + ":" + propertyValue + ")";
+            return "!(data_" + observationProperty + ":" + getSanitizedPropertyValue() + ")";
         } else if("<".equals(operator) || ">".equals(operator) || "<=".equals(operator) || ">=".equals(operator)) {
             return "data_" + observationProperty + ":" + operator + propertyValue;
         } else {
             throw new UnsupportedOperationException();
         }
+    }
+
+    private Object getSanitizedPropertyValue() {
+        if(this.propertyValue instanceof String p) {
+            return p.contains(" ") && !p.contains("\"") ?
+                    "\"" + p.trim() + "\"" :
+                    p.trim();
+        }
+        return this.propertyValue;
     }
 }
