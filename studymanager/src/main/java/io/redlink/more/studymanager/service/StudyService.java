@@ -80,14 +80,26 @@ public class StudyService {
             throw BadRequestException.StateChange(study.getStudyState(), status);
         }
 
-        studyRepository.setStateById(studyId, status);
+        Study.Status oldState = study.getStudyState();
 
+        studyRepository.setStateById(studyId, status);
         studyRepository.getById(studyId).ifPresent(s -> {
-            interventionService.alignInterventionsWithStudyState(s);
-            participantService.alignParticipantsWithStudyState(s);
-            observationService.alignObservationsWithStudyState(s);
-            integrationService.alignIntegrationsWithStudyState(s);
+            try {
+                alignWithStudyState(s);
+            } catch (Exception e) {
+                //ROLLBACK
+                studyRepository.setStateById(studyId, oldState);
+                studyRepository.getById(studyId).ifPresent(this::alignWithStudyState);
+                throw new BadRequestException("Study cannot be initialized");
+            }
         });
+    }
+
+    private void alignWithStudyState(Study s) {
+        interventionService.alignInterventionsWithStudyState(s);
+        participantService.alignParticipantsWithStudyState(s);
+        observationService.alignObservationsWithStudyState(s);
+        integrationService.alignIntegrationsWithStudyState(s);
     }
 
     public Map<MoreUser, Set<StudyRole>> getACL(Long studyId) {
