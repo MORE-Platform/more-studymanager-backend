@@ -10,9 +10,8 @@ import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
-import io.redlink.more.studymanager.core.io.Timeframe;
-import io.redlink.more.studymanager.model.data.ElasticActionDataPoint;
-import io.redlink.more.studymanager.model.Participant;
+import co.elastic.clients.elasticsearch.indices.ExistsRequest;
+import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
@@ -38,7 +37,7 @@ public class ElasticService {
 
     public ElasticService(ElasticsearchClient client) { this.client = client; }
 
-    public List<Integer> participantsThatMapQuery(Long studyId, Integer studyGroupId, String query, Timeframe timeframe) {
+    public List<Integer> participantsThatMapQuery(Long studyId, Integer studyGroupId, String query, TimeRange timerange) {
         SearchRequest.Builder builder = new SearchRequest.Builder();
         builder
                 .index(getStudyIdString(studyId))
@@ -48,7 +47,7 @@ public class ElasticService {
                                 must(m -> m.
                                         queryString(qs -> qs.
                                                 query(query))).
-                                filter(getFilters(studyId, studyGroupId, timeframe))
+                                filter(getFilters(studyId, studyGroupId, timerange))
                         )).aggregations(
                         "participant_ids",
                         a -> a.terms(t -> t.
@@ -57,20 +56,24 @@ public class ElasticService {
                 );
 
         try {
-            return client.search(builder.build(), Map.class)
-                    .aggregations().get("participant_ids").sterms().buckets().array().stream()
-                    .map(StringTermsBucket::key)
-                    .map(FieldValue::stringValue)
-                    .map(s -> s.substring(12))
-                    .map(Integer::valueOf)
-                    .toList();
+            if(indexExists(studyId)) {
+                return client.search(builder.build(), Map.class)
+                        .aggregations().get("participant_ids").sterms().buckets().array().stream()
+                        .map(StringTermsBucket::key)
+                        .map(FieldValue::stringValue)
+                        .map(s -> s.substring(12))
+                        .map(Integer::valueOf)
+                        .toList();
+            } else {
+                return List.of();
+            }
         } catch (IOException | ElasticsearchException e) {
             LOG.error("Elastic Query failed", e);
             return List.of();
         }
     }
 
-    private List<Query> getFilters(Long studyId, Integer studyGroupId, Timeframe timeframe) {
+    private List<Query> getFilters(Long studyId, Integer studyGroupId, TimeRange timerange) {
         List<Query> queries = new ArrayList<>();
         queries.add(Query.of(f -> f.
                 term(t -> t.
@@ -82,15 +85,26 @@ public class ElasticService {
                     value(getStudyGroupIdString(studyGroupId)))));
         }
 
-        if (timeframe != null && timeframe.getFrom() != null && timeframe.getTo() != null) {
+        if (timerange != null && timerange.getFromString() != null && timerange.getToString() != null) {
             queries.add(Query.of(f -> f.
                     range(r -> r.
                             field("effective_time_frame").
-                            from(timeframe.getFrom().toString()).
-                            to(timeframe.getTo().toString())
+                            from(timerange.getFromString()).
+                            to(timerange.getToString())
                     )));
         }
         return queries;
+    }
+
+    public boolean indexExists(long studyId) {
+        ExistsRequest request = new ExistsRequest.Builder()
+                .index(getStudyIdString(studyId))
+                .build();
+        try {
+            return this.client.indices().exists(request).value();
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     public boolean closeIndex(Study study) {

@@ -2,7 +2,7 @@ package io.redlink.more.studymanager.core.io;
 
 import java.time.Instant;
 
-public class Timeframe {
+public class Timeframe implements TimeRange {
 
     private Instant from;
     private Instant to;
@@ -12,11 +12,13 @@ public class Timeframe {
         this.to = to;
     }
 
-    public Instant getFrom() {
-        return from;
+    @Override
+    public String getFromString() {
+        return from != null ? from.toString() : null;
     }
 
-    public Instant getTo() {
-        return to;
+    @Override
+    public String getToString() {
+        return to != null ? to.toString() : null;
     }
 }

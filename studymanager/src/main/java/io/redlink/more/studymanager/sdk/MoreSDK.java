@@ -1,13 +1,13 @@
 package io.redlink.more.studymanager.sdk;
 
+import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
-import io.redlink.more.studymanager.model.data.ElasticActionDataPoint;
 import io.redlink.more.studymanager.model.Participant;
-import io.redlink.more.studymanager.core.io.Timeframe;
+import io.redlink.more.studymanager.model.data.ElasticActionDataPoint;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
 import io.redlink.more.studymanager.model.data.ElasticObservationDataPoint;
 import io.redlink.more.studymanager.repository.NameValuePairRepository;
@@ -110,9 +110,9 @@ public class MoreSDK {
                 .collect(Collectors.toSet());
     }
 
-    public Set<Integer> listActiveParticipantsByQuery(long studyId, Integer studyGroupId, String query, Timeframe timeframe) {
+    public Set<Integer> listActiveParticipantsByQuery(long studyId, Integer studyGroupId, String query, TimeRange timerange) {
         Set<Integer> participants = listParticipants(studyId, studyGroupId, Set.of(Participant.Status.ACTIVE));
-        Set<Integer> allThatMatchQuery = new HashSet<>(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timeframe));
+        Set<Integer> allThatMatchQuery = new HashSet<>(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timerange));
         participants.retainAll(allThatMatchQuery);
         return participants;
     }

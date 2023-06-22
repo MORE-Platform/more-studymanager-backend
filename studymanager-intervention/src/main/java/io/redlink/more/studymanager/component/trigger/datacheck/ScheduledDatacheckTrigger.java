@@ -1,19 +1,19 @@
 package io.redlink.more.studymanager.component.trigger.datacheck;
 
 import io.redlink.more.studymanager.core.component.Trigger;
-import io.redlink.more.studymanager.core.io.ActionParameter;
-import io.redlink.more.studymanager.core.io.Parameters;
-import io.redlink.more.studymanager.core.io.Timeframe;
-import io.redlink.more.studymanager.core.io.TriggerResult;
+import io.redlink.more.studymanager.core.io.*;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTriggerProperties> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledDatacheckTrigger.class);
 
     private static final String SCHEDULE_ID = "scheduleId";
 
@@ -28,7 +28,10 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
         properties.getCronSchedule()
                 .map(CronSchedule::new)
                 .map(sdk::addSchedule)
-                .ifPresent(id -> sdk.setValue(SCHEDULE_ID, id));
+                .ifPresent(id -> {
+                    sdk.setValue(SCHEDULE_ID, id);
+                    LOGGER.info("Activated");
+                });
     }
 
     @Override
@@ -38,8 +41,13 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
 
     @Override
     public TriggerResult execute(Parameters parameters) {
-        Timeframe timeframe = properties.getWindow()
-                .map(window -> new Timeframe(Instant.now().minusMillis(window), Instant.now()))
+        LOGGER.info("Execute trigger with params: {}",
+                parameters.keySet().stream()
+                        .map(key -> key + "=" + parameters.get(key))
+                        .collect(Collectors.joining(", ", "{", "}")));
+
+        TimeRange timeframe = properties.getWindow()
+                .map(window -> new RelativeTimeFrame(window))
                 .orElse(null);
 
         Set<Integer> notMatchingParticipantIds = sdk.participantIds();
