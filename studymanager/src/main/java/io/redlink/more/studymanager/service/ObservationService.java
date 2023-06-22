@@ -5,12 +5,16 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
+import io.redlink.more.studymanager.model.Event;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.Timeframe;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -18,16 +22,19 @@ import java.util.Optional;
 @Service
 public class ObservationService {
 
+    private final ScheduleService scheduleService;
     private final StudyStateService studyStateService;
     private final ObservationRepository repository;
 
     private final Map<String, ObservationFactory> observationFactories;
     private final MoreSDK sdk;
 
-    public ObservationService(StudyStateService studyStateService,
+    public ObservationService(ScheduleService scheduleService,
+                              StudyStateService studyStateService,
                               ObservationRepository repository,
                               Map<String, ObservationFactory> observationFactories,
                               MoreSDK sdk) {
+        this.scheduleService = scheduleService;
         this.studyStateService = studyStateService;
         this.repository = repository;
         this.observationFactories = observationFactories;
@@ -36,6 +43,7 @@ public class ObservationService {
 
     public Observation addObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
+        scheduleService.assertScheduleWithinStudyTime(observation.getStudyId(), observation.getSchedule());
         return repository.insert(validate(observation));
     }
 
@@ -58,6 +66,7 @@ public class ObservationService {
 
     public Observation updateObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
+        scheduleService.assertScheduleWithinStudyTime(observation.getStudyId(), observation.getSchedule());
         return repository.updateObservation(validate(observation));
     }
 
