@@ -12,15 +12,17 @@ import java.time.ZoneId;
 @Service
 public class ScheduleService {
     private final StudyRepository studyRepository;
+    public final ZoneId zoneId;
 
-    public ScheduleService(StudyRepository studyRepository) {
+    public ScheduleService(StudyRepository studyRepository, ZoneId zoneId) {
         this.studyRepository = studyRepository;
+        this.zoneId = zoneId;
     }
 
     public Event assertScheduleWithinStudyTime(Long studyId, Event schedule) {
         Timeframe timeframe = studyRepository.getStudyTimeframe(studyId);
-        if(LocalDate.ofInstant(schedule.getDateStart(), ZoneId.systemDefault()).isBefore(timeframe.getFrom())
-                || LocalDate.ofInstant(schedule.getDateEnd(), ZoneId.systemDefault()).isAfter(timeframe.getTo())) {
+        if(LocalDate.ofInstant(schedule.getDateStart(), zoneId).isBefore(timeframe.from())
+                || LocalDate.ofInstant(schedule.getDateEnd(), zoneId).isAfter(timeframe.to())) {
             throw new BadRequestException("Schedule should lie within study timeframe");
         }
         return schedule;

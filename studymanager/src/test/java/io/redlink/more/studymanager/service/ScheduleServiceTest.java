@@ -7,8 +7,10 @@ import io.redlink.more.studymanager.repository.StudyRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -19,18 +21,23 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@SpringBootTest
 public class ScheduleServiceTest {
-    @Mock
+
+    @MockBean
     StudyRepository studyRepository;
+
+    @Autowired
     @InjectMocks
     ScheduleService scheduleService;
+
 
     @Test
     void testAssertPasses() {
         when(studyRepository.getStudyTimeframe(anyLong())).thenReturn(
-                new Timeframe()
-                        .setFrom(LocalDate.of(2023, 6, 2))
-                        .setTo(LocalDate.of(2023,6,3))
+                new Timeframe(
+                        LocalDate.of(2023, 6, 2),
+                        LocalDate.of(2023,6,3))
         );
         Event schedule = new Event()
                 .setDateStart(Instant.parse("2023-06-02T00:00:00.00Z"))
@@ -40,10 +47,11 @@ public class ScheduleServiceTest {
 
     @Test
     void testAssertFails() {
+        System.out.println(scheduleService.zoneId);
         when(studyRepository.getStudyTimeframe(anyLong())).thenReturn(
-                new Timeframe()
-                        .setFrom(LocalDate.of(2023, 6, 2))
-                        .setTo(LocalDate.of(2023,6,3))
+                new Timeframe(
+                        LocalDate.of(2023, 6, 2),
+                        LocalDate.of(2023,6,3))
         );
         Event scheduleBefore = new Event()
                 .setDateStart(Instant.parse("2023-06-01T00:00:00.00Z"))
