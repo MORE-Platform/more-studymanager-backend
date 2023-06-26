@@ -131,9 +131,13 @@ public class ElasticService {
     }
 
     public boolean deleteIndex(Study study) {
+        return deleteIndex(study.getStudyId());
+    }
+
+    public boolean deleteIndex(Long studyId) {
         try {
             DeleteIndexRequest indexRequest = new DeleteIndexRequest.Builder()
-                    .index(getStudyIdString(study))
+                    .index(getStudyIdString(studyId))
                     .ignoreUnavailable(true)
                     .build();
             this.client.indices().delete(indexRequest);
