@@ -3,8 +3,6 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -14,17 +12,15 @@ import java.util.function.Function;
  * Common basic transformers.
  */
 
-@Component
 public final class Transformers {
 
-    private static ZoneId zoneId;
+    private static final ZoneId HOME = ZoneId.of("Europe/Vienna");
 
-    private Transformers(ZoneId zoneId) {
-         Transformers.zoneId = zoneId;
+    private Transformers() {
     }
 
     public static OffsetDateTime toOffsetDateTime(Instant instant) {
-        return transform(instant, i -> i.atZone(zoneId).toOffsetDateTime());
+        return transform(instant, i -> i.atZone(HOME).toOffsetDateTime());
     }
 
     public static Instant toInstant(OffsetDateTime offsetDateTime) {

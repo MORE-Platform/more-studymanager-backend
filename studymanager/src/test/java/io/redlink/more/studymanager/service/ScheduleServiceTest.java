@@ -57,7 +57,6 @@ public class ScheduleServiceTest {
 
     @Test
     void testAssertFails() {
-        System.out.println(scheduleService.zoneId);
         when(studyRepository.getStudyTimeframe(anyLong())).thenReturn(
                 new Timeframe(
                         LocalDate.of(2023, 6, 2),

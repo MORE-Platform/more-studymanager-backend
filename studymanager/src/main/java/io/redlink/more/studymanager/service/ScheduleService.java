@@ -12,7 +12,7 @@ import java.time.ZoneId;
 @Service
 public class ScheduleService {
     private final StudyRepository studyRepository;
-    public final ZoneId zoneId;
+    private final ZoneId zoneId;
 
     public ScheduleService(StudyRepository studyRepository, ZoneId zoneId) {
         this.studyRepository = studyRepository;
