@@ -10,10 +10,13 @@ import io.redlink.more.studymanager.model.transformer.StudyTransformer;
 import io.redlink.more.studymanager.service.ImportExportService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -66,6 +69,15 @@ public class ImportExportApiV1Controller implements ImportExportApi {
                                 service.exportStudy(studyId, currentUser)
                         )
         );
+    }
+    @RequestMapping(
+            method = RequestMethod.GET,
+            value = "/studies/{studyId}/export/studydata",
+            produces = { "application/json" }
+    )
+    public void exportStudyData(@PathVariable Long studyId, HttpServletResponse response) throws IOException {
+        final var currentUser = authService.getCurrentUser();
+        service.exportStudyData(response.getOutputStream(), studyId, currentUser);
     }
 
     @Override

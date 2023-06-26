@@ -2,11 +2,16 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.*;
+import jakarta.servlet.ServletOutputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -16,6 +21,7 @@ import java.util.Scanner;
 @Service
 public class ImportExportService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportService.class);
     private final ParticipantService participantService;
     private final StudyService studyService;
     private final StudyStateService studyStateService;
@@ -23,14 +29,17 @@ public class ImportExportService {
     private final InterventionService interventionService;
     private final StudyGroupService studyGroupService;
 
+    private final ElasticService elasticService;
+
     public ImportExportService(ParticipantService participantService, StudyService studyService, StudyStateService studyStateService,
-                               ObservationService observationService, InterventionService interventionService, StudyGroupService studyGroupService) {
+                               ObservationService observationService, InterventionService interventionService, StudyGroupService studyGroupService, ElasticService elasticService) {
         this.participantService = participantService;
         this.studyService = studyService;
         this.studyStateService = studyStateService;
         this.observationService = observationService;
         this.interventionService = interventionService;
         this.studyGroupService = studyGroupService;
+        this.elasticService = elasticService;
     }
 
     public Resource exportParticipants(Long studyId, User user) {
@@ -116,4 +125,18 @@ public class ImportExportService {
         return newStudy;
     }
 
+    public void exportStudyData(ServletOutputStream outputStream, Long studyId, AuthenticatedUser currentUser) {
+        studyService.getStudy(studyId, currentUser).ifPresent(s -> exportStudyDataAsync(outputStream, studyId));
+    }
+
+    @Async
+    public void exportStudyDataAsync(ServletOutputStream outputStream, Long studyId) {
+        try(outputStream) {
+            outputStream.write("[".getBytes(StandardCharsets.UTF_8));
+            elasticService.exportData(studyId, outputStream);
+            outputStream.write("]".getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            LOGGER.error("Cannot export study data for {}", studyId, e);
+        }
+    }
 }

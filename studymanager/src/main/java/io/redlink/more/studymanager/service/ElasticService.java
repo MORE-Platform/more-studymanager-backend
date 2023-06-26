@@ -4,34 +4,44 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Conflicts;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.Iterables;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
 import io.redlink.more.studymanager.properties.ElasticProperties;
+import io.redlink.more.studymanager.utils.MapperUtils;
+import jakarta.servlet.ServletOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @EnableConfigurationProperties({ElasticProperties.class})
 public class ElasticService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ElasticService.class);
+
+    private static final int BATCH_SIZE_FOR_EXPORT_REQUESTS = 1000;
 
     private final ElasticsearchClient client;
 
@@ -247,6 +257,50 @@ public class ElasticService {
         }
     }
 
+    public void exportData(Long studyId, OutputStream outputStream) throws IOException {
+        String index = getStudyIdString(studyId);
 
+        OpenPointInTimeResponse pitRsp = client.openPointInTime(r -> r.index(index).keepAlive(k -> k.time("1m")));
+        String pitId = pitRsp.id();
+
+        SearchRequest request = getQuery(index, pitId, null);
+        SearchResponse<JsonNode> rsp = client.search(request, JsonNode.class);
+
+        while (rsp.hits().hits().size() > 0) {
+            writeHits(rsp.hits().hits(), outputStream);
+            //pitId = rsp.pitId();
+            List<FieldValue> searchAfterSort = Iterables.getLast(rsp.hits().hits()).sort();
+            request = getQuery(index, pitId, searchAfterSort);
+            rsp = client.search(request, JsonNode.class);
+            if(rsp.hits().hits().size() > 0) {
+                outputStream.write(",".getBytes(StandardCharsets.UTF_8));
+            }
+        }
+
+        client.closePointInTime(new ClosePointInTimeRequest.Builder().id(pitId).build());
+    }
+
+    private void writeHits(List<Hit<JsonNode>> hits, OutputStream outputStream) throws IOException {
+        String datapoints = hits.stream()
+                .map(Hit::source)
+                .map(MapperUtils::writeValueAsString)
+                .collect(Collectors.joining(","));
+        outputStream.write(datapoints.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private SearchRequest getQuery(String index, String pitId, List<FieldValue> searchAfterSort) {
+        SearchRequest.Builder builder = new SearchRequest.Builder();
+        builder.index(index)
+                .query(q -> q.matchAll(m -> m))
+                //.pit(p -> p.id(pitId).keepAlive(k -> k.time("1m")))
+                .sort(s -> s.field(f -> f.field("effective_time_frame").order(SortOrder.Asc)))
+                .size(BATCH_SIZE_FOR_EXPORT_REQUESTS);
+
+        if(searchAfterSort != null) {
+            builder.searchAfter(searchAfterSort);
+        }
+
+        return builder.build();
+    }
 
 }

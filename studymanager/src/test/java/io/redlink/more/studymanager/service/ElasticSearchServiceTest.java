@@ -3,13 +3,21 @@ package io.redlink.more.studymanager.service;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.json.JsonData;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.io.Resources;
 import io.redlink.more.studymanager.configuration.ElasticConfiguration;
 import io.redlink.more.studymanager.model.data.ElasticActionDataPoint;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.core.io.Timeframe;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
+
+import io.redlink.more.studymanager.model.data.ElasticObservationDataPoint;
+import io.redlink.more.studymanager.utils.MapperUtils;
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
@@ -27,8 +35,7 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Testcontainers
@@ -89,6 +96,41 @@ class ElasticSearchServiceTest {
                         Map.of()
                 ))
         );
+    }
+
+    @Test
+    void testExportData() throws JsonProcessingException, InterruptedException {
+        for (int i = 0; i < 1200; i++) {
+            setDataPoint(1L, 2, i);
+        }
+        //wait for auto commit
+        Thread.sleep(2000);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try(outputStream) {
+            outputStream.write("[".getBytes(StandardCharsets.UTF_8));
+            elasticService.exportData(1L, outputStream);
+            outputStream.write("]".getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            //do nothing than close
+        }
+        String result = outputStream.toString(StandardCharsets.UTF_8);
+        assertThat(result).isNotBlank();
+        assertThat(MapperUtils.MAPPER.readValue(result, List.class)).hasSize(1200);
+    }
+
+    private void setDataPoint(Long studyId, int participantId, int i) {
+        elasticService.setDataPoint(studyId, new ElasticObservationDataPoint(
+                "DP_" + studyId + "_" + participantId + "_" + i,
+                "participant_"+ participantId,
+                "study_" + studyId,
+                null,
+                "2",
+                "acc-mobile-observation",
+                "acc-mobile-observation",
+                Instant.now(),
+                Instant.now(),
+                Map.of()
+        ));
     }
 
     @Test
