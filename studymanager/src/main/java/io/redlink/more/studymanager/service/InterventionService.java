@@ -6,11 +6,8 @@ import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
-import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
-import io.redlink.more.studymanager.model.Intervention;
-import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.repository.InterventionRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
@@ -25,6 +22,8 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,6 +32,7 @@ import java.util.Optional;
 @Service
 public class InterventionService {
 
+    private final ScheduleService scheduleService;
     private final StudyStateService studyStateService;
     private final InterventionRepository repository;
     private final StudyRepository studyRepository;
@@ -43,11 +43,13 @@ public class InterventionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(InterventionService.class);
 
 
-    public InterventionService(StudyStateService studyStateService,
+    public InterventionService(ScheduleService scheduleService,
+                               StudyStateService studyStateService,
                                InterventionRepository repository, StudyRepository studyRepository,
                                MoreSDK sdk,
                                Map<String, TriggerFactory> triggerFactories,
                                Map<String, ActionFactory> actionFactories) {
+        this.scheduleService = scheduleService;
         this.studyStateService = studyStateService;
         this.repository = repository;
         this.studyRepository = studyRepository;
@@ -58,6 +60,7 @@ public class InterventionService {
 
     public Intervention addIntervention(Intervention intervention) {
         studyStateService.assertStudyNotInState(intervention.getStudyId(), Study.Status.CLOSED);
+        scheduleService.assertScheduleWithinStudyTime(intervention.getStudyId(), intervention.getSchedule());
         return repository.insert(intervention);
     }
 
@@ -76,6 +79,7 @@ public class InterventionService {
 
     public Intervention updateIntervention(Intervention intervention) {
         studyStateService.assertStudyNotInState(intervention.getStudyId(), Study.Status.CLOSED);
+        scheduleService.assertScheduleWithinStudyTime(intervention.getStudyId(), intervention.getSchedule());
         return repository.updateIntervention(intervention);
     }
 

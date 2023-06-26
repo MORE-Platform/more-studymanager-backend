@@ -38,6 +38,9 @@ class ObservationServiceTest {
     @Mock
     StudyStateService studyStateService;
 
+    @Mock
+    ScheduleService scheduleService;
+
     @InjectMocks
     ObservationService observationService;
 

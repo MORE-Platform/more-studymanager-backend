@@ -1,17 +1,17 @@
 package io.redlink.more.studymanager.repository;
 
-import io.redlink.more.studymanager.model.Contact;
-import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.StudyRole;
-import io.redlink.more.studymanager.model.User;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.model.*;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Component
 public class StudyRepository {
@@ -46,6 +46,7 @@ public class StudyRepository {
     private static final String SET_PAUSED_STATE_BY_ID = "UPDATE studies SET status = 'paused', modified = now() WHERE study_id = ?";
     private static final String SET_CLOSED_STATE_BY_ID = "UPDATE studies SET status = 'closed', end_date = now(), modified = now() WHERE study_id = ?";
     private static final String STUDY_HAS_STATE = "SELECT study_id FROM studies WHERE study_id = :study_id AND status::varchar IN (:study_status)";
+    private static final String GET_STUDY_TIMEFRAME = "SELECT planned_start_date, planned_end_date FROM studies WHERE study_id = ?";
 
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -113,6 +114,17 @@ public class StudyRepository {
         };
     }
 
+    public Timeframe getStudyTimeframe(Long studyId) {
+        try {
+            return template.queryForObject(
+                    GET_STUDY_TIMEFRAME,
+                    getStudyTimeframeRowMapper(),
+                    studyId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new BadRequestException("Study " + studyId + " does not exist");
+        }
+    }
+
     private static MapSqlParameterSource studyToParams(Study study) {
         return new MapSqlParameterSource()
                 .addValue("title", study.getTitle())
@@ -147,6 +159,12 @@ public class StudyRepository {
                         .setPerson(rs.getString("contact_person"))
                         .setEmail(rs.getString("contact_email"))
                         .setPhoneNumber(rs.getString("contact_phone")));
+    }
+
+    private static RowMapper<Timeframe> getStudyTimeframeRowMapper() {
+        return  (rs,rowNum) -> new Timeframe(
+                RepositoryUtils.readLocalDate(rs, "planned_end_date"),
+                RepositoryUtils.readLocalDate(rs, "planned_end_date"));
     }
 
     private static RowMapper<Study> getStudyRowMapperWithUserRoles() {
