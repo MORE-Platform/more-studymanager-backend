@@ -5,6 +5,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.sql.Time;
 import java.time.ZoneId;
 import java.util.TimeZone;
 
@@ -19,6 +20,8 @@ public class TimezoneConfiguration {
 
     @Bean
     public ZoneId ZoneId() {
-        return TimeZone.getTimeZone(properties.identifier()).toZoneId();
+        return TimeZone().toZoneId();
     }
+
+    @Bean public TimeZone TimeZone() { return TimeZone.getTimeZone(properties.identifier()); }
 }

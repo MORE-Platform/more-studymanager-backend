@@ -22,10 +22,12 @@ public class SchedulingService {
     public static final String TRIGGER = "trigger";
     public static final String JOB = "job";
     private final Scheduler scheduler;
+    private final TimeZone timeZone;
 
-    public SchedulingService(SchedulerFactoryBean factory) throws SchedulerException {
+    public SchedulingService(SchedulerFactoryBean factory, TimeZone timeZone) throws SchedulerException {
         this.scheduler = factory.getScheduler();
         this.scheduler.start();
+        this.timeZone = timeZone;
     }
 
     public <T extends Job> String scheduleJob(String issuer, Map<String,Object> data, Schedule schedule, Class<T> type) {
@@ -69,7 +71,7 @@ public class SchedulingService {
     private ScheduleBuilder<? extends Trigger> getSchedulerBuilderFor(Schedule schedule) {
         if(schedule instanceof CronSchedule) {
             return CronScheduleBuilder.cronSchedule(((CronSchedule) schedule).getCronExpression())
-                    .inTimeZone(TimeZone.getTimeZone("Europe/Vienna")); //TODO make configurable per study
+                    .inTimeZone(timeZone); //TODO make configurable per study
         } else {
             throw new NotImplementedException("SchedulerType " + schedule.getClass().getSimpleName() + " not yet supportet");
         }
