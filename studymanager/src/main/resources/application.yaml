@@ -101,9 +101,6 @@ more:
       more-admin:
         - 'more-admin'
 
-  timezone:
-    identifier: "${MORE_TIMEZONE:Europe/Vienna}"
-
   frontend:
     title: "${MORE_FE_TITLE:MORE Studymanager}"
     keycloak:

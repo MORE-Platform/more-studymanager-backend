@@ -18,19 +18,16 @@ import java.util.Optional;
 @Service
 public class ObservationService {
 
-    private final ScheduleService scheduleService;
     private final StudyStateService studyStateService;
     private final ObservationRepository repository;
 
     private final Map<String, ObservationFactory> observationFactories;
     private final MoreSDK sdk;
 
-    public ObservationService(ScheduleService scheduleService,
-                              StudyStateService studyStateService,
+    public ObservationService(StudyStateService studyStateService,
                               ObservationRepository repository,
                               Map<String, ObservationFactory> observationFactories,
                               MoreSDK sdk) {
-        this.scheduleService = scheduleService;
         this.studyStateService = studyStateService;
         this.repository = repository;
         this.observationFactories = observationFactories;
@@ -39,7 +36,6 @@ public class ObservationService {
 
     public Observation addObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
-        scheduleService.assertScheduleWithinStudyTime(observation.getStudyId(), observation.getSchedule());
         return repository.insert(validate(observation));
     }
 
@@ -62,7 +58,6 @@ public class ObservationService {
 
     public Observation updateObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
-        scheduleService.assertScheduleWithinStudyTime(observation.getStudyId(), observation.getSchedule());
         return repository.updateObservation(validate(observation));
     }
 
