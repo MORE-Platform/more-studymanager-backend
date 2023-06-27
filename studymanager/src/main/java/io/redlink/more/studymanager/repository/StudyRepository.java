@@ -163,7 +163,7 @@ public class StudyRepository {
 
     private static RowMapper<Timeframe> getStudyTimeframeRowMapper() {
         return  (rs,rowNum) -> new Timeframe(
-                RepositoryUtils.readLocalDate(rs, "planned_end_date"),
+                RepositoryUtils.readLocalDate(rs, "planned_start_date"),
                 RepositoryUtils.readLocalDate(rs, "planned_end_date"));
     }
 
