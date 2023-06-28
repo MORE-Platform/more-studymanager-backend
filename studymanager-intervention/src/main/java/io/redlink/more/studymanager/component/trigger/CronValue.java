@@ -6,4 +6,9 @@ public class CronValue extends StringValue {
     public CronValue(String id) {
         super(id);
     }
+
+    @Override
+    public String getType() {
+        return "CRON";
+    }
 }

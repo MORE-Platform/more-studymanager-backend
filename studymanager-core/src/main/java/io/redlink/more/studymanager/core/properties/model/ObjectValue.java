@@ -12,6 +12,6 @@ public class ObjectValue extends Value<Object> {
 
     @Override
     public String getType() {
-        return "Object";
+        return "OBJECT";
     }
 }
