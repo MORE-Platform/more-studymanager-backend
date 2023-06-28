@@ -9,23 +9,26 @@ import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.model.User;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
-import io.redlink.more.studymanager.core.properties.model.IntegerValue;
 import io.redlink.more.studymanager.core.properties.model.StringValue;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
-import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
 
     private static List<Value> properties = List.of(
+            /* TODO enable Autocomplete in FE
+            new AutocompleteValue("limeSurveyId", "surveys")
+                    .setName("Survey")
+                    .setDescription("An existing survey")
+                    .setRequired(true)
+             */
             new StringValue("limeSurveyId")
                     .setName("Survey")
-                    .setDescription("The id of the survey")
+                    .setDescription("An existing survey")
                     .setRequired(true)
     );
 

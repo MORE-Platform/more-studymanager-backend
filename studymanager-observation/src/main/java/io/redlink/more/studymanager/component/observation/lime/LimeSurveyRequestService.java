@@ -3,9 +3,9 @@ package io.redlink.more.studymanager.component.observation.lime;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.redlink.more.studymanager.component.observation.lime.model.*;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
+import io.redlink.more.studymanager.core.ui.OptionValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,7 +192,11 @@ public class LimeSurveyRequestService {
             List<SurveyData> result = response.result().stream()
                     .filter(res -> matchesFilter(filter, res.surveyTitle()))
                     .toList();
-            return mapper.convertValue(sublist(result, start, size), JsonNode.class);
+            return mapper.convertValue(
+                    sublist(result, start, size).stream().map(d -> new OptionValue()
+                            .setName(d.surveyTitle()).setValue(d.surveyId())).toList(),
+                    JsonNode.class
+            );
         } catch (IOException | InterruptedException e) {
             LOGGER.error("Error getting surveys for user", e);
             throw new RuntimeException(e);
