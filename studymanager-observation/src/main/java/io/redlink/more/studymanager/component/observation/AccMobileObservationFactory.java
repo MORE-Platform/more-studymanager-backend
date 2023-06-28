@@ -17,13 +17,13 @@ public class AccMobileObservationFactory<C extends Observation<P>, P extends Obs
 
     @Override
     public String getTitle() {
-        return "Accelerometer Mobile";
+        return "observation.factory.accelerometerMobile.title";
     }
 
     @Override
     public String getDescription() {
         return """
-                This observation enables you to collect accelerometer data via the smartphone sensor.
+                observation.factory.accelerometerMobile.description
                 """;
     }
 

@@ -24,8 +24,8 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
 
     private static List<Value> properties = List.of(
             new StringValue("limeSurveyId")
-                    .setName("Survey")
-                    .setDescription("The id of the survey")
+                    .setName("observation.factory.limeSurvey.configProps.idName")
+                    .setDescription("observation.factory.limeSurvey.configProps.idDesc")
                     .setRequired(true)
     );
 
@@ -52,12 +52,12 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
 
     @Override
     public String getTitle() {
-        return "Lime Survey Observation";
+        return "observation.factory.limeSurvey.title";
     }
 
     @Override
     public String getDescription() {
-        return "This observation enables you to create a Lime Survey questionnaire";
+        return "observation.factory.limeSurvey.description";
     }
 
     @Override

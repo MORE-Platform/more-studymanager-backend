@@ -19,8 +19,8 @@ public class GpsMobileObservationFactory<C extends Observation<P>, P extends Obs
                     .setMax(600000)
                     .setMin(30000)
                     .setDefaultValue(60000)
-                    .setName("Measurement Interval")
-                    .setDescription("Measurement Interval in Milliseconds, 30K to 600k")
+                    .setName("observation.factory.gpsMobile.configProps.measurementName")
+                    .setDescription("observation.factory.gpsMobile.configProps.measurementDesc")
                     .setRequired(true)
     );
 
@@ -31,14 +31,14 @@ public class GpsMobileObservationFactory<C extends Observation<P>, P extends Obs
 
     @Override
     public String getTitle() {
-        return "GPS Mobile Sensor";
+        return "observation.factory.gpsMobile.title";
     }
 
     @Override
     public String getDescription() {
         return
 """
-This observation enables you to collect GPS data via the smartphone sensor.
+observation.factory.gpsMobile.description
 """;
     }
 

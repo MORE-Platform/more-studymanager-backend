@@ -28,22 +28,22 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
         });
 
         properties.add(prop.setRequired(true)
-                .setName("Cron Schedule")
+                .setName("intervention.factory.trigger.scheduledDatacheck.configProps.cronName")
                 .setDefaultValue("0 0 12 * * ?")
-                .setDescription("Triggers and action based on a <a target=\"_blank\" href=\"http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html\">cron trigger.</a>\n"));
+                .setDescription("intervention.factory.trigger.scheduledDatacheck.configProps.cronDesc"));
 
         properties.add(new StringValue("query")
-                .setName("Query")
-                .setDescription("The query for values in <a target=\"_blank\" href=\"https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-simple-query-string-query.html#simple-query-string-syntax\">simple query syntax.</a>.")
+                .setName("intervention.factory.trigger.scheduledDatacheck.configProps.queryName")
+                .setDescription("intervention.factory.trigger.scheduledDatacheck.configProps.queryDesc")
         );
 
         properties.add(new StringListValue("queryObject")
-        .setName("Query Object")
-        .setDescription("A more complex variant of query")
+        .setName("intervention.factory.trigger.scheduled.configProps.queryObjName")
+        .setDescription("intervention.factory.trigger.scheduled.configProps.queryObjDesc")
         );
 
         properties.add(new IntegerValue("window")
-                .setName("Timewindow in seconds from querytime")
+                .setName("intervention.factory.trigger.scheduledDatacheck.configProps.timewindowName")
                 .setRequired(true)
                 .setDefaultValue(100)
         );
@@ -56,12 +56,12 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
 
     @Override
     public String getTitle() {
-        return "Scheduled Datacheck";
+        return "intervention.factory.trigger.scheduledDatacheck.title";
     }
 
     @Override
     public String getDescription() {
-        return "Checks if certain data occurs in a specific timeframe.";
+        return "intervention.factory.trigger.scheduledDatacheck.title.decription";
     }
 
     @Override

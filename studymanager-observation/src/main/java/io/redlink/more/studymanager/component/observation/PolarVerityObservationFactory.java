@@ -17,12 +17,12 @@ public class PolarVerityObservationFactory<C extends Observation<P>, P extends O
 
     @Override
     public String getTitle() {
-        return "Polar Verity Sensor";
+        return "observation.factory.polarVerity.title";
     }
 
     @Override
     public String getDescription() {
-        return "This observation enables you to collect heart rate data via the polar verity sensor. No properties are supported.";
+        return "observation.factory.polarVerity.description";
     }
 
     @Override

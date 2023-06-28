@@ -29,12 +29,12 @@ public class PushNotificationActionFactory extends ActionFactory<PushNotificatio
 
     @Override
     public String getTitle() {
-        return "Push Notification Action";
+        return "intervention.factory.actions.pushNotification.title";
     }
 
     @Override
     public String getDescription() {
-        return "Sends a push notification to all matching participants based on trigger.";
+        return "intervention.factory.actions.pushNotification.description";
     }
 
     @Override
