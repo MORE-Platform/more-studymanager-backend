@@ -66,7 +66,7 @@ public class StudyService {
     }
 
     public void deleteStudy(Long studyId) {
-        studyStateService.assertStudyNotInState(studyId, Study.Status.ACTIVE, Study.Status.PAUSED);
+        studyStateService.assertStudyState(studyId, Study.Status.DRAFT, Study.Status.CLOSED);
         studyRepository.deleteById(studyId);
         elasticService.deleteIndex(studyId);
     }
