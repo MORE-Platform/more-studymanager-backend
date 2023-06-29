@@ -61,7 +61,7 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
 
     @Override
     public String getDescription() {
-        return "intervention.factory.trigger.scheduledDatacheck.title.decription";
+        return "intervention.factory.trigger.scheduledDatacheck.decription";
     }
 
     @Override
