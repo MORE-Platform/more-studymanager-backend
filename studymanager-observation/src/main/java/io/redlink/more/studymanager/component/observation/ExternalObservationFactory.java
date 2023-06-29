@@ -17,12 +17,12 @@ public class ExternalObservationFactory<C extends Observation<P>, P extends Obse
 
     @Override
     public String getTitle() {
-        return "External Observation";
+        return "observation.factory.external.title";
     }
 
     @Override
     public String getDescription() {
-        return "A stub observation for data that is collected via the external data api.";
+        return "observation.factory.external.description";
     }
 
     @Override

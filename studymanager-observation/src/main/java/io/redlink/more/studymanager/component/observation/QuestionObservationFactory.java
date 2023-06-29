@@ -25,14 +25,14 @@ public class QuestionObservationFactory<C extends Observation<P>, P extends Obse
 
     private static List<Value> properties = List.of(
         new StringValue("question")
-                .setName("Question")
-                .setDescription("The question you want to ask")
+                .setName("observation.factory.simpleQuestion.configProps.questionName")
+                .setDescription("observation.factory.simpleQuestion.configProps.questionDesc")
                 .setRequired(true),
             new StringListValue("answers")
                     .setMinSize(2)
                     .setMaxSize(5)
-                    .setName("Answers")
-                    .setDescription("Possible answers (min 2, max 5")
+                    .setName("observation.factory.simpleQuestion.configProps.answerName")
+                    .setDescription("observation.factory.simpleQuestion.configProps.answerDesc")
                     .setDefaultValue(List.of(
                             "No",
                             "Yes"
@@ -45,12 +45,12 @@ public class QuestionObservationFactory<C extends Observation<P>, P extends Obse
 
     @Override
     public String getTitle() {
-        return "Question Observation";
+        return "observation.factory.simpleQuestion.title";
     }
 
     @Override
     public String getDescription() {
-        return "This observation enables you to create a simple MultipleChoice question.";
+        return "observation.factory.simpleQuestion.description";
     }
 
     public List<Value> getProperties() {
