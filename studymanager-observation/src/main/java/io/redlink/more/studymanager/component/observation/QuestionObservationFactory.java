@@ -25,14 +25,14 @@ public class QuestionObservationFactory<C extends Observation<P>, P extends Obse
 
     private static List<Value> properties = List.of(
         new StringValue("question")
-                .setName("observation.factory.simpleQuestion.questionName")
-                .setDescription("observation.factory.simpleQuestion.questionDesc")
+                .setName("observation.factory.simpleQuestion.configProps.questionName")
+                .setDescription("observation.factory.simpleQuestion.configProps.questionDesc")
                 .setRequired(true),
             new StringListValue("answers")
                     .setMinSize(2)
                     .setMaxSize(5)
-                    .setName("observation.factory.simpleQuestion.answerName")
-                    .setDescription("observation.factory.simpleQuestion.answerDesc")
+                    .setName("observation.factory.simpleQuestion.configProps.answerName")
+                    .setDescription("observation.factory.simpleQuestion.configProps.answerDesc")
                     .setDefaultValue(List.of(
                             "No",
                             "Yes"

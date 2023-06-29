@@ -43,7 +43,7 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
         );
 
         properties.add(new IntegerValue("window")
-                .setName("intervention.factory.trigger.scheduledDatacheck.configProps.timewindowName")
+                .setName("intervention.factory.trigger.scheduledDatacheck.configProps.timeWindowName")
                 .setRequired(true)
                 .setDefaultValue(100)
         );
