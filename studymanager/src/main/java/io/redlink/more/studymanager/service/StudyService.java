@@ -23,10 +23,11 @@ public class StudyService {
     private final ParticipantService participantService;
     private final StudyStateService studyStateService;
     private final IntegrationService integrationService;
+    private final ElasticService elasticService;
 
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
                         StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService,
-                        ParticipantService participantService, IntegrationService integrationService) {
+                        ParticipantService participantService, IntegrationService integrationService, ElasticService elasticService) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
@@ -35,6 +36,7 @@ public class StudyService {
         this.observationService = observationService;
         this.participantService = participantService;
         this.integrationService = integrationService;
+        this.elasticService = elasticService;
     }
 
     public Study createStudy(Study study, User currentUser) {
@@ -64,7 +66,9 @@ public class StudyService {
     }
 
     public void deleteStudy(Long studyId) {
+        studyStateService.assertStudyState(studyId, Study.Status.DRAFT, Study.Status.CLOSED);
         studyRepository.deleteById(studyId);
+        elasticService.deleteIndex(studyId);
     }
 
     public void setStatus(Long studyId, Study.Status status, User user) {
