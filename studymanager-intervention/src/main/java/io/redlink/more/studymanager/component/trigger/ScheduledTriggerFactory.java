@@ -18,7 +18,7 @@ public class ScheduledTriggerFactory extends TriggerFactory<ScheduledTrigger, Tr
     private static List<Value> properties = new ArrayList<>();
 
     static {
-        StringValue prop = new StringValue("cronSchedule");
+        CronValue prop = new CronValue("cronSchedule");
 
         prop.setValidationFunction((String s) -> {
             if(!QuartzCronExpressionValidator.validate(s)) {
