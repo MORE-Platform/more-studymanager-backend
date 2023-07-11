@@ -1,7 +1,7 @@
 package io.redlink.more.studymanager.core.properties.model;
 
 public class StringTextValue extends Value<String> {
-    public StringValue(String id) {
+    public StringTextValue(String id) {
         super(id);
     }
 
