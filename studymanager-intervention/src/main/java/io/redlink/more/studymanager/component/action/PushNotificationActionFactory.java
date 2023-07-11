@@ -14,7 +14,7 @@ public class PushNotificationActionFactory extends ActionFactory<PushNotificatio
     private static List<Value> properties = List.of(
             new StringValue("title")
                     .setRequired(true),
-            new StringValue("message")
+            new StringTextValue("message")
                     .setRequired(true)
     );
     @Override
