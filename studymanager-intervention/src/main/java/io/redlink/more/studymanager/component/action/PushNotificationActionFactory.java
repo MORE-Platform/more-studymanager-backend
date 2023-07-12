@@ -4,6 +4,7 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.model.StringValue;
+import io.redlink.more.studymanager.core.properties.model.StringTextValue;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 
@@ -14,7 +15,7 @@ public class PushNotificationActionFactory extends ActionFactory<PushNotificatio
     private static List<Value> properties = List.of(
             new StringValue("title")
                     .setRequired(true),
-            new StringValue("message")
+            new StringTextValue("message")
                     .setRequired(true)
     );
     @Override
