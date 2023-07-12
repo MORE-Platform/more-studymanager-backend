@@ -30,11 +30,6 @@ public class ScheduledDatacheckTriggerFactory extends TriggerFactory<ScheduledDa
                 .setDefaultValue("0 0 12 * * ?")
                 .setDescription("intervention.factory.trigger.scheduledDatacheck.configProps.cronDesc"));
 
-        properties.add(new StringValue("query")
-                .setName("intervention.factory.trigger.scheduledDatacheck.configProps.queryName")
-                .setDescription("intervention.factory.trigger.scheduledDatacheck.configProps.queryDesc")
-        );
-
         properties.add(new DatacheckQueryValue("queryObject")
                 .setName("intervention.factory.trigger.scheduled.configProps.queryObjName")
                 .setDescription("intervention.factory.trigger.scheduled.configProps.queryObjDesc")

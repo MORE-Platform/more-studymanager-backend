@@ -16,10 +16,6 @@ public class ScheduledDatacheckTriggerProperties extends TriggerProperties {
         return Optional.ofNullable(this.getString("cronSchedule"));
     }
 
-    public Optional<String> getQuery() {
-        return Optional.ofNullable(this.getString("query"));
-    }
-
     public Optional<Set<QueryObject>> getQueryObject() {return this.getObject("queryObject", new TypeReference<>() {});}
 
     public Optional<Long> getWindow() {
