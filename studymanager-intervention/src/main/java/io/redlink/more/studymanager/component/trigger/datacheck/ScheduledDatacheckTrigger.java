@@ -7,7 +7,6 @@ import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,7 +51,7 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
 
         Set<Integer> notMatchingParticipantIds = sdk.participantIds();
 
-        TriggerResult result = getQueryString().map(query ->
+        TriggerResult result = properties.getElasticQueryString().map(query ->
                 TriggerResult.withParams(
                         sdk.participantIdsMatchingQuery(query, timeframe).stream()
                                 .peek(notMatchingParticipantIds::remove)
@@ -66,10 +65,6 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
         notMatchingParticipantIds.forEach(id -> setParticipantActive(id, false));
 
         return result;
-    }
-
-    private Optional<String> getQueryString() {
-        return this.properties.getQuery().or(this.properties::getElasticQueryString);
     }
 
     public boolean isParticipantActive(int participantId) {
