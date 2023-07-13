@@ -41,6 +41,8 @@
         <docker.namespace>more-project</docker.namespace>
 
         <start-class>io.redlink.more.studymanager.Application</start-class>
+
+        <maven.install.skip>false</maven.install.skip>
     </properties>
 
     <scm>
@@ -51,6 +53,32 @@
     </scm>
 
     <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.5.0</version>
+                <configuration>
+                    <outputDirectory>${build.directory}</outputDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten-clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -74,7 +102,7 @@
                     <artifactId>maven-install-plugin</artifactId>
                     <version>3.1.1</version>
                     <configuration>
-                        <skip>true</skip>
+                        <skip>${maven.install.skip}</skip>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -427,4 +455,18 @@
         </dependencies>
     </dependencyManagement>
 
+    <profiles>
+        <profile>
+            <id>quick</id>
+            <activation>
+                <property>
+                    <name>quick</name>
+                </property>
+            </activation>
+            <properties>
+                <skipTests>true</skipTests>
+                <skipITs>true</skipITs>
+            </properties>
+        </profile>
+    </profiles>
 </project>
