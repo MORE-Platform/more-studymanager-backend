@@ -4,9 +4,9 @@ import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
+import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -21,7 +21,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
 
     @Override
     public void activate(){
-        Set<Integer> participantIds = sdk.participantIds();
+        Set<Integer> participantIds = sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL);
         String surveyId = properties.getString("limeSurveyId");
         //TODO disable keys fromm removed?
         participantIds.removeIf(id -> sdk.getPropertiesForParticipant(id).isPresent());
@@ -47,7 +47,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     }
 
     public Optional<Integer> getParticipantForToken(String token) {
-        return sdk.participantIds().stream().filter(id -> {
+        return sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL).stream().filter(id -> {
             return sdk.getPropertiesForParticipant(id)
                     .map(o -> o.getString("token"))
                     .map(t -> t.equals(token))

@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.component.trigger.datacheck;
 
 import io.redlink.more.studymanager.core.component.Trigger;
 import io.redlink.more.studymanager.core.io.*;
+import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
 import org.slf4j.Logger;
@@ -22,7 +23,7 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
 
     @Override
     public void activate() {
-        sdk.participantIds().forEach(id -> setParticipantActive(id, false));
+        sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL).forEach(id -> setParticipantActive(id, false));
 
         properties.getCronSchedule()
                 .map(CronSchedule::new)
@@ -49,7 +50,7 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
                 .map(window -> new RelativeTimeFrame(window))
                 .orElse(null);
 
-        Set<Integer> notMatchingParticipantIds = sdk.participantIds();
+        Set<Integer> notMatchingParticipantIds = sdk.participantIds(MorePlatformSDK.ParticipantFilter.ACTIVE_ONLY);
 
         TriggerResult result = properties.getElasticQueryString().map(query ->
                 TriggerResult.withParams(

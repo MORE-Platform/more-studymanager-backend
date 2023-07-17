@@ -6,6 +6,7 @@ import io.redlink.more.studymanager.core.io.ActionParameter;
 import io.redlink.more.studymanager.core.io.Parameters;
 import io.redlink.more.studymanager.core.io.TriggerResult;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
+import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.CronSchedule;
 
@@ -31,7 +32,7 @@ public class ScheduledTrigger extends Trigger<TriggerProperties> {
 
     @Override
     public TriggerResult execute(Parameters parameters) {
-        Set<Integer> participants = sdk.participantIds();
+        Set<Integer> participants = sdk.participantIds(MorePlatformSDK.ParticipantFilter.ACTIVE_ONLY);
         if(participants.isEmpty()) {
            return TriggerResult.NOOP;
         } else {

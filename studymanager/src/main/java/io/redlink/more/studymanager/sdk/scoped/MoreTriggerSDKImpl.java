@@ -3,7 +3,6 @@ package io.redlink.more.studymanager.sdk.scoped;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
-import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -26,11 +25,6 @@ public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTrigg
     @Override
     public void removeSchedule(String id) {
         sdk.removeSchedule(getIssuer(), id);
-    }
-
-    @Override
-    public Set<Integer> participantIds() {
-        return sdk.listParticipants(studyId, studyGroupId, Set.of(Participant.Status.ACTIVE));
     }
 
     public Set<Integer> participantIdsMatchingQuery(String query, TimeRange timerange) {
