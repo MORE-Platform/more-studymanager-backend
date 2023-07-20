@@ -56,6 +56,4 @@ observation.factory.gpsMobile.description
     public MeasurementSet getMeasurementSet() {
         return GenericMeasurementSets.GEOLOCATION;
     }
-
-    public Boolean getDefaultHidden() { return true; }
 }

@@ -93,14 +93,12 @@ class ObservationServiceTest {
         QuestionObservationFactory qstFactory = new QuestionObservationFactory();
         ExternalObservationFactory extFactory = new ExternalObservationFactory();
 
-        assertThat(accFactory.getHidden(acc.getHidden())).isTrue();
-        assertThat(polFactory.getHidden(pol.getHidden())).isTrue();
-        assertThat(gpsFactory.getHidden(gps.getHidden())).isTrue();
-        assertThat(limFactory.getHidden(lim.getHidden())).isFalse();
-        assertThat(qstFactory.getHidden(qst.getHidden())).isFalse();
-        assertThat(extFactory.getHidden(ext.getHidden())).isTrue();
+        assertThat(accFactory.getHidden()).isTrue();
+        assertThat(polFactory.getHidden()).isTrue();
+        assertThat(gpsFactory.getHidden()).isTrue();
+        assertThat(limFactory.getHidden()).isFalse();
+        assertThat(qstFactory.getHidden()).isFalse();
+        assertThat(extFactory.getHidden()).isTrue();
 
-        assertThat(qstFactory.getHidden(qst2.getHidden())).isFalse();
-        assertThat(qstFactory.getHidden(qst3.getHidden())).isFalse();
     }
 }

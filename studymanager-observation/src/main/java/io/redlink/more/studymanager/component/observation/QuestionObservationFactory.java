@@ -10,10 +10,8 @@ import io.redlink.more.studymanager.core.properties.model.StringListValue;
 import io.redlink.more.studymanager.core.properties.model.StringValue;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
-import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class QuestionObservationFactory<C extends Observation<P>, P extends ObservationProperties>
@@ -67,8 +65,6 @@ public class QuestionObservationFactory<C extends Observation<P>, P extends Obse
         return measurements;
     }
 
-    public Boolean getDefaultHidden() { return false; }
-
     @Override
-    public Boolean getHidden(Boolean hidden) { return getDefaultHidden(); }
+    public Boolean getHidden() { return false; }
 }

@@ -34,6 +34,4 @@ public class PolarVerityObservationFactory<C extends Observation<P>, P extends O
     public MeasurementSet getMeasurementSet() {
         return GenericMeasurementSets.HEART_RATE;
     }
-
-    public Boolean getDefaultHidden() { return true; }
 }

@@ -36,7 +36,4 @@ public class ExternalObservationFactory<C extends Observation<P>, P extends Obse
     }
 
     public Boolean getDefaultHidden() { return true; }
-
-    @Override
-    public Boolean getHidden(Boolean hidden) { return getDefaultHidden(); }
 }

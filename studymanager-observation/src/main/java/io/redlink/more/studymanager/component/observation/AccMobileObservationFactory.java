@@ -36,6 +36,4 @@ public class AccMobileObservationFactory<C extends Observation<P>, P extends Obs
     public MeasurementSet getMeasurementSet() {
         return GenericMeasurementSets.ACCELEROMETER;
     }
-
-    public Boolean getDefaultHidden() { return true; }
 }

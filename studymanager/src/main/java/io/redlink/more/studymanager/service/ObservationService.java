@@ -92,7 +92,6 @@ public class ObservationService {
         try {
             final var factory = factory(observation);
             factory.validate(observation.getProperties());
-            observation.setHidden(factory.getHidden(observation.getHidden()));
         } catch (ConfigurationValidationException e) {
             throw new BadRequestException(e.getMessage());
         }

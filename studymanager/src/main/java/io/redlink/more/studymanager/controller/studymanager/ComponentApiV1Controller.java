@@ -26,7 +26,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -138,7 +137,7 @@ public class ComponentApiV1Controller implements ComponentsApi {
     }
 
     private ComponentFactoryDTO toComponentDTO(ComponentFactory factory) {
-        return new ComponentFactoryDTO()
+        ComponentFactoryDTO c = new ComponentFactoryDTO()
                 .componentId(factory.getId())
                 .title(factory.getTitle())
                 .properties(factory.getProperties())
@@ -146,6 +145,10 @@ public class ComponentApiV1Controller implements ComponentsApi {
                 .defaultProperties(factory.getDefaultProperties())
                 .description(factory.getDescription())
                 .hasWebComponent(factory.hasWebComponent());
+        if(ObservationFactory.class.isAssignableFrom(factory.getClass())) {
+            return c.hidden(((ObservationFactory) factory).getHidden());
+        }
+        return c;
     }
 
     private List<ComponentFactoryMeasurementsInnerDTO> getMeasurements(ComponentFactory factory) {
