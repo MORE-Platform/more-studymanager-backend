@@ -59,7 +59,7 @@
                 <artifactId>flatten-maven-plugin</artifactId>
                 <version>1.5.0</version>
                 <configuration>
-                    <outputDirectory>${build.directory}</outputDirectory>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
                 </configuration>
                 <executions>
                     <execution>
