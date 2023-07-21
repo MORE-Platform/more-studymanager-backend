@@ -1,11 +1,16 @@
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.api.v1.model.DataPointDTO;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.StudyGroup;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -97,5 +102,40 @@ public class DataProcessingService {
         }
         Collections.sort(participationDataList);
         return participationDataList;
+    }
+
+    public List<DataPointDTO> getDataPoints(Long studyId, Integer size, Integer observationId, Integer participantId, OffsetDateTime date) {
+        try {
+            return elasticService.listDataPoints(studyId, participantId, observationId, toIsoString(date), size).stream()
+                    .map(dp -> new DataPointDTO()
+                            .observation(getObservationName(studyId, dp.getObservationId()))
+                            .observationId(dp.getObservationId())
+                            .participant(getParticipantName(studyId, dp.getParticipantId()))
+                            .participantId(dp.getParticipantId())
+                            .time(dp.getTime())
+                            .data(dp.getData())
+                    )
+                    .toList();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String toIsoString(OffsetDateTime date) {
+        return date != null ? date.format(DateTimeFormatter.ISO_INSTANT) : null;
+    }
+
+    @Cacheable("participants")
+    public String getParticipantName(Long studyId, int participantId) {
+        return Optional.ofNullable(participantService.getParticipant(studyId, participantId))
+                .map(Participant::getAlias)
+                .orElse("<unknown>");
+    }
+
+    @Cacheable("observations")
+    public String getObservationName(Long studyId, int observationId) {
+        return observationService.getObservation(studyId, observationId)
+                .map(Observation::getTitle)
+                .orElse("<unknown>");
     }
 }

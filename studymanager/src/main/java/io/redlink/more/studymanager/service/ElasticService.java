@@ -18,9 +18,9 @@ import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
+import io.redlink.more.studymanager.model.data.SimpleDataPoint;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import io.redlink.more.studymanager.utils.MapperUtils;
-import jakarta.servlet.ServletOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -307,4 +308,49 @@ public class ElasticService {
         return builder.build();
     }
 
+    public List<SimpleDataPoint> listDataPoints(
+            Long studyId, Integer participantId, Integer observationId, String isoDate, int size) throws IOException {
+        SearchRequest.Builder builder = new SearchRequest.Builder();
+        builder.query(q -> q.bool(b ->b.must(m ->
+                        m.term(t -> t.field("study_id").value("study_" + studyId)))
+                        .filter(getFilters(participantId, observationId, isoDate))))
+                .sort(s -> s.field(f -> f.field("effective_time_frame").order(SortOrder.Desc)))
+                .size(size);
+
+        SearchResponse<Map> rsp = client.search(builder.build(), Map.class);
+
+        return rsp.hits().hits().stream().map(h -> new SimpleDataPoint()
+                .setObservationId(Integer.parseInt(h.source().get("observation_id").toString()))
+                .setParticipantId(Integer.parseInt(h.source().get("participant_id").toString().substring(12)))
+                .setTime(h.source().get("effective_time_frame").toString())
+                .setData(toData(h.source()))).toList();
+    }
+
+    private List<Query> getFilters(Integer participantId, Integer observationId, String isoDate) {
+        List<Query> filters = new ArrayList<>();
+        if(participantId != null) {
+            filters.add(Query.of(q -> q.term(t -> t.field("participant_id").value("participant_" + participantId))));
+        }
+
+        if(observationId != null) {
+            filters.add(Query.of(q -> q.term(t -> t.field("observation_id").value(observationId))));
+        }
+
+        if(isoDate != null) {
+            filters.add(Query.of(f -> f.
+                    range(r -> r.
+                            field("effective_time_frame").
+                            to(isoDate))));
+        }
+        return filters;
+    }
+
+    private Map<String, Object> toData(Map<String, Object> source) {
+        Map<String, Object> result = new HashMap<>();
+        source.keySet().stream()
+                .filter(k -> k.startsWith("data_"))
+                .filter(k -> !k.equals("data_type"))
+                .forEach(k -> result.put(k.substring(5), source.get(k)));
+        return result;
+    }
 }
