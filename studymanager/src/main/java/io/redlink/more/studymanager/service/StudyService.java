@@ -25,9 +25,11 @@ public class StudyService {
     private final IntegrationService integrationService;
     private final ElasticService elasticService;
 
+    private final PushNotificationService pushNotificationService;
+
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
                         StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService,
-                        ParticipantService participantService, IntegrationService integrationService, ElasticService elasticService) {
+                        ParticipantService participantService, IntegrationService integrationService, ElasticService elasticService, PushNotificationService pushNotificationService) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
@@ -37,6 +39,7 @@ public class StudyService {
         this.participantService = participantService;
         this.integrationService = integrationService;
         this.elasticService = elasticService;
+        this.pushNotificationService = pushNotificationService;
     }
 
     public Study createStudy(Study study, User currentUser) {
@@ -90,6 +93,13 @@ public class StudyService {
         studyRepository.getById(studyId).ifPresent(s -> {
             try {
                 alignWithStudyState(s);
+                participantService.listParticipants(studyId).forEach(participant -> {
+                    pushNotificationService.sendPushDataNotification(
+                            studyId, participant.getParticipantId(),
+                            Map.of("key", "STUDY_STATE_CHANGED",
+                                    "oldState", oldState.getValue(),
+                                    "newState", s.getStudyState().getValue()));
+                });
             } catch (Exception e) {
                 //ROLLBACK
                 studyRepository.setStateById(studyId, oldState);
