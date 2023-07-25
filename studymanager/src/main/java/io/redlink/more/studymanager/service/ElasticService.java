@@ -283,7 +283,7 @@ public class ElasticService {
             }
         }
 
-        client.closePointInTime(new ClosePointInTimeRequest.Builder().id(pitId).build());
+        //client.closePointInTime(new ClosePointInTimeRequest.Builder().id(pitId).build());
     }
 
     private void writeHits(List<Hit<JsonNode>> hits, OutputStream outputStream) throws IOException {
