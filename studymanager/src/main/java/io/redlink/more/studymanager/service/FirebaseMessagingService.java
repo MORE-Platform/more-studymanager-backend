@@ -53,7 +53,7 @@ public class FirebaseMessagingService {
                 .builder()
                 .setToken(token)
                 .setNotification(notification)
-                .setApnsConfig(getApnsConfig(apsCategory, apnsPushType.ALERT))
+                .setApnsConfig(getApnsConfig(apsCategory, apnsPushType.ALERT, apnsPriority.MEDIUM))
                 .build();
         if (firebaseMessaging == null) {
             log.warn("Not sending Message {}", title);
@@ -63,10 +63,10 @@ public class FirebaseMessagingService {
         }
     }
 
-    private static ApnsConfig getApnsConfig(String apsCategory, apnsPushType type) {
+    private static ApnsConfig getApnsConfig(String apsCategory, apnsPushType type, apnsPriority priority) {
         return ApnsConfig
                 .builder()
-                .putHeader(apnsPriorityHeader, String.valueOf(apnsPriority.MEDIUM.value))
+                .putHeader(apnsPriorityHeader, String.valueOf(priority.value))
                 .putHeader(apnsPushTypeHeader, type.value)
                 .setAps(Aps.builder().setCategory(apsCategory).build())
                 .build();
@@ -76,7 +76,7 @@ public class FirebaseMessagingService {
         Message message = Message
                 .builder()
                 .setToken(token)
-                .setApnsConfig(getApnsConfig(apsDataCategory, apnsPushType.BACKGROUND))
+                .setApnsConfig(getApnsConfig(apsDataCategory, apnsPushType.BACKGROUND, apnsPriority.MEDIUM))
                 .putAllData(data)
                 .build();
 
