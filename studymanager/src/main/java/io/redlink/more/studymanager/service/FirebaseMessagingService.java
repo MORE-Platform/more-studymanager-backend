@@ -19,9 +19,21 @@ public class FirebaseMessagingService {
             this.value = value;
         }
     }
+
+    private enum apnsPushType {
+        ALERT("alert"),
+        BACKGROUND("background");
+
+        public final String value;
+
+        apnsPushType(String value) {
+            this.value = value;
+        }
+    }
     private static final String apnsPriorityHeader = "apns-priority";
     private static final String apsCategory = "NEW_MESSAGE_CATEGORY";
     private static final String apsDataCategory = "DATA_CATEGORY";
+    private static final String apnsPushTypeHeader = "apns-push-type";
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseMessagingService.class);
 
@@ -41,7 +53,7 @@ public class FirebaseMessagingService {
                 .builder()
                 .setToken(token)
                 .setNotification(notification)
-                .setApnsConfig(getApnsConfig(apsCategory))
+                .setApnsConfig(getApnsConfig(apsCategory, apnsPushType.ALERT, apnsPriority.MEDIUM))
                 .build();
         if (firebaseMessaging == null) {
             log.warn("Not sending Message {}", title);
@@ -51,10 +63,11 @@ public class FirebaseMessagingService {
         }
     }
 
-    private static ApnsConfig getApnsConfig(String apsCategory) {
+    private static ApnsConfig getApnsConfig(String apsCategory, apnsPushType type, apnsPriority priority) {
         return ApnsConfig
                 .builder()
-                .putHeader(apnsPriorityHeader, String.valueOf(apnsPriority.MEDIUM.value))
+                .putHeader(apnsPriorityHeader, String.valueOf(priority.value))
+                .putHeader(apnsPushTypeHeader, type.value)
                 .setAps(Aps.builder().setCategory(apsCategory).build())
                 .build();
     }
@@ -63,7 +76,7 @@ public class FirebaseMessagingService {
         Message message = Message
                 .builder()
                 .setToken(token)
-                .setApnsConfig(getApnsConfig(apsDataCategory))
+                .setApnsConfig(getApnsConfig(apsDataCategory, apnsPushType.BACKGROUND, apnsPriority.MEDIUM))
                 .putAllData(data)
                 .build();
 
@@ -71,7 +84,7 @@ public class FirebaseMessagingService {
             log.warn("Not sending data Message {}", MapperUtils.writeValueAsString(data));
         } else {
             final String msgId = firebaseMessaging.send(message);
-            log.debug("Successfully sent FCM Message {}", msgId);
+            log.debug("Successfully sent FCM data Message {}", msgId);
         }
     }
 }
