@@ -265,14 +265,15 @@ public class ElasticService {
     public void exportData(Long studyId, OutputStream outputStream) throws IOException {
         String index = getStudyIdString(studyId);
 
-        OpenPointInTimeResponse pitRsp = client.openPointInTime(r -> r.index(index).keepAlive(k -> k.time("1m")));
-        String pitId = pitRsp.id();
+        //OpenPointInTimeResponse pitRsp = client.openPointInTime(r -> r.index(index).keepAlive(k -> k.time("1m")));
+        String pitId = "";//pitRsp.id();
 
         SearchRequest request = getQuery(index, pitId, null);
         SearchResponse<JsonNode> rsp = client.search(request, JsonNode.class);
 
         while (rsp.hits().hits().size() > 0) {
             writeHits(rsp.hits().hits(), outputStream);
+            outputStream.flush();
             //pitId = rsp.pitId();
             List<FieldValue> searchAfterSort = Iterables.getLast(rsp.hits().hits()).sort();
             request = getQuery(index, pitId, searchAfterSort);
