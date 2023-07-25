@@ -335,6 +335,8 @@ public class ElasticService {
 
         if(observationId != null) {
             filters.add(Query.of(q -> q.term(t -> t.field("observation_id").value(observationId))));
+        } else {
+            filters.add(Query.of(q -> q.exists(e -> e.field("observation_id"))));
         }
 
         if(isoDate != null) {

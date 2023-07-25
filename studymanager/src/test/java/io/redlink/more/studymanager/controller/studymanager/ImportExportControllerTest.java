@@ -5,6 +5,7 @@ import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.repository.DownloadTokenRepository;
 import io.redlink.more.studymanager.service.ImportExportService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +45,9 @@ class ImportExportControllerTest {
 
     @MockBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
+
+    @MockBean
+    DownloadTokenRepository tokenRepository;
 
     @Autowired
     ObjectMapper mapper;
