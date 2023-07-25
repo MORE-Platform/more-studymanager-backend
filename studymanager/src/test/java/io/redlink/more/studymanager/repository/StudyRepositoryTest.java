@@ -45,6 +45,9 @@ class StudyRepositoryTest {
         assertThat(studyResponse.getStudyState()).isEqualTo(Study.Status.DRAFT);
         assertThat(studyResponse.getContact().getPerson()).isEqualTo(study.getContact().getPerson());
         assertThat(studyResponse.getContact().getEmail()).isEqualTo(study.getContact().getEmail());
+
+        assertTrue(studyRepository.exists(studyResponse.getStudyId()).get());
+        assertFalse(studyRepository.exists(studyResponse.getStudyId()+1).get());
     }
     @Test
     @DisplayName("Study is updated in database and returned")

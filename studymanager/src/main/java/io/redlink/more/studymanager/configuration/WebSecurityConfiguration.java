@@ -75,6 +75,7 @@ public class WebSecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/v1/config/ui").permitAll()
                 //TODO specific handling of temporary sidecar
                 .requestMatchers("/api/v1/components/observation/lime-survey-observation/end.html").permitAll()
+                .requestMatchers("/api/v1/studies/*/export/studydata/*").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
                 .requestMatchers("/kibana/**").authenticated()
                 .requestMatchers("/login/init").authenticated()

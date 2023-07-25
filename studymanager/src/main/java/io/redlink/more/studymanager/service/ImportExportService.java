@@ -125,8 +125,13 @@ public class ImportExportService {
         return newStudy;
     }
 
-    public void exportStudyData(ServletOutputStream outputStream, Long studyId, AuthenticatedUser currentUser) {
-        studyService.getStudy(studyId, currentUser).ifPresent(s -> exportStudyDataAsync(outputStream, studyId));
+    public void exportStudyData(ServletOutputStream outputStream, Long studyId) {
+        //TODO check token
+        if(studyService.existsStudy(studyId).orElse(false)) {
+            exportStudyDataAsync(outputStream, studyId);
+        } else {
+            throw NotFoundException.Study(studyId);
+        }
     }
 
     @Async

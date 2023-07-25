@@ -25,6 +25,11 @@ public class StudyRepository {
             "  (SELECT user_roles FROM study_roles_by_user WHERE study_roles_by_user.study_id = studies.study_id AND user_id = :userId) AS user_roles " +
             "FROM studies " +
             "WHERE study_id = :studyId";
+
+    private static final String COUNT_STUDY =
+            "SELECT count(*) AS c " +
+                    "FROM studies " +
+                    "WHERE study_id = ?";
     private static final String LIST_STUDIES_ORDER_BY_MODIFIED_DESC = "SELECT * FROM studies ORDER BY modified DESC";
     private static final String LIST_STUDIES_BY_STATUS = "SELECT * FROM studies WHERE status = ?::study_state";
     private static final String LIST_STUDY_BY_ACL =
@@ -178,5 +183,10 @@ public class StudyRepository {
                 )) {
             return stream.findFirst().isPresent();
         }
+    }
+
+    public Optional<Boolean> exists(Long studyId) {
+        return template.query(COUNT_STUDY, (rs, rowNum) -> rs.getInt("c"), studyId).stream()
+                .findFirst().map(c -> c == 1);
     }
 }

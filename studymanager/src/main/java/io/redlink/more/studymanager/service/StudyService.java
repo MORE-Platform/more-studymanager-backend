@@ -63,6 +63,10 @@ public class StudyService {
         return studyRepository.getById(studyId, user);
     }
 
+    public Optional<Boolean> existsStudy(Long studyId) {
+        return studyRepository.exists(studyId);
+    }
+
     public Optional<Study> updateStudy(Study study, User user) {
         studyStateService.assertStudyNotInState(study, Study.Status.CLOSED);
         return studyRepository.update(study, user);
