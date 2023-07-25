@@ -10,6 +10,7 @@ public class Study {
     private String purpose;
     private String participantInfo;
     private String consentInfo;
+    private String finishText;
     private Status studyState;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -79,6 +80,15 @@ public class Study {
 
     public Study setConsentInfo(String consentInfo) {
         this.consentInfo = consentInfo;
+        return this;
+    }
+
+    public String getFinishText() {
+        return finishText;
+    }
+
+    public Study setFinishText(String finishText) {
+        this.finishText = finishText;
         return this;
     }
 

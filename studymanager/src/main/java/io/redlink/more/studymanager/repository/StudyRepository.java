@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 public class StudyRepository {
 
     private static final String INSERT_STUDY =
-            "INSERT INTO studies (title,purpose,participant_info,consent_info,planned_start_date,planned_end_date,institute,contact_person,contact_email,contact_phone) " +
-            "VALUES (:title,:purpose,:participant_info,:consent_info,:planned_start_date,:planned_end_date,:institute,:contact_person,:contact_email,:contact_phone) " +
+            "INSERT INTO studies (title,purpose,participant_info,consent_info,finish_text,planned_start_date,planned_end_date,institute,contact_person,contact_email,contact_phone) " +
+            "VALUES (:title,:purpose,:participant_info,:consent_info,:finish_text,:planned_start_date,:planned_end_date,:institute,:contact_person,:contact_email,:contact_phone) " +
             "RETURNING *";
     private static final String GET_STUDY_BY_ID =
             "SELECT *, " +
@@ -39,7 +39,7 @@ public class StudyRepository {
             "    ON (studies.study_id = acl.study_id) " +
             "ORDER BY modified DESC";
     private static final String UPDATE_STUDY =
-            "UPDATE studies SET title = :title, purpose = :purpose, participant_info = :participant_info, consent_info = :consent_info, planned_start_date = :planned_start_date, " +
+            "UPDATE studies SET title = :title, purpose = :purpose, participant_info = :participant_info, consent_info = :consent_info, finish_text = :finish_text, planned_start_date = :planned_start_date, " +
                     "planned_end_date = :planned_end_date, modified = now(), institute = :institute, contact_person = :contact_person, contact_email = :contact_email, contact_phone = :contact_phone " +
             "WHERE study_id = :study_id " +
             "RETURNING *, (SELECT user_roles FROM study_roles_by_user WHERE study_roles_by_user.study_id = studies.study_id AND user_id = :userId) AS user_roles";
@@ -124,6 +124,7 @@ public class StudyRepository {
                 .addValue("purpose", study.getPurpose())
                 .addValue("participant_info", study.getParticipantInfo())
                 .addValue("consent_info", study.getConsentInfo())
+                .addValue("finish_text", study.getFinishText())
                 .addValue("planned_start_date", study.getPlannedStartDate())
                 .addValue("planned_end_date", study.getPlannedEndDate())
                 .addValue("institute", study.getContact().getInstitute())
@@ -138,6 +139,7 @@ public class StudyRepository {
                 .setStudyId(rs.getLong("study_id"))
                 .setTitle(rs.getString("title"))
                 .setPurpose(rs.getString("purpose"))
+                .setFinishText(rs.getString("finish_text"))
                 .setParticipantInfo(rs.getString("participant_info"))
                 .setConsentInfo(rs.getString("consent_info"))
                 .setPlannedStartDate(RepositoryUtils.readLocalDate(rs, "planned_start_date"))

@@ -36,7 +36,8 @@ class StudyRepositoryTest {
     void testInsert() {
         Study study = new Study()
                 .setTitle("some title")
-                .setContact(new Contact().setPerson("test").setEmail("test"));
+                .setContact(new Contact().setPerson("test").setEmail("test"))
+                .setFinishText("servus");
 
         Study studyResponse = studyRepository.insert(study);
 
@@ -45,6 +46,7 @@ class StudyRepositoryTest {
         assertThat(studyResponse.getStudyState()).isEqualTo(Study.Status.DRAFT);
         assertThat(studyResponse.getContact().getPerson()).isEqualTo(study.getContact().getPerson());
         assertThat(studyResponse.getContact().getEmail()).isEqualTo(study.getContact().getEmail());
+        assertThat(studyResponse.getFinishText()).isEqualTo(study.getFinishText());
 
         assertTrue(studyRepository.exists(studyResponse.getStudyId()).get());
         assertFalse(studyRepository.exists(studyResponse.getStudyId()+1).get());

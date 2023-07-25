@@ -62,12 +62,14 @@ class StudyControllerTest {
                 .setPlannedStartDate(((Study) invocationOnMock.getArgument(0)).getPlannedStartDate())
                 .setPlannedEndDate(((Study) invocationOnMock.getArgument(0)).getPlannedEndDate())
                 .setStudyState(Study.Status.DRAFT)
+                .setFinishText(((Study) invocationOnMock.getArgument(0)).getFinishText())
                 .setCreated(Instant.ofEpochMilli(System.currentTimeMillis()))
                 .setModified(Instant.ofEpochMilli(System.currentTimeMillis()))
                 .setContact(((Study) invocationOnMock.getArgument(0)).getContact()));
 
         StudyDTO studyRequest = new StudyDTO()
                 .title("Some title")
+                .finishText("servus")
                 .plannedStart(LocalDate.now())
                 .plannedEnd(LocalDate.now())
                 .contact(new ContactDTO().person("test").email("test"));
@@ -80,6 +82,7 @@ class StudyControllerTest {
                 .andExpect(jsonPath("$.title").value(studyRequest.getTitle()))
                 .andExpect(jsonPath("$.studyId").value(1L))
                 .andExpect(jsonPath("$.status").value("draft"))
+                .andExpect(jsonPath("$.finishText").value("servus"))
                 .andExpect(jsonPath("$.contact").exists());
     }
 
