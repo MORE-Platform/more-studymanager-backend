@@ -126,7 +126,6 @@ public class ImportExportService {
     }
 
     public void exportStudyData(ServletOutputStream outputStream, Long studyId) {
-        //TODO check token
         if(studyService.existsStudy(studyId).orElse(false)) {
             exportStudyDataAsync(outputStream, studyId);
         } else {

@@ -104,6 +104,7 @@ public class StudyService {
                                     "oldState", oldState.getValue(),
                                     "newState", s.getStudyState().getValue()));
                 });
+                participantService.alignParticipantsWithStudyState(s);
             } catch (Exception e) {
                 //ROLLBACK
                 studyRepository.setStateById(studyId, oldState);
@@ -115,7 +116,6 @@ public class StudyService {
 
     private void alignWithStudyState(Study s) {
         interventionService.alignInterventionsWithStudyState(s);
-        participantService.alignParticipantsWithStudyState(s);
         observationService.alignObservationsWithStudyState(s);
         integrationService.alignIntegrationsWithStudyState(s);
     }

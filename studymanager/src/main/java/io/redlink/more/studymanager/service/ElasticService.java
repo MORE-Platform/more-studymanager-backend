@@ -265,25 +265,23 @@ public class ElasticService {
     public void exportData(Long studyId, OutputStream outputStream) throws IOException {
         String index = getStudyIdString(studyId);
 
-        //OpenPointInTimeResponse pitRsp = client.openPointInTime(r -> r.index(index).keepAlive(k -> k.time("1m")));
-        String pitId = "";//pitRsp.id();
+        if(!client.indices().exists(e -> e.index(index)).value()) {
+            return;
+        }
 
-        SearchRequest request = getQuery(index, pitId, null);
+        SearchRequest request = getQuery(index, null);
         SearchResponse<JsonNode> rsp = client.search(request, JsonNode.class);
 
         while (rsp.hits().hits().size() > 0) {
             writeHits(rsp.hits().hits(), outputStream);
             outputStream.flush();
-            //pitId = rsp.pitId();
             List<FieldValue> searchAfterSort = Iterables.getLast(rsp.hits().hits()).sort();
-            request = getQuery(index, pitId, searchAfterSort);
+            request = getQuery(index, searchAfterSort);
             rsp = client.search(request, JsonNode.class);
             if(rsp.hits().hits().size() > 0) {
                 outputStream.write(",".getBytes(StandardCharsets.UTF_8));
             }
         }
-
-        //client.closePointInTime(new ClosePointInTimeRequest.Builder().id(pitId).build());
     }
 
     private void writeHits(List<Hit<JsonNode>> hits, OutputStream outputStream) throws IOException {
@@ -294,7 +292,7 @@ public class ElasticService {
         outputStream.write(datapoints.getBytes(StandardCharsets.UTF_8));
     }
 
-    private SearchRequest getQuery(String index, String pitId, List<FieldValue> searchAfterSort) {
+    private SearchRequest getQuery(String index, List<FieldValue> searchAfterSort) {
         SearchRequest.Builder builder = new SearchRequest.Builder();
         builder.index(index)
                 .query(q -> q.matchAll(m -> m))
