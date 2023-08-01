@@ -5,7 +5,9 @@ import io.redlink.more.studymanager.utils.MapperUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class FirebaseMessagingService {
     private final FirebaseMessaging firebaseMessaging;
@@ -41,7 +43,10 @@ public class FirebaseMessagingService {
         this.firebaseMessaging = firebaseMessaging;
     }
 
-    public void sendNotification(String title, String body, String token) throws FirebaseMessagingException {
+    public String sendNotification(String title, String body, String token) throws FirebaseMessagingException {
+
+        String uuid = UUID.randomUUID().toString();
+        Map<String,String> data = Map.of("MSG_ID", uuid);
 
         Notification notification = Notification
                 .builder()
@@ -51,6 +56,7 @@ public class FirebaseMessagingService {
 
         Message message = Message
                 .builder()
+                .putAllData(data)
                 .setToken(token)
                 .setNotification(notification)
                 .setApnsConfig(getApnsConfig(apsCategory, apnsPushType.ALERT, apnsPriority.MEDIUM))
@@ -59,8 +65,10 @@ public class FirebaseMessagingService {
             log.warn("Not sending Message {}", title);
         } else {
             final String msgId = firebaseMessaging.send(message);
-            log.debug("Successfully sent FCM Message {} ({})", title, msgId);
+            log.debug("Successfully sent FCM Message {} ({}:{})", title, msgId, uuid);
+            return uuid;
         }
+        return null;
     }
 
     private static ApnsConfig getApnsConfig(String apsCategory, apnsPushType type, apnsPriority priority) {
@@ -72,19 +80,25 @@ public class FirebaseMessagingService {
                 .build();
     }
 
-    public void sendDataNotification(Map<String, String> data, String token) throws FirebaseMessagingException {
+    public String sendDataNotification(Map<String, String> data, String token) throws FirebaseMessagingException {
+        String uuid = UUID.randomUUID().toString();
+        Map<String,String> dataUp = new HashMap<>(data);
+        dataUp.put("MSG_ID", uuid);
+
         Message message = Message
                 .builder()
                 .setToken(token)
                 .setApnsConfig(getApnsConfig(apsDataCategory, apnsPushType.BACKGROUND, apnsPriority.MEDIUM))
-                .putAllData(data)
+                .putAllData(dataUp)
                 .build();
 
         if (firebaseMessaging == null) {
             log.warn("Not sending data Message {}", MapperUtils.writeValueAsString(data));
         } else {
             final String msgId = firebaseMessaging.send(message);
-            log.debug("Successfully sent FCM data Message {}", msgId);
+            log.debug("Successfully sent FCM data Message {}:{}", msgId, uuid);
+            return uuid;
         }
+        return null;
     }
 }

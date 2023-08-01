@@ -2,7 +2,9 @@ package io.redlink.more.studymanager.service;
 
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MessagingErrorCode;
+import io.redlink.more.studymanager.model.Notification;
 import io.redlink.more.studymanager.model.PushNotificationsToken;
+import io.redlink.more.studymanager.repository.NotificationRepository;
 import io.redlink.more.studymanager.repository.PushNotificationTokenRepository;
 
 import java.util.Map;
@@ -14,13 +16,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class PushNotificationService {
     private final PushNotificationTokenRepository pushNotificationsRepository;
+    private final NotificationRepository notificationRepository;
     private final FirebaseMessagingService firebaseService;
 
     private static final Logger LOG = LoggerFactory.getLogger(PushNotificationService.class);
 
     public PushNotificationService(PushNotificationTokenRepository pushNotificationsRepository,
-                                   FirebaseMessagingService firebaseService) {
+                                   NotificationRepository notificationRepository, FirebaseMessagingService firebaseService) {
         this.pushNotificationsRepository = pushNotificationsRepository;
+        this.notificationRepository = notificationRepository;
         this.firebaseService = firebaseService;
     }
 
@@ -35,7 +39,17 @@ public class PushNotificationService {
         final String serviceType = token.service();
         if ("FCM".equals(serviceType)) {
             try {
-                this.firebaseService.sendNotification(title, message, token.token());
+                String msgId = this.firebaseService.sendNotification(title, message, token.token());
+                if(msgId != null) {
+                    this.notificationRepository.insert(
+                            new Notification()
+                                    .setStudyId(studyID)
+                                    .setParticipantId(participantId)
+                                    .setMsgId(msgId)
+                                    .setType(Notification.Type.TEXT)
+                                    .setData(Map.of("title", title, "body", message))
+                    );
+                }
                 return true;
             } catch (FirebaseMessagingException e) {
                 if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
@@ -66,7 +80,17 @@ public class PushNotificationService {
         final String serviceType = token.service();
         if ("FCM".equals(serviceType)) {
             try {
-                this.firebaseService.sendDataNotification(data, token.token());
+                String msgId = this.firebaseService.sendDataNotification(data, token.token());
+                if(msgId != null) {
+                    this.notificationRepository.insert(
+                            new Notification()
+                                    .setStudyId(studyID)
+                                    .setParticipantId(participantId)
+                                    .setMsgId(msgId)
+                                    .setType(Notification.Type.DATA)
+                                    .setData(data)
+                    );
+                }
                 return true;
             } catch (FirebaseMessagingException e) {
                 if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
