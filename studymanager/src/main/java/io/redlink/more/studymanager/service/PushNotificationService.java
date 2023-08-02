@@ -41,6 +41,7 @@ public class PushNotificationService {
             try {
                 String msgId = this.firebaseService.sendNotification(title, message, token.token());
                 if(msgId != null) {
+                    LOG.info("Store Text Message (sid:{} pid:{}, mid:{})", studyID, participantId, msgId);
                     this.notificationRepository.insert(
                             new Notification()
                                     .setStudyId(studyID)
@@ -82,6 +83,7 @@ public class PushNotificationService {
             try {
                 String msgId = this.firebaseService.sendDataNotification(data, token.token());
                 if(msgId != null) {
+                    LOG.info("Store Data Message (sid:{} pid:{}, mid:{})", studyID, participantId, msgId);
                     this.notificationRepository.insert(
                             new Notification()
                                     .setStudyId(studyID)
