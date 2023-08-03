@@ -33,7 +33,7 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
             ctx.putAction(actionId, actionType);
 
             if (sdk.sendPushNotification(studyId, participantId, title, message)) {
-                sdk.storeDatapoint(ElasticDataPoint.Type.action, studyId, studyGroupId, participantId, "action_"+actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
+                sdk.storeDatapoint(ElasticDataPoint.Type.action, studyId, studyGroupId, participantId, actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
             }
         }
     }

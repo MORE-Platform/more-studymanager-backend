@@ -58,6 +58,6 @@ public class MoreObservationSDKImpl extends MorePlatformSDKImpl implements MoreO
 
     @Override
     public void storeDataPoint(Integer participantId, String observationType, Map data) {
-        sdk.storeDatapoint(ElasticDataPoint.Type.observation, studyId, studyGroupId, participantId, "observation_"+observationId, observationType, Instant.now(), data);
+        sdk.storeDatapoint(ElasticDataPoint.Type.observation, studyId, studyGroupId, participantId, observationId, observationType, Instant.now(), data);
     }
 }
