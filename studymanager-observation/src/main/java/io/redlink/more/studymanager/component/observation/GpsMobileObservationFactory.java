@@ -6,11 +6,7 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
-import io.redlink.more.studymanager.core.properties.model.IntegerValue;
-import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
-
-import java.util.List;
 
 public class GpsMobileObservationFactory<C extends Observation<P>, P extends ObservationProperties> extends ObservationFactory<C, P> {
 
