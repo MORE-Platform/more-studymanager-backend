@@ -22,6 +22,10 @@ public class ScheduledDatacheckTriggerProperties extends TriggerProperties {
         return Optional.ofNullable(this.getLong("window"));
     }
 
+    public Optional<Boolean> getOnlyOnce() {
+        return Optional.ofNullable(this.getBoolean("onlyOnce"));
+    }
+
     public Optional<String> getElasticQueryString() {
         return this.getQueryObject().map(o -> o.stream()
                 .map(qo ->

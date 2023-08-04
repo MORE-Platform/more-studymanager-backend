@@ -46,6 +46,8 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
                         .map(key -> key + "=" + parameters.get(key))
                         .collect(Collectors.joining(", ", "{", "}")));
 
+        Boolean onlyOnce = properties.getOnlyOnce().orElse(false);
+
         TimeRange timeframe = properties.getWindow()
                 .map(window -> new RelativeTimeFrame(window))
                 .orElse(null);
@@ -56,7 +58,7 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
                 TriggerResult.withParams(
                         sdk.participantIdsMatchingQuery(query, timeframe).stream()
                                 .peek(notMatchingParticipantIds::remove)
-                                .filter(id -> !isParticipantActive(id))
+                                .filter(id -> !isParticipantActive(id, onlyOnce))
                                 .peek(id -> setParticipantActive(id, true))
                                 .map(id -> new ActionParameter(sdk.getStudyId(), id))
                                 .collect(Collectors.toSet())
@@ -68,8 +70,12 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
         return result;
     }
 
-    public boolean isParticipantActive(int participantId) {
-        return sdk.getValue(participantId + "_active", Boolean.class).orElse(false);
+    public boolean isParticipantActive(int participantId, boolean onlyOnce) {
+        if(onlyOnce) {
+            return false;
+        } else {
+            return sdk.getValue(participantId + "_active", Boolean.class).orElse(false);
+        }
     }
 
     public void setParticipantActive(int participantId, Boolean isActive) {
