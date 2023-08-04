@@ -14,16 +14,6 @@ import java.util.List;
 
 public class GpsMobileObservationFactory<C extends Observation<P>, P extends ObservationProperties> extends ObservationFactory<C, P> {
 
-    private static List<Value> properties = List.of(
-            new IntegerValue("location_interval_millis")
-                    .setMax(600000)
-                    .setMin(30000)
-                    .setDefaultValue(60000)
-                    .setName("observation.factory.gpsMobile.configProps.measurementName")
-                    .setDescription("observation.factory.gpsMobile.configProps.measurementDesc")
-                    .setRequired(true)
-    );
-
     @Override
     public String getId() {
         return "gps-mobile-observation";
@@ -40,11 +30,6 @@ public class GpsMobileObservationFactory<C extends Observation<P>, P extends Obs
 """
 observation.factory.gpsMobile.description
 """;
-    }
-
-    @Override
-    public List<Value> getProperties() {
-        return properties;
     }
 
     @Override
