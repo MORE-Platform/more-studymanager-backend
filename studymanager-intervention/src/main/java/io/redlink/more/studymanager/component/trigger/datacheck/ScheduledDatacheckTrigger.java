@@ -71,7 +71,7 @@ public class ScheduledDatacheckTrigger extends Trigger<ScheduledDatacheckTrigger
     }
 
     public boolean isParticipantActive(int participantId, boolean onlyOnce) {
-        if(onlyOnce) {
+        if(!onlyOnce) {
             return false;
         } else {
             return sdk.getValue(participantId + "_active", Boolean.class).orElse(false);
