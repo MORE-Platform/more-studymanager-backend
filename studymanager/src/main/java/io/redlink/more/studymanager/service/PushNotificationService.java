@@ -28,7 +28,7 @@ public class PushNotificationService {
         this.firebaseService = firebaseService;
     }
 
-    public boolean sendPushNotification(long studyID, int participantId, String title, String message) {
+    public boolean sendPushNotification(long studyID, int participantId, String title, String message, Map<String, String> data) {
         Optional<PushNotificationsToken> tkn = this.pushNotificationsRepository.getTokenById(studyID, participantId);
 
         if (tkn.isEmpty()) {
@@ -39,7 +39,7 @@ public class PushNotificationService {
         final String serviceType = token.service();
         if ("FCM".equals(serviceType)) {
             try {
-                String msgId = this.firebaseService.sendNotification(title, message, token.token());
+                String msgId = this.firebaseService.sendNotification(title, message, token.token(), data);
                 if(msgId != null) {
                     LOG.info("Store Text Message (sid:{} pid:{}, mid:{})", studyID, participantId, msgId);
                     this.notificationRepository.insert(
@@ -49,6 +49,7 @@ public class PushNotificationService {
                                     .setMsgId(msgId)
                                     .setType(Notification.Type.TEXT)
                                     .setData(Map.of("title", title, "body", message))
+
                     );
                 }
                 return true;

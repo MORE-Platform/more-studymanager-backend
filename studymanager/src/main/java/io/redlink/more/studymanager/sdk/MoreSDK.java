@@ -119,7 +119,7 @@ public class MoreSDK {
 
     public boolean sendPushNotification(long studyId, int participantId, String title, String message) {
         LOGGER.debug("Sending message to participant (sid:{}, pid:{}): {} -- {}", studyId, participantId, title, message);
-        return pushNotificationService.sendPushNotification(studyId, participantId, title, message);
+        return pushNotificationService.sendPushNotification(studyId, participantId, title, message, Collections.emptyMap());
     }
 
     public void storeDatapoint(

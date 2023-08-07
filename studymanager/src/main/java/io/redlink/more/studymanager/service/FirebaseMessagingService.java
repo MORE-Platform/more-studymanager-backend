@@ -43,10 +43,10 @@ public class FirebaseMessagingService {
         this.firebaseMessaging = firebaseMessaging;
     }
 
-    public String sendNotification(String title, String body, String token) throws FirebaseMessagingException {
+    public String sendNotification(String title, String body, String token, Map<String, String> data) throws FirebaseMessagingException {
 
         String uuid = UUID.randomUUID().toString();
-        Map<String,String> data = Map.of("MSG_ID", uuid);
+        data.put("MSG_ID", uuid);
 
         Notification notification = Notification
                 .builder()

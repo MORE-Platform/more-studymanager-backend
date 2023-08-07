@@ -98,11 +98,15 @@ public class StudyService {
             try {
                 alignWithStudyState(s);
                 participantService.listParticipants(studyId).forEach(participant -> {
-                    pushNotificationService.sendPushDataNotification(
-                            studyId, participant.getParticipantId(),
+                    pushNotificationService.sendPushNotification(
+                            studyId,
+                            participant.getParticipantId(),
+                            "Your Study has a new update",
+                            "Your study was updated. For more information, please launch the app!",
                             Map.of("key", "STUDY_STATE_CHANGED",
                                     "oldState", oldState.getValue(),
-                                    "newState", s.getStudyState().getValue()));
+                                    "newState", s.getStudyState().getValue())
+                    );
                 });
                 participantService.alignParticipantsWithStudyState(s);
             } catch (Exception e) {
@@ -129,7 +133,7 @@ public class StudyService {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         //MORE-218: One must not remove oneself as ADMIN
         if (StringUtils.equals(currentUser.id(), userId)
-            && !roles.contains(StudyRole.STUDY_ADMIN)) {
+                && !roles.contains(StudyRole.STUDY_ADMIN)) {
             throw DataConstraintException.createNoSelfAdminRemoval(studyId, userId);
         }
 
