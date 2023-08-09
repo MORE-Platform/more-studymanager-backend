@@ -8,6 +8,8 @@ import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,6 +17,7 @@ import java.util.*;
 @Service
 public class StudyService {
 
+    private static final Logger log = LoggerFactory.getLogger(StudyService.class);
     private final StudyRepository studyRepository;
     private final StudyAclRepository aclRepository;
     private final UserRepository userRepo;
@@ -26,6 +29,7 @@ public class StudyService {
     private final ElasticService elasticService;
 
     private final PushNotificationService pushNotificationService;
+
 
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
                         StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService,
@@ -98,14 +102,19 @@ public class StudyService {
             try {
                 alignWithStudyState(s);
                 participantService.listParticipants(studyId).forEach(participant -> {
-                    pushNotificationService.sendPushDataNotification(
-                            studyId, participant.getParticipantId(),
+                    pushNotificationService.sendPushNotification(
+                            studyId,
+                            participant.getParticipantId(),
+                            "Your Study has a new update",
+                            "Your study was updated. For more information, please launch the app!",
                             Map.of("key", "STUDY_STATE_CHANGED",
                                     "oldState", oldState.getValue(),
-                                    "newState", s.getStudyState().getValue()));
+                                    "newState", s.getStudyState().getValue())
+                    );
                 });
                 participantService.alignParticipantsWithStudyState(s);
             } catch (Exception e) {
+                log.warn("Could not set new state for study id {}; old state: {}; new state: {}", studyId, oldState.getValue(), s.getStudyState().getValue());
                 //ROLLBACK
                 studyRepository.setStateById(studyId, oldState);
                 studyRepository.getById(studyId).ifPresent(this::alignWithStudyState);
@@ -129,7 +138,7 @@ public class StudyService {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         //MORE-218: One must not remove oneself as ADMIN
         if (StringUtils.equals(currentUser.id(), userId)
-            && !roles.contains(StudyRole.STUDY_ADMIN)) {
+                && !roles.contains(StudyRole.STUDY_ADMIN)) {
             throw DataConstraintException.createNoSelfAdminRemoval(studyId, userId);
         }
 

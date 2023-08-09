@@ -43,20 +43,22 @@ public class FirebaseMessagingService {
         this.firebaseMessaging = firebaseMessaging;
     }
 
-    public String sendNotification(String title, String body, String token) throws FirebaseMessagingException {
+    public String sendNotification(String title, String body, String token, Map<String, String> data) throws FirebaseMessagingException {
 
-        String uuid = UUID.randomUUID().toString();
-        Map<String,String> data = Map.of("MSG_ID", uuid);
+        final String uuid = UUID.randomUUID().toString();
+        final Map<String, String> payload = new HashMap<>(data);
+        payload.put("MSG_ID", uuid);
 
-        Notification notification = Notification
+
+        final Notification notification = Notification
                 .builder()
                 .setTitle(title)
                 .setBody(body)
                 .build();
 
-        Message message = Message
+        final Message message = Message
                 .builder()
-                .putAllData(data)
+                .putAllData(payload)
                 .setToken(token)
                 .setNotification(notification)
                 .setApnsConfig(getApnsConfig(apsCategory, apnsPushType.ALERT, apnsPriority.MEDIUM))
