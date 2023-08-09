@@ -8,6 +8,8 @@ import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,6 +17,7 @@ import java.util.*;
 @Service
 public class StudyService {
 
+    private static final Logger log = LoggerFactory.getLogger(StudyService.class);
     private final StudyRepository studyRepository;
     private final StudyAclRepository aclRepository;
     private final UserRepository userRepo;
@@ -26,6 +29,7 @@ public class StudyService {
     private final ElasticService elasticService;
 
     private final PushNotificationService pushNotificationService;
+
 
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
                         StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService,
@@ -110,6 +114,7 @@ public class StudyService {
                 });
                 participantService.alignParticipantsWithStudyState(s);
             } catch (Exception e) {
+                log.warn("Could not set new state for study id {}; old state: {}; new state: {}", studyId, oldState.getValue(), s.getStudyState().getValue());
                 //ROLLBACK
                 studyRepository.setStateById(studyId, oldState);
                 studyRepository.getById(studyId).ifPresent(this::alignWithStudyState);
