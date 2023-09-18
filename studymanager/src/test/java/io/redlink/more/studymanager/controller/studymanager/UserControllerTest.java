@@ -28,6 +28,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -41,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({UserApiV1Controller.class})
 @EnableConfigurationProperties(MoreAuthProperties.class)
 @AutoConfigureMockMvc(addFilters = false)
+@TestPropertySource(properties = "more.auth.claims.roles=my_roles")
 class UserControllerTest {
 
     @Autowired

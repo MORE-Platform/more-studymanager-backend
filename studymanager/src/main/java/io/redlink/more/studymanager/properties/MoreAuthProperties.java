@@ -25,7 +25,7 @@ public record MoreAuthProperties(
     ) {
         public ClaimsProperties {
             institution = StringUtils.defaultIfEmpty(institution, "org");
-            roles = StringUtils.defaultIfEmpty(roles, "roles");
+            roles = StringUtils.defaultIfEmpty(roles, "realm_access.roles");
         }
     }
 
