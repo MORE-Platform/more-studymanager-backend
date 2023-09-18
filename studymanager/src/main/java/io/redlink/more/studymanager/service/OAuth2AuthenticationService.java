@@ -15,7 +15,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.ClaimAccessor;
@@ -23,6 +26,8 @@ import org.springframework.security.oauth2.core.oidc.IdTokenClaimAccessor;
 import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
 
 public class OAuth2AuthenticationService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(OAuth2AuthenticationService.class);
 
     private final Map<String, Set<PlatformRole>> roleMapping;
     private final MoreAuthProperties.ClaimsProperties claimSettings;
@@ -76,7 +81,7 @@ public class OAuth2AuthenticationService {
                     claims.getSubject(),
                     claims.getFullName(),
                     Boolean.TRUE.equals(claims.getEmailVerified()) ? claims.getEmail() : null,
-                    claims.getClaimAsString(claimSettings.institution()),
+                    readPath(claims, claimSettings.institution(), ClaimAccessor::getClaimAsString),
                     extractRoles(claims)
             );
         }
@@ -95,10 +100,20 @@ public class OAuth2AuthenticationService {
     }
 
     public Set<PlatformRole> extractRoles(ClaimAccessor token) {
-        return mapToRoles(token.getClaimAsStringList(claimSettings.roles()));
+        final List<String> tokenRoles = readPath(token, claimSettings.roles(), ClaimAccessor::getClaimAsStringList);
+        if (tokenRoles == null) {
+            LOG.warn("Could not determine PlatformRoles, no roles-claim present in '{}'", claimSettings.roles());
+            return Set.of();
+        }
+
+        return mapToRoles(tokenRoles);
     }
 
     private Set<PlatformRole> mapToRoles(List<String> roles) {
+        if (roles == null) {
+            return Set.of();
+        }
+
         return roles.stream()
                 .map(roleMapping::get)
                 .filter(Objects::nonNull)
@@ -111,5 +126,17 @@ public class OAuth2AuthenticationService {
         return getAuthenticatedUser(userInfo).isValid();
     }
 
+    private static <T> T readPath(ClaimAccessor token, String claimPath, BiFunction<ClaimAccessor, String, T> converter) {
+        final String[] path = claimPath.split("\\.");
+        var t = token;
+        for (int i = 0; i < path.length - 1; i++) {
+            final var claimAsMap = t.getClaimAsMap(path[i]);
+            if (claimAsMap == null) {
+                return null;
+            }
+            t = new AttributeMapClaimAccessor(claimAsMap);
+        }
+        return converter.apply(t, path[path.length - 1]);
+    }
 
 }
