@@ -8,13 +8,16 @@ import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 
 import java.util.List;
 
-public class PushNotificationActionFactory extends ActionFactory<PushNotificationAction, ActionProperties> {
-
+public class TriggerObservationActionFactory extends ActionFactory<PushNotificationAction, ActionProperties> {
     private static List<Value> properties = List.of(
             new StringValue("title")
                     .setRequired(true),
             new StringTextValue("message")
+                    .setRequired(true),
+            new TriggerObservationValue("observation")
                     .setRequired(true)
+                    .setDescription("intervention.factory.actions.triggerObservation.properties.observation.description")
+                    .setName("intervention.factory.actions.triggerObservation.properties.observation.name")
     );
     @Override
     public PushNotificationAction create(MoreActionSDK sdk, ActionProperties properties) throws ConfigurationValidationException {
@@ -23,17 +26,17 @@ public class PushNotificationActionFactory extends ActionFactory<PushNotificatio
 
     @Override
     public String getId() {
-        return "push-notification-action";
+        return "trigger-observation-action";
     }
 
     @Override
     public String getTitle() {
-        return "intervention.factory.actions.pushNotification.title";
+        return "intervention.factory.actions.triggerObservation.title";
     }
 
     @Override
     public String getDescription() {
-        return "intervention.factory.actions.pushNotification.description";
+        return "intervention.factory.actions.triggerObservation.description";
     }
 
     @Override

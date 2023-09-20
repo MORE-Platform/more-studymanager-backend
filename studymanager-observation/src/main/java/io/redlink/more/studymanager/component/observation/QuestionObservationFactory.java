@@ -64,7 +64,4 @@ public class QuestionObservationFactory<C extends Observation<P>, P extends Obse
     public MeasurementSet getMeasurementSet() {
         return measurements;
     }
-
-    @Override
-    public Boolean getHidden() { return false; }
 }
