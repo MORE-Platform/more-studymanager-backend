@@ -32,7 +32,25 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
             ctx.putIntervention(interventionId);
             ctx.putAction(actionId, actionType);
 
-            if (sdk.sendPushNotification(studyId, participantId, title, message)) {
+            if (sdk.sendPushNotification(studyId, participantId, title, message, null)) {
+                sdk.storeDatapoint(ElasticDataPoint.Type.action, studyId, studyGroupId, participantId, actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
+            }
+        }
+    }
+
+    @Override
+    public void triggerObservation(String title, String message, String factoryId, int observationId) {
+        try (var ctx = LoggingUtils.createContext()) {
+            ctx.putStudy(studyId);
+            ctx.putStudyGroup(studyGroupId);
+            ctx.putParticipant(participantId);
+            ctx.putIntervention(interventionId);
+            ctx.putAction(actionId, actionType);
+
+            //TODO still android specific
+            String deepLink = String.format("app://io.redlink.more.app.android/%s?observationId=%s", factoryId, observationId);
+
+            if (sdk.sendPushNotification(studyId, participantId, title, message, Map.of("deepLink", deepLink))) {
                 sdk.storeDatapoint(ElasticDataPoint.Type.action, studyId, studyGroupId, participantId, actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
             }
         }

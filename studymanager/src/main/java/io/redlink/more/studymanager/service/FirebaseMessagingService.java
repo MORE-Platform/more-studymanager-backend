@@ -43,31 +43,38 @@ public class FirebaseMessagingService {
         this.firebaseMessaging = firebaseMessaging;
     }
 
-    public String sendNotification(String title, String body, String token, Map<String, String> data) throws FirebaseMessagingException {
+    public String sendNotification(String title, String body, Map<String, String> data, String token) throws FirebaseMessagingException {
 
-        final String uuid = UUID.randomUUID().toString();
-        final Map<String, String> payload = new HashMap<>(data);
-        payload.put("MSG_ID", uuid);
+        String uuid = UUID.randomUUID().toString();
+        if(data == null) {
+            data = Map.of("MSG_ID", uuid);
+        } else {
+            data = new HashMap<>(data);
+            data.put("MSG_ID", uuid);
+        }
 
+        Message.Builder messageBuilder = Message.builder();
 
-        final Notification notification = Notification
-                .builder()
-                .setTitle(title)
-                .setBody(body)
-                .build();
-
-        final Message message = Message
-                .builder()
-                .putAllData(payload)
+        messageBuilder.putAllData(data)
                 .setToken(token)
-                .setNotification(notification)
-                .setApnsConfig(getApnsConfig(apsCategory, apnsPushType.ALERT, apnsPriority.MEDIUM))
-                .build();
+                .setApnsConfig(getApnsConfig(apsCategory, apnsPushType.ALERT, apnsPriority.MEDIUM));
+
+        if(title != null && body != null) {
+            Notification notification = Notification
+                    .builder()
+                    .setTitle(title)
+                    .setBody(body)
+                    .build();
+            messageBuilder.setNotification(notification);
+        }
+
+        Message message = messageBuilder.build();
+
         if (firebaseMessaging == null) {
-            log.warn("Not sending Message {}", title);
+            log.warn("Not sending Message");
         } else {
             final String msgId = firebaseMessaging.send(message);
-            log.debug("Successfully sent FCM Message {} ({}:{})", title, msgId, uuid);
+            log.debug("Successfully sent FCM Message ({}:{})", msgId, uuid);
             return uuid;
         }
         return null;
@@ -80,27 +87,5 @@ public class FirebaseMessagingService {
                 .putHeader(apnsPushTypeHeader, type.value)
                 .setAps(Aps.builder().setCategory(apsCategory).build())
                 .build();
-    }
-
-    public String sendDataNotification(Map<String, String> data, String token) throws FirebaseMessagingException {
-        String uuid = UUID.randomUUID().toString();
-        Map<String,String> dataUp = new HashMap<>(data);
-        dataUp.put("MSG_ID", uuid);
-
-        Message message = Message
-                .builder()
-                .setToken(token)
-                .setApnsConfig(getApnsConfig(apsDataCategory, apnsPushType.BACKGROUND, apnsPriority.MEDIUM))
-                .putAllData(dataUp)
-                .build();
-
-        if (firebaseMessaging == null) {
-            log.warn("Not sending data Message {}", MapperUtils.writeValueAsString(data));
-        } else {
-            final String msgId = firebaseMessaging.send(message);
-            log.debug("Successfully sent FCM data Message {}:{}", msgId, uuid);
-            return uuid;
-        }
-        return null;
     }
 }

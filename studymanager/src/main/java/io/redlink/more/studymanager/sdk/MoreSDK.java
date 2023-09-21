@@ -117,9 +117,9 @@ public class MoreSDK {
         return participants;
     }
 
-    public boolean sendPushNotification(long studyId, int participantId, String title, String message) {
+    public boolean sendPushNotification(long studyId, int participantId, String title, String message, Map<String, String> data) {
         LOGGER.debug("Sending message to participant (sid:{}, pid:{}): {} -- {}", studyId, participantId, title, message);
-        return pushNotificationService.sendPushNotification(studyId, participantId, title, message, Collections.emptyMap());
+        return pushNotificationService.sendPushNotification(studyId, participantId, title, message, data);
     }
 
     public void storeDatapoint(
