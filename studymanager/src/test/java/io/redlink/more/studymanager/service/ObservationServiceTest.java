@@ -96,9 +96,9 @@ class ObservationServiceTest {
         assertThat(accFactory.getHidden()).isTrue();
         assertThat(polFactory.getHidden()).isTrue();
         assertThat(gpsFactory.getHidden()).isTrue();
-        assertThat(limFactory.getHidden()).isFalse();
-        assertThat(qstFactory.getHidden()).isFalse();
-        assertThat(extFactory.getHidden()).isTrue();
+        assertThat(limFactory.getHidden()).isTrue();
+        assertThat(qstFactory.getHidden()).isTrue();
+        assertThat(extFactory.getHidden()).isFalse();
 
     }
 }
