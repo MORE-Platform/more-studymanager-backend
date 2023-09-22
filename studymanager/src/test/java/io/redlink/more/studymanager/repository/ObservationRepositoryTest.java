@@ -57,7 +57,8 @@ class ObservationRepositoryTest {
                         .setDateStart(startTime)
                         .setDateEnd(endTime)
                         .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)))
-                .setHidden(true);
+                .setHidden(true)
+                .setNoSchedule(false);
 
         Observation observationResponse = observationRepository.insert(observation);
 
@@ -84,7 +85,9 @@ class ObservationRepositoryTest {
                 .setStudyId(studyId)
                 .setType("gps")
                 .setType("new Title")
-                .setHidden(true));
+                .setHidden(true)
+                .setNoSchedule(true)
+        );
 
         assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(2);
         observationRepository.deleteObservation(studyId, observationResponse.getObservationId());

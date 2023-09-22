@@ -24,11 +24,11 @@ import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNu
 @Component
 public class ObservationRepository {
 
-    private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule, hidden) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden)";
+    private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule)";
     private static final String GET_OBSERVATION_BY_IDS = "SELECT * FROM observations WHERE study_id = ? AND observation_id = ?";
     private static final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
     private static final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = ?";
-    private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now(), hidden=:hidden WHERE study_id=:study_id AND observation_id=:observation_id";
+    private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now(), hidden=:hidden, no_schedule=:no_schedule WHERE study_id=:study_id AND observation_id=:observation_id";
     private static final String DELETE_ALL = "DELETE FROM observations";
     private static final String SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "INSERT INTO participant_observation_properties(study_id,participant_id,observation_id,properties) VALUES (:study_id,:participant_id,:observation_id,:properties::jsonb) ON CONFLICT (study_id, participant_id, observation_id) DO UPDATE SET properties = EXCLUDED.properties";
     private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT properties FROM participant_observation_properties WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
@@ -119,7 +119,8 @@ public class ObservationRepository {
                 .addValue("study_group_id", observation.getStudyGroupId())
                 .addValue("properties", MapperUtils.writeValueAsString(observation.getProperties()))
                 .addValue("schedule", MapperUtils.writeValueAsString(observation.getSchedule()))
-                .addValue("hidden", observation.getHidden());
+                .addValue("hidden", observation.getHidden())
+                .addValue("no_schedule", observation.getNoSchedule());
     }
 
     private static RowMapper<ObservationProperties> getParticipantObservationPropertiesRowMapper() {
@@ -139,6 +140,7 @@ public class ObservationRepository {
                 .setSchedule(MapperUtils.readValue(rs.getString("schedule"), Event.class))
                 .setCreated(RepositoryUtils.readInstant(rs, "created"))
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
-                .setHidden(rs.getBoolean("hidden"));
+                .setHidden(rs.getBoolean("hidden"))
+                .setNoSchedule(rs.getBoolean("no_schedule"));
     }
 }

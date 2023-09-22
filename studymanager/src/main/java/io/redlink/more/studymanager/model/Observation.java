@@ -17,7 +17,7 @@ public class Observation {
     private Instant created;
     private Instant modified;
     private Boolean hidden;
-
+    private Boolean noSchedule = false;
 
     public Long getStudyId() {
         return studyId;
@@ -122,6 +122,15 @@ public class Observation {
 
     public Observation setHidden(Boolean hidden) {
         this.hidden = hidden;
+        return this;
+    }
+
+    public Boolean getNoSchedule() {
+        return noSchedule;
+    }
+
+    public Observation setNoSchedule(Boolean noSchedule) {
+        this.noSchedule = noSchedule;
         return this;
     }
 }
