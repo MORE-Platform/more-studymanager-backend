@@ -4,11 +4,14 @@ import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.utils.LoggingUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Map;
 
 public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreActionSDK {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MoreActionSDKImpl.class);
     private final int interventionId;
     private final int actionId;
     private final String actionType;
@@ -49,6 +52,8 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
 
             //TODO still android specific
             String deepLink = String.format("app://io.redlink.more.app.android/%s?observationId=%s", factoryId, observationId);
+
+            LOGGER.info("Trigger observation for participant {} with deepLink <{}>", participantId, deepLink);
 
             if (sdk.sendPushNotification(studyId, participantId, title, message, Map.of("deepLink", deepLink))) {
                 sdk.storeDatapoint(ElasticDataPoint.Type.action, studyId, studyGroupId, participantId, actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
