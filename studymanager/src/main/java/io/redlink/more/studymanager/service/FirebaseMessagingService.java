@@ -33,7 +33,6 @@ public class FirebaseMessagingService {
         }
     }
     private static final String apnsPriorityHeader = "apns-priority";
-    private static final String apsCategory = "NEW_MESSAGE_CATEGORY";
     private static final String apsDataCategory = "DATA_CATEGORY";
     private static final String apnsPushTypeHeader = "apns-push-type";
 
@@ -46,6 +45,9 @@ public class FirebaseMessagingService {
     public String sendNotification(String title, String body, Map<String, String> data, String token) throws FirebaseMessagingException {
 
         String uuid = UUID.randomUUID().toString();
+
+        log.info("Send data: {}", MapperUtils.writeValueAsString(data));
+
         if(data == null) {
             data = Map.of("MSG_ID", uuid);
         } else {
@@ -55,9 +57,10 @@ public class FirebaseMessagingService {
 
         Message.Builder messageBuilder = Message.builder();
 
-        messageBuilder.putAllData(data)
+        messageBuilder
+                .putAllData(data)
                 .setToken(token)
-                .setApnsConfig(getApnsConfig(apsCategory, apnsPushType.ALERT, apnsPriority.MEDIUM));
+                .setApnsConfig(getApnsConfig(apsDataCategory, apnsPushType.ALERT, apnsPriority.MEDIUM));
 
         if(title != null && body != null) {
             Notification notification = Notification

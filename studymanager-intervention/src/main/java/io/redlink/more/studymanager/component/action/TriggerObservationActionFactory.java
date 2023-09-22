@@ -8,7 +8,7 @@ import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 
 import java.util.List;
 
-public class TriggerObservationActionFactory extends ActionFactory<PushNotificationAction, ActionProperties> {
+public class TriggerObservationActionFactory extends ActionFactory<TriggerObservationAction, ActionProperties> {
     private static List<Value> properties = List.of(
             new StringValue("title")
                     .setRequired(true),
@@ -20,8 +20,8 @@ public class TriggerObservationActionFactory extends ActionFactory<PushNotificat
                     .setName("intervention.factory.actions.triggerObservation.properties.observation.name")
     );
     @Override
-    public PushNotificationAction create(MoreActionSDK sdk, ActionProperties properties) throws ConfigurationValidationException {
-        return new PushNotificationAction(sdk, validate(properties));
+    public TriggerObservationAction create(MoreActionSDK sdk, ActionProperties properties) throws ConfigurationValidationException {
+        return new TriggerObservationAction(sdk, validate(properties));
     }
 
     @Override
