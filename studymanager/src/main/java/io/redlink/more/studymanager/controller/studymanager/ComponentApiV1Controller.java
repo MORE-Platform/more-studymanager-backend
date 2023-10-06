@@ -1,10 +1,7 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.redlink.more.studymanager.api.v1.model.ComponentFactoryDTO;
-import io.redlink.more.studymanager.api.v1.model.ComponentFactoryMeasurementsInnerDTO;
-import io.redlink.more.studymanager.api.v1.model.ValidationReportDTO;
-import io.redlink.more.studymanager.api.v1.model.ValidationReportItemDTO;
+import io.redlink.more.studymanager.api.v1.model.*;
 import io.redlink.more.studymanager.api.v1.webservices.ComponentsApi;
 import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
@@ -12,6 +9,7 @@ import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.factory.ComponentFactory;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
+import io.redlink.more.studymanager.core.io.Visibility;
 import io.redlink.more.studymanager.core.model.User;
 import io.redlink.more.studymanager.core.properties.ComponentProperties;
 import io.redlink.more.studymanager.core.webcomponent.WebComponent;
@@ -146,9 +144,16 @@ public class ComponentApiV1Controller implements ComponentsApi {
                 .description(factory.getDescription())
                 .hasWebComponent(factory.hasWebComponent());
         if(ObservationFactory.class.isAssignableFrom(factory.getClass())) {
-            return c.hidden(((ObservationFactory) factory).getHidden());
+            c.hidden(((ObservationFactory) factory).getHidden());
+            c.visibility(toVisibilityDTO(((ObservationFactory) factory).getVisibility()));
         }
         return c;
+    }
+
+    private VisibilityDTO toVisibilityDTO(Visibility visibility) {
+        return new VisibilityDTO()
+                .changeable(visibility.isChangeable())
+                .hiddenByDefault(visibility.isHiddenByDefault());
     }
 
     private List<ComponentFactoryMeasurementsInnerDTO> getMeasurements(ComponentFactory factory) {

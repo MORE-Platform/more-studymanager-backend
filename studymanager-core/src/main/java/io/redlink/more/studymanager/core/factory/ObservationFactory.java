@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.core.factory;
 
 import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.io.Visibility;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
@@ -16,7 +17,12 @@ public abstract class ObservationFactory<C extends Observation<P>, P extends Obs
 
     public abstract MeasurementSet getMeasurementSet();
 
+    @Deprecated
     public Boolean getHidden() {
         return true;
+    }
+
+    public Visibility getVisibility() {
+        return Visibility.DEFAULT;
     }
 }

@@ -4,12 +4,16 @@ import io.redlink.more.studymanager.component.observation.measurement.GenericMea
 import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
+import io.redlink.more.studymanager.core.io.Visibility;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
 public class ExternalObservationFactory<C extends Observation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
+
+    private static final Visibility visibility = new Visibility(false, true);
+
     @Override
     public String getId() {
         return "external-observation";
@@ -38,5 +42,10 @@ public class ExternalObservationFactory<C extends Observation<P>, P extends Obse
     @Override
     public Boolean getHidden() {
         return false;
+    }
+
+    @Override
+    public Visibility getVisibility() {
+        return visibility;
     }
 }
