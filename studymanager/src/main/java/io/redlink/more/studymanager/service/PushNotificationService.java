@@ -7,6 +7,7 @@ import io.redlink.more.studymanager.model.PushNotificationsToken;
 import io.redlink.more.studymanager.repository.NotificationRepository;
 import io.redlink.more.studymanager.repository.PushNotificationTokenRepository;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -42,13 +43,21 @@ public class PushNotificationService {
                 String msgId = this.firebaseService.sendNotification(title, message, data, token.token());
                 if(msgId != null) {
                     LOG.info("Store Text Message (sid:{} pid:{}, mid:{})", studyID, participantId, msgId);
+                    //TODO kind of workaround, data handling should be cleaned up
+                    Map<String,String> dataToStore = new HashMap<>();
+                    dataToStore.put("title", title);
+                    dataToStore.put("body", message);
+                    if(data != null && data.containsKey("deepLink")) {
+                        dataToStore.put("deepLink", data.get("deepLink"));
+                    }
+
                     this.notificationRepository.insert(
                             new Notification()
                                     .setStudyId(studyID)
                                     .setParticipantId(participantId)
                                     .setMsgId(msgId)
                                     .setType(Notification.Type.TEXT)
-                                    .setData(Map.of("title", title, "body", message))
+                                    .setData(dataToStore)
                     );
                 }
                 return true;
