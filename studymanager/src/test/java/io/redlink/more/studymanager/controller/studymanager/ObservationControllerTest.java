@@ -3,7 +3,9 @@ package io.redlink.more.studymanager.controller.studymanager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.EventDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
+import io.redlink.more.studymanager.api.v1.model.ObservationScheduleDTO;
 import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.service.IntegrationService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ObservationService;
@@ -136,7 +138,7 @@ class ObservationControllerTest {
         ObservationDTO observationRequest = new ObservationDTO()
                 .studyId(1L)
                 .title("a different title")
-                .schedule(MapperUtils.readValue(new HashMap<String, String>(), EventDTO.class))
+                .schedule(MapperUtils.readValue("{\"type\":\"Event\"}", ObservationScheduleDTO.class))
                 .observationId(1);
 
         mvc.perform(post("/api/v1/studies/1/observations")
@@ -146,7 +148,7 @@ class ObservationControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value("title"))
                 .andExpect(jsonPath("$.studyId").value(observationRequest.getStudyId()))
-                .andExpect(jsonPath("$.schedule").value(MapperUtils.readValue(new HashMap<String, String>(), EventDTO.class)))
+                .andExpect(jsonPath("$.schedule").value(MapperUtils.readValue("{\"type\":\"Event\"}", ObservationScheduleDTO.class)))
                 .andExpect(jsonPath("$.modified").exists())
                 .andExpect(jsonPath("$.created").exists());
     }

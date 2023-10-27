@@ -4,7 +4,7 @@ import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Action;
-import io.redlink.more.studymanager.model.Event;
+import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.utils.MapperUtils;

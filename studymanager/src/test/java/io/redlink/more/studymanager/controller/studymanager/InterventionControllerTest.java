@@ -8,7 +8,7 @@ import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
-import io.redlink.more.studymanager.model.Event;
+import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.Trigger;

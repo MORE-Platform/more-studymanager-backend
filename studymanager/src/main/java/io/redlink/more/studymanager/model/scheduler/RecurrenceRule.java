@@ -1,4 +1,4 @@
-package io.redlink.more.studymanager.model;
+package io.redlink.more.studymanager.model.scheduler;
 
 import java.time.Instant;
 import java.util.List;

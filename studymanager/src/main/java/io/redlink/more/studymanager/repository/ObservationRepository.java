@@ -3,7 +3,7 @@ package io.redlink.more.studymanager.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
-import io.redlink.more.studymanager.model.Event;
+import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import java.util.List;

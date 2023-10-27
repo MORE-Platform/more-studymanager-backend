@@ -1,5 +1,8 @@
 package io.redlink.more.studymanager.model;
 
+import io.redlink.more.studymanager.model.scheduler.Event;
+import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
+
 import java.time.Instant;
 
 public class Intervention {
@@ -8,7 +11,7 @@ public class Intervention {
     private String title;
     private String purpose;
     private Integer studyGroupId;
-    private Event schedule;
+    private ScheduleEvent schedule;
     private Instant created;
     private Instant modified;
 
@@ -57,11 +60,11 @@ public class Intervention {
         return this;
     }
 
-    public Event getSchedule() {
+    public ScheduleEvent getSchedule() {
         return schedule;
     }
 
-    public Intervention setSchedule(Event schedule) {
+    public Intervention setSchedule(ScheduleEvent schedule) {
         this.schedule = schedule;
         return this;
     }
