@@ -87,7 +87,7 @@ more:
     lime-survey-observation:
       username: '${LIME_ADMIN_USER:more-admin}'
       password: '${LIME_ADMIN_PWD:more-admin}'
-      baseUrl: '${LIME_BASE_URL:lime.platform-test.more.redlink.io}'
+      baseUrl: '${LIME_BASE_URL:https://lime.platform-test.more.redlink.io}'
       remoteUrl: '${LIME_URL:https://lime.platform-test.more.redlink.io/admin/remotecontrol}'
       surveyUrl: '${LIME_SURVEY_URL:https://lime.platform-test.more.redlink.io/index.php}'
       endUrl: '${LIME_END_SURVEY_URL:https://studymanager.platform-test.more.redlink.io/api/v1/components/observation/lime-survey-observation/end.html}'
