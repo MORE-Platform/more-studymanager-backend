@@ -1,5 +1,4 @@
 # More Studymanager Backend
-* [Architecture Decision Records](docs/adr)
 
 ## Development Setup
 
@@ -25,3 +24,7 @@ MORE_FE_KC_CLIENT_ID: study-manager
 ```
 
 [keycloak-dev]: https://github.com/MORE-Platform/more-auth-keycloak#connect-the-applications-to-keycloak
+
+## Planning & Documentation
+
+* [Architecture Decision Records](docs/adr)
