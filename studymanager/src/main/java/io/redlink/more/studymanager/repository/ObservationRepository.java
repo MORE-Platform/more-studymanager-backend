@@ -5,6 +5,7 @@ import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import java.util.List;
 import java.util.Optional;
@@ -137,7 +138,7 @@ public class ObservationRepository {
                 .setType(rs.getString("type"))
                 .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
                 .setProperties(MapperUtils.readValue(rs.getString("properties"), ObservationProperties.class))
-                .setSchedule(MapperUtils.readValue(rs.getString("schedule"), Event.class))
+                .setSchedule(MapperUtils.readValue(rs.getString("schedule"), ScheduleEvent.class))
                 .setCreated(RepositoryUtils.readInstant(rs, "created"))
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setHidden(rs.getBoolean("hidden"))
