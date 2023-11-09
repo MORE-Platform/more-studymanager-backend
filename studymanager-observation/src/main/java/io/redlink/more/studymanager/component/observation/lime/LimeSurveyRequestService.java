@@ -34,6 +34,10 @@ public class LimeSurveyRequestService {
         this.client = client;
     }
 
+    protected String getBaseUrl() {
+        return Optional.ofNullable(properties.get("baseUrl")).map(String::valueOf).orElse(null);
+    }
+
     protected void activateSurvey(String surveyId) {
         try{
             String sessionKey = getSessionKey();
