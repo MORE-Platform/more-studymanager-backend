@@ -5,6 +5,8 @@ import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 
+import java.util.Optional;
+
 public class StudyTransformer {
 
     private StudyTransformer() {}
@@ -28,9 +30,10 @@ public class StudyTransformer {
     }
 
     private static Duration toDuration(StudyDurationDTO duration) {
-        return new Duration()
-                .setValue(duration.getValue())
-                .setUnit(Duration.Unit.valueOf(duration.getUnit().getValue().toUpperCase()));
+        return Optional.of(duration).map(d -> new Duration()
+                    .setValue(d.getValue())
+                    .setUnit(Duration.Unit.valueOf(d.getUnit().getValue().toUpperCase())))
+                .orElse(null);
     }
 
     public static StudyDTO toStudyDTO_V1(Study study) {
@@ -60,8 +63,9 @@ public class StudyTransformer {
     }
 
     public static StudyDurationDTO toStudyDurationDTO(Duration duration) {
-        return new StudyDurationDTO()
-                .value(duration.getValue())
-                .unit(StudyDurationDTO.UnitEnum.fromValue(duration.getUnit().getValue()));
+        return Optional.ofNullable(duration).map(d -> new StudyDurationDTO()
+                    .value(d.getValue())
+                    .unit(StudyDurationDTO.UnitEnum.fromValue(d.getUnit().getValue())))
+                .orElse(null);
     }
 }
