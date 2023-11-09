@@ -29,7 +29,10 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
                 .forEach(data -> {
                     sdk.setPropertiesForParticipant(
                             Integer.parseInt(data.firstname()),
-                            new ObservationProperties(Map.of("token", data.token()))
+                            new ObservationProperties(
+                                    Map.of("token", data.token(),
+                                            "limeUrl", limeSurveyRequestService.getBaseUrl())
+                            )
                     );
                 });
         limeSurveyRequestService.setSurveyEndUrl(surveyId, sdk.getStudyId(), sdk.getObservationId());
