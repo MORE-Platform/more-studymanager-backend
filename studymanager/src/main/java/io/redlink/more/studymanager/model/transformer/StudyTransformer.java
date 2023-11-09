@@ -1,11 +1,9 @@
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.ContactDTO;
-import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
-import io.redlink.more.studymanager.api.v1.model.StudyDTO;
-import io.redlink.more.studymanager.api.v1.model.StudyStatusDTO;
+import io.redlink.more.studymanager.api.v1.model.*;
 import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.scheduler.Duration;
 
 public class StudyTransformer {
 
@@ -22,10 +20,17 @@ public class StudyTransformer {
                 .setPurpose(studyDTO.getPurpose())
                 .setFinishText(studyDTO.getFinishText())
                 .setParticipantInfo(studyDTO.getParticipantInfo())
+                .setDuration(toDuration(studyDTO.getDuration()))
                 .setConsentInfo(studyDTO.getConsentInfo())
                 .setPlannedStartDate(studyDTO.getPlannedStart())
                 .setPlannedEndDate(studyDTO.getPlannedEnd())
                 .setContact(ContactTransformer.fromContactDTO_V1(studyDTO.getContact()));
+    }
+
+    private static Duration toDuration(StudyDurationDTO duration) {
+        return new Duration()
+                .setValue(duration.getValue())
+                .setUnit(Duration.Unit.valueOf(duration.getUnit().getValue().toUpperCase()));
     }
 
     public static StudyDTO toStudyDTO_V1(Study study) {
@@ -37,6 +42,7 @@ public class StudyTransformer {
                 .purpose(study.getPurpose())
                 .finishText(study.getFinishText())
                 .participantInfo(study.getParticipantInfo())
+                .duration(toStudyDurationDTO(study.getDuration()))
                 .consentInfo(study.getConsentInfo())
                 .status(StudyStatusDTO.fromValue(study.getStudyState().getValue()))
                 .start(study.getStartDate())
@@ -51,5 +57,11 @@ public class StudyTransformer {
 
     public static Study.Status fromStatusChangeDTO_V1(StatusChangeDTO statusChangeDTO) {
         return Study.Status.valueOf(statusChangeDTO.getStatus().getValue().toUpperCase());
+    }
+
+    public static StudyDurationDTO toStudyDurationDTO(Duration duration) {
+        return new StudyDurationDTO()
+                .value(duration.getValue())
+                .unit(StudyDurationDTO.UnitEnum.fromValue(duration.getUnit().getValue()));
     }
 }

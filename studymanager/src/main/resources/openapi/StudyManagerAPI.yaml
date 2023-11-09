@@ -1373,7 +1373,7 @@ components:
       type: object
       properties:
         value:
-          type: number
+          type: integer
         unit:
           type: string
           description: unit of time
