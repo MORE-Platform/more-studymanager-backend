@@ -30,7 +30,7 @@ public class StudyTransformer {
     }
 
     private static Duration toDuration(StudyDurationDTO duration) {
-        return Optional.of(duration).map(d -> new Duration()
+        return Optional.ofNullable(duration).map(d -> new Duration()
                     .setValue(d.getValue())
                     .setUnit(Duration.Unit.valueOf(d.getUnit().getValue().toUpperCase())))
                 .orElse(null);
