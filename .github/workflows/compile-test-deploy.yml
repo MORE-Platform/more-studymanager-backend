@@ -1,7 +1,6 @@
 name: Test, Compile and Deploy
 on:
   workflow_dispatch:
-  push:
 
 jobs:
   Compile-and-Test:
