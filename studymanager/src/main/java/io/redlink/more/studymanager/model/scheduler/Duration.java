@@ -2,6 +2,7 @@ package io.redlink.more.studymanager.model.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.redlink.more.studymanager.api.v1.model.DurationDTO;
+import io.redlink.more.studymanager.api.v1.model.StudyDurationDTO;
 
 public class Duration {
 
@@ -67,6 +68,32 @@ public class Duration {
                     throw new IllegalArgumentException("Unexpected value '" + unit + "'");
             }
         }
+
+        public static Unit fromStudyDurationDTOUnit(StudyDurationDTO.UnitEnum unit) {
+            switch (unit) {
+                case MINUTE:
+                    return MINUTE;
+                case HOUR:
+                    return HOUR;
+                case DAY:
+                    return DAY;
+                default:
+                    throw new IllegalArgumentException("Unexpected value '" + unit + "'");
+            }
+        }
+
+        public static StudyDurationDTO.UnitEnum toStudyDurationDTOUnit(Unit unit) {
+            switch (unit) {
+                case MINUTE:
+                    return StudyDurationDTO.UnitEnum.MINUTE;
+                case HOUR:
+                    return StudyDurationDTO.UnitEnum.HOUR;
+                case DAY:
+                    return StudyDurationDTO.UnitEnum.DAY;
+                default:
+                    throw new IllegalArgumentException("Unexpected value '" + unit + "'");
+            }
+        }
     }
 
     private Unit unit;
@@ -90,6 +117,22 @@ public class Duration {
     public Duration setUnit(Unit unit) {
         this.unit = unit;
         return this;
+    }
+
+    public static StudyDurationDTO toStudyDurationDTO(Duration duration) {
+        if (duration != null)
+            return new StudyDurationDTO()
+                    .value(duration.getValue())
+                    .unit(Unit.toStudyDurationDTOUnit(duration.unit));
+        else return null;
+    }
+
+    public static Duration fromStudyDurationDTO(StudyDurationDTO dto) {
+        if (dto != null)
+            return new Duration()
+                    .setValue(dto.getValue())
+                    .setUnit(Unit.fromStudyDurationDTOUnit(dto.getUnit()));
+        else return null;
     }
 
     public static DurationDTO toDurationDTO(Duration duration) {

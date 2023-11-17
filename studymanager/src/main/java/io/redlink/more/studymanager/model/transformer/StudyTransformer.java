@@ -22,18 +22,11 @@ public class StudyTransformer {
                 .setPurpose(studyDTO.getPurpose())
                 .setFinishText(studyDTO.getFinishText())
                 .setParticipantInfo(studyDTO.getParticipantInfo())
-                .setDuration(toDuration(studyDTO.getDuration()))
+                .setDuration(Duration.fromStudyDurationDTO(studyDTO.getDuration()))
                 .setConsentInfo(studyDTO.getConsentInfo())
                 .setPlannedStartDate(studyDTO.getPlannedStart())
                 .setPlannedEndDate(studyDTO.getPlannedEnd())
                 .setContact(ContactTransformer.fromContactDTO_V1(studyDTO.getContact()));
-    }
-
-    private static Duration toDuration(StudyDurationDTO duration) {
-        return Optional.ofNullable(duration).map(d -> new Duration()
-                    .setValue(d.getValue())
-                    .setUnit(Duration.Unit.valueOf(d.getUnit().getValue().toUpperCase())))
-                .orElse(null);
     }
 
     public static StudyDTO toStudyDTO_V1(Study study) {
@@ -45,7 +38,7 @@ public class StudyTransformer {
                 .purpose(study.getPurpose())
                 .finishText(study.getFinishText())
                 .participantInfo(study.getParticipantInfo())
-                .duration(toStudyDurationDTO(study.getDuration()))
+                .duration(Duration.toStudyDurationDTO(study.getDuration()))
                 .consentInfo(study.getConsentInfo())
                 .status(StudyStatusDTO.fromValue(study.getStudyState().getValue()))
                 .start(study.getStartDate())
@@ -60,12 +53,5 @@ public class StudyTransformer {
 
     public static Study.Status fromStatusChangeDTO_V1(StatusChangeDTO statusChangeDTO) {
         return Study.Status.valueOf(statusChangeDTO.getStatus().getValue().toUpperCase());
-    }
-
-    public static StudyDurationDTO toStudyDurationDTO(Duration duration) {
-        return Optional.ofNullable(duration).map(d -> new StudyDurationDTO()
-                    .value(d.getValue())
-                    .unit(StudyDurationDTO.UnitEnum.fromValue(d.getUnit().getValue())))
-                .orElse(null);
     }
 }
