@@ -337,6 +337,23 @@ paths:
           description: Cleared
         '409':
           description: removal failed
+  /studies/{studyId}/calendar.ics:
+    get:
+      tags:
+        - calendar
+      description: Get study calendar for study as iCal
+      operationId: getStudyCalendar
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+      responses:
+        '200':
+          description: Successfully returned study calendar
+          content:
+            text/calendar:
+              schema:
+                type: string
+        '404':
+          description: Not found
 
   /studies/{studyId}/studyGroups:
     post:
