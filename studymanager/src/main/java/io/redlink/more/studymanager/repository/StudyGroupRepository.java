@@ -10,6 +10,8 @@ package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.scheduler.Duration;
+import io.redlink.more.studymanager.utils.MapperUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,7 +30,7 @@ public class StudyGroupRepository {
     private static final String GET_STUDY_GROUP_BY_IDS = "SELECT * FROM study_groups WHERE study_id = ? AND study_group_id = ?";
     private static final String LIST_STUDY_GROUPS_ORDER_BY_STUDY_GROUP_ID = "SELECT * FROM study_groups WHERE study_id = ? ORDER BY study_group_id";
     private static final String UPDATE_STUDY =
-            "UPDATE study_groups SET title = :title, purpose = :purpose, modified = now() WHERE study_id = :study_id AND study_group_id = :study_group_id";
+            "UPDATE study_groups SET title = :title, purpose = :purpose, duration = :duration::jsonb, modified = now() WHERE study_id = :study_id AND study_group_id = :study_group_id";
 
     private static final String DELETE_STUDY_GROUP_BY_ID = "DELETE FROM study_groups WHERE study_id = ? AND study_group_id = ?";
     private static final String CLEAR_STUDY_GROUPS = "DELETE FROM study_groups";
@@ -78,7 +80,8 @@ public class StudyGroupRepository {
         return new MapSqlParameterSource()
                 .addValue("study_id", studyGroup.getStudyId())
                 .addValue("title", studyGroup.getTitle())
-                .addValue("purpose", studyGroup.getPurpose());
+                .addValue("purpose", studyGroup.getPurpose())
+                .addValue("duration", MapperUtils.writeValueAsString(studyGroup.getDuration()));
     }
 
     private static RowMapper<StudyGroup> getStudyGroupRowMapper() {
@@ -87,6 +90,7 @@ public class StudyGroupRepository {
                 .setStudyGroupId(rs.getInt("study_group_id"))
                 .setTitle(rs.getString("title"))
                 .setPurpose(rs.getString("purpose"))
+                .setDuration(MapperUtils.readValue(rs.getString("duration"), Duration.class))
                 .setCreated(RepositoryUtils.readInstant(rs, "created"))
                 .setModified(RepositoryUtils.readInstant(rs, "modified"));
     }

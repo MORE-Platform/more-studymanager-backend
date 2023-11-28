@@ -8,12 +8,12 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.ContactDTO;
-import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
-import io.redlink.more.studymanager.api.v1.model.StudyDTO;
-import io.redlink.more.studymanager.api.v1.model.StudyStatusDTO;
+import io.redlink.more.studymanager.api.v1.model.*;
 import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.scheduler.Duration;
+
+import java.util.Optional;
 
 public class StudyTransformer {
 
@@ -30,6 +30,7 @@ public class StudyTransformer {
                 .setPurpose(studyDTO.getPurpose())
                 .setFinishText(studyDTO.getFinishText())
                 .setParticipantInfo(studyDTO.getParticipantInfo())
+                .setDuration(Duration.fromStudyDurationDTO(studyDTO.getDuration()))
                 .setConsentInfo(studyDTO.getConsentInfo())
                 .setPlannedStartDate(studyDTO.getPlannedStart())
                 .setPlannedEndDate(studyDTO.getPlannedEnd())
@@ -45,6 +46,7 @@ public class StudyTransformer {
                 .purpose(study.getPurpose())
                 .finishText(study.getFinishText())
                 .participantInfo(study.getParticipantInfo())
+                .duration(Duration.toStudyDurationDTO(study.getDuration()))
                 .consentInfo(study.getConsentInfo())
                 .status(StudyStatusDTO.fromValue(study.getStudyState().getValue()))
                 .start(study.getStartDate())

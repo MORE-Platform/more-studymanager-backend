@@ -11,6 +11,8 @@ package io.redlink.more.studymanager.repository;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
+import io.redlink.more.studymanager.model.scheduler.Event;
+import io.redlink.more.studymanager.model.scheduler.RecurrenceRule;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -72,7 +74,7 @@ class InterventionRepositoryTest {
 
         assertThat(interventionResponse.getInterventionId()).isNotNull();
         assertThat(interventionResponse.getTitle()).isEqualTo(intervention.getTitle());
-        assertThat(interventionResponse.getSchedule().getDateStart()).isEqualTo(startTime);
+        assertThat(((Event)interventionResponse.getSchedule()).getDateStart()).isEqualTo(startTime);
         assertThat(MapperUtils.writeValueAsString(interventionResponse.getSchedule()))
                 .isEqualTo(MapperUtils.writeValueAsString(intervention.getSchedule()));
 

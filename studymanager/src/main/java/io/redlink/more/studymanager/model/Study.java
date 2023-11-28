@@ -8,6 +8,8 @@
  */
 package io.redlink.more.studymanager.model;
 
+import io.redlink.more.studymanager.model.scheduler.Duration;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Set;
@@ -19,6 +21,7 @@ public class Study {
     private String participantInfo;
     private String consentInfo;
     private String finishText;
+    private Duration duration;
     private Status studyState;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -97,6 +100,15 @@ public class Study {
 
     public Study setFinishText(String finishText) {
         this.finishText = finishText;
+        return this;
+    }
+
+    public Duration getDuration() {
+        return duration;
+    }
+
+    public Study setDuration(Duration duration) {
+        this.duration = duration;
         return this;
     }
 
@@ -192,6 +204,7 @@ public class Study {
                 ", endDate=" + endDate +
                 ", plannedStartDate=" + plannedStartDate +
                 ", plannedEndDate=" + plannedEndDate +
+                ", duration=" + duration +
                 ", created=" + created +
                 ", modified=" + modified +
                 ", institute=" + contact.getInstitute() +

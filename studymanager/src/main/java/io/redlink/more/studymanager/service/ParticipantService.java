@@ -45,6 +45,10 @@ public class ParticipantService {
         return participantRepository.listParticipants(studyId);
     }
 
+    public List<Participant> listParticipantsForClosing() {
+        return participantRepository.listParticipantsForClosing();
+    }
+
     public Participant getParticipant(Long studyId, Integer participantId) {
         return participantRepository.getByIds(studyId, participantId);
     }

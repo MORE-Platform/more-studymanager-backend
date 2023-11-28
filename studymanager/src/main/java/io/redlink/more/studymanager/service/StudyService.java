@@ -18,6 +18,7 @@ import io.redlink.more.studymanager.repository.UserRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -128,6 +129,27 @@ public class StudyService {
                 studyRepository.getById(studyId).ifPresent(this::alignWithStudyState);
                 throw new BadRequestException("Study cannot be initialized");
             }
+        });
+    }
+
+    // every minute
+    @Scheduled(cron = "0 * * * * ?")
+    public void closeParticipationsForStudiesWithDurations() {
+        List<Participant> participantsToClose = participantService.listParticipantsForClosing();
+        log.debug("Selected {} paticipants to close", participantsToClose.size());
+        participantsToClose.forEach(participant -> {
+            pushNotificationService.sendPushNotification(
+                    participant.getStudyId(),
+                    participant.getParticipantId(),
+                    "Your Study has been closed",
+                    "Your study was updated. For more information, please launch the app!",
+                    Map.of("key", "STUDY_STATE_CHANGED",
+                            "oldState", Study.Status.ACTIVE.getValue(),
+                            "newState", Study.Status.CLOSED.getValue())
+            );
+            participantService.setStatus(
+                    participant.getStudyId(), participant.getParticipantId(), Participant.Status.LOCKED
+            );
         });
     }
 
