@@ -39,6 +39,8 @@ class InterventionServiceTest {
     StudyPermissionService studyPermissionService;
     @Mock
     StudyStateService studyStateService;
+    @Mock
+    ScheduleService scheduleService;
     @InjectMocks
     InterventionService interventionService;
 
