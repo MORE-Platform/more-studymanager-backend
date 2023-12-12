@@ -76,31 +76,45 @@ class UserRepositoryTest {
     void testSearch() {
         var user1 = userRepository.save(new MoreUser("1", "User Eins", "Company", "user1@company.com"));
         var user2 = userRepository.save(new MoreUser("2", "Benutzer Zwei", "Firma", "benutzer2@firma.com"));
-        var user3 = userRepository.save(new MoreUser("3", "Usager Trois", "Entreprise", "usager3@entreprise.fr"));
+        var user3 = userRepository.save(new MoreUser("3", "Usager Trois", "Enterprise", "usager3@entreprise.fr"));
+        var user4 = userRepository.save(new MoreUser("4", "User", "Enterprise", "usager4@entreprise.fr"));
 
-        assertThat(userRepository.findUser("", 0, 10))
+        assertThat(userRepository.findUser("", "ACME", 0, 10))
                 .returns(List.of(), SearchResult::content)
                 .returns(0, SearchResult::offset)
                 .returns(0L, SearchResult::numFound)
         ;
 
-        assertThat(userRepository.findUser("XXXX", 0, 10))
+        assertThat(userRepository.findUser("XXXX", "ACME", 0, 10))
                 .returns(List.of(), SearchResult::content)
                 .returns(0, SearchResult::offset)
                 .returns(0L, SearchResult::numFound)
         ;
 
-        assertThat(userRepository.findUser("tro", 0, 10))
+        assertThat(userRepository.findUser("tro", "Enterprise", 0, 10))
                 .returns(user3, r -> r.content().get(0))
                 .returns(0, SearchResult::offset)
                 .returns(1L, SearchResult::numFound)
         ;
 
-        assertThat(userRepository.findUser("@", 1, 1))
+        assertThat(userRepository.findUser("tro", "ACME", 0, 10))
+                .returns(0, SearchResult::offset)
+                .returns(0L, SearchResult::numFound)
+        ;
+
+        assertThat(userRepository.findUser("@", "Enterprise", 0, 10))
+                .returns(2, r -> r.content().size())
+                .returns(user3, r -> r.content().get(0))
+                .returns(user4, r -> r.content().get(1))
+                .returns(0, SearchResult::offset)
+                .returns(2L, SearchResult::numFound)
+        ;
+
+        assertThat(userRepository.findUser("@", "Enterprise", 1, 10))
                 .returns(1, r -> r.content().size())
-                .returns(user2, r -> r.content().get(0))
+                .returns(user4, r -> r.content().get(0))
                 .returns(1, SearchResult::offset)
-                .returns(3L, SearchResult::numFound)
+                .returns(2L, SearchResult::numFound)
         ;
 
     }

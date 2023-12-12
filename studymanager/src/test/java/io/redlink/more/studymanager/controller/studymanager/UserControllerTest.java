@@ -39,8 +39,7 @@ import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -117,7 +116,7 @@ class UserControllerTest {
     void testUserSearch() throws Exception {
         MoreUser u1 = createUser("Derdust", "Lumwinn", "Old Republic");
         MoreUser u2 = createUser("Noellam", "Lambed", "Old Republic");
-        when(userService.findUsers(any(), anyInt(), anyInt()))
+        when(userService.findUsers(any(), any(), anyInt(), anyInt()))
                 .thenReturn(new SearchResult<>(12, 5, List.of(u1, u2)));
 
         mvc.perform(get("/api/v1/users/search")

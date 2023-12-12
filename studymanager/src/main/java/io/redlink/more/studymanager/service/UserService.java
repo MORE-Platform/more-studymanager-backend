@@ -18,7 +18,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public SearchResult<MoreUser> findUsers(String query, int offset, int limit) {
-        return userRepository.findUser(query, offset, limit);
+    public SearchResult<MoreUser> findUsers(String query, String institution, int offset, int limit) {
+        return userRepository.findUser(query, institution, offset, limit);
     }
 }

@@ -81,6 +81,7 @@ public class UserApiV1Controller implements UsersApi {
 
     @Override
     public ResponseEntity<UserSearchResultListDTO> findUsers(String q, Integer offset, Integer limit) {
+        final var currentUser = authService.getCurrentUser();
         limit = Math.min(limit, 15);
         return ResponseEntity.ok(
                 new UserSearchResultListDTO()
@@ -91,7 +92,7 @@ public class UserApiV1Controller implements UsersApi {
                         )
                         .result(
                                 UserInfoTransformer.toUserSearchResultListDTO(
-                                        userService.findUsers(q, offset, limit)
+                                        userService.findUsers(q, currentUser.institution(), offset, limit)
                                 )
                         )
         );

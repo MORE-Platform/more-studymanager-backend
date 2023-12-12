@@ -31,11 +31,11 @@ public class UserRepository {
     private static final String DELETE_BY_ID = "DELETE FROM users WHERE user_id = :user_id";
     private static final String FIND_USERS =
             "SELECT * FROM users " +
-            "WHERE LOWER(name) LIKE LOWER(:query) OR LOWER(email) LIKE LOWER(:query) " +
-            "LIMIT :limit OFFSET :skip";
+            "WHERE (LOWER(institution) = LOWER(:institution)) AND (LOWER(name) LIKE LOWER(:query) OR LOWER(email) LIKE LOWER(:query)) " +
+            "ORDER BY user_id LIMIT :limit OFFSET :skip";
     private static final String COUNT_USERS =
             "SELECT count(*) as count FROM users " +
-            "WHERE LOWER(name) LIKE LOWER(:query) OR LOWER(email) LIKE LOWER(:query)";
+            "WHERE (LOWER(institution) = LOWER(:institution)) AND (LOWER(name) LIKE LOWER(:query) OR LOWER(email) LIKE LOWER(:query))";
 
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -60,7 +60,7 @@ public class UserRepository {
 
 
     @Transactional(readOnly = true)
-    public SearchResult<MoreUser> findUser(String query, int offset, int limit) {
+    public SearchResult<MoreUser> findUser(String query, String institution, int offset, int limit) {
         String sqlLike = StringUtils.defaultString(query).replace("%", "");
         if (sqlLike.isEmpty()) {
             return new SearchResult<>();
@@ -70,6 +70,7 @@ public class UserRepository {
 
         final MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("query", sqlLike)
+                .addValue("institution", institution)
                 .addValue("skip", offset)
                 .addValue("limit", limit);
         final Long count = namedTemplate.queryForObject(COUNT_USERS, params, ((rs, i) -> rs.getLong("count")));
