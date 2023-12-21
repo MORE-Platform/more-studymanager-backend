@@ -1414,6 +1414,9 @@ components:
           readOnly: true
         status:
           $ref: '#/components/schemas/ParticipantStatus'
+        start:
+          type: string
+          readOnly: true
         created:
           type: string
           format: date-time

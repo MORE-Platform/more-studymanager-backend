@@ -163,6 +163,7 @@ public class ParticipantRepository {
                 .setCreated(RepositoryUtils.readInstant(rs, "created"))
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setStatus(RepositoryUtils.readParticipantStatus(rs, "status"))
+                .setStart(RepositoryUtils.redInstant(rs, "start"))
                 .setRegistrationToken(rs.getString("token"));
     }
 }
