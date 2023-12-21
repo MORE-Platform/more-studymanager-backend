@@ -31,8 +31,8 @@ public class ParticipantRepository {
 
     private static final String INSERT_PARTICIPANT_AND_TOKEN =
             "WITH p AS (INSERT INTO participants(study_id,participant_id,alias,study_group_id) VALUES (:study_id,(SELECT COALESCE(MAX(participant_id),0)+1 FROM participants WHERE study_id = :study_id),:alias,:study_group_id) RETURNING participant_id, study_id) INSERT INTO registration_tokens(participant_id,study_id,token) SELECT participant_id, study_id, :token FROM p";
-    private static final String GET_PARTICIPANT_BY_IDS = "SELECT p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, p.modified FROM participants p LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id WHERE p.study_id = ? AND p.participant_id = ?";
-    private static final String LIST_PARTICIPANTS_BY_STUDY = "SELECT p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, p.modified FROM participants p LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id WHERE p.study_id = ?";
+    private static final String GET_PARTICIPANT_BY_IDS = "SELECT p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, p.modified, p.start FROM participants p LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id WHERE p.study_id = ? AND p.participant_id = ?";
+    private static final String LIST_PARTICIPANTS_BY_STUDY = "SELECT p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, p.modified, p.start FROM participants p LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id WHERE p.study_id = ?";
     private static final String DELETE_PARTICIPANT =
             "DELETE FROM participants " +
             "WHERE study_id=? AND participant_id=?";
@@ -163,6 +163,7 @@ public class ParticipantRepository {
                 .setCreated(RepositoryUtils.readInstant(rs, "created"))
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setStatus(RepositoryUtils.readParticipantStatus(rs, "status"))
+                .setStart(RepositoryUtils.readInstant(rs, "start"))
                 .setRegistrationToken(rs.getString("token"));
     }
 }
