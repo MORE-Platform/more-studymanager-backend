@@ -17,7 +17,7 @@ public class Participant {
     private Status status;
     private Instant created;
     private Instant modified;
-    private String start;
+    private Instant start;
 
     private String registrationToken;
 
@@ -52,6 +52,15 @@ public class Participant {
         return this;
     }
 
+    public Participant setStart( Instant start ) {
+        this.start = start;
+        return this;
+    }
+
+    public Instant getStart() {
+        return start;
+    }
+
     public Participant setStudyId(Long studyId) {
         this.studyId = studyId;
         return this;
@@ -65,8 +74,6 @@ public class Participant {
         this.participantId = participantId;
         return this;
     }
-
-    public String getParticipantStart() { return start; }
 
     public String getAlias() {
         return alias;

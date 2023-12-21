@@ -70,7 +70,7 @@ public class ActionService {
                 ctx.putParticipant(parameter.getParticipantId());
                 Action executable = factory.create(
                         moreSDK.scopedActionSDK(
-                                studyId, studyGroupId, interventionId, action.getParticipantStart(), action.getActionId(), action.getType(), parameter.getParticipantId()
+                                studyId, studyGroupId, interventionId, action.getActionId(), action.getType(), parameter.getParticipantId()
                         ),
                         action.getProperties()
                 );
