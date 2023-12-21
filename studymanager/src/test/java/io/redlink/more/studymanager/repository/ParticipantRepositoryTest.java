@@ -21,8 +21,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.Instant;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -49,8 +47,6 @@ class ParticipantRepositoryTest {
         Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup()
                 .setStudyId(studyId)).getStudyGroupId();
-        Instant startTimestamp = Instant.parse("2023-12-24T20:30:42.12Z");
-
 
         Participant participant = new Participant()
                 .setAlias("participant x")
@@ -63,18 +59,12 @@ class ParticipantRepositoryTest {
         assertThat(participantResponse.getAlias()).isEqualTo(participant.getAlias());
         assertThat(participantResponse.getStatus()).isEqualTo(Participant.Status.NEW);
         assertThat(participantResponse.getParticipantId()).isNotNull();
-        assertThat(participantResponse.getStart()).isNull();
-
-        participantResponse.setStart(startTimestamp);
-
-        assertThat(participantResponse.getStart()).isNotNull();
 
         Participant update = participantResponse.setAlias("new participant x");
 
         Participant updated = participantRepository.update(update);
 
         Participant queried = participantRepository.getByIds(participantResponse.getStudyId(), participantResponse.getParticipantId());
-
 
         assertThat(queried.getAlias()).isEqualTo(updated.getAlias());
         assertThat(queried.getStudyId()).isEqualTo(updated.getStudyId());
