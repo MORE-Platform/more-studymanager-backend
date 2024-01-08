@@ -17,6 +17,7 @@ public class Participant {
     private Status status;
     private Instant created;
     private Instant modified;
+    private Instant start;
 
     private String registrationToken;
 
@@ -49,6 +50,15 @@ public class Participant {
     public Participant setStatus(Status status) {
         this.status = status;
         return this;
+    }
+
+    public Participant setStart( Instant start ) {
+        this.start = start;
+        return this;
+    }
+
+    public Instant getStart() {
+        return start;
     }
 
     public Participant setStudyId(Long studyId) {
