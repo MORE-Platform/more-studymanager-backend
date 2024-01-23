@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.sdk;
 
+import io.redlink.more.studymanager.core.io.SimpleParticipant;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
@@ -110,16 +111,17 @@ public class MoreSDK {
         schedulingService.unscheduleJob(issuer, id, TriggerJob.class);
     }
 
-    public Set<Integer> listParticipants(long studyId, Integer studyGroupId, Set<Participant.Status> status) {
+    public Set<SimpleParticipant> listParticipants(long studyId, Integer studyGroupId, Set<Participant.Status> status) {
         return participantService.listParticipants(studyId).stream()
                 .filter(p -> studyGroupId == null || studyGroupId.equals(p.getStudyGroupId()))
                 .filter(p -> status == null || status.contains(p.getStatus()))
-                .map(Participant::getParticipantId)
+                .map(p -> new SimpleParticipant(p.getParticipantId(), p.getStart()))
                 .collect(Collectors.toSet());
     }
 
     public Set<Integer> listActiveParticipantsByQuery(long studyId, Integer studyGroupId, String query, TimeRange timerange) {
-        Set<Integer> participants = listParticipants(studyId, studyGroupId, Set.of(Participant.Status.ACTIVE));
+        Set<Integer> participants = listParticipants(studyId, studyGroupId, Set.of(Participant.Status.ACTIVE))
+                .stream().map(SimpleParticipant::getId).collect(Collectors.toSet());
         Set<Integer> allThatMatchQuery = new HashSet<>(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timerange));
         participants.retainAll(allThatMatchQuery);
         return participants;
