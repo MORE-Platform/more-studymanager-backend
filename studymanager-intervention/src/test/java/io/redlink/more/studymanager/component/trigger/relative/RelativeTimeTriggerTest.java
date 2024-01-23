@@ -25,7 +25,7 @@ class RelativeTimeTriggerTest {
 
         Assertions.assertFalse(trigger.matchesDayAndHour(p1, now1));
         Assertions.assertFalse(trigger.matchesDayAndHour(p2, now1));
-        Assertions.assertTrue(trigger.matchesDayAndHour(p1, now2));
-        Assertions.assertFalse(trigger.matchesDayAndHour(p2, now2));
+        Assertions.assertFalse(trigger.matchesDayAndHour(p1, now2));
+        Assertions.assertTrue(trigger.matchesDayAndHour(p2, now2));
     }
 }
