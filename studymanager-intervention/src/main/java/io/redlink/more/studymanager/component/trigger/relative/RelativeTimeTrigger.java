@@ -32,7 +32,7 @@ public class RelativeTimeTrigger extends Trigger<TriggerProperties> {
     }
     @Override
     public void activate() {
-        String schedule = sdk.addSchedule(new CronSchedule("1 2 * * * ?"));
+        String schedule = sdk.addSchedule(new CronSchedule("1 0 * * * ?"));
         sdk.setValue("scheduleId", schedule);
     }
 
