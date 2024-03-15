@@ -13,15 +13,19 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.io.ActionParameter;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PushNotificationAction extends Action<ActionProperties> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(PushNotificationAction.class);
     protected PushNotificationAction(MoreActionSDK sdk, ActionProperties properties) throws ConfigurationValidationException {
         super(sdk, properties);
     }
 
     @Override
     public void execute(ActionParameter parameters) {
+        LOGGER.info("send push notification with parameters: {}", parameters.toString());
         sdk.sendPushNotification(
                 properties.getString("title"),
                 properties.getString("message")
