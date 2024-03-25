@@ -127,7 +127,7 @@ public class StudyService {
                 //ROLLBACK
                 studyRepository.setStateById(studyId, oldState);
                 studyRepository.getById(studyId).ifPresent(this::alignWithStudyState);
-                throw new BadRequestException("Study cannot be initialized");
+                throw new BadRequestException("Study cannot be initialized",e);
             }
         });
     }
