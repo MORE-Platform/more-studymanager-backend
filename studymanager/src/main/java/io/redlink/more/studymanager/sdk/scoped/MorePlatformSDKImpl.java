@@ -13,8 +13,6 @@ import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 
-import java.io.Serializable;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,21 +49,4 @@ public abstract class MorePlatformSDKImpl implements MorePlatformSDK {
                 (filter == ParticipantFilter.ACTIVE_ONLY ? Set.of(Participant.Status.ACTIVE) : null);
         return sdk.listParticipants(studyId, studyGroupId, state);
     }
-
-    @Override
-    public <T extends Serializable> void setValue(String name, T value) {
-        sdk.setValue(getIssuer(), name, value);
-    }
-
-    @Override
-    public <T extends Serializable> Optional<T> getValue(String name, Class<T> tClass) {
-        return sdk.getValue(getIssuer(), name, tClass);
-    }
-
-    @Override
-    public void removeValue(String name) {
-        sdk.removeValue(getIssuer(), name);
-    }
-
-    public abstract String getIssuer();
 }
