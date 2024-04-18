@@ -15,10 +15,8 @@ import io.redlink.more.studymanager.utils.LoggingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
 import java.time.Instant;
 import java.util.Map;
-import java.util.Optional;
 
 public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreActionSDK {
     private static final Logger LOGGER = LoggerFactory.getLogger(MoreActionSDKImpl.class);
@@ -34,21 +32,6 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
         this.actionId = actionId;
         this.actionType = actionType;
         this.participantId = participantId;
-    }
-
-    @Override
-    public <T extends Serializable> void setValue(String name, T value) {
-        sdk.nvpairs.setActionValue(studyId, interventionId, actionId, name, value);
-    }
-
-    @Override
-    public <T extends Serializable> Optional<T> getValue(String name, Class<T> tClass) {
-        return sdk.nvpairs.getActionValue(studyId, interventionId, actionId, name, tClass);
-    }
-
-    @Override
-    public void removeValue(String name) {
-        sdk.nvpairs.removeActionValue(studyId, interventionId, actionId, name);
     }
 
     @Override
@@ -84,5 +67,10 @@ public class MoreActionSDKImpl extends MorePlatformSDKImpl implements MoreAction
                 sdk.storeDatapoint(ElasticDataPoint.Type.action, studyId, studyGroupId, participantId, actionId, actionType, Instant.now(), Map.of("title", title, "message", message));
             }
         }
+    }
+
+    @Override
+    public String getIssuer() {
+        return studyId + "-" + studyGroupId + '-' + interventionId + "-" + actionId + "-action";
     }
 }
