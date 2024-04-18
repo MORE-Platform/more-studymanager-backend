@@ -20,6 +20,7 @@ import java.util.Set;
 
 public class LimeSurveyObservation<C extends ObservationProperties> extends Observation<C> {
 
+    public static final String LIME_SURVEY_ID = "limeSurveyId";
     private final LimeSurveyRequestService limeSurveyRequestService;
 
     public LimeSurveyObservation(MoreObservationSDK sdk, C properties, LimeSurveyRequestService limeSurveyRequestService) throws ConfigurationValidationException {
@@ -29,9 +30,9 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
 
     @Override
     public void activate(){
+        String surveyId = checkAndGetSurveyId();
+
         Set<Integer> participantIds = sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL);
-        String surveyId = properties.getString("limeSurveyId");
-        //TODO disable keys fromm removed?
         participantIds.removeIf(id -> sdk.getPropertiesForParticipant(id).isPresent());
         limeSurveyRequestService.activateParticipants(participantIds, surveyId)
                 .forEach(data -> {
@@ -45,6 +46,36 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
                 });
         limeSurveyRequestService.setSurveyEndUrl(surveyId, sdk.getStudyId(), sdk.getObservationId());
         limeSurveyRequestService.activateSurvey(surveyId);
+        sdk.setValue(LIME_SURVEY_ID, surveyId);
+    }
+
+    protected String checkAndGetSurveyId() {
+        String newSurveyId = properties.getString(LIME_SURVEY_ID);
+        String activeSurveyId = sdk.getValue(LIME_SURVEY_ID, String.class).orElse(null);
+
+        if(activeSurveyId != null && !activeSurveyId.equals(newSurveyId)) {
+            throw new RuntimeException(String.format(
+                    "SurveyId on Observation %s must not be changed: %s -> %s",
+                    sdk.getObservationId(),
+                    activeSurveyId,
+                    newSurveyId
+            ));
+        } else {
+            return newSurveyId;
+        }
+    }
+
+
+
+    @Override
+    public void deactivate() {
+        // for downwards compatibility (already running studies)
+        String newSurveyId = properties.getString(LIME_SURVEY_ID);
+        String activeSurveyId = sdk.getValue(LIME_SURVEY_ID, String.class).orElse(null);
+
+        if(activeSurveyId == null || activeSurveyId.equals(newSurveyId)) {
+            sdk.setValue(LIME_SURVEY_ID, newSurveyId);
+        }
     }
 
     public boolean writeDataPoints(String token, int surveyId, int savedId) {
