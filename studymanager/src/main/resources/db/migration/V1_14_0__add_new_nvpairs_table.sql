@@ -8,14 +8,18 @@ CREATE TABLE IF NOT EXISTS nvpairs_observations (
     FOREIGN KEY (study_id, observation_id) REFERENCES observations(study_id, observation_id) ON DELETE CASCADE
 );
 
+WITH legacy AS (
+    SELECT
+        name,
+        value,
+        CAST(substring(issuer, '^\d+') AS BIGINT) AS study_id,
+        CAST(substring(replace(issuer, 'null', '0'), '^\d+-\d+-(\d+)') AS INT) AS observation_id
+    FROM nvpairs
+    WHERE issuer LIKE '%_observation'
+)
 INSERT INTO nvpairs_observations (name, value, study_id, observation_id)
-SELECT
-    name,
-    value,
-    CAST(substring(issuer, '^\d+') AS BIGINT) AS study_id,
-    CAST(substring(replace(issuer, 'null', '0'), '^\d+-\d+-(\d+)') AS INT) AS observation_id
-FROM nvpairs
-WHERE issuer LIKE '%_observation'
+SELECT legacy.* FROM legacy
+    INNER JOIN observations ON (legacy.study_id = observations.study_id AND legacy.observation_id = observations.observation_id)
 ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS nvpairs_triggers (
@@ -29,14 +33,18 @@ CREATE TABLE IF NOT EXISTS nvpairs_triggers (
     FOREIGN KEY (study_id, intervention_id) REFERENCES triggers(study_id, intervention_id) ON DELETE CASCADE
 );
 
+WITH legacy AS (
+    SELECT
+        name,
+        value,
+        CAST(substring(issuer, '^\d+') AS BIGINT) AS study_id,
+        CAST(substring(replace(issuer, 'null', '0'), '^\d+-\d+-(\d+)') AS INT) AS intervention_id
+    FROM nvpairs
+    WHERE issuer LIKE '%_trigger'
+)
 INSERT INTO nvpairs_triggers (name, value, study_id, intervention_id)
-SELECT
-    name,
-    value,
-    CAST(substring(issuer, '^\d+') AS BIGINT) AS study_id,
-    CAST(substring(replace(issuer, 'null', '0'), '^\d+-\d+-(\d+)') AS INT) AS intervention_id
-FROM nvpairs
-WHERE issuer LIKE '%_trigger'
+SELECT legacy.* FROM legacy
+    INNER JOIN triggers ON (legacy.study_id = triggers.study_id AND legacy.intervention_id = triggers.intervention_id)
 ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS nvpairs_actions (
@@ -51,15 +59,19 @@ CREATE TABLE IF NOT EXISTS nvpairs_actions (
     FOREIGN KEY (study_id, intervention_id, action_id) REFERENCES actions(study_id, intervention_id, action_id) ON DELETE CASCADE
 );
 
+WITH legacy AS (
+    SELECT
+        name,
+        value,
+        CAST(substring(issuer, '^\d+') AS BIGINT) AS study_id,
+        CAST(substring(replace(issuer, 'null', '0'), '^\d+-\d+-(\d+)') AS INT) AS intervention_id,
+        CAST(substring(replace(issuer, 'null', '0'), '^\d+-\d+-\d+-(\d+)') AS INT) AS action_id
+    FROM nvpairs
+    WHERE issuer LIKE '%_action'
+)
 INSERT INTO nvpairs_actions (name, value, study_id, intervention_id, action_id)
-SELECT
-    name,
-    value,
-    CAST(substring(issuer, '^\d+') AS BIGINT) AS study_id,
-    CAST(substring(replace(issuer, 'null', '0'), '^\d+-\d+-(\d+)') AS INT) AS intervention_id,
-    CAST(substring(replace(issuer, 'null', '0'), '^\d+-\d+-\d+-(\d+)') AS INT) AS action_id
-FROM nvpairs
-WHERE issuer LIKE '%_action'
+SELECT legacy.* FROM legacy
+    INNER JOIN actions ON (legacy.study_id = actions.study_id AND legacy.intervention_id = actions.intervention_id AND legacy.action_id = actions.action_id)
 ON CONFLICT DO NOTHING;
 
 DROP TABLE nvpairs;
