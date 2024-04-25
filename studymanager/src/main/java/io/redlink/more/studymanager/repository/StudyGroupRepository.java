@@ -27,6 +27,7 @@ import java.util.List;
 @Component
 public class StudyGroupRepository {
     private static final String INSERT_STUDY_GROUP = "INSERT INTO study_groups (study_id,study_group_id,title,purpose) VALUES (:study_id,(SELECT COALESCE(MAX(study_group_id),0)+1 FROM study_groups WHERE study_id = :study_id),:title,:purpose)";
+    private static final String IMPORT_STUDY_GROUP = "INSERT INTO study_groups (study_id, study_group_id, title, purpose) VALUES (:study_id,:study_group_id,:title,:purpose);";
     private static final String GET_STUDY_GROUP_BY_IDS = "SELECT * FROM study_groups WHERE study_id = ? AND study_group_id = ?";
     private static final String LIST_STUDY_GROUPS_ORDER_BY_STUDY_GROUP_ID = "SELECT * FROM study_groups WHERE study_id = ? ORDER BY study_group_id";
     private static final String UPDATE_STUDY =
@@ -51,6 +52,19 @@ public class StudyGroupRepository {
             throw new BadRequestException("Study " + studyGroup.getStudyId() + " does not exist");
         }
         return getByIds(studyGroup.getStudyId(), keyHolder.getKey().intValue());
+    }
+
+    public void doImport(StudyGroup studyGroup) {
+        try {
+            namedTemplate.update(IMPORT_STUDY_GROUP, toImportParams(studyGroup));
+        } catch (DataIntegrityViolationException e) {
+            throw new BadRequestException(
+                    "Error during import of studyGroup " +
+                            studyGroup.getStudyGroupId() +
+                            "for study " +
+                            studyGroup.getStudyId()
+            );
+        }
     }
 
     public StudyGroup getByIds(long studyId, int studyGroupId) {
@@ -79,6 +93,15 @@ public class StudyGroupRepository {
     private static MapSqlParameterSource toParams(StudyGroup studyGroup) {
         return new MapSqlParameterSource()
                 .addValue("study_id", studyGroup.getStudyId())
+                .addValue("title", studyGroup.getTitle())
+                .addValue("purpose", studyGroup.getPurpose())
+                .addValue("duration", MapperUtils.writeValueAsString(studyGroup.getDuration()));
+    }
+
+    private static MapSqlParameterSource toImportParams(StudyGroup studyGroup) {
+        return new MapSqlParameterSource()
+                .addValue("study_id", studyGroup.getStudyId())
+                .addValue("study_group_id", studyGroup.getStudyGroupId())
                 .addValue("title", studyGroup.getTitle())
                 .addValue("purpose", studyGroup.getPurpose())
                 .addValue("duration", MapperUtils.writeValueAsString(studyGroup.getDuration()));

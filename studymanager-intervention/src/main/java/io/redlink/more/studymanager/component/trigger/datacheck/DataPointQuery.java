@@ -21,10 +21,6 @@ public class DataPointQuery {
     public int getObservationId() {
         return observationId;
     }
-    public DataPointQuery setObservationId(int observationId) {
-        this.observationId = observationId;
-        return this;
-    }
 
     public String getObservationType() {
         return observationType;

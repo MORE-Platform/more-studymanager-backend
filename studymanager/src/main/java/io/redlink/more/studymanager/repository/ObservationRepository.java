@@ -11,7 +11,6 @@ package io.redlink.more.studymanager.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
-import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
 import io.redlink.more.studymanager.utils.MapperUtils;
@@ -34,6 +33,7 @@ import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNu
 public class ObservationRepository {
 
     private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule)";
+    private static final String IMPORT_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,:observation_id,:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule)";
     private static final String GET_OBSERVATION_BY_IDS = "SELECT * FROM observations WHERE study_id = ? AND observation_id = ?";
     private static final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
     private static final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = ?";
@@ -59,6 +59,19 @@ public class ObservationRepository {
             throw new BadRequestException("Study group " + observation.getStudyGroupId() + " does not exist on study " + observation.getStudyId());
         }
         return getById(observation.getStudyId(), keyHolder.getKey().intValue());
+    }
+
+    public void doImport(Observation observation) {
+        try {
+            namedTemplate.update(IMPORT_OBSERVATION, toImportParams(observation));
+        } catch (DataIntegrityViolationException | JsonProcessingException e) {
+            throw new BadRequestException(
+                    "Error during import of observation " +
+                            observation.getObservationId() +
+                            "for study " +
+                            observation.getStudyId()
+            );
+        }
     }
 
     public Observation getById(Long studyId, Integer observationId) {
@@ -121,6 +134,21 @@ public class ObservationRepository {
     private static MapSqlParameterSource toParams(Observation observation) throws JsonProcessingException {
         return new MapSqlParameterSource()
                 .addValue("study_id", observation.getStudyId())
+                .addValue("title", observation.getTitle())
+                .addValue("purpose", observation.getPurpose())
+                .addValue("participant_info", observation.getParticipantInfo())
+                .addValue("type", observation.getType())
+                .addValue("study_group_id", observation.getStudyGroupId())
+                .addValue("properties", MapperUtils.writeValueAsString(observation.getProperties()))
+                .addValue("schedule", MapperUtils.writeValueAsString(observation.getSchedule()))
+                .addValue("hidden", observation.getHidden())
+                .addValue("no_schedule", observation.getNoSchedule());
+    }
+
+    private static MapSqlParameterSource toImportParams(Observation observation) throws JsonProcessingException {
+        return new MapSqlParameterSource()
+                .addValue("study_id", observation.getStudyId())
+                .addValue("observation_id", observation.getObservationId())
                 .addValue("title", observation.getTitle())
                 .addValue("purpose", observation.getPurpose())
                 .addValue("participant_info", observation.getParticipantInfo())

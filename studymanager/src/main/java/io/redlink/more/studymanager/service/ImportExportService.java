@@ -8,9 +8,6 @@
  */
 package io.redlink.more.studymanager.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import io.redlink.more.studymanager.component.action.TriggerObservation;
-import io.redlink.more.studymanager.component.trigger.datacheck.QueryObject;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.*;
 import jakarta.servlet.ServletOutputStream;
@@ -102,53 +99,22 @@ public class ImportExportService {
     public Study importStudy(StudyImportExport studyImport, AuthenticatedUser user) {
         Study newStudy = studyService.createStudy(studyImport.getStudy(), user);
         Long studyId = newStudy.getStudyId();
-        HashMap<Integer,Integer> studyGroupIds = new HashMap<>();
-        HashMap<Integer,Integer> observationIds = new HashMap<>();
-        HashMap<Integer,Integer> interventionIds = new HashMap<>();
 
         studyImport.getStudyGroups().forEach(studyGroup ->
-                studyGroupIds.put(
-                        studyGroup.getStudyGroupId(),
-                        studyGroupService.createStudyGroup(studyGroup.setStudyId(studyId)).getStudyGroupId())
+                studyGroupService.importStudyGroup(studyGroup.setStudyId(studyId))
         );
-
-        studyImport.getObservations().forEach(observation -> {
-            if(observation.getStudyGroupId() != null) {
-                observation.setStudyGroupId(studyGroupIds.get(observation.getStudyGroupId()));
-            }
-            observationIds.put(
-                    observation.getObservationId(),
-                    observationService.addObservation(observation.setStudyId(studyId)).getObservationId()
-            );
+        studyImport.getObservations().forEach(observation ->
+                observationService.importObservation(observation.setStudyId(studyId))
+        );
+        studyImport.getInterventions().forEach(intervention ->
+                interventionService.importIntervention(intervention.setStudyId(studyId))
+        );
+        studyImport.getTriggers().forEach((interventionId, trigger) -> {
+            interventionService.importTrigger(studyId, interventionId, trigger);
         });
-
-        studyImport.getInterventions().forEach(intervention -> {
-            if(intervention.getStudyGroupId() != null) {
-                intervention.setStudyGroupId(studyGroupIds.get(intervention.getStudyGroupId()));
-            }
-            interventionIds.put(
-                    intervention.getInterventionId(),
-                    interventionService.addIntervention(intervention.setStudyId(studyId)).getInterventionId());
-        });
-
-        studyImport.getTriggers().forEach((oldInterventionId, trigger) -> {
-            Optional<Set<QueryObject>> optional = trigger.getProperties().getObject("queryObject", new TypeReference<>() {});
-            optional.ifPresent( queryObjectSet ->
-                queryObjectSet.forEach(queryObject ->
-                    queryObject.parameter.forEach(dataPointQuery ->
-                        dataPointQuery.setObservationId(observationIds.get(dataPointQuery.getObservationId()))
-                    )
-                )
-            );
-            interventionService.updateTrigger(studyId, interventionIds.get(oldInterventionId), trigger);
-        });
-
-        studyImport.getActions().forEach((oldInterventionId, actionList) ->
+        studyImport.getActions().forEach((interventionId, actionList) ->
             actionList.forEach(action -> {
-                Optional<TriggerObservation> optional = action.getProperties().getObject("observation", new TypeReference<>() {
-                });
-                optional.ifPresent(observationAction -> observationAction.setId(observationIds.get(observationAction.getId())));
-                interventionService.createAction(studyId, interventionIds.get(oldInterventionId), action);
+                interventionService.importAction(studyId, interventionId, action);
             })
         );
         return newStudy;
