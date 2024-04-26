@@ -18,6 +18,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -96,12 +97,13 @@ public class ImportExportService {
         return export;
     }
 
+    @Transactional
     public Study importStudy(StudyImportExport studyImport, AuthenticatedUser user) {
         Study newStudy = studyService.createStudy(studyImport.getStudy(), user);
         Long studyId = newStudy.getStudyId();
 
         studyImport.getStudyGroups().forEach(studyGroup ->
-                studyGroupService.importStudyGroup(studyGroup.setStudyId(studyId))
+                studyGroupService.importStudyGroup(studyId, studyGroup)
         );
         studyImport.getObservations().forEach(observation ->
                 observationService.importObservation(observation.setStudyId(studyId))
@@ -109,13 +111,12 @@ public class ImportExportService {
         studyImport.getInterventions().forEach(intervention ->
                 interventionService.importIntervention(intervention.setStudyId(studyId))
         );
-        studyImport.getTriggers().forEach((interventionId, trigger) -> {
-            interventionService.importTrigger(studyId, interventionId, trigger);
-        });
+        studyImport.getTriggers().forEach((interventionId, trigger) ->
+            interventionService.importTrigger(studyId, interventionId, trigger)
+        );
         studyImport.getActions().forEach((interventionId, actionList) ->
-            actionList.forEach(action -> {
-                interventionService.importAction(studyId, interventionId, action);
-            })
+            actionList.forEach(action ->
+                    interventionService.importAction(studyId, interventionId, action))
         );
         return newStudy;
     }

@@ -18,16 +18,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
 public class StudyGroupRepository {
-    private static final String INSERT_STUDY_GROUP = "INSERT INTO study_groups (study_id,study_group_id,title,purpose) VALUES (:study_id,(SELECT COALESCE(MAX(study_group_id),0)+1 FROM study_groups WHERE study_id = :study_id),:title,:purpose)";
-    private static final String IMPORT_STUDY_GROUP = "INSERT INTO study_groups (study_id, study_group_id, title, purpose) VALUES (:study_id,:study_group_id,:title,:purpose);";
+    private static final String INSERT_STUDY_GROUP = "INSERT INTO study_groups (study_id,study_group_id,title,purpose) VALUES (:study_id,(SELECT COALESCE(MAX(study_group_id),0)+1 FROM study_groups WHERE study_id = :study_id),:title,:purpose) RETURNING *";
+    private static final String IMPORT_STUDY_GROUP = "INSERT INTO study_groups (study_id, study_group_id, title, purpose) VALUES (:study_id,:study_group_id,:title,:purpose) RETURNING *";
     private static final String GET_STUDY_GROUP_BY_IDS = "SELECT * FROM study_groups WHERE study_id = ? AND study_group_id = ?";
     private static final String LIST_STUDY_GROUPS_ORDER_BY_STUDY_GROUP_ID = "SELECT * FROM study_groups WHERE study_id = ? ORDER BY study_group_id";
     private static final String UPDATE_STUDY =
@@ -45,18 +43,22 @@ public class StudyGroupRepository {
     }
 
     public StudyGroup insert(StudyGroup studyGroup) {
-        final KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
-            namedTemplate.update(INSERT_STUDY_GROUP, toParams(studyGroup), keyHolder, new String[] { "study_group_id" });
+            return namedTemplate.queryForObject(INSERT_STUDY_GROUP, toParams(studyGroup), getStudyGroupRowMapper());
         } catch (DataIntegrityViolationException e) {
             throw new BadRequestException("Study " + studyGroup.getStudyId() + " does not exist");
         }
-        return getByIds(studyGroup.getStudyId(), keyHolder.getKey().intValue());
     }
 
-    public void doImport(StudyGroup studyGroup) {
+    public StudyGroup doImport(Long studyId, StudyGroup studyGroup) {
         try {
-            namedTemplate.update(IMPORT_STUDY_GROUP, toImportParams(studyGroup));
+            return namedTemplate.queryForObject(
+                    IMPORT_STUDY_GROUP,
+                    toParams(studyGroup)
+                            .addValue("study_id", studyId)
+                            .addValue("study_group_id", studyGroup.getStudyGroupId()),
+                    getStudyGroupRowMapper()
+            );
         } catch (DataIntegrityViolationException e) {
             throw new BadRequestException(
                     "Error during import of studyGroup " +
@@ -93,15 +95,6 @@ public class StudyGroupRepository {
     private static MapSqlParameterSource toParams(StudyGroup studyGroup) {
         return new MapSqlParameterSource()
                 .addValue("study_id", studyGroup.getStudyId())
-                .addValue("title", studyGroup.getTitle())
-                .addValue("purpose", studyGroup.getPurpose())
-                .addValue("duration", MapperUtils.writeValueAsString(studyGroup.getDuration()));
-    }
-
-    private static MapSqlParameterSource toImportParams(StudyGroup studyGroup) {
-        return new MapSqlParameterSource()
-                .addValue("study_id", studyGroup.getStudyId())
-                .addValue("study_group_id", studyGroup.getStudyGroupId())
                 .addValue("title", studyGroup.getTitle())
                 .addValue("purpose", studyGroup.getPurpose())
                 .addValue("duration", MapperUtils.writeValueAsString(studyGroup.getDuration()));
