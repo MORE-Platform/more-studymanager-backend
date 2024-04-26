@@ -28,6 +28,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -72,7 +73,10 @@ public class ImportExportServiceTest {
     private ArgumentCaptor<Action> actionCaptor;
 
     @Captor
-    private ArgumentCaptor<Integer> idCaptor;
+    private ArgumentCaptor<Integer> idIntCaptor;
+
+    @Captor
+    private ArgumentCaptor<Long> idLongCaptor;
 
     private final AuthenticatedUser currentUser = new AuthenticatedUser(
             UUID.randomUUID().toString(),
@@ -94,6 +98,7 @@ public class ImportExportServiceTest {
     @Test
     @DisplayName("Study configuration should be imported and set id's correctly")
     void testImportStudy() {
+        Long studyId = 1L;
         StudyImportExport studyImport = new StudyImportExport()
                 .setStudy(new Study()
                         .setTitle("title")
@@ -152,25 +157,34 @@ public class ImportExportServiceTest {
 
         when(studyService.createStudy(any(), any()))
                 .thenAnswer(invocationOnMock ->
-                        ((Study) invocationOnMock.getArgument(0)).setStudyId(1L));
+                        ((Study) invocationOnMock.getArgument(0)).setStudyId(studyId));
+        when(observationService.importObservation(any(), any()))
+                .thenAnswer(invocationOnMock ->
+                                ((Observation) invocationOnMock.getArgument(1)).setStudyId(studyId));
+        when(interventionService.importIntervention(any(), any()))
+                .thenAnswer(invocationOnMock ->
+                        ((Intervention) invocationOnMock.getArgument(1)).setStudyId(studyId));
 
         importExportService.importStudy(studyImport, currentUser);
 
-        verify(observationService, times(2)).importObservation(observationCaptor.capture());
-        verify(interventionService, times(2)).importIntervention(interventionCaptor.capture());
-        verify(interventionService, times(1)).importTrigger(any(), idCaptor.capture(), triggerCaptor.capture());
-        verify(interventionService, times(1)).importAction(any(), idCaptor.capture(), actionCaptor.capture());
+        verify(observationService, times(2)).importObservation(idLongCaptor.capture(), observationCaptor.capture());
+        verify(interventionService, times(2)).importIntervention(idLongCaptor.capture(),interventionCaptor.capture());
+        verify(interventionService, times(1)).importTrigger(idLongCaptor.capture(), idIntCaptor.capture(), triggerCaptor.capture());
+        verify(interventionService, times(1)).importAction(idLongCaptor.capture(), idIntCaptor.capture(), actionCaptor.capture());
 
-        assertThat(observationCaptor.getAllValues().get(0).getStudyId()).isEqualTo(1L);
+        assertThat(observationCaptor.getAllValues().get(0).getObservationId()).isEqualTo(1);
         assertThat(observationCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(3);
+        assertThat(observationCaptor.getAllValues().get(1).getObservationId()).isEqualTo(3);
         assertThat(observationCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(null);
 
-        assertThat(interventionCaptor.getAllValues().get(0).getStudyId()).isEqualTo(1L);
         assertThat(interventionCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(2);
+        assertThat(interventionCaptor.getAllValues().get(0).getInterventionId()).isEqualTo(2);
         assertThat(interventionCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
+        assertThat(interventionCaptor.getAllValues().get(1).getInterventionId()).isEqualTo(3);
 
-        assertThat(idCaptor.getAllValues().get(0)).isEqualTo(3);
-        assertThat(idCaptor.getAllValues().get(1)).isEqualTo(2);
+        assertThat(idIntCaptor.getAllValues().get(0)).isEqualTo(3);
+        assertThat(idIntCaptor.getAllValues().get(1)).isEqualTo(2);
+        assertThat(idLongCaptor.getAllValues()).allMatch(Predicate.isEqual(1L));
     }
 
 

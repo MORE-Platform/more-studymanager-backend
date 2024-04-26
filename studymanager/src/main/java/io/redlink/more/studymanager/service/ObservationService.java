@@ -47,8 +47,8 @@ public class ObservationService {
         return repository.insert(validate(observation));
     }
 
-    public void importObservation(Observation observation) {
-        repository.doImport(validate(observation));
+    public Observation importObservation(Long studyId, Observation observation) {
+        return repository.doImport(studyId, validate(observation));
     }
 
     public void deleteObservation(Long studyId, Integer observationId) {

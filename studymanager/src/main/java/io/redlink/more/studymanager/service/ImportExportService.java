@@ -106,10 +106,10 @@ public class ImportExportService {
                 studyGroupService.importStudyGroup(studyId, studyGroup)
         );
         studyImport.getObservations().forEach(observation ->
-                observationService.importObservation(observation.setStudyId(studyId))
+                observationService.importObservation(studyId, observation)
         );
         studyImport.getInterventions().forEach(intervention ->
-                interventionService.importIntervention(intervention.setStudyId(studyId))
+                interventionService.importIntervention(studyId, intervention)
         );
         studyImport.getTriggers().forEach((interventionId, trigger) ->
             interventionService.importTrigger(studyId, interventionId, trigger)

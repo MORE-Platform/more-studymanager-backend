@@ -23,8 +23,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
 import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNullableIntegerValue;
@@ -32,8 +30,8 @@ import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNu
 @Component
 public class ObservationRepository {
 
-    private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule)";
-    private static final String IMPORT_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,:observation_id,:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule)";
+    private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule) RETURNING *";
+    private static final String IMPORT_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,:observation_id,:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule) RETURNING *";
     private static final String GET_OBSERVATION_BY_IDS = "SELECT * FROM observations WHERE study_id = ? AND observation_id = ?";
     private static final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
     private static final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = ?";
@@ -52,18 +50,22 @@ public class ObservationRepository {
     }
 
     public Observation insert(Observation observation) {
-        final KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
-            namedTemplate.update(INSERT_NEW_OBSERVATION, toParams(observation), keyHolder, new String[] { "observation_id" });
+            return namedTemplate.queryForObject(INSERT_NEW_OBSERVATION, toParams(observation), getObservationRowMapper());
         } catch (DataIntegrityViolationException | JsonProcessingException e) {
             throw new BadRequestException("Study group " + observation.getStudyGroupId() + " does not exist on study " + observation.getStudyId());
         }
-        return getById(observation.getStudyId(), keyHolder.getKey().intValue());
     }
 
-    public void doImport(Observation observation) {
+    public Observation doImport(Long studyId, Observation observation) {
         try {
-            namedTemplate.update(IMPORT_OBSERVATION, toImportParams(observation));
+            return namedTemplate.queryForObject(
+                    IMPORT_OBSERVATION,
+                    toParams(observation)
+                            .addValue("study_id", studyId)
+                            .addValue("observation_id", observation.getObservationId()),
+                    getObservationRowMapper()
+            );
         } catch (DataIntegrityViolationException | JsonProcessingException e) {
             throw new BadRequestException(
                     "Error during import of observation " +
@@ -134,21 +136,6 @@ public class ObservationRepository {
     private static MapSqlParameterSource toParams(Observation observation) throws JsonProcessingException {
         return new MapSqlParameterSource()
                 .addValue("study_id", observation.getStudyId())
-                .addValue("title", observation.getTitle())
-                .addValue("purpose", observation.getPurpose())
-                .addValue("participant_info", observation.getParticipantInfo())
-                .addValue("type", observation.getType())
-                .addValue("study_group_id", observation.getStudyGroupId())
-                .addValue("properties", MapperUtils.writeValueAsString(observation.getProperties()))
-                .addValue("schedule", MapperUtils.writeValueAsString(observation.getSchedule()))
-                .addValue("hidden", observation.getHidden())
-                .addValue("no_schedule", observation.getNoSchedule());
-    }
-
-    private static MapSqlParameterSource toImportParams(Observation observation) throws JsonProcessingException {
-        return new MapSqlParameterSource()
-                .addValue("study_id", observation.getStudyId())
-                .addValue("observation_id", observation.getObservationId())
                 .addValue("title", observation.getTitle())
                 .addValue("purpose", observation.getPurpose())
                 .addValue("participant_info", observation.getParticipantInfo())
