@@ -47,6 +47,10 @@ public class ObservationService {
         return repository.insert(validate(observation));
     }
 
+    public Observation importObservation(Long studyId, Observation observation) {
+        return repository.doImport(studyId, validate(observation));
+    }
+
     public void deleteObservation(Long studyId, Integer observationId) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         repository.deleteObservation(studyId, observationId);

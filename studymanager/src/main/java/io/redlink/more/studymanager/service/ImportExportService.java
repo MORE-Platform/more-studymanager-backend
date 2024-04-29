@@ -18,13 +18,12 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 @Service
 public class ImportExportService {
@@ -98,37 +97,26 @@ public class ImportExportService {
         return export;
     }
 
+    @Transactional
     public Study importStudy(StudyImportExport studyImport, AuthenticatedUser user) {
         Study newStudy = studyService.createStudy(studyImport.getStudy(), user);
         Long studyId = newStudy.getStudyId();
-        HashMap<Integer,Integer> studyGroupIds = new HashMap<>();
-        HashMap<Integer,Integer> interventionIds = new HashMap<>();
 
         studyImport.getStudyGroups().forEach(studyGroup ->
-                studyGroupIds.put(
-                        studyGroup.getStudyGroupId(),
-                        studyGroupService.createStudyGroup(studyGroup.setStudyId(studyId)).getStudyGroupId())
+                studyGroupService.importStudyGroup(studyId, studyGroup)
         );
-        studyImport.getObservations().forEach(observation -> {
-            if(observation.getStudyGroupId() != null) {
-                observation.setStudyGroupId(studyGroupIds.get(observation.getStudyGroupId()));
-            }
-            observationService.addObservation(observation.setStudyId(studyId));
-        });
-        studyImport.getInterventions().forEach(intervention -> {
-            if(intervention.getStudyGroupId() != null) {
-                intervention.setStudyGroupId(studyGroupIds.get(intervention.getStudyGroupId()));
-            }
-            interventionIds.put(
-                    intervention.getInterventionId(),
-                    interventionService.addIntervention(intervention.setStudyId(studyId)).getInterventionId());
-        });
-        studyImport.getTriggers().forEach((oldInterventionId, trigger) ->
-            interventionService.updateTrigger(studyId, interventionIds.get(oldInterventionId), trigger)
+        studyImport.getObservations().forEach(observation ->
+                observationService.importObservation(studyId, observation)
         );
-        studyImport.getActions().forEach((oldInterventionId, actionList) ->
+        studyImport.getInterventions().forEach(intervention ->
+                interventionService.importIntervention(studyId, intervention)
+        );
+        studyImport.getTriggers().forEach((interventionId, trigger) ->
+            interventionService.importTrigger(studyId, interventionId, trigger)
+        );
+        studyImport.getActions().forEach((interventionId, actionList) ->
             actionList.forEach(action ->
-                    interventionService.createAction(studyId, interventionIds.get(oldInterventionId), action))
+                    interventionService.importAction(studyId, interventionId, action))
         );
         return newStudy;
     }
