@@ -69,6 +69,10 @@ public class InterventionService {
         return repository.insert(intervention);
     }
 
+    public Intervention importIntervention(Long studyId, Intervention intervention) {
+        return repository.importIntervention(studyId, intervention);
+    }
+
     public List<Intervention> listInterventions(Long studyId) {
         return repository.listInterventions(studyId);
     }
@@ -92,6 +96,10 @@ public class InterventionService {
         return repository.createAction(studyId, interventionId, validateAction(action));
     }
 
+    public Action importAction(Long studyId, Integer interventionId, Action action) {
+        return repository.importAction(studyId, interventionId, validateAction(action));
+    }
+
     public Action getActionByIds(Long studyId, Integer interventionId, Integer actionId) {
         return repository.getActionByIds(studyId, interventionId, actionId);
     }
@@ -113,6 +121,10 @@ public class InterventionService {
     public Trigger updateTrigger(Long studyId, Integer interventionId, Trigger trigger) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         return repository.updateTrigger(studyId, interventionId, validateTrigger(trigger));
+    }
+
+    public Trigger importTrigger(Long studyId, Integer interventionId, Trigger trigger) {
+        return repository.importTrigger(studyId, interventionId, validateTrigger(trigger));
     }
 
     public Trigger getTriggerByIds(Long studyId, Integer interventionId) {
