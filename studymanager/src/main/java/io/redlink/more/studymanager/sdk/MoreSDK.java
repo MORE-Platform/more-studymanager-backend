@@ -43,7 +43,7 @@ public class MoreSDK {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MoreSDK.class);
 
-    private final NameValuePairRepository nvpairs;
+    public final NameValuePairRepository nvpairs;
 
     private final SchedulingService schedulingService;
 
@@ -67,18 +67,6 @@ public class MoreSDK {
         this.elasticService = elasticService;
         this.pushNotificationService = pushNotificationService;
         this.observationRepository = observationRepository;
-    }
-
-    public <T extends Serializable> void setValue(String issuer, String name, T value) {
-        nvpairs.setValue(issuer, name, value);
-    }
-
-    public <T extends Serializable> Optional<T> getValue(String issuer, String name, Class<T> tClass) {
-        return nvpairs.getValue(issuer, name, tClass);
-    }
-
-    public void removeValue(String issuer, String name) {
-        nvpairs.removeValue(issuer, name);
     }
 
     public MoreActionSDK scopedActionSDK(Long studyId, Integer studyGroupId, int interventionId, int actionId, String actionType, int participantId) {

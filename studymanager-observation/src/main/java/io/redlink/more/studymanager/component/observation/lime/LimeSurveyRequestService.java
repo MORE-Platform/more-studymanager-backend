@@ -138,15 +138,22 @@ public class LimeSurveyRequestService {
                 );
             LOGGER.info("sent {} participants to lime", participantIds.size());
 
-            List<ParticipantData> data = mapper.readValue(client.send(request, HttpResponse.BodyHandlers.ofString()).body(),
-                            LimeSurveyParticipantResponse.class)
-                    .result();
+            String rsp = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+
+            if(rsp.contains("Error: Invalid survey ID")) {
+                throw new RuntimeException("Invalid survey ID: " + surveyId);
+            }
+
+            List<ParticipantData> data = mapper.readValue(
+                    rsp,
+                    LimeSurveyParticipantResponse.class
+            ).result();
 
             releaseSessionKey(sessionKey);
 
             LOGGER.info("result: {}", data.stream().map(ParticipantData::toString).collect(Collectors.joining()));
             return data;
-        }catch(IOException | InterruptedException e){
+        } catch( IOException | InterruptedException e){
             LOGGER.error("Error creating participants for survey {}", surveyId);
             throw new RuntimeException(e);
         }
