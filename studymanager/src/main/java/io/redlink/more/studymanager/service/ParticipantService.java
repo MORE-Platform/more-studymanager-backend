@@ -15,9 +15,9 @@ import io.redlink.more.studymanager.repository.ParticipantRepository;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import static io.redlink.more.studymanager.model.Participant.Status.*;
 
@@ -66,9 +66,16 @@ public class ParticipantService {
         return participantRepository.update(participant);
     }
 
+    @Transactional
     public void alignParticipantsWithStudyState(Study study) {
-        if (study.getStudyState() == Study.Status.CLOSED) {
+        if (EnumSet.of(Study.Status.CLOSED, Study.Status.DRAFT).contains(study.getStudyState())) {
             participantRepository.cleanupParticipants(study.getStudyId());
+        }
+        if (EnumSet.of(Study.Status.PREVIEW).contains(study.getStudyState())) {
+            participantRepository.listParticipants(study.getStudyId())
+                    .forEach(p -> participantRepository.updateRegistrationToken(
+                            p.getStudyId(), p.getParticipantId(), RandomTokenGenerator.generate()
+                    ));
         }
     }
 

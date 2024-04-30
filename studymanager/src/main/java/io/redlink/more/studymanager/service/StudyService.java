@@ -22,11 +22,21 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class StudyService {
 
     private static final Logger log = LoggerFactory.getLogger(StudyService.class);
+
+    private static final Map<Study.Status, Set<Study.Status>> VALID_STUDY_TRANSITIONS = Map.of(
+            Study.Status.DRAFT, EnumSet.of(Study.Status.PREVIEW, Study.Status.ACTIVE),
+            Study.Status.PREVIEW, EnumSet.of(Study.Status.PAUSED_PREVIEW, Study.Status.DRAFT),
+            Study.Status.PAUSED_PREVIEW, EnumSet.of(Study.Status.DRAFT),
+            Study.Status.ACTIVE, EnumSet.of(Study.Status.PAUSED, Study.Status.CLOSED),
+            Study.Status.PAUSED, EnumSet.of(Study.Status.ACTIVE)
+    );
+
     private final StudyRepository studyRepository;
     private final StudyAclRepository aclRepository;
     private final UserRepository userRepo;
@@ -91,52 +101,48 @@ public class StudyService {
         elasticService.deleteIndex(studyId);
     }
 
-    public void setStatus(Long studyId, Study.Status status, User user) {
-        Study study = getStudy(studyId, user)
+    @Transactional
+    public void setStatus(Long studyId, Study.Status newState, User user) {
+        final Study study = getStudy(studyId, user)
                 .orElseThrow(() -> NotFoundException.Study(studyId));
-        if (status.equals(Study.Status.DRAFT)) {
-            throw BadRequestException.StateChange(study.getStudyState(), Study.Status.DRAFT);
-        }
-        if (study.getStudyState().equals(Study.Status.CLOSED)) {
-            throw BadRequestException.StateChange(Study.Status.CLOSED, status);
-        }
-        if (study.getStudyState().equals(status)) {
-            throw BadRequestException.StateChange(study.getStudyState(), status);
+        final Study.Status oldState = study.getStudyState();
+
+        /* Validate the transition */
+        if (!VALID_STUDY_TRANSITIONS.getOrDefault(oldState, EnumSet.noneOf(Study.Status.class)).contains(newState)) {
+            throw BadRequestException.StateChange(oldState, newState);
         }
 
-        Study.Status oldState = study.getStudyState();
-
-        studyRepository.setStateById(studyId, status);
-        studyRepository.getById(studyId).ifPresent(s -> {
-            try {
-                alignWithStudyState(s);
-                participantService.listParticipants(studyId).forEach(participant -> {
-                    pushNotificationService.sendPushNotification(
-                            studyId,
-                            participant.getParticipantId(),
-                            "Your Study has a new update",
-                            "Your study was updated. For more information, please launch the app!",
-                            Map.of("key", "STUDY_STATE_CHANGED",
-                                    "oldState", oldState.getValue(),
-                                    "newState", s.getStudyState().getValue())
-                    );
+        studyRepository.setStateById(studyId, newState)
+                .ifPresent(s -> {
+                    try {
+                        alignWithStudyState(s);
+                        participantService.listParticipants(studyId).forEach(participant ->
+                            pushNotificationService.sendPushNotification(
+                                    studyId,
+                                    participant.getParticipantId(),
+                                    "Your Study has a new update",
+                                    "Your study was updated. For more information, please launch the app!",
+                                    Map.of("key", "STUDY_STATE_CHANGED",
+                                            "oldState", oldState.getValue(),
+                                            "newState", s.getStudyState().getValue())
+                            )
+                        );
+                        participantService.alignParticipantsWithStudyState(s);
+                    } catch (Exception e) {
+                        log.warn("Could not set new state for study id {}; old state: {}; new state: {}", studyId, oldState.getValue(), s.getStudyState().getValue());
+                        //ROLLBACK
+                        studyRepository.setStateById(studyId, oldState);
+                        studyRepository.getById(studyId).ifPresent(this::alignWithStudyState);
+                        throw new BadRequestException("Study cannot be initialized", e);
+                    }
                 });
-                participantService.alignParticipantsWithStudyState(s);
-            } catch (Exception e) {
-                log.warn("Could not set new state for study id {}; old state: {}; new state: {}", studyId, oldState.getValue(), s.getStudyState().getValue());
-                //ROLLBACK
-                studyRepository.setStateById(studyId, oldState);
-                studyRepository.getById(studyId).ifPresent(this::alignWithStudyState);
-                throw new BadRequestException("Study cannot be initialized",e);
-            }
-        });
     }
 
     // every minute
     @Scheduled(cron = "0 * * * * ?")
     public void closeParticipationsForStudiesWithDurations() {
         List<Participant> participantsToClose = participantService.listParticipantsForClosing();
-        log.debug("Selected {} paticipants to close", participantsToClose.size());
+        log.debug("Selected {} participants to close", participantsToClose.size());
         participantsToClose.forEach(participant -> {
             pushNotificationService.sendPushNotification(
                     participant.getStudyId(),

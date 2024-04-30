@@ -26,6 +26,7 @@ import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.utils.LoggingUtils;
 import java.text.ParseException;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -152,7 +153,7 @@ public class InterventionService {
     }
 
     public void alignInterventionsWithStudyState(Study study) {
-        if (study.getStudyState() == Study.Status.ACTIVE) {
+        if (EnumSet.of(Study.Status.ACTIVE, Study.Status.PREVIEW).contains(study.getStudyState())) {
             activateInterventionsFor(study);
         } else {
             deactivateInterventionsFor(study);
