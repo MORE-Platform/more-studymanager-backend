@@ -11,6 +11,7 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.core.component.Component;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
+import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
@@ -48,7 +49,11 @@ public class ObservationService {
     }
 
     public Observation importObservation(Long studyId, Observation observation) {
-        return repository.doImport(studyId, validate(observation));
+        Observation validated = validate(observation);
+        ObservationFactory factory = factory(validated);
+        ObservationProperties props = (ObservationProperties) factory.preImport(validated.getProperties());
+        validated.setProperties(props);
+        return repository.doImport(studyId, validated);
     }
 
     public void deleteObservation(Long studyId, Integer observationId) {
