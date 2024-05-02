@@ -27,7 +27,7 @@ import java.util.Optional;
 public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
 
-    private static List<Value> properties = List.of(
+    private static final List<Value> properties = List.of(
             /* TODO enable Autocomplete in FE
             new AutocompleteValue("limeSurveyId", "surveys")
                     .setName("Survey")
@@ -79,6 +79,12 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
     @Override
     public LimeSurveyObservation<ObservationProperties> create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
         return new LimeSurveyObservation(sdk, validate((P)properties), limeSurveyRequestService);
+    }
+
+    @Override
+    public ObservationProperties preImport(ObservationProperties properties) {
+        properties.remove(LimeSurveyObservation.LIME_SURVEY_ID);
+        return properties;
     }
 
     @Override
