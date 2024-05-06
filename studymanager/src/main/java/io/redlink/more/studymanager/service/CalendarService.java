@@ -56,9 +56,9 @@ public class CalendarService {
             if (referenceDate != null) {
                 relativeDate = referenceDate.toInstant();
             } else if (study.getStartDate() != null) {
-                relativeDate = study.getStartDate().atStartOfDay().toInstant(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
+                relativeDate = study.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
             } else {
-                relativeDate = study.getPlannedStartDate().atStartOfDay().toInstant(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
+                relativeDate = study.getPlannedStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
             }
         }
         Instant finalRelativeDate = relativeDate;
@@ -75,37 +75,27 @@ public class CalendarService {
                         Event event = (Event) e;
                         start = event.getDateStart();
                         end = event.getDateEnd();
-                        isWithinTimeframe = start.isAfter(Transformers.toInstant(OffsetDateTime.from(from.atStartOfDay())))
-                                    && end.isBefore(Transformers.toInstant(OffsetDateTime.from(to.atStartOfDay().plusDays(1))));
+                        isWithinTimeframe = start.isAfter(from.atStartOfDay(ZoneId.systemDefault()).toInstant())
+                                    && end.isBefore(to.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant());
                     } else if(RelativeEvent.TYPE.equals(e.getType())) {
                         RelativeEvent event = (RelativeEvent) e;
                         start = finalRelativeDate.plus(
                                 event.getDtstart().getOffset().getValue(),
-                                ChronoUnit.valueOf(event.getDtstart().getOffset().getUnit().getValue())
+                                event.getDtstart().getOffset().getUnit().toChronoUnit()
                         );
                         end = finalRelativeDate.plus(
                                 event.getDtend().getOffset().getValue(),
-                                ChronoUnit.valueOf(event.getDtend().getOffset().getUnit().getValue())
+                                event.getDtend().getOffset().getUnit().toChronoUnit()
                         );
 
-                        isWithinTimeframe = start.isAfter(Transformers.toInstant(OffsetDateTime.from(from.atStartOfDay())))
-                                && end.isBefore(Transformers.toInstant(OffsetDateTime.from(to.atStartOfDay().plusDays(1))));
+                        isWithinTimeframe = start.isAfter(from.atStartOfDay(ZoneId.systemDefault()).toInstant())
+                                && end.isBefore(to.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant());
                     }
                     if (Objects.equals(observation.getStudyGroupId(), actualStudyGroupId) && isWithinTimeframe)
-                        return new ObservationTimelineEvent(
-                                observation.getObservationId(),
-                                observation.getStudyGroupId(),
-                                observation.getTitle(),
-                                observation.getPurpose(),
-                                observation.getType(),
-                                start,
-                                end,
-                                observation.getHidden(),
-                                observation.getSchedule().getType()
-                        );
-                    return null;
-                }).filter(Objects::nonNull)
-                .toList()
+                        return ObservationTimelineEvent.fromObservation(observation, start, end);
+                    else
+                        return null;
+                }).filter(Objects::nonNull).toList()
         );
 
         return studyTimeline;

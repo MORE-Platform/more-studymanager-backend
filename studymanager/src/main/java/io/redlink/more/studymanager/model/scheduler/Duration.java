@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import io.redlink.more.studymanager.api.v1.model.DurationDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDurationDTO;
 
+import java.time.temporal.ChronoUnit;
+
 public class Duration {
 
     private Integer value;
@@ -12,20 +14,27 @@ public class Duration {
      * unit of time to offset
      */
     public enum Unit {
-        MINUTE("MINUTE"),
+        MINUTE("MINUTE", "MINUTES"),
 
-        HOUR("HOUR"),
+        HOUR("HOUR", "HOURS"),
 
-        DAY("DAY");
+        DAY("DAY", "DAYS");
 
         private String value;
+        private String chronoValue;
 
-        Unit(String value) {
+        Unit(String value, String chronoValue) {
             this.value = value;
+            this.chronoValue = chronoValue;
         }
+
 
         public String getValue() {
             return value;
+        }
+
+        public String getChronoValue() {
+            return chronoValue;
         }
 
         @Override
@@ -41,6 +50,10 @@ public class Duration {
                 }
             }
             throw new IllegalArgumentException("Unexpected value '" + value + "'");
+        }
+
+        public ChronoUnit toChronoUnit() {
+            return ChronoUnit.valueOf(chronoValue);
         }
 
         public static Unit fromDurationDTOUnit(DurationDTO.UnitEnum unit) {
