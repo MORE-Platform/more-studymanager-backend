@@ -19,7 +19,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -28,8 +27,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -122,7 +119,7 @@ public class CalendarControllerTest {
                 .andExpect(jsonPath("$.observations[0].title").value("title 1"))
                 .andExpect(jsonPath("$.observations[0].purpose").value("purpose 1"))
                 .andExpect(jsonPath("$.observations[0].type").value("type 1"))
-                .andExpect(jsonPath("$.observations[0].start", is(from.atStartOfDay(ZoneId.systemDefault()).format(pattern))))
+                .andExpect(jsonPath("$.observations[0].start").value(from.atStartOfDay(ZoneId.systemDefault()).format(pattern)))
                 .andExpect(jsonPath("$.observations[0].end").value(to.atStartOfDay(ZoneId.systemDefault()).format(pattern)))
                 .andExpect(jsonPath("$.observations[0].hidden").value(Boolean.FALSE))
                 .andExpect(jsonPath("$.observations[0].scheduleType").value(Event.TYPE))
