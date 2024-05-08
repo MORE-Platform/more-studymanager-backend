@@ -104,7 +104,7 @@ public class CalendarControllerTest {
                     return studyTimeline;
                 });
 
-        DateTimeFormatter pattern = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+        DateTimeFormatter pattern = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX").withZone(ZoneId.systemDefault());
 
         mvc.perform(get("/api/v1/studies/3/timeline")
                         .param("participant", String.valueOf(2))
@@ -119,8 +119,8 @@ public class CalendarControllerTest {
                 .andExpect(jsonPath("$.observations[0].title").value("title 1"))
                 .andExpect(jsonPath("$.observations[0].purpose").value("purpose 1"))
                 .andExpect(jsonPath("$.observations[0].type").value("type 1"))
-                .andExpect(jsonPath("$.observations[0].start").value(from.atStartOfDay(ZoneId.systemDefault()).format(pattern)))
-                .andExpect(jsonPath("$.observations[0].end").value(to.atStartOfDay(ZoneId.systemDefault()).format(pattern)))
+                .andExpect(jsonPath("$.observations[0].start").value(pattern.format(from.atStartOfDay(ZoneId.systemDefault()).toInstant())))
+                .andExpect(jsonPath("$.observations[0].end").value(pattern.format(to.atStartOfDay(ZoneId.systemDefault()).toInstant())))
                 .andExpect(jsonPath("$.observations[0].hidden").value(Boolean.FALSE))
                 .andExpect(jsonPath("$.observations[0].scheduleType").value(Event.TYPE))
 
@@ -129,8 +129,8 @@ public class CalendarControllerTest {
                 .andExpect(jsonPath("$.observations[1].title").value("title 2"))
                 .andExpect(jsonPath("$.observations[1].purpose").value("purpose 2"))
                 .andExpect(jsonPath("$.observations[1].type").value("type 2"))
-                .andExpect(jsonPath("$.observations[1].start").value(from.atStartOfDay(ZoneId.systemDefault()).format(pattern)))
-                .andExpect(jsonPath("$.observations[1].end").value(to.atStartOfDay(ZoneId.systemDefault()).format(pattern)))
+                .andExpect(jsonPath("$.observations[1].start").value(pattern.format(from.atStartOfDay(ZoneId.systemDefault()).toInstant())))
+                .andExpect(jsonPath("$.observations[1].end").value(pattern.format(to.atStartOfDay(ZoneId.systemDefault()).toInstant())))
                 .andExpect(jsonPath("$.observations[1].hidden").value(Boolean.TRUE))
                 .andExpect(jsonPath("$.observations[1].scheduleType").value(RelativeEvent.TYPE));
 
