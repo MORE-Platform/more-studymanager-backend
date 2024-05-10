@@ -3,15 +3,15 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.User;
-import io.redlink.more.studymanager.model.scheduler.Event;
-import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
-import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
 import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
+import io.redlink.more.studymanager.utils.SchedulerUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -30,13 +30,17 @@ public class CalendarService {
     }
 
     public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, OffsetDateTime referenceDate, LocalDate from, LocalDate to, User currentUser) {
-        Study study = studyService.getStudy(studyId, currentUser).orElse(null);
-        if(study == null)
-            return null;
-
+        Instant fromInstant = from.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant toInstant = to.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        final Integer actualStudyGroupId;
+        Instant actualReferenceDate = null;
         StudyTimeline studyTimeline = new StudyTimeline();
-        Integer actualStudyGroupId;
-        Instant relativeDate = null;
+
+        Study study = studyService.getStudy(studyId, currentUser).orElse(null);
+        if(study == null) {
+            return null;
+        }
+
 
         if(participantId != null) {
             Participant participant = participantService.getParticipant(studyId, participantId);
@@ -44,58 +48,36 @@ public class CalendarService {
                 return null;
             actualStudyGroupId = participant.getStudyGroupId();
             if (participant.getStart() != null) {
-                relativeDate = participant.getStart();
+                actualReferenceDate = participant.getStart();
             }
         } else {
             actualStudyGroupId = studyGroupId;
         }
 
-        if(relativeDate == null) {
+        if(actualReferenceDate == null) {
             if (referenceDate != null) {
-                relativeDate = referenceDate.toInstant();
+                actualReferenceDate = referenceDate.toInstant();
             } else if (study.getStartDate() != null) {
-                relativeDate = study.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
+                actualReferenceDate = study.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
             } else {
-                relativeDate = study.getPlannedStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
+                actualReferenceDate = study.getPlannedStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
             }
         }
-        Instant finalRelativeDate = relativeDate;
+
+        Instant finalActualReferenceDate = actualReferenceDate;
 
         studyTimeline.addAllObservations(observationService.listObservations(studyId)
                 .stream()
-                .map(observation -> {
-                    ScheduleEvent e = observation.getSchedule();
-                    boolean isWithinTimeframe = true;
-                    Instant start = null;
-                    Instant end = null;
-
-                    if(Event.TYPE.equals(e.getType())) {
-                        Event event = (Event) e;
-                        start = event.getDateStart();
-                        end = event.getDateEnd();
-                        isWithinTimeframe = start.isAfter(from.atStartOfDay(ZoneId.systemDefault()).toInstant())
-                                    && end.isBefore(to.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant());
-                    } else if(RelativeEvent.TYPE.equals(e.getType())) {
-                        RelativeEvent event = (RelativeEvent) e;
-                        start = finalRelativeDate.plus(
-                                event.getDtstart().getOffset().getValue(),
-                                event.getDtstart().getOffset().getUnit().toChronoUnit()
-                        );
-                        end = finalRelativeDate.plus(
-                                event.getDtend().getOffset().getValue(),
-                                event.getDtend().getOffset().getUnit().toChronoUnit()
-                        );
-
-                        isWithinTimeframe = start.isAfter(from.atStartOfDay(ZoneId.systemDefault()).toInstant())
-                                && end.isBefore(to.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant());
-                    }
-                    if (Objects.equals(observation.getStudyGroupId(), actualStudyGroupId) && isWithinTimeframe)
-                        return ObservationTimelineEvent.fromObservation(observation, start, end);
-                    else
-                        return null;
-                }).filter(Objects::nonNull).toList()
+                .filter(observation -> actualStudyGroupId == null || Objects.equals(observation.getStudyGroupId(), actualStudyGroupId))
+                .map(observation ->
+                        SchedulerUtils.parseToObservationSchedules(observation.getSchedule(), finalActualReferenceDate, fromInstant, toInstant)
+                            .stream()
+                                .map(schedule -> ObservationTimelineEvent.fromObservation(observation, schedule.getKey(), schedule.getValue()))
+                                .toList()
+                )
+                .flatMap(List::stream)
+                .collect(Collectors.toList())
         );
-
         return studyTimeline;
     }
 
