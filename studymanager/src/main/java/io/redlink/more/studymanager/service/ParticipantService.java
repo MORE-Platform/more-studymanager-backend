@@ -68,14 +68,11 @@ public class ParticipantService {
 
     @Transactional
     public void alignParticipantsWithStudyState(Study study) {
-        if (EnumSet.of(Study.Status.CLOSED, Study.Status.DRAFT).contains(study.getStudyState())) {
+        if (EnumSet.of(Study.Status.CLOSED).contains(study.getStudyState())) {
             participantRepository.cleanupParticipants(study.getStudyId());
         }
-        if (EnumSet.of(Study.Status.PREVIEW).contains(study.getStudyState())) {
-            participantRepository.listParticipants(study.getStudyId())
-                    .forEach(p -> participantRepository.updateRegistrationToken(
-                            p.getStudyId(), p.getParticipantId(), RandomTokenGenerator.generate()
-                    ));
+        if (EnumSet.of(Study.Status.DRAFT).contains(study.getStudyState())) {
+            participantRepository.resetParticipants(study.getStudyId(), RandomTokenGenerator::generate);
         }
     }
 

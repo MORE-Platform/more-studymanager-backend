@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.repository;
 
+import com.google.common.base.Supplier;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Participant;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNullableIntegerValue;
+import static io.redlink.more.studymanager.repository.RepositoryUtils.intReader;
 
 @Component
 public class ParticipantRepository {
@@ -136,9 +138,23 @@ public class ParticipantRepository {
         namedTemplate.update("DELETE FROM push_notifications_token WHERE study_id = :study_id", params);
     }
 
-    public void updateRegistrationToken(Long studyId, Integer participantId, String registrationToken) {
-        namedTemplate.update(UPDATE_REGISTRATION_TOKEN,
-                toParams(studyId, participantId).addValue("token", registrationToken));
+    @Transactional
+    public void resetParticipants(final Long studyId, final Supplier<String> tokenSource) {
+        // First clear credentials and tokens...
+        cleanupParticipants(studyId);
+        // ... then reset participant-status and start-date ...
+        final var pIDs = namedTemplate.query(
+                "UPDATE participants SET status = DEFAULT, start = NULL WHERE study_id = :study_id RETURNING *",
+                toParams(studyId),
+                intReader("participant_id")
+        );
+        // ... and finally create new token for the participants
+        namedTemplate.batchUpdate(
+                UPDATE_REGISTRATION_TOKEN,
+                pIDs.stream()
+                        .map(pid -> toParams(studyId, pid).addValue("token", tokenSource.get()))
+                        .toArray(MapSqlParameterSource[]::new)
+        );
     }
 
     public void clear() {

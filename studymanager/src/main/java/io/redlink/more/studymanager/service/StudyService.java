@@ -32,9 +32,9 @@ public class StudyService {
     private static final Map<Study.Status, Set<Study.Status>> VALID_STUDY_TRANSITIONS = Map.of(
             Study.Status.DRAFT, EnumSet.of(Study.Status.PREVIEW, Study.Status.ACTIVE),
             Study.Status.PREVIEW, EnumSet.of(Study.Status.PAUSED_PREVIEW, Study.Status.DRAFT),
-            Study.Status.PAUSED_PREVIEW, EnumSet.of(Study.Status.DRAFT),
+            Study.Status.PAUSED_PREVIEW, EnumSet.of(Study.Status.PREVIEW, Study.Status.DRAFT),
             Study.Status.ACTIVE, EnumSet.of(Study.Status.PAUSED, Study.Status.CLOSED),
-            Study.Status.PAUSED, EnumSet.of(Study.Status.ACTIVE)
+            Study.Status.PAUSED, EnumSet.of(Study.Status.ACTIVE, Study.Status.CLOSED)
     );
 
     private final StudyRepository studyRepository;
@@ -128,6 +128,7 @@ public class StudyService {
                             )
                         );
                         participantService.alignParticipantsWithStudyState(s);
+                        elasticService.deleteIndex(s.getStudyId());
                     } catch (Exception e) {
                         log.warn("Could not set new state for study id {}; old state: {}; new state: {}", studyId, oldState.getValue(), s.getStudyState().getValue());
                         //ROLLBACK
