@@ -189,4 +189,8 @@ public class StudyService {
                 )
         );
     }
+
+    public Optional<StudyDurationInfo> getStudyDurationInfo(Long studyId) {
+        return studyRepository.getStudyDurationInfo(studyId);
+    }
 }

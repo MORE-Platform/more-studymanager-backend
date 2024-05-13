@@ -1,5 +1,10 @@
 package io.redlink.more.studymanager.utils;
 
+import biweekly.component.VEvent;
+import biweekly.util.DayOfWeek;
+import biweekly.util.Frequency;
+import biweekly.util.Recurrence;
+import biweekly.util.com.google.ical.compat.javautil.DateIterator;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.scheduler.*;
 import org.apache.commons.lang3.tuple.Pair;
@@ -13,13 +18,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class SchedulerUtils {
-    public static Instant getEnd(RelativeEvent event, Instant start, Instant end) {
-        return parseToObservationSchedulesForRelativeEvent(event, start, end)
-                .stream().map(Pair::getRight).max(Instant::compareTo).orElse(null);
-    }
 
     public static List<Pair<Instant, Instant>> parseToObservationSchedulesForRelativeEvent(
-            RelativeEvent event, Instant referenceDate, Instant start, Instant maxEnd) {
+            RelativeEvent event, Instant start, Instant maxEnd) {
 
         List<Pair<Instant, Instant>> events = new ArrayList<>();
 
@@ -27,13 +28,13 @@ public class SchedulerUtils {
 
         if(event.getRrrule() != null) {
             RelativeRecurrenceRule rrule = event.getRrrule();
-            Instant maxEndOfRule = currentEvt.getRight().plus(rrule.getEndAfter().getValue(), rrule.getEndAfter().getUnit().toTemporalUnit());
+            Instant maxEndOfRule = currentEvt.getRight().plus(rrule.getEndAfter().getValue(), rrule.getEndAfter().getUnit().toChronoUnit());
             maxEnd = maxEnd.isBefore(maxEndOfRule) ? maxEnd : maxEndOfRule;
             long durationInMs = currentEvt.getRight().toEpochMilli() - currentEvt.getLeft().toEpochMilli();
 
             while(currentEvt.getRight().isBefore(maxEnd)) {
                 events.add(currentEvt);
-                Instant estart = currentEvt.getLeft().plus(rrule.getFrequency().getValue(), rrule.getFrequency().getUnit().toTemporalUnit());
+                Instant estart = currentEvt.getLeft().plus(rrule.getFrequency().getValue(), rrule.getFrequency().getUnit().toChronoUnit());
                 currentEvt = Pair.of(estart, estart.plusMillis(durationInMs));
             }
         } else {
@@ -44,7 +45,7 @@ public class SchedulerUtils {
     }
 
     private static Instant toInstant(RelativeDate date, Instant start) {
-        return ZonedDateTime.ofInstant(start.plus(date.getOffset().getValue() - 1L, date.getOffset().getUnit().toTemporalUnit()), date.getZoneId())
+        return ZonedDateTime.ofInstant(start.plus(date.getOffset().getValue() - 1L, date.getOffset().getUnit().toChronoUnit()), ZoneId.systemDefault())
                 .withHour(date.getHours())
                 .withMinute(date.getMinutes())
                 .withSecond(0)
@@ -70,23 +71,23 @@ public class SchedulerUtils {
         return observationSchedules;
     }
 
-    public static List<Pair<Instant, Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, Instant referenceDate, Instant start, Instant end) {
+    public static List<Pair<Instant, Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, Instant start, Instant end) {
         if(scheduleEvent == null) return Collections.emptyList();
         if(Event.class.isAssignableFrom(scheduleEvent.getClass())) {
             return parseToObservationSchedulesForEvent((Event) scheduleEvent, start, end);
         } else {
-            return parseToObservationSchedulesForRelativeEvent((RelativeEvent) scheduleEvent, referenceDate, start, end);
+            return parseToObservationSchedulesForRelativeEvent((RelativeEvent) scheduleEvent, start, end);
         }
     }
 
     public static Instant shiftStartIfObservationAlreadyEnded(Instant start, List<Observation> observations) {
         // returns start date, if now event ends before, otherwise start date + 1 day
         return observations.stream()
-                .map(Observation::observationSchedule)
+                .map(Observation::getSchedule)
                 .filter(scheduleEvent -> scheduleEvent.getType().equals(RelativeEvent.TYPE))
                 .map(r -> ((RelativeEvent) r).getDtend())
                 .filter(relativeDate -> relativeDate.getOffset().getValue() == 1)
-                .map(relativeDate -> start.atZone(relativeDate.getZoneId()).withHour(relativeDate.getHours()).withMinute(relativeDate.getMinutes()).withSecond(0).withNano(0).toInstant())
+                .map(relativeDate -> start.atZone(ZoneId.systemDefault()).withHour(relativeDate.getHours()).withMinute(relativeDate.getMinutes()).withSecond(0).withNano(0).toInstant())
                 .filter(instant -> {
                     return  instant.isBefore(start);
                 })
@@ -156,5 +157,4 @@ public class SchedulerUtils {
     private static void setByMonthDay(Recurrence.Builder builder, Integer byMonthDay) {
         if(byMonthDay != null) builder.byMonthDay(byMonthDay);
     }
-}
 }

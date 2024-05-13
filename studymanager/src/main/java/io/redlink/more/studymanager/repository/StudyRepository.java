@@ -8,16 +8,15 @@
  */
 package io.redlink.more.studymanager.repository;
 
-import io.redlink.more.studymanager.model.Contact;
-import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.StudyRole;
-import io.redlink.more.studymanager.model.User;
+import io.redlink.more.studymanager.model.*;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -62,6 +61,10 @@ public class StudyRepository {
     private static final String SET_PAUSED_STATE_BY_ID = "UPDATE studies SET status = 'paused', modified = now() WHERE study_id = ?";
     private static final String SET_CLOSED_STATE_BY_ID = "UPDATE studies SET status = 'closed', end_date = now(), modified = now() WHERE study_id = ?";
     private static final String STUDY_HAS_STATE = "SELECT study_id FROM studies WHERE study_id = :study_id AND status::varchar IN (:study_status)";
+    private static final String GET_DURATION_INFO_FOR_STUDY =
+            "SELECT sg.study_group_id as group_id, sg.duration AS group_duration, s.duration AS study_duration, s.planned_end_date AS end_date, s.planned_start_date AS start_date FROM studies s " +
+            "LEFT OUTER JOIN study_groups sg on s.study_id = sg.study_id " +
+            "WHERE s.study_id = :study_id";
 
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -129,6 +132,14 @@ public class StudyRepository {
         };
     }
 
+    public Optional<StudyDurationInfo> getStudyDurationInfo(Long studyId) {
+        return namedTemplate.query(GET_DURATION_INFO_FOR_STUDY,
+                new MapSqlParameterSource()
+                        .addValue("study_id", studyId),
+                getStudyDurationInfoRowMapper()).stream()
+                .reduce((prev, curr) -> prev.addGroupDuration(curr.getGroupDurations().get(0)));
+    }
+
     private static MapSqlParameterSource studyToParams(Study study) {
         return new MapSqlParameterSource()
                 .addValue("title", study.getTitle())
@@ -175,6 +186,14 @@ public class StudyRepository {
             if (study == null) return null;
             return study.setUserRoles(StudyAclRepository.readRoleArray(rs, "user_roles"));
         });
+    }
+
+    private static RowMapper<StudyDurationInfo> getStudyDurationInfoRowMapper() {
+        return (rs, rowNum) -> new StudyDurationInfo()
+                .setEndDate(rs.getDate("end_date").toLocalDate())
+                .setStartDate(rs.getDate("start_date").toLocalDate())
+                .setDuration(MapperUtils.readValue(rs.getString("study_duration"), Duration.class))
+                .addGroupDuration(Pair.of(rs.getInt("group_id"), MapperUtils.readValue(rs.getString("group_duration"), Duration.class)));
     }
 
     // for testing purpose only

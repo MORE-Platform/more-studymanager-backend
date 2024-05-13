@@ -1,40 +1,47 @@
 package io.redlink.more.studymanager.model.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.redlink.more.studymanager.api.v1.model.DurationDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDurationDTO;
 
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 public class Duration {
 
     private Integer value;
 
+    public Instant getEnd(Instant start) {
+        if(start == null) {
+            return null;
+        }
+        return start.plus(value, unit.toChronoUnit());
+    }
+
     /**
      * unit of time to offset
      */
     public enum Unit {
-        MINUTE("MINUTE", "MINUTES"),
+        MINUTE("MINUTE", ChronoUnit.MINUTES),
 
-        HOUR("HOUR", "HOURS"),
+        HOUR("HOUR", ChronoUnit.HOURS),
 
-        DAY("DAY", "DAYS");
+        DAY("DAY", ChronoUnit.DAYS);
 
         private String value;
-        private String chronoValue;
 
-        Unit(String value, String chronoValue) {
+        @JsonIgnore
+        private ChronoUnit chronoUnit;
+
+        Unit(String value, ChronoUnit chronoValue) {
             this.value = value;
-            this.chronoValue = chronoValue;
+            this.chronoUnit = chronoValue;
         }
 
 
         public String getValue() {
             return value;
-        }
-
-        public String getChronoValue() {
-            return chronoValue;
         }
 
         @Override
@@ -53,7 +60,7 @@ public class Duration {
         }
 
         public ChronoUnit toChronoUnit() {
-            return ChronoUnit.valueOf(chronoValue);
+            return chronoUnit;
         }
 
         public static Unit fromDurationDTOUnit(DurationDTO.UnitEnum unit) {
