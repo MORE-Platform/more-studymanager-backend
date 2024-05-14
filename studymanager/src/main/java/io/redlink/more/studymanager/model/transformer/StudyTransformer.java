@@ -8,12 +8,13 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.*;
+import io.redlink.more.studymanager.api.v1.model.ContactDTO;
+import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
+import io.redlink.more.studymanager.api.v1.model.StudyDTO;
+import io.redlink.more.studymanager.api.v1.model.StudyStatusDTO;
 import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.scheduler.Duration;
-
-import java.util.Optional;
 
 public class StudyTransformer {
 
@@ -60,6 +61,6 @@ public class StudyTransformer {
     }
 
     public static Study.Status fromStatusChangeDTO_V1(StatusChangeDTO statusChangeDTO) {
-        return Study.Status.valueOf(statusChangeDTO.getStatus().getValue().toUpperCase());
+        return Study.Status.fromValue(statusChangeDTO.getStatus().getValue());
     }
 }

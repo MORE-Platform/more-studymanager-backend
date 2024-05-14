@@ -29,6 +29,7 @@ import io.redlink.more.studymanager.model.data.ElasticDataPoint;
 import io.redlink.more.studymanager.model.data.SimpleDataPoint;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -265,7 +266,12 @@ public class ElasticService {
             }
             return participationDataList;
         }catch (IOException | ElasticsearchException e) {
-            LOG.error("Elastic Query failed", e);
+            if (e instanceof ElasticsearchException ee) {
+                if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
+                    return List.of();
+                }
+            }
+            LOG.warn("Elastic Query failed", e);
             return new ArrayList<>();
         }
     }

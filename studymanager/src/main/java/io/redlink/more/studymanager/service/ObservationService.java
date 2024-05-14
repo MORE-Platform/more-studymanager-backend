@@ -18,6 +18,7 @@ import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
+import java.util.EnumSet;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -79,7 +80,7 @@ public class ObservationService {
     }
 
     public void alignObservationsWithStudyState(Study study){
-        if(study.getStudyState() == Study.Status.ACTIVE)
+        if (EnumSet.of(Study.Status.ACTIVE, Study.Status.PREVIEW).contains(study.getStudyState()))
             activateObservationsFor(study);
         else deactivateObservationsFor(study);
     }

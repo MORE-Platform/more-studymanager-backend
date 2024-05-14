@@ -36,7 +36,10 @@ public class Study {
         DRAFT("draft"),
         ACTIVE("active"),
         PAUSED("paused"),
-        CLOSED("closed");
+        CLOSED("closed"),
+        PREVIEW("preview"),
+        PAUSED_PREVIEW("paused-preview"),
+        ;
 
         private final String value;
 
@@ -46,6 +49,17 @@ public class Study {
 
         public String getValue() {
             return value;
+        }
+
+        public static Status fromValue(String value) {
+            for (Status c : Status.values()) {
+                if (c.value.equalsIgnoreCase(value)) {
+                    return c;
+                }
+            }
+            throw new IllegalArgumentException(
+                    "No enum constant " + Status.class.getCanonicalName() + " with value " + value
+            );
         }
     }
 
