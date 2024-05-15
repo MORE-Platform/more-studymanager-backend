@@ -6,6 +6,7 @@ import biweekly.util.Frequency;
 import biweekly.util.Recurrence;
 import biweekly.util.com.google.ical.compat.javautil.DateIterator;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.*;
 import java.time.LocalDate;
 import org.apache.commons.lang3.Range;
@@ -111,6 +112,34 @@ public final class SchedulerUtils {
                 .orElse(signup),
             ZoneId.systemDefault()
         );
+    }
+
+    public static List<Instant> parseToInterventionSchedules(Trigger trigger, Instant start, Instant end) {
+        if(trigger == null) return Collections.emptyList();
+        if(Objects.equals(trigger.getType(), "relative-time-trigger")) {
+            return parseToInterventionSchedulesForRelativeTrigger(trigger, start);
+        } else if(Objects.equals(trigger.getType(), "scheduled-trigger")) {
+            return parseToInterventionSchedulesForScheduledTrigger(trigger, start, end);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    private static List<Instant> parseToInterventionSchedulesForRelativeTrigger(Trigger trigger, Instant start) {
+        List<Instant> events = new ArrayList<>();
+        Instant currentEvent = toInstant(
+                new RelativeDate()
+                        .setTime(trigger.getProperties().getString("hour") + ":00")
+                        .setOffset(new io.redlink.more.studymanager.model.scheduler.Duration().setValue(trigger.getProperties().getInt("day")).setUnit(io.redlink.more.studymanager.model.scheduler.Duration.Unit.DAY)),
+                start);
+        events.add(currentEvent);
+        return events;
+    }
+
+    private static List<Instant> parseToInterventionSchedulesForScheduledTrigger(Trigger trigger, Instant start, Instant end) {
+        List<Instant> events = new ArrayList<>();
+        //TODO parse cron schedule
+        return events;
     }
 
     public static Instant shiftStartIfObservationAlreadyEnded(Instant start, List<Observation> observations) {

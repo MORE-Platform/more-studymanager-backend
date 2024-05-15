@@ -5,6 +5,9 @@ import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.scheduler.Duration;
+import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.timeline.InterventionTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
 import io.redlink.more.studymanager.utils.SchedulerUtils;
@@ -16,6 +19,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.Range;
 import org.springframework.stereotype.Service;
 
@@ -87,6 +91,12 @@ public class CalendarService {
         }
 
         final List<Observation> observations = observationService.listObservationsForGroup(studyId, effectiveGroup);
+        final List<Intervention> interventions = interventionService.listInterventions(studyId)
+                .stream()
+                .filter(intervention -> actualStudyGroupId == null ||
+                        intervention.getStudyGroupId() == null ||
+                        Objects.equals(intervention.getStudyGroupId(), actualStudyGroupId))
+                .toList();
 
         // Shift the effective study-start if the participant would miss a relative observation
         final LocalDate firstDayInStudy = SchedulerUtils.alignStartDateToSignupInstant(participantStart, observations);
@@ -128,7 +138,23 @@ public class CalendarService {
                                 .map(e -> ObservationTimelineEvent.fromObservation(o, e.getMinimum(), e.getMaximum()))
                         )
                         .toList(),
-                List.of()
+                interventions.stream()
+                        .map(intervention -> {
+                            Trigger trigger = interventionService.getTriggerByIds(studyId, intervention.getInterventionId());
+                            return SchedulerUtils.parseToInterventionSchedules(
+                                            trigger,
+                                            relStart,
+                                            info.getDurationFor(actualStudyGroupId).getEnd(relStart))
+                                    .stream()
+                                    .filter(event ->
+                                            event.isBefore(to.atStartOfDay(ZoneId.systemDefault()).toInstant()) &&
+                                                    event.isAfter(from.atStartOfDay(ZoneId.systemDefault()).toInstant()))
+                                    .map(event -> InterventionTimelineEvent.fromInterventionAndTrigger(intervention, trigger, event))
+                                    .toList();
+                        })
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList())
+
         );
     }
 

@@ -1587,12 +1587,7 @@ components:
           type: string
         purpose:
           type: string
-        type:
-          type: string
         start:
-          type: string
-          format: date-time
-        end:
           type: string
           format: date-time
         scheduleType:
