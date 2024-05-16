@@ -99,8 +99,8 @@ public class ImportExportService {
 
     @Transactional
     public Study importStudy(StudyImportExport studyImport, AuthenticatedUser user) {
-        Study newStudy = studyService.createStudy(studyImport.getStudy(), user);
-        Long studyId = newStudy.getStudyId();
+        final Study newStudy = studyService.createStudy(studyImport.getStudy(), user);
+        final Long studyId = newStudy.getStudyId();
 
         studyImport.getStudyGroups().forEach(studyGroup ->
                 studyGroupService.importStudyGroup(studyId, studyGroup)
@@ -109,14 +109,12 @@ public class ImportExportService {
                 observationService.importObservation(studyId, observation)
         );
         studyImport.getInterventions().forEach(intervention ->
-                interventionService.importIntervention(studyId, intervention)
-        );
-        studyImport.getTriggers().forEach((interventionId, trigger) ->
-            interventionService.importTrigger(studyId, interventionId, trigger)
-        );
-        studyImport.getActions().forEach((interventionId, actionList) ->
-            actionList.forEach(action ->
-                    interventionService.importAction(studyId, interventionId, action))
+                interventionService.importIntervention(
+                        studyId,
+                        intervention,
+                        studyImport.getTriggers().get(intervention.getInterventionId()),
+                        studyImport.getActions().getOrDefault(intervention.getInterventionId(), Collections.emptyList())
+                )
         );
         return newStudy;
     }

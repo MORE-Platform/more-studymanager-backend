@@ -57,10 +57,14 @@ public class StudyRepository {
 
     private static final String DELETE_BY_ID = "DELETE FROM studies WHERE study_id = ?";
     private static final String CLEAR_STUDIES = "DELETE FROM studies";
-    private static final String SET_DRAFT_STATE_BY_ID = "UPDATE studies SET status = 'draft', start_date = NULL, end_date = NULL, modified = now() WHERE study_id = ?";
-    private static final String SET_ACTIVE_STATE_BY_ID = "UPDATE studies SET status = 'active', start_date = now(), modified = now() WHERE study_id = ?";
-    private static final String SET_PAUSED_STATE_BY_ID = "UPDATE studies SET status = 'paused', modified = now() WHERE study_id = ?";
-    private static final String SET_CLOSED_STATE_BY_ID = "UPDATE studies SET status = 'closed', end_date = now(), modified = now() WHERE study_id = ?";
+    private static final String SET_STUDY_STATE = """
+            UPDATE studies
+            SET status = :newState::study_state,
+                modified = now(),
+                start_date = CASE WHEN :setStart = 0 THEN NULL WHEN :setStart = 1 THEN now() ELSE start_date END,
+                end_date = CASE WHEN :setEnd = 0 THEN NULL WHEN :setEnd = 1 THEN now() ELSE end_date END
+            WHERE study_id = :studyId
+            RETURNING *""";
     private static final String STUDY_HAS_STATE = "SELECT study_id FROM studies WHERE study_id = :study_id AND status::varchar IN (:study_status)";
 
     private final JdbcTemplate template;
@@ -116,17 +120,29 @@ public class StudyRepository {
         template.update(DELETE_BY_ID, id);
     }
 
-    public void setStateById(long id, Study.Status status) {
-        template.update(getStatusQuery(status), id);
-    }
+    public Optional<Study> setStateById(long id, Study.Status status) {
+        final int toNull = 0, toNow = 1, keepCurrentValue = -1;
+        int setStart = keepCurrentValue, setEnd = keepCurrentValue;
+        switch (status) {
+            case DRAFT -> {
+                setStart = toNull;
+                setEnd = toNull;
+            }
+            case ACTIVE, PREVIEW -> setStart = toNow;
+            case CLOSED -> setEnd = toNow;
+        }
 
-    private String getStatusQuery(Study.Status status) {
-        return switch (status) {
-            case DRAFT -> SET_DRAFT_STATE_BY_ID;
-            case ACTIVE -> SET_ACTIVE_STATE_BY_ID;
-            case PAUSED -> SET_PAUSED_STATE_BY_ID;
-            case CLOSED -> SET_CLOSED_STATE_BY_ID;
-        };
+        try (var stream = namedTemplate.queryForStream(SET_STUDY_STATE,
+                new MapSqlParameterSource()
+                        .addValue("studyId", id)
+                        .addValue("newState", status.getValue())
+                        .addValue("setStart", setStart)
+                        .addValue("setEnd", setEnd),
+                getStudyRowMapper()
+        )) {
+            return stream
+                    .findFirst();
+        }
     }
 
     private static MapSqlParameterSource studyToParams(Study study) {
@@ -161,7 +177,7 @@ public class StudyRepository {
                 .setDuration(MapperUtils.readValue(rs.getString("duration"), Duration.class))
                 .setCreated(RepositoryUtils.readInstant(rs, "created"))
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
-                .setStudyState(Study.Status.valueOf(rs.getString("status").toUpperCase()))
+                .setStudyState(Study.Status.fromValue(rs.getString("status").toUpperCase()))
                 .setContact(new Contact()
                         .setInstitute(rs.getString("institute"))
                         .setPerson(rs.getString("contact_person"))

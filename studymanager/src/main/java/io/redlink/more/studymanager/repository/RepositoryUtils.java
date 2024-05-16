@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
+import org.springframework.jdbc.core.RowMapper;
 
 public final class RepositoryUtils {
 
@@ -67,6 +68,14 @@ public final class RepositoryUtils {
             case ABANDONED -> "abandoned";
             case KICKED_OUT -> "kicked_out";
             case LOCKED -> "locked";
+        };
+    }
+
+    public static RowMapper<Integer> intReader(String columnLabel) {
+        return (rs, rowNum) -> {
+            int anInt = rs.getInt(columnLabel);
+            if (rs.wasNull()) return null;
+            return anInt;
         };
     }
 }

@@ -70,10 +70,7 @@ public class ImportExportServiceTest {
     private ArgumentCaptor<Trigger> triggerCaptor;
 
     @Captor
-    private ArgumentCaptor<Action> actionCaptor;
-
-    @Captor
-    private ArgumentCaptor<Integer> idIntCaptor;
+    private ArgumentCaptor<List<Action>> actionCaptor;
 
     @Captor
     private ArgumentCaptor<Long> idLongCaptor;
@@ -161,16 +158,20 @@ public class ImportExportServiceTest {
         when(observationService.importObservation(any(), any()))
                 .thenAnswer(invocationOnMock ->
                                 ((Observation) invocationOnMock.getArgument(1)).setStudyId(studyId));
-        when(interventionService.importIntervention(any(), any()))
+        when(interventionService.importIntervention(any(), any(), any(), any()))
                 .thenAnswer(invocationOnMock ->
                         ((Intervention) invocationOnMock.getArgument(1)).setStudyId(studyId));
 
         importExportService.importStudy(studyImport, currentUser);
 
+        ArgumentCaptor<StudyGroup> studyGroupCaptor = ArgumentCaptor.forClass(StudyGroup.class);
+        verify(studyGroupService, times(2)).importStudyGroup(idLongCaptor.capture(), studyGroupCaptor.capture());
+        assertThat(studyGroupCaptor.getAllValues()).hasSize(2);
+        assertThat(studyGroupCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(2);
+        assertThat(studyGroupCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
+
         verify(observationService, times(2)).importObservation(idLongCaptor.capture(), observationCaptor.capture());
-        verify(interventionService, times(2)).importIntervention(idLongCaptor.capture(),interventionCaptor.capture());
-        verify(interventionService, times(1)).importTrigger(idLongCaptor.capture(), idIntCaptor.capture(), triggerCaptor.capture());
-        verify(interventionService, times(1)).importAction(idLongCaptor.capture(), idIntCaptor.capture(), actionCaptor.capture());
+        verify(interventionService, times(2)).importIntervention(idLongCaptor.capture(), interventionCaptor.capture(), triggerCaptor.capture(), actionCaptor.capture());
 
         assertThat(observationCaptor.getAllValues().get(0).getObservationId()).isEqualTo(1);
         assertThat(observationCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(3);
@@ -182,8 +183,6 @@ public class ImportExportServiceTest {
         assertThat(interventionCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
         assertThat(interventionCaptor.getAllValues().get(1).getInterventionId()).isEqualTo(3);
 
-        assertThat(idIntCaptor.getAllValues().get(0)).isEqualTo(3);
-        assertThat(idIntCaptor.getAllValues().get(1)).isEqualTo(2);
         assertThat(idLongCaptor.getAllValues()).allMatch(Predicate.isEqual(1L));
     }
 
