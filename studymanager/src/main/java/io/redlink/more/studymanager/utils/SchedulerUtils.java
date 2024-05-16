@@ -10,7 +10,11 @@ import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.*;
 import java.time.LocalDate;
 import org.apache.commons.lang3.Range;
+import org.quartz.CronExpression;
 
+import java.sql.Date;
+import java.text.ParseException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -129,7 +133,7 @@ public final class SchedulerUtils {
         List<Instant> events = new ArrayList<>();
         Instant currentEvent = toInstant(
                 new RelativeDate()
-                        .setTime(trigger.getProperties().getString("hour") + ":00")
+                        .setTime(trigger.getProperties().getInt("hour") + ":00")
                         .setOffset(new io.redlink.more.studymanager.model.scheduler.Duration().setValue(trigger.getProperties().getInt("day")).setUnit(io.redlink.more.studymanager.model.scheduler.Duration.Unit.DAY)),
                 start);
         events.add(currentEvent);
@@ -138,7 +142,17 @@ public final class SchedulerUtils {
 
     private static List<Instant> parseToInterventionSchedulesForScheduledTrigger(Trigger trigger, Instant start, Instant end) {
         List<Instant> events = new ArrayList<>();
-        //TODO parse cron schedule
+        String cronString = trigger.getProperties().get("cronSchedule").toString();
+        if (CronExpression.isValidExpression(cronString)) {
+            try {
+                CronExpression cronExpression = new CronExpression(cronString);
+                Instant currentDate = cronExpression.getNextValidTimeAfter(Date.from(start)).toInstant();
+                while (currentDate.isBefore(end)) {
+                    events.add(currentDate);
+                    currentDate = cronExpression.getNextValidTimeAfter(Date.from(currentDate)).toInstant();
+                }
+            } catch (ParseException ignore) {}
+        }
         return events;
     }
 
