@@ -1,34 +1,14 @@
 package io.redlink.more.studymanager.model.timeline;
 
-import java.util.ArrayList;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
+import org.apache.commons.lang3.Range;
 
-public class StudyTimeline {
-    List<ObservationTimelineEvent> observationTimelineEvents;
-    List<InterventionTimelineEvent> interventionTimelineEvents;
-
-    public StudyTimeline() {
-        observationTimelineEvents = new ArrayList<>();
-        interventionTimelineEvents = new ArrayList<>();
-    }
-
-    public void addObservationTimelineEvent(ObservationTimelineEvent event) {
-        observationTimelineEvents.add(event);
-    }
-
-    public void addAllObservations(List<ObservationTimelineEvent> events) { observationTimelineEvents.addAll(events); }
-
-    public List<ObservationTimelineEvent> getObservationTimelineEvents() {
-        return observationTimelineEvents;
-    }
-
-    public void addInterventionTimelineEvent(InterventionTimelineEvent event) {
-        interventionTimelineEvents.add(event);
-    }
-
-    public void addAllInterventions(List<InterventionTimelineEvent> events) { interventionTimelineEvents.addAll(events); }
-
-    public List<InterventionTimelineEvent> getInterventionTimelineEvents() {
-        return interventionTimelineEvents;
-    }
+public record StudyTimeline(
+        Instant signup,
+        Range<LocalDate> participationRange,
+        List<ObservationTimelineEvent> observationTimelineEvents,
+        List<InterventionTimelineEvent> interventionTimelineEvents
+) {
 }

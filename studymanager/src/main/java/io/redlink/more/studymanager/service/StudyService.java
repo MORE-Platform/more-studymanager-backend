@@ -12,7 +12,9 @@ import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.repository.StudyAclRepository;
+import io.redlink.more.studymanager.repository.StudyGroupRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
 import org.apache.commons.lang3.StringUtils;
@@ -48,11 +50,12 @@ public class StudyService {
     private final ElasticService elasticService;
 
     private final PushNotificationService pushNotificationService;
+    private final StudyGroupRepository studyGroupRepository;
 
 
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
                         StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService,
-                        ParticipantService participantService, IntegrationService integrationService, ElasticService elasticService, PushNotificationService pushNotificationService) {
+                        ParticipantService participantService, IntegrationService integrationService, ElasticService elasticService, PushNotificationService pushNotificationService, StudyGroupRepository studyGroupRepository) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
@@ -63,6 +66,7 @@ public class StudyService {
         this.integrationService = integrationService;
         this.elasticService = elasticService;
         this.pushNotificationService = pushNotificationService;
+        this.studyGroupRepository = studyGroupRepository;
     }
 
     public Study createStudy(Study study, User currentUser) {
@@ -195,6 +199,31 @@ public class StudyService {
                         aclRepository.getRoleDetails(studyId, userId)
                 )
         );
+    }
+
+    public Optional<Duration> getStudyDuration(Long studyId) {
+        return studyRepository.getById(studyId)
+                .flatMap(study ->
+                        Optional.ofNullable(study.getDuration())
+                                .or(() -> Optional.of(new Duration()
+                                        .setValue((int)
+                                                java.time.Duration.between(
+                                                        Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
+                                                        Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate())
+                                                ).toDays())
+                                        .setUnit(Duration.Unit.DAY)
+                                ))
+                );
+    }
+
+    public Optional<Duration> getStudyDuration(Long studyId, Integer studyGroupId) {
+        final Optional<StudyGroup> group = Optional.ofNullable(studyGroupRepository.getByIds(studyId, studyGroupId));
+        // If there's no such group, return empty() here...
+        if (group.isEmpty()) return Optional.empty();
+
+        return group
+                .map(StudyGroup::getDuration)
+                .or(() -> getStudyDuration(studyId));
     }
 
     public Optional<StudyDurationInfo> getStudyDurationInfo(Long studyId) {

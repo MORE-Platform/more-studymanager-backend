@@ -6,17 +6,30 @@ import io.redlink.more.studymanager.api.v1.model.DurationDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDurationDTO;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 
 public class Duration {
 
     private Integer value;
 
-    public Instant getEnd(Instant start) {
+    public Instant addTo(Instant start) {
         if(start == null) {
             return null;
         }
         return start.plus(value, unit.toChronoUnit());
+    }
+
+    public LocalDate addTo(LocalDate start) {
+        if(start == null) {
+            return null;
+        }
+        return start.plus(Math.max(value-1, 0), unit.toChronoUnit());
+    }
+
+    public java.time.Duration asDuration() {
+        return java.time.Duration.of(value, unit.toChronoUnit());
     }
 
     /**
@@ -178,4 +191,8 @@ public class Duration {
                 ", unit=" + unit +
                 '}';
     }
+
+    public static final Comparator<Duration> DURATION_COMPARATOR =
+            Comparator.comparing(d -> java.time.Duration.of(d.value, d.unit.chronoUnit));
+
 }

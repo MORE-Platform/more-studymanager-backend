@@ -10,6 +10,7 @@ import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
 import io.redlink.more.studymanager.service.CalendarService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
+import org.apache.commons.lang3.Range;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -68,10 +69,11 @@ public class CalendarControllerTest {
         LocalDate from = LocalDate.of(2024, 2, 1);
         LocalDate to = LocalDate.of(2024, 5, 1);
 
-        when(service.getTimeline(any(), any(), any(), any(OffsetDateTime.class), any(LocalDate.class), any(LocalDate.class), any()))
+        when(service.getTimeline(any(), any(), any(), any(OffsetDateTime.class), any(LocalDate.class), any(LocalDate.class)))
                 .thenAnswer(invocationOnMock -> {
-                    StudyTimeline studyTimeline =  new StudyTimeline();
-                    studyTimeline.addAllObservations(
+                    return new StudyTimeline(
+                            referenceDate,
+                            Range.between(from, to, LocalDate::compareTo),
                             List.of(
                                     ObservationTimelineEvent.fromObservation(
                                             new Observation()
@@ -99,9 +101,9 @@ public class CalendarControllerTest {
                                             ((LocalDate)invocationOnMock.getArgument(4)).atStartOfDay(ZoneId.systemDefault()).toInstant(),
                                             ((LocalDate)invocationOnMock.getArgument(5)).atStartOfDay(ZoneId.systemDefault()).toInstant()
                                     )
-                            )
+                            ),
+                            List.of()
                     );
-                    return studyTimeline;
                 });
 
         DateTimeFormatter pattern = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX").withZone(ZoneId.systemDefault());

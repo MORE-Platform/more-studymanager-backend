@@ -99,8 +99,10 @@ class ObservationRepositoryTest {
         );
 
         assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(2);
+        assertThat((observationRepository.listObservations(studyId, studyGroupId)).size()).isEqualTo(1);
         observationRepository.deleteObservation(studyId, observationResponse.getObservationId());
         assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(1);
+        assertThat((observationRepository.listObservations(studyId, studyGroupId)).size()).isEqualTo(0);
         observationRepository.deleteObservation(studyId, observationResponse2.getObservationId());
         assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(0);
 

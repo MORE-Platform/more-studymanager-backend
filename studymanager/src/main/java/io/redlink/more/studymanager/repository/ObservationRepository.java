@@ -34,7 +34,7 @@ public class ObservationRepository {
     private static final String IMPORT_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,:observation_id,:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule) RETURNING *";
     private static final String GET_OBSERVATION_BY_IDS = "SELECT * FROM observations WHERE study_id = ? AND observation_id = ?";
     private static final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
-    private static final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = ?";
+    private static final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = :study_id AND (:study_group_id::integer IS NULL OR study_group_id = :study_group_id)";
     private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now(), hidden=:hidden, no_schedule=:no_schedule WHERE study_id=:study_id AND observation_id=:observation_id";
     private static final String DELETE_ALL = "DELETE FROM observations";
     private static final String SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "INSERT INTO participant_observation_properties(study_id,participant_id,observation_id,properties) VALUES (:study_id,:participant_id,:observation_id,:properties::jsonb) ON CONFLICT (study_id, participant_id, observation_id) DO UPDATE SET properties = EXCLUDED.properties";
@@ -89,7 +89,16 @@ public class ObservationRepository {
     }
 
     public List<Observation> listObservations(Long studyId) {
-        return template.query(LIST_OBSERVATIONS, getObservationRowMapper(), studyId);
+        return listObservations(studyId, null);
+    }
+
+    public List<Observation> listObservations(Long studyId, Integer studyGroupId) {
+        return namedTemplate.query(
+                LIST_OBSERVATIONS,
+                new MapSqlParameterSource("study_id", studyId)
+                        .addValue("study_group_id", studyGroupId),
+                getObservationRowMapper()
+        );
     }
 
     public Observation updateObservation(Observation observation) {

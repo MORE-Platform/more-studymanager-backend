@@ -4,6 +4,7 @@ package io.redlink.more.studymanager.model.transformer;
 import io.redlink.more.studymanager.api.v1.model.InterventionTimelineEventDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationTimelineEventDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyTimelineDTO;
+import io.redlink.more.studymanager.api.v1.model.StudyTimelineStudyDurationDTO;
 import io.redlink.more.studymanager.model.timeline.InterventionTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
@@ -14,10 +15,16 @@ public class TimelineTransformer {
 
     public static StudyTimelineDTO toStudyTimelineDTO(StudyTimeline studyTimeline) {
         return new StudyTimelineDTO()
-                .observations(studyTimeline.getObservationTimelineEvents().stream().map(
+                .participantSignup(Transformers.toOffsetDateTime(studyTimeline.signup()))
+                .studyDuration(
+                        new StudyTimelineStudyDurationDTO()
+                                .from(studyTimeline.participationRange().getMinimum())
+                                .to(studyTimeline.participationRange().getMaximum())
+                )
+                .observations(studyTimeline.observationTimelineEvents().stream().map(
                         TimelineTransformer::toObservationTimelineDTO
                 ).toList())
-                .interventions(studyTimeline.getInterventionTimelineEvents().stream().map(
+                .interventions(studyTimeline.interventionTimelineEvents().stream().map(
                         TimelineTransformer::toInterventionTimelineEventDTO
                 ).toList());
     }

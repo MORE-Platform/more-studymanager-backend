@@ -11,6 +11,7 @@ package io.redlink.more.studymanager.repository;
 import io.redlink.more.studymanager.model.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -65,10 +66,11 @@ public class StudyRepository {
             WHERE study_id = :studyId
             RETURNING *""";
     private static final String STUDY_HAS_STATE = "SELECT study_id FROM studies WHERE study_id = :study_id AND status::varchar IN (:study_status)";
-    private static final String GET_DURATION_INFO_FOR_STUDY =
-            "SELECT sg.study_group_id as group_id, sg.duration AS group_duration, s.duration AS study_duration, s.planned_end_date AS end_date, s.planned_start_date AS start_date FROM studies s " +
-            "LEFT OUTER JOIN study_groups sg on s.study_id = sg.study_id " +
-            "WHERE s.study_id = :study_id";
+    private static final String GET_DURATION_INFO_FOR_STUDY = """
+            SELECT sg.study_group_id as group_id, sg.duration AS group_duration, s.duration AS study_duration, s.planned_end_date AS end_date, s.planned_start_date AS start_date 
+            FROM studies s
+            LEFT OUTER JOIN study_groups sg on s.study_id = sg.study_id
+            WHERE s.study_id = :study_id""";
 
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;

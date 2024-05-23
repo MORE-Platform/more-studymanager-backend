@@ -2,6 +2,11 @@ package io.redlink.more.studymanager.model.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
+import java.time.LocalTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,6 +52,11 @@ public class RelativeDate {
 
     public String getTime() {
         return time;
+    }
+
+    @JsonIgnore
+    public LocalTime getLocalTime() {
+        return LocalTime.parse(time);
     }
 
     public RelativeDate setTime(String time) {
