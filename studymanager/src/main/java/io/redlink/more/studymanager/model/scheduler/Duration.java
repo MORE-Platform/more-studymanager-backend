@@ -14,20 +14,6 @@ public class Duration {
 
     private Integer value;
 
-    public Instant addTo(Instant start) {
-        if(start == null) {
-            return null;
-        }
-        return start.plus(value, unit.toChronoUnit());
-    }
-
-    public LocalDate addTo(LocalDate start) {
-        if(start == null) {
-            return null;
-        }
-        return start.plus(Math.max(value-1, 0), unit.toChronoUnit());
-    }
-
     public java.time.Duration asDuration() {
         return java.time.Duration.of(value, unit.toChronoUnit());
     }

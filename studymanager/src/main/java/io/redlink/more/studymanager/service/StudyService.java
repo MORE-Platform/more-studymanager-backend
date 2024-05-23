@@ -11,19 +11,29 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.exception.NotFoundException;
-import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.MoreUser;
+import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.StudyUserRoles;
+import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyGroupRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -224,9 +234,5 @@ public class StudyService {
         return group
                 .map(StudyGroup::getDuration)
                 .or(() -> getStudyDuration(studyId));
-    }
-
-    public Optional<StudyDurationInfo> getStudyDurationInfo(Long studyId) {
-        return studyRepository.getStudyDurationInfo(studyId);
     }
 }

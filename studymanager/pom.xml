@@ -242,33 +242,18 @@
                             <output>${project.build.directory}/generated-sources/study-manager</output>
                             <apiPackage>io.redlink.more.studymanager.api.v1.webservices</apiPackage>
                             <modelPackage>io.redlink.more.studymanager.api.v1.model</modelPackage>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>app-api</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi/AppAPI.yaml</inputSpec>
-                            <output>${project.build.directory}/generated-sources/app</output>
-                            <apiPackage>io.redlink.more.mmb.api.v1.app.webservices</apiPackage>
-                            <modelPackage>io.redlink.more.mmb.api.v1.app.model</modelPackage>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>internal-api</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <configOptions>
-                                <useTags>true</useTags>
-                            </configOptions>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi/ExternalAPI.yaml</inputSpec>
-                            <output>${project.build.directory}/generated-sources/external</output>
-                            <apiPackage>io.redlink.more.mmb.api.v1.external.webservices</apiPackage>
-                            <modelPackage>io.redlink.more.mmb.api.v1.external.model</modelPackage>
+                            <typeMappings>
+                                <!-- typeMapping>string+date-time=Instant</typeMapping -->
+                                <typeMapping>string+time=LocalTime</typeMapping>
+                            </typeMappings>
+                            <schemaMappings>
+                                <schemaMapping>Instant=java.time.Instant</schemaMapping>
+                                <schemaMapping>LocalTime=java.time.LocalTime</schemaMapping>
+                            </schemaMappings>
+                            <importMappings>
+                                <importMapping>Instant=java.time.Instant</importMapping>
+                                <importMapping>LocalTime=java.time.LocalTime</importMapping>
+                            </importMappings>
                         </configuration>
                     </execution>
                 </executions>

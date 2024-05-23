@@ -7,39 +7,27 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
 import java.time.LocalTime;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class RelativeDate {
 
-    private static final Pattern CLOCK = Pattern.compile("(\\d?\\d):(\\d\\d)");
     private Duration offset;
-    private String time;
+    @JsonSerialize(using = LocalTimeSerializer.class)
+    @JsonDeserialize(using = LocalTimeDeserializer.class)
+    private LocalTime time;
 
     public RelativeDate() {
     }
 
     @JsonIgnore
     public int getHours() {
-        return getTimeGroup(1);
+        return time.getHour();
     }
 
     @JsonIgnore
     public int getMinutes() {
-        return getTimeGroup(2);
+        return time.getMinute();
     }
 
-    private int getTimeGroup(int i) {
-        if(time == null) {
-            return 0;
-        }
-        Matcher m = CLOCK.matcher(time);
-        if(m.find()) {
-            return Integer.parseInt(m.group(i));
-        } else {
-            return 0;
-        }
-    }
 
     public Duration getOffset() {
         return offset;
@@ -50,16 +38,11 @@ public class RelativeDate {
         return this;
     }
 
-    public String getTime() {
+    public LocalTime getTime() {
         return time;
     }
 
-    @JsonIgnore
-    public LocalTime getLocalTime() {
-        return LocalTime.parse(time);
-    }
-
-    public RelativeDate setTime(String time) {
+    public RelativeDate setTime(LocalTime time) {
         this.time = time;
         return this;
     }

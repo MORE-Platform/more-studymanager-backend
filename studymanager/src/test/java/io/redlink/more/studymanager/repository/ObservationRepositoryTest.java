@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.model.scheduler.*;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.time.LocalTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -107,8 +108,8 @@ class ObservationRepositoryTest {
         assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(0);
 
         observation.setSchedule(new RelativeEvent()
-                .setDtstart(new RelativeDate().setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY)).setTime("12:00:00"))
-                .setDtend(new RelativeDate().setOffset(new Duration().setValue(2).setUnit(Duration.Unit.DAY)).setTime("13:00:00")));
+                .setDtstart(new RelativeDate().setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY)).setTime(LocalTime.parse("12:00:00")))
+                .setDtend(new RelativeDate().setOffset(new Duration().setValue(2).setUnit(Duration.Unit.DAY)).setTime(LocalTime.parse("13:00:00"))));
 
         Observation observationResponse3 = observationRepository.insert(observation);
         assertThat(observationResponse3.getSchedule()).isInstanceOf(RelativeEvent.class);

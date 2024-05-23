@@ -8,23 +8,24 @@ import biweekly.util.com.google.ical.compat.javautil.DateIterator;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.scheduler.*;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import org.apache.commons.lang3.Range;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-public class SchedulerUtils {
+public final class SchedulerUtils {
 
     public static List<Range<Instant>> parseToObservationSchedulesForRelativeEvent(
             RelativeEvent event, Instant start, Instant maxEnd) {
 
         final List<Range<Instant>> events = new ArrayList<>();
 
-        Range<Instant> currentEvt = Range.between(toInstant(event.getDtstart(), start), toInstant(event.getDtend(), start));
+        Range<Instant> currentEvt = Range.between(
+                toInstantFrom(event.getDtstart(), start),
+                toInstantFrom(event.getDtend(), start)
+        );
 
         if (event.getRrrule() != null) {
             RelativeRecurrenceRule rrule = event.getRrrule();
@@ -44,11 +45,13 @@ public class SchedulerUtils {
         return List.copyOf(events);
     }
 
-    private static Instant toInstant(RelativeDate date, Instant start) {
+    private static Instant toInstantFrom(RelativeDate date, Instant start) {
         return start.atZone(ZoneId.systemDefault())
                 // FIXME: Hidden Offset-Correction
+                // Offset is 1-based, therefor we must "-1" here
+                // (fist day: 1, second day: 2, ... )
                 .plus(date.getOffset().getValue() - 1, date.getOffset().getUnit().toChronoUnit())
-                .with(date.getLocalTime())
+                .with(date.getTime())
                 .toInstant();
     }
 
@@ -81,9 +84,9 @@ public class SchedulerUtils {
         }
     }
 
-    public static LocalDate alignStartDateToSignupInstant(Instant signup, List<Observation> observations) {
+    public static LocalDate alignStartDateToSignupInstant(final Instant signup, List<Observation> observations) {
         return LocalDate.ofInstant(observations.stream()
-                // All the observations
+                // All the observation-schedules
                 .map(Observation::getSchedule)
                 // ... the relative ones
                 .filter(e -> RelativeEvent.TYPE.equals(e.getType()))
@@ -94,16 +97,14 @@ public class SchedulerUtils {
                 .min(Comparator.comparing(RelativeDate::getOffset, io.redlink.more.studymanager.model.scheduler.Duration.DURATION_COMPARATOR))
                 // Convert the relative schedule end to the actual instant
                 .map(rd -> LocalDate.ofInstant(
-                                signup.plus(rd.getOffset().asDuration()), ZoneId.systemDefault()
+                                toInstantFrom(rd, signup), ZoneId.systemDefault()
                         )
-                        .atTime(
-                                LocalTime.parse(rd.getTime())
-                        )
+                        .atTime(rd.getTime())
                         .atZone(ZoneId.systemDefault())
                         .toInstant()
                 )
                 // has the first relative schedule end already passed?
-                .filter(i -> i.isBefore(signup))
+                .filter(end -> end.isBefore(signup))
                 // then we start "tomorrow"
                 .map(i -> signup.atZone(ZoneId.systemDefault()).plusDays(1).toInstant())
                 // otherwise we start "now"
@@ -120,16 +121,14 @@ public class SchedulerUtils {
                 .map(r -> ((RelativeEvent) r).getDtend())
                 .filter(relativeDate -> relativeDate.getOffset().getValue() == 1)
                 .map(relativeDate -> start.atZone(ZoneId.systemDefault()).withHour(relativeDate.getHours()).withMinute(relativeDate.getMinutes()).withSecond(0).withNano(0).toInstant())
-                .filter(instant -> {
-                    return instant.isBefore(start);
-                })
+                .filter(instant -> instant.isBefore(start))
                 .map(instant -> start.atZone(ZoneId.systemDefault()).withHour(0).withMinute(0).plusDays(1).toInstant())
                 .findFirst()
                 .orElse(start);
     }
 
     private static long getEventTime(Event event) {
-        return Duration.between(event.getDateStart(), event.getDateEnd()).getSeconds();
+        return java.time.Duration.between(event.getDateStart(), event.getDateEnd()).getSeconds();
     }
 
     private static VEvent parseToICalEvent(Event event) {

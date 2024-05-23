@@ -1,11 +1,9 @@
 package io.redlink.more.studymanager.service;
 
-import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.StudyDurationInfo;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
@@ -15,16 +13,11 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalAdjuster;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.Range;
 import org.springframework.stereotype.Service;
-
-import static io.redlink.more.studymanager.utils.SchedulerUtils.shiftStartIfObservationAlreadyEnded;
 
 
 @Service
@@ -104,9 +97,13 @@ public class CalendarService {
                 .or(() -> studyService.getStudyDuration(studyId))
                 .orElseThrow(() -> NotFoundException.Study(studyId));
 
-        final LocalDate lastDayInStudy = studyDuration
-                .addTo(firstDayInStudy);
-        // Note: the "lastDayInStudy" *could* be after the "(planned) study end".
+        final LocalDate lastDayInStudy = firstDayInStudy
+                .plus(
+                        // firstDay / lastDay are *inclusive* bounds, therefor we use the "-1" here
+                        Math.max(studyDuration.getValue() - 1, 0),
+                        studyDuration.getUnit().toChronoUnit()
+                );
+        // Note: the "lastDayInStudy" *could* be after the "(planned) study end", but that's OK
 
         final Range<Instant> effectiveRange = Range.between(
                 firstDayInStudy.atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
@@ -134,66 +131,5 @@ public class CalendarService {
                 List.of()
         );
     }
-
-    public StudyTimeline createTimeline(Long studyId, Integer participantId, Integer studyGroupId, OffsetDateTime referenceDate, LocalDate from, LocalDate to) {
-        return studyService.getStudy(studyId, null).map( study -> {
-            final Integer actualStudyGroupId;
-            Instant actualReferenceDate = null;
-
-            if(participantId != null) {
-                Participant participant = participantService.getParticipant(studyId, participantId);
-                if(participant == null)
-                    return null;
-                actualStudyGroupId = participant.getStudyGroupId();
-                if (participant.getStart() != null) {
-                    actualReferenceDate = participant.getStart();
-                }
-            } else {
-                actualStudyGroupId = studyGroupId;
-            }
-
-            if(actualReferenceDate == null) {
-                if (referenceDate != null) {
-                    actualReferenceDate = referenceDate.toInstant();
-                } else if (study.getStartDate() != null) {
-                    actualReferenceDate = study.getStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
-                } else {
-                    actualReferenceDate = study.getPlannedStartDate().atStartOfDay(ZoneId.systemDefault()).toInstant();
-                }
-            }
-
-            List<Observation> observations = observationService.listObservations(studyId)
-                    .stream()
-                    .filter(observation -> actualStudyGroupId == null || observation.getStudyGroupId() == null || Objects.equals(observation.getStudyGroupId(), actualStudyGroupId))
-                    .toList();
-            final Instant relStart = shiftStartIfObservationAlreadyEnded(actualReferenceDate, observations);
-
-            StudyDurationInfo info = studyService.getStudyDurationInfo(studyId)
-                    .orElseThrow(() -> new BadRequestException("Cannot create Timeline: missing duration info for study"));
-
-            return new StudyTimeline(
-                    actualReferenceDate,
-                    Range.between(
-                            LocalDate.ofInstant(relStart, ZoneId.systemDefault()),
-                            LocalDate.ofInstant(info.getDurationFor(actualStudyGroupId).addTo(relStart), ZoneId.systemDefault()),
-                            LocalDate::compareTo
-                    ),
-                    observations.stream()
-                            .map(observation ->
-                                    SchedulerUtils.parseToObservationSchedules(observation.getSchedule(), relStart, info.getDurationFor(actualStudyGroupId).addTo(relStart))
-                                            .stream()
-                                            .filter((event) ->
-                                                    event.getMinimum().isBefore(to.atStartOfDay(ZoneId.systemDefault()).toInstant()) &&
-                                                    event.getMaximum().isAfter(from.atStartOfDay(ZoneId.systemDefault()).toInstant()))
-                                            .map(schedule -> ObservationTimelineEvent.fromObservation(observation, schedule.getMinimum(), schedule.getMaximum()))
-                                            .toList()
-                            )
-                            .flatMap(List::stream)
-                            .collect(Collectors.toList()),
-                    List.of()
-            );
-        }).orElse(null);
-    }
-
 
 }
