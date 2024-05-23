@@ -9,6 +9,7 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.DataPointDTO;
+import io.redlink.more.studymanager.api.v1.model.MonitoringDataDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipationDataDTO;
 import io.redlink.more.studymanager.api.v1.webservices.DataApi;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
@@ -49,6 +50,16 @@ public class DataApiV1Controller implements DataApi {
                 dataProcessingService.getParticipationData(studyId).stream()
                         .map(StudyDataTransformer::toParticipationDataDTO_V1)
                         .toList()
+        );
+    }
+
+    @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
+    public ResponseEntity<MonitoringDataDTO> getMonitoringData(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
+        return ResponseEntity.ok().body(
+                StudyDataTransformer.toMonitoringDataDTO(
+                        dataProcessingService.getMonitoringData(studyId, observationId, studyGroupId, participantId, from, to)
+                )
         );
     }
 }

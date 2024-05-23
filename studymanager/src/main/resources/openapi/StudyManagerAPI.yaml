@@ -1186,6 +1186,37 @@ paths:
         '404':
           description: not found
 
+  /studies/{studyId}/observations/{observationId}/data:
+    get:
+      tags:
+        - data
+      description: Get Study Monitoring Data
+      operationId: getMonitoringData
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - $ref: '#/components/parameters/ObservationId'
+        - name: studyGroupId
+          in: query
+          schema:
+            type: integer
+          required: false
+        - name: participantId
+          in: query
+          schema:
+            type: integer
+          required: false
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringData'
+        '404':
+          description: not found
+
   /studies/{studyId}/datapoints:
     get:
       tags:
@@ -1310,6 +1341,8 @@ components:
                 type: string
               type:
                 type: string
+        dataPreview:
+          $ref: '#/components/schemas/DataPreview'
         defaultProperties:
           type: object
         hasWebComponent:
@@ -1326,6 +1359,14 @@ components:
           type: boolean
         hiddenByDefault:
           type: boolean
+
+    DataPreview:
+      type: object
+      properties:
+        chartTitle:
+          type: string
+        chartType:
+          type: string
 
     ValidationReport:
       type: object
@@ -1657,6 +1698,31 @@ components:
           type: string
           format: date-time
           readOnly: true
+
+    MonitoringData:
+      type: object
+      properties:
+        chartTitle:
+          type: string
+        chartType:
+          type: string
+        dataRows:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataRow'
+
+    DataRow:
+      type: object
+      properties:
+        rowTitle:
+          type: string
+        data:
+          type: array
+          items:
+            type: array
+            items:
+              type: object
+
     DataPoint:
       type: object
       properties:
@@ -2052,6 +2118,27 @@ components:
         type: integer
         format: int32
       required: true
+    DateTime:
+      name: dateTime
+      in: query
+      schema:
+        type: string
+        format: date-time
+        readOnly: true
+    From:
+      name: from
+      in: query
+      schema:
+        type: string
+        format: date-time
+        readOnly: true
+    To:
+      name: to
+      in: query
+      schema:
+        type: string
+        format: date-time
+        readOnly: true
 
   securitySchemes:
     OAuth:

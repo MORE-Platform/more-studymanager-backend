@@ -11,7 +11,8 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.api.v1.model.DataPointDTO;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
-import io.redlink.more.studymanager.model.ParticipationData;
+import io.redlink.more.studymanager.model.data.MonitoringData;
+import io.redlink.more.studymanager.model.data.ParticipationData;
 import io.redlink.more.studymanager.model.StudyGroup;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -110,6 +111,26 @@ public class DataProcessingService {
         }
         Collections.sort(participationDataList);
         return participationDataList;
+    }
+
+    public MonitoringData getMonitoringData(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
+        Observation observation = observationService.getObservation(studyId, observationId).orElseThrow(); //can be "<unknown>"
+        List<Participant> participants = new ArrayList<>();
+
+        if(participantId != null) {
+            participants.add(participantService.getParticipant(studyId, participantId));
+        } else if (studyGroupId != null) {
+            participants.addAll(participantService.listParticipants(studyId).stream()
+                    .filter( participant -> participant.getStudyGroupId() == null || Objects.equals(participant.getStudyGroupId(), studyGroupId))
+                    .toList());
+        } else {
+            participants.addAll(participantService.listParticipants(studyId));
+        }
+
+        return new MonitoringData(
+                observation.getTitle(),
+                observation.getType(),
+                elasticService.getDataRows(studyId, observationId, participants, toIsoString(from), toIsoString(to)));
     }
 
     public List<DataPointDTO> getDataPoints(Long studyId, Integer size, Integer observationId, Integer participantId, OffsetDateTime date) {

@@ -23,7 +23,9 @@ import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Iterables;
 import io.redlink.more.studymanager.core.io.TimeRange;
-import io.redlink.more.studymanager.model.ParticipationData;
+import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.data.MonitoringData;
+import io.redlink.more.studymanager.model.data.ParticipationData;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
 import io.redlink.more.studymanager.model.data.SimpleDataPoint;
@@ -277,6 +279,10 @@ public class ElasticService {
             LOG.warn("Elastic Query failed", e);
             return new ArrayList<>();
         }
+    }
+
+    public List<MonitoringData.DataRow> getDataRows(Long studyId, Integer observationId, List<Participant> participantIds, String from, String to) {
+        return new ArrayList<>(); //TODO
     }
 
     public void exportData(Long studyId, OutputStream outputStream) throws IOException {
