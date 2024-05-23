@@ -63,12 +63,14 @@ public class CalendarService {
 
             List<Observation> observations = observationService.listObservations(studyId)
                     .stream()
-                    .filter(observation -> actualStudyGroupId == null || observation.getStudyGroupId() == null || Objects.equals(observation.getStudyGroupId(), actualStudyGroupId))
+                    .filter(observation -> actualStudyGroupId == null ||
+                            observation.getStudyGroupId() == null ||
+                            Objects.equals(observation.getStudyGroupId(), actualStudyGroupId))
                     .toList();
-            final Instant relStart = shiftStartIfObservationAlreadyEnded(actualReferenceDate, observations);
-
             StudyDurationInfo info = studyService.getStudyDurationInfo(studyId)
                     .orElseThrow(() -> new BadRequestException("Cannot create Timeline: missing duration info for study"));
+
+            final Instant relStart = shiftStartIfObservationAlreadyEnded(actualReferenceDate, observations);
 
             studyTimeline.addAllObservations(
                     observations.stream()
