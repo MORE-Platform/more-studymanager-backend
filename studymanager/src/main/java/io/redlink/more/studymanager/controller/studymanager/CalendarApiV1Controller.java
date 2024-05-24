@@ -2,6 +2,8 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.StudyTimelineDTO;
 import io.redlink.more.studymanager.api.v1.webservices.CalendarApi;
+import io.redlink.more.studymanager.controller.RequiresStudyRole;
+import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.TimelineTransformer;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.CalendarService;
@@ -39,6 +41,7 @@ public class CalendarApiV1Controller implements CalendarApi {
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<StudyTimelineDTO> getStudyTimeline(Long studyId, Integer participant, Integer studyGroup, OffsetDateTime referenceDate, LocalDate from, LocalDate to) {
         final var currentUser = auth2AuthenticationService.getCurrentUser();
         return ResponseEntity.ok(
