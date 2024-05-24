@@ -169,7 +169,8 @@ public class ComponentApiV1Controller implements ComponentsApi {
     private DataPreviewDTO toDataPreviewDTO(DataPreview preview) {
         return new DataPreviewDTO()
                 .chartTitle(preview.getChartTitle())
-                .chartType(preview.getChartType());
+                .chartType(preview.getChartType())
+                .measurements(preview.getMeasurements().stream().toList());
     }
 
     private List<ComponentFactoryMeasurementsInnerDTO> getMeasurements(ComponentFactory factory) {
