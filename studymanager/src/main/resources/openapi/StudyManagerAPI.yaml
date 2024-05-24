@@ -1367,6 +1367,10 @@ components:
           type: string
         chartType:
           type: string
+        measurements:
+          type: array
+          items:
+            type: string
 
     ValidationReport:
       type: object

@@ -49,5 +49,5 @@ observation.factory.gpsMobile.description
     }
 
     @Override
-    public DataPreview getDataPreview() { return GenericDataPreview.GPS; }
+    public DataPreview getDataPreview() { return GenericDataPreview.NOT_SPECIFIED; }
 }
