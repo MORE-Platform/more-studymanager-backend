@@ -95,7 +95,7 @@ class StudyRepositoryTest {
         assertThat(update.getDuration().getUnit()).isEqualTo(updated.getDuration().getUnit());
         assertThat(inserted.getStudyId()).isEqualTo(updated.getStudyId());
         assertThat(inserted.getCreated()).isEqualTo(updated.getCreated());
-        assertThat(inserted.getModified().toEpochMilli()).isLessThan(updated.getModified().toEpochMilli());
+        assertThat(inserted.getModified()).isBefore(updated.getModified());
         assertThat(inserted.getContact().getPerson()).isNotEqualTo(updated.getContact().getPerson());
         assertThat(inserted.getContact().getEmail()).isNotEqualTo(updated.getContact().getEmail());
 

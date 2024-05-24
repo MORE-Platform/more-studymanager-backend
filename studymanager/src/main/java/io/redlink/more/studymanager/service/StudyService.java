@@ -11,17 +11,29 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.exception.NotFoundException;
-import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.MoreUser;
+import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.StudyUserRoles;
+import io.redlink.more.studymanager.model.User;
+import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.repository.StudyAclRepository;
+import io.redlink.more.studymanager.repository.StudyGroupRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -48,11 +60,12 @@ public class StudyService {
     private final ElasticService elasticService;
 
     private final PushNotificationService pushNotificationService;
+    private final StudyGroupRepository studyGroupRepository;
 
 
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
                         StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService,
-                        ParticipantService participantService, IntegrationService integrationService, ElasticService elasticService, PushNotificationService pushNotificationService) {
+                        ParticipantService participantService, IntegrationService integrationService, ElasticService elasticService, PushNotificationService pushNotificationService, StudyGroupRepository studyGroupRepository) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
@@ -63,6 +76,7 @@ public class StudyService {
         this.integrationService = integrationService;
         this.elasticService = elasticService;
         this.pushNotificationService = pushNotificationService;
+        this.studyGroupRepository = studyGroupRepository;
     }
 
     public Study createStudy(Study study, User currentUser) {
@@ -195,5 +209,30 @@ public class StudyService {
                         aclRepository.getRoleDetails(studyId, userId)
                 )
         );
+    }
+
+    public Optional<Duration> getStudyDuration(Long studyId) {
+        return studyRepository.getById(studyId)
+                .flatMap(study ->
+                        Optional.ofNullable(study.getDuration())
+                                .or(() -> Optional.of(new Duration()
+                                        .setValue((int)
+                                                java.time.Duration.between(
+                                                        Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
+                                                        Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate())
+                                                ).toDays())
+                                        .setUnit(Duration.Unit.DAY)
+                                ))
+                );
+    }
+
+    public Optional<Duration> getStudyDuration(Long studyId, Integer studyGroupId) {
+        final Optional<StudyGroup> group = Optional.ofNullable(studyGroupRepository.getByIds(studyId, studyGroupId));
+        // If there's no such group, return empty() here...
+        if (group.isEmpty()) return Optional.empty();
+
+        return group
+                .map(StudyGroup::getDuration)
+                .or(() -> getStudyDuration(studyId));
     }
 }
