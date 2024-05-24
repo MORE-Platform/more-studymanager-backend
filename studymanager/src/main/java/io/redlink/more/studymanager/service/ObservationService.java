@@ -71,11 +71,11 @@ public class ObservationService {
     }
 
     public List<Observation> listObservations(Long studyId) {
-        return listObservationsForGroup(studyId, null);
+        return repository.listObservations(studyId);
     }
 
     public List<Observation> listObservationsForGroup(Long studyId, Integer groupId) {
-        return repository.listObservations(studyId, groupId);
+        return repository.listObservationsForGroup(studyId, groupId);
     }
 
     public Observation updateObservation(Observation observation) {
