@@ -147,7 +147,7 @@ class StudyServiceTest {
         testForbiddenSetStatus(Study.Status.DRAFT, Study.Status.DRAFT);
         testForbiddenSetStatus(Study.Status.CLOSED, Study.Status.DRAFT);
         testForbiddenSetStatus(Study.Status.PAUSED, Study.Status.DRAFT);
-        testForbiddenSetStatus(Study.Status.PAUSED, Study.Status.CLOSED);
+        testForbiddenSetStatus(Study.Status.PAUSED, Study.Status.PAUSED_PREVIEW);
         testForbiddenSetStatus(Study.Status.PREVIEW, Study.Status.CLOSED);
     }
 
