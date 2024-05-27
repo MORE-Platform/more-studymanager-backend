@@ -142,7 +142,10 @@ public class StudyService {
                             )
                         );
                         participantService.alignParticipantsWithStudyState(s);
-                        elasticService.deleteIndex(s.getStudyId());
+                        if (s.getStudyState() == Study.Status.DRAFT) {
+                            log.info("Study {} transitioned back to {}, dropping collected observation data", study.getStudyId(), s.getStudyState());
+                            elasticService.deleteIndex(s.getStudyId());
+                        }
                     } catch (Exception e) {
                         log.warn("Could not set new state for study id {}; old state: {}; new state: {}", studyId, oldState.getValue(), s.getStudyState().getValue());
                         //ROLLBACK
