@@ -30,6 +30,8 @@ import io.redlink.more.studymanager.model.data.SimpleDataPoint;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -159,6 +161,7 @@ public class ElasticService {
     }
 
     public void removeDataForParticipant(Long studyId, Integer participantId) {
+        if (!indexExists(studyId)) { return; }
         try {
             DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
                     .index(getStudyIdString(studyId))
@@ -171,8 +174,10 @@ public class ElasticService {
                     .build();
             client.deleteByQuery(deleteByQueryRequest);
         } catch (IOException | ElasticsearchException e) {
-            LOG.warn("Error when deleting participant from elastic index. Error message: ", e);
-            throw new RuntimeException(e);
+            handleIndexNotFoundException(e, t -> {
+                LOG.warn("Error when deleting participant from elastic index. Error message: ", e);
+                return new RuntimeException(t);
+            });
         }
     }
 
@@ -266,10 +271,8 @@ public class ElasticService {
             }
             return participationDataList;
         }catch (IOException | ElasticsearchException e) {
-            if (e instanceof ElasticsearchException ee) {
-                if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
-                    return List.of();
-                }
+            if (isElasticIndexNotFound(e)) {
+                return List.of();
             }
             LOG.warn("Elastic Query failed", e);
             return new ArrayList<>();
@@ -367,5 +370,33 @@ public class ElasticService {
                 .filter(k -> !k.equals("data_type"))
                 .forEach(k -> result.put(k.substring(5), source.get(k)));
         return result;
+    }
+
+    private static <R, T extends Exception> R handleIndexNotFoundException(T e, Supplier<R> supplier) throws T {
+        return ElasticService.handleIndexNotFoundException(e, supplier, Function.identity());
+    }
+
+    private static <R, E extends Exception, T extends Exception> R handleIndexNotFoundException(E e, Supplier<R> supplier, Function<E, T> exceptionTFunction) throws T {
+        if (isElasticIndexNotFound(e)) return supplier.get();
+        throw exceptionTFunction.apply(e);
+    }
+
+    private static boolean isElasticIndexNotFound(Exception e) {
+        if (e instanceof ElasticsearchException ee) {
+            if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
+                LOG.debug("Swallowing Index-Not-Found from Elastic");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static <E extends Exception> void handleIndexNotFoundException(E e) throws E {
+        handleIndexNotFoundException(e, Function.identity());
+    }
+
+    private static <E extends Exception, T extends Exception> void handleIndexNotFoundException(E e, Function<E, T> exceptionWrapper) throws T {
+        if (!isElasticIndexNotFound(e))
+            throw exceptionWrapper.apply(e);
     }
 }
