@@ -43,7 +43,7 @@ public class CalendarService {
     public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, OffsetDateTime referenceDate, LocalDate from, LocalDate to) {
         final Study study = studyService.getStudy(studyId, null)
                 .orElseThrow(() -> NotFoundException.Study(studyId));
-        final Range<LocalDate> studyRange = Range.between(
+        final Range<LocalDate> studyRange = Range.of(
                 Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
                 Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate()),
                 LocalDate::compareTo
@@ -108,18 +108,18 @@ public class CalendarService {
                 );
         // Note: the "lastDayInStudy" *could* be after the "(planned) study end", but that's OK
 
-        final Range<Instant> effectiveRange = Range.between(
+        final Range<Instant> effectiveRange = Range.of(
                 firstDayInStudy.atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
                 lastDayInStudy.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
         );
-        final Range<Instant> filterWindow = Range.between(
+        final Range<Instant> filterWindow = Range.of(
                 from.atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
                 to.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
         );
 
         return new StudyTimeline(
                 participantStart,
-                Range.between(firstDayInStudy, lastDayInStudy, LocalDate::compareTo),
+                Range.of(firstDayInStudy, lastDayInStudy, LocalDate::compareTo),
                 observations.stream()
                         .flatMap(o -> SchedulerUtils
                                 .parseToObservationSchedules(

@@ -27,7 +27,7 @@ public final class SchedulerUtils {
 
         final List<Range<Instant>> events = new ArrayList<>();
 
-        Range<Instant> currentEvt = Range.between(
+        Range<Instant> currentEvt = Range.of(
                 toInstantFrom(event.getDtstart(), start),
                 toInstantFrom(event.getDtend(), start)
         );
@@ -41,7 +41,7 @@ public final class SchedulerUtils {
             while (currentEvt.getMaximum().isBefore(maxEnd)) {
                 events.add(currentEvt);
                 Instant estart = currentEvt.getMinimum().plus(rrule.getFrequency().getValue(), rrule.getFrequency().getUnit().toChronoUnit());
-                currentEvt = Range.between(estart, estart.plusMillis(durationInMs));
+                currentEvt = Range.of(estart, estart.plusMillis(durationInMs));
             }
         } else {
             events.add(currentEvt);
@@ -70,7 +70,7 @@ public final class SchedulerUtils {
                 Instant ostart = it.next().toInstant();
                 Instant oend = ostart.plus(eventDuration, ChronoUnit.SECONDS);
                 if (ostart.isBefore(end) && oend.isAfter(start)) {
-                    observationSchedules.add(Range.between(ostart, oend));
+                    observationSchedules.add(Range.of(ostart, oend));
                 }
             }
         }
