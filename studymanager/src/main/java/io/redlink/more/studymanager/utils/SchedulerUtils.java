@@ -9,12 +9,12 @@ import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.*;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import org.apache.commons.lang3.Range;
 import org.quartz.CronExpression;
 
 import java.sql.Date;
 import java.text.ParseException;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -130,14 +130,13 @@ public final class SchedulerUtils {
     }
 
     private static List<Instant> parseToInterventionSchedulesForRelativeTrigger(Trigger trigger, Instant start) {
-        List<Instant> events = new ArrayList<>();
-        Instant currentEvent = toInstant(
+        return List.of(
+                toInstantFrom(
                 new RelativeDate()
-                        .setTime(trigger.getProperties().getInt("hour") + ":00")
-                        .setOffset(new io.redlink.more.studymanager.model.scheduler.Duration().setValue(trigger.getProperties().getInt("day")).setUnit(io.redlink.more.studymanager.model.scheduler.Duration.Unit.DAY)),
-                start);
-        events.add(currentEvent);
-        return events;
+                        .setTime(LocalTime.of(trigger.getProperties().getInt("hour"), 0))
+                        .setOffset(new Duration().setValue(trigger.getProperties().getInt("day")).setUnit(Duration.Unit.DAY)),
+                start)
+        );
     }
 
     private static List<Instant> parseToInterventionSchedulesForScheduledTrigger(Trigger trigger, Instant start, Instant end) {
@@ -153,7 +152,7 @@ public final class SchedulerUtils {
                 }
             } catch (ParseException ignore) {}
         }
-        return events;
+        return List.copyOf(events);
     }
 
     public static Instant shiftStartIfObservationAlreadyEnded(Instant start, List<Observation> observations) {

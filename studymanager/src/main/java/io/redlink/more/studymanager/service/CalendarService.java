@@ -1,12 +1,12 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.NotFoundException;
+import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Duration;
-import io.redlink.more.studymanager.exception.BadRequestException;
-import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.model.timeline.InterventionTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
@@ -31,15 +31,13 @@ public class CalendarService {
     private final ObservationService observationService;
     private final InterventionService interventionService;
     private final ParticipantService participantService;
-    private final StudyGroupService studyGroupService;
 
     public CalendarService(StudyService studyService, ObservationService observationService, InterventionService interventionService,
-                           ParticipantService participantService, StudyGroupService studyGroupService) {
+                           ParticipantService participantService) {
         this.studyService = studyService;
         this.observationService = observationService;
         this.interventionService = interventionService;
         this.participantService = participantService;
-        this.studyGroupService = studyGroupService;
     }
 
     public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, OffsetDateTime referenceDate, LocalDate from, LocalDate to) {
@@ -91,12 +89,7 @@ public class CalendarService {
         }
 
         final List<Observation> observations = observationService.listObservationsForGroup(studyId, effectiveGroup);
-        final List<Intervention> interventions = interventionService.listInterventions(studyId)
-                .stream()
-                .filter(intervention -> actualStudyGroupId == null ||
-                        intervention.getStudyGroupId() == null ||
-                        Objects.equals(intervention.getStudyGroupId(), actualStudyGroupId))
-                .toList();
+        final List<Intervention> interventions = interventionService.listInterventionsForGroup(studyId, effectiveGroup);
 
         // Shift the effective study-start if the participant would miss a relative observation
         final LocalDate firstDayInStudy = SchedulerUtils.alignStartDateToSignupInstant(participantStart, observations);
@@ -143,12 +136,12 @@ public class CalendarService {
                             Trigger trigger = interventionService.getTriggerByIds(studyId, intervention.getInterventionId());
                             return SchedulerUtils.parseToInterventionSchedules(
                                             trigger,
-                                            relStart,
-                                            info.getDurationFor(actualStudyGroupId).getEnd(relStart))
+                                            effectiveRange.getMinimum(),
+                                            effectiveRange.getMaximum()
+                                    )
                                     .stream()
-                                    .filter(event ->
-                                            event.isBefore(to.atStartOfDay(ZoneId.systemDefault()).toInstant()) &&
-                                                    event.isAfter(from.atStartOfDay(ZoneId.systemDefault()).toInstant()))
+                                    // Disabled client-side filter for now...
+                                    // .filter(filterWindow::contains)
                                     .map(event -> InterventionTimelineEvent.fromInterventionAndTrigger(intervention, trigger, event))
                                     .toList();
                         })

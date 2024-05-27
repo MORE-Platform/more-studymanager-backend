@@ -35,6 +35,7 @@ public class InterventionRepository {
     private static final String IMPORT_INTERVENTION = "INSERT INTO interventions(study_id,intervention_id,title,purpose,study_group_id,schedule) VALUES (:study_id,:intervention_id,:title,:purpose,:study_group_id,:schedule::jsonb) RETURNING *";
     private static final String GET_INTERVENTION_BY_IDS = "SELECT * FROM interventions WHERE study_id = ? AND intervention_id = ?";
     private static final String LIST_INTERVENTIONS = "SELECT * FROM interventions WHERE study_id = ?";
+    private static final String LIST_INTERVENTIONS_FOR_GROUP = "SELECT * FROM interventions WHERE study_id = :study_id AND (study_group_id IS NULL OR study_group_id = :study_group_id)";
     private static final String DELETE_INTERVENTION_BY_IDS = "DELETE FROM interventions WHERE study_id = ? AND intervention_id = ?";
     private static final String DELETE_ALL = "DELETE FROM interventions";
     private static final String UPDATE_INTERVENTION = "UPDATE interventions SET title=:title, study_group_id=:study_group_id, purpose=:purpose, schedule=:schedule::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id";
@@ -82,6 +83,10 @@ public class InterventionRepository {
 
     public List<Intervention> listInterventions(Long studyId) {
         return template.query(LIST_INTERVENTIONS, getInterventionRowMapper(), studyId);
+    }
+
+    public List<Intervention> listInterventionsForGroup(Long studyId, Integer groupId) {
+        return template.query(LIST_INTERVENTIONS_FOR_GROUP, getInterventionRowMapper(), studyId, groupId);
     }
 
     public Intervention getByIds(Long studyId, Integer interventionId) {
@@ -228,5 +233,4 @@ public class InterventionRepository {
                 .setCreated(RepositoryUtils.readInstant(rs,"created"))
                 .setModified(RepositoryUtils.readInstant(rs,"modified"));
         }
-
 }

@@ -1,12 +1,12 @@
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.exception.NotFoundException;
+import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.core.properties.TriggerProperties;
-import io.redlink.more.studymanager.model.*;
-import io.redlink.more.studymanager.model.scheduler.*;
+import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.scheduler.RecurrenceRule;
@@ -167,7 +167,8 @@ class CalendarServiceTest {
         when(observationService.listObservationsForGroup(any(), eq(participant.getStudyGroupId()))).thenReturn(
                 List.of(observationAbsolute, observationAbsoluteRecurrent, observationRelative, observationRelativeRecurrent));
 
-        when(interventionService.listInterventions(any())).thenReturn(List.of(scheduledIntervention, relativeIntervention));
+        when(interventionService.listInterventionsForGroup(any(), eq(participant.getStudyGroupId()))).thenReturn(
+                List.of(scheduledIntervention, relativeIntervention));
         when(interventionService.getTriggerByIds(any(), eq(1))).thenReturn(relativeTrigger);
         when(interventionService.getTriggerByIds(any(), eq(2))).thenReturn(scheduledTrigger);
 
