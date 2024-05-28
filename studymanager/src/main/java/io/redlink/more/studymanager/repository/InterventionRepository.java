@@ -86,7 +86,11 @@ public class InterventionRepository {
     }
 
     public List<Intervention> listInterventionsForGroup(Long studyId, Integer groupId) {
-        return template.query(LIST_INTERVENTIONS_FOR_GROUP, getInterventionRowMapper(), studyId, groupId);
+        return namedTemplate.query(LIST_INTERVENTIONS_FOR_GROUP,
+                new MapSqlParameterSource("study_id", studyId)
+                        .addValue("study_group_id", groupId),
+                getInterventionRowMapper()
+        );
     }
 
     public Intervention getByIds(Long studyId, Integer interventionId) {
