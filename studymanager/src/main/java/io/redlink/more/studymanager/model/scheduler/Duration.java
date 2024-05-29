@@ -1,28 +1,43 @@
 package io.redlink.more.studymanager.model.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.redlink.more.studymanager.api.v1.model.DurationDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDurationDTO;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 
 public class Duration {
 
     private Integer value;
 
+    public java.time.Duration asDuration() {
+        return java.time.Duration.of(value, unit.toChronoUnit());
+    }
+
     /**
      * unit of time to offset
      */
     public enum Unit {
-        MINUTE("MINUTE"),
+        MINUTE("MINUTE", ChronoUnit.MINUTES),
 
-        HOUR("HOUR"),
+        HOUR("HOUR", ChronoUnit.HOURS),
 
-        DAY("DAY");
+        DAY("DAY", ChronoUnit.DAYS);
 
         private String value;
 
-        Unit(String value) {
+        @JsonIgnore
+        private ChronoUnit chronoUnit;
+
+        Unit(String value, ChronoUnit chronoValue) {
             this.value = value;
+            this.chronoUnit = chronoValue;
         }
+
 
         public String getValue() {
             return value;
@@ -41,6 +56,10 @@ public class Duration {
                 }
             }
             throw new IllegalArgumentException("Unexpected value '" + value + "'");
+        }
+
+        public ChronoUnit toChronoUnit() {
+            return chronoUnit;
         }
 
         public static Unit fromDurationDTOUnit(DurationDTO.UnitEnum unit) {
@@ -158,4 +177,8 @@ public class Duration {
                 ", unit=" + unit +
                 '}';
     }
+
+    public static final Comparator<Duration> DURATION_COMPARATOR =
+            Comparator.comparing(d -> java.time.Duration.of(d.value, d.unit.chronoUnit));
+
 }

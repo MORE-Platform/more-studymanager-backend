@@ -95,6 +95,10 @@ public class InterventionService {
         return repository.listInterventions(studyId);
     }
 
+    public List<Intervention> listInterventionsForGroup(Long studyId, Integer groupId) {
+        return repository.listInterventionsForGroup(studyId, groupId);
+    }
+
     public Intervention getIntervention(Long studyId, Integer interventionId) {
         return repository.getByIds(studyId, interventionId);
     }

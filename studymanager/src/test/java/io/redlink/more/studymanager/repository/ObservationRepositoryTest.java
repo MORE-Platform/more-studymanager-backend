@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.model.scheduler.*;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.time.LocalTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -98,18 +99,38 @@ class ObservationRepositoryTest {
                 .setNoSchedule(true)
         );
 
-        assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(2);
+        assertThat((observationRepository.listObservations(studyId)))
+                .as("List all Observations")
+                .hasSize(2);
+        assertThat((observationRepository.listObservationsForGroup(studyId, studyGroupId)))
+                .as("Include group-specific observations and globals")
+                .hasSize(2);
+        assertThat((observationRepository.listObservationsForGroup(studyId, -1)))
+                .as("Non-existing Group should only retrieve 'global' observations")
+                .hasSize(1);
+        assertThat((observationRepository.listObservationsForGroup(studyId, null)))
+                .as("<null>-Group should only retrieve 'global' observations")
+                .hasSize(1)
+                .as("Check for the global observation")
+                .extracting(Observation::getObservationId)
+                .contains(observationResponse2.getObservationId());
+        // Delete the group specific observations
         observationRepository.deleteObservation(studyId, observationResponse.getObservationId());
-        assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(1);
+        assertThat((observationRepository.listObservations(studyId)))
+                .hasSize(1);
+        assertThat((observationRepository.listObservationsForGroup(studyId, studyGroupId)))
+                .hasSize(1);
         observationRepository.deleteObservation(studyId, observationResponse2.getObservationId());
-        assertThat((observationRepository.listObservations(studyId)).size()).isEqualTo(0);
+        assertThat((observationRepository.listObservations(studyId)))
+                .hasSize(0);
 
         observation.setSchedule(new RelativeEvent()
-                .setDtstart(new RelativeDate().setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY)).setTime("12:00:00"))
-                .setDtend(new RelativeDate().setOffset(new Duration().setValue(2).setUnit(Duration.Unit.DAY)).setTime("13:00:00")));
+                .setDtstart(new RelativeDate().setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY)).setTime(LocalTime.parse("12:00:00")))
+                .setDtend(new RelativeDate().setOffset(new Duration().setValue(2).setUnit(Duration.Unit.DAY)).setTime(LocalTime.parse("13:00:00"))));
 
         Observation observationResponse3 = observationRepository.insert(observation);
-        assertThat(observationResponse3.getSchedule()).isInstanceOf(RelativeEvent.class);
+        assertThat(observationResponse3.getSchedule())
+                .isInstanceOf(RelativeEvent.class);
     }
 
     @Test
@@ -123,16 +144,31 @@ class ObservationRepositoryTest {
         ObservationProperties op1 = new ObservationProperties(Map.of("hello", "world"));
         ObservationProperties op2 = new ObservationProperties(Map.of("hello", "world2"));
 
-        assertThat(observationRepository.getParticipantProperties(s1,p1,o1)).isEmpty();
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o1))
+                .isEmpty();
         observationRepository.setParticipantProperties(s1, p1, o1, op1);
-        assertThat(observationRepository.getParticipantProperties(s1,p1,o1).get().getString("hello")).isEqualTo("world");
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o1))
+                .get()
+                .extracting(op -> op.getString("hello"))
+                .isEqualTo("world");
         observationRepository.setParticipantProperties(s1, p1, o1, op2);
-        assertThat(observationRepository.getParticipantProperties(s1,p1,o1).get().getString("hello")).isEqualTo("world2");
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o1))
+                .get()
+                .extracting(op -> op.getString("hello"))
+                .isEqualTo("world2");
         observationRepository.setParticipantProperties(s1, p1, o2, op1);
-        assertThat(observationRepository.getParticipantProperties(s1,p1,o1).get().getString("hello")).isEqualTo("world2");
-        assertThat(observationRepository.getParticipantProperties(s1,p1,o2).get().getString("hello")).isEqualTo("world");
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o1))
+                .get()
+                .extracting(op -> op.getString("hello"))
+                .isEqualTo("world2");
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o2))
+                .get()
+                .extracting(op -> op.getString("hello"))
+                .isEqualTo("world");
         observationRepository.removeParticipantProperties(s1, p1, o2);
-        assertThat(observationRepository.getParticipantProperties(s1,p1,o2)).isEmpty();
-        assertThat(observationRepository.getParticipantProperties(s1,p1,o1)).isPresent();
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o2))
+                .isEmpty();
+        assertThat(observationRepository.getParticipantProperties(s1,p1,o1))
+                .isPresent();
     }
 }

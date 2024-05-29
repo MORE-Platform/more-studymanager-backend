@@ -74,6 +74,10 @@ public class ObservationService {
         return repository.listObservations(studyId);
     }
 
+    public List<Observation> listObservationsForGroup(Long studyId, Integer groupId) {
+        return repository.listObservationsForGroup(studyId, groupId);
+    }
+
     public Observation updateObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
         return repository.updateObservation(validate(observation));
