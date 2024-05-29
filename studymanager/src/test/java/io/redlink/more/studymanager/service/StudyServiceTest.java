@@ -9,25 +9,38 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
-import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
+import io.redlink.more.studymanager.model.Contact;
+import io.redlink.more.studymanager.model.MoreUser;
+import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.PlatformRole;
+import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
 import java.time.Instant;
-import java.util.*;
-
+import java.util.Base64;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,6 +50,24 @@ class StudyServiceTest {
 
     @Mock
     StudyRepository studyRepository;
+
+    @Mock
+    ParticipantService participantService;
+
+    @Mock
+    ObservationService observationService;
+
+    @Mock
+    InterventionService interventionService;
+
+    @Mock
+    IntegrationService integrationService;
+
+    @Mock
+    PushNotificationService pushNotificationService;
+
+    @Mock
+    ElasticService elasticService;
 
     @Mock
     StudyAclRepository studyAclRepository;
@@ -115,6 +146,9 @@ class StudyServiceTest {
     void testSetStatus() {
         testForbiddenSetStatus(Study.Status.DRAFT, Study.Status.DRAFT);
         testForbiddenSetStatus(Study.Status.CLOSED, Study.Status.DRAFT);
+        testForbiddenSetStatus(Study.Status.PAUSED, Study.Status.DRAFT);
+        testForbiddenSetStatus(Study.Status.PAUSED, Study.Status.PAUSED_PREVIEW);
+        testForbiddenSetStatus(Study.Status.PREVIEW, Study.Status.CLOSED);
     }
 
     private void testForbiddenSetStatus(Study.Status statusBefore, Study.Status statusAfter) {
@@ -126,5 +160,76 @@ class StudyServiceTest {
         when(studyRepository.getById(any(Long.class), any())).thenReturn(Optional.of(study));
         Assertions.assertThrows(BadRequestException.class,
                 () -> studyService.setStatus(1L, statusAfter, currentUser));
+    }
+
+    @Test
+    void testWorkflowSideEffects() {
+        final Study study = new Study().setStudyId(1L)
+                .setContact(new Contact().setPerson("testPerson").setEmail("testMail"));
+        final List<Participant> pt = List.of(
+                new Participant().setParticipantId(1).setStudyId(study.getStudyId()),
+                new Participant().setParticipantId(2).setStudyId(study.getStudyId())
+        );
+
+        when(studyRepository.getById(eq(study.getStudyId()), any())).thenReturn(Optional.of(study));
+        when(participantService.listParticipants(study.getStudyId())).thenReturn(pt);
+        when(studyRepository.setStateById(eq(study.getStudyId()), any()))
+                .thenAnswer(i -> Optional.of(study.setStudyState(i.getArgument(1))));
+
+        StudyService.VALID_STUDY_TRANSITIONS.forEach((from, tos) -> {
+            tos.forEach(to -> {
+                study.setStudyState(from);
+                clearInvocations(
+                        observationService, interventionService, integrationService,
+                        participantService, pushNotificationService, elasticService
+                );
+
+                studyService.setStatus(1L, to, currentUser);
+
+                verify(observationService,
+                        times(1).description("%s -> %s should align observations".formatted(from, to))
+                ).alignObservationsWithStudyState(study);
+                verify(interventionService,
+                        times(1).description("%s -> %s should align interventions".formatted(from, to))
+                ).alignInterventionsWithStudyState(study);
+                verify(integrationService,
+                        times(1).description("%s -> %s should align integrations".formatted(from, to))
+                ).alignIntegrationsWithStudyState(study);
+                verify(participantService,
+                        times(1).description("%s -> %s should align participants".formatted(from, to))
+                ).alignParticipantsWithStudyState(study);
+                verify(pushNotificationService,
+                        times(pt.size()).description("%s -> %s should send %d notifications".formatted(from, to, pt.size()))
+                ).sendPushNotification(eq(study.getStudyId()), anyInt(), any(), any(), any());
+
+                // ONLY when transitioning to back to DRAFT, clear the collected data in Elastic
+                if ((from == Study.Status.PREVIEW || from == Study.Status.PAUSED_PREVIEW)
+                        && to == Study.Status.DRAFT) {
+                    verify(elasticService,
+                            times(1).description("%s -> %s should delete the elastic index".formatted(from, to))
+                    ).deleteIndex(study.getStudyId());
+                } else {
+                    verify(elasticService,
+                            never().description("%s -> %s must not delete the elastic index".formatted(from, to))
+                    ).deleteIndex(study.getStudyId());
+                }
+            });
+
+            clearInvocations(
+                    observationService, interventionService, integrationService,
+                    participantService, pushNotificationService, elasticService
+            );
+            EnumSet.complementOf(EnumSet.copyOf(tos)).forEach(invalidTo -> {
+                study.setStudyState(from);
+                Assertions.assertThrows(BadRequestException.class,
+                        () -> studyService.setStatus(1L, invalidTo, currentUser),
+                        () -> "Invalid Transition: %s -> %s".formatted(from, invalidTo));
+                Mockito.verifyNoInteractions(
+                        observationService, interventionService, integrationService,
+                        participantService, pushNotificationService, elasticService
+                );
+            });
+
+        });
     }
 }

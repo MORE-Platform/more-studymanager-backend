@@ -1,13 +1,11 @@
 package io.redlink.more.studymanager.model.scheduler;
 
-import io.redlink.more.studymanager.api.v1.model.RelativeDateDTO;
-import io.redlink.more.studymanager.api.v1.model.RelativeRecurrenceRuleDTO;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RelativeEvent implements ScheduleEvent {
 
     public static final String TYPE = "RelativeEvent";
-
-    private String type;
 
     private RelativeDate dtstart;
 
@@ -21,11 +19,6 @@ public class RelativeEvent implements ScheduleEvent {
     @Override
     public String getType() {
         return TYPE;
-    }
-
-    public RelativeEvent setType(String type) {
-        this.type = type;
-        return this;
     }
 
     public RelativeDate getDtstart() {

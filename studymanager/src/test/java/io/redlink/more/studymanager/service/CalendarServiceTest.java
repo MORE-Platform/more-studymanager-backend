@@ -1,9 +1,12 @@
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.exception.NotFoundException;
+import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.scheduler.RecurrenceRule;
@@ -130,12 +133,44 @@ class CalendarServiceTest {
                                 .setEndAfter(new Duration().setValue(6).setUnit(Duration.Unit.DAY))))
                 .setHidden(false);
 
+        Intervention relativeIntervention = new Intervention()
+                .setInterventionId(1)
+                .setStudyGroupId(2)
+                .setTitle("title")
+                .setPurpose("purpose");
+
+        Intervention scheduledIntervention = new Intervention()
+                .setInterventionId(2)
+                .setStudyGroupId(2)
+                .setTitle("title2")
+                .setPurpose("purpose2");
+
+        TriggerProperties relativeProperties = new TriggerProperties();
+        relativeProperties.put("day", 1);
+        relativeProperties.put("hour", 1);
+
+        TriggerProperties cronProperties = new TriggerProperties();
+        cronProperties.put("cronSchedule", "0 0 12 * * ?");
+
+        Trigger relativeTrigger = new Trigger()
+                .setType("relative-time-trigger")
+                .setProperties(relativeProperties);
+
+        Trigger scheduledTrigger = new Trigger()
+                .setType("scheduled-trigger")
+                .setProperties(cronProperties);
+
         when(studyService.getStudy(any(), any())).thenReturn(Optional.of(study));
         when(participantService.getParticipant(any(), any())).thenReturn(participant);
         when(studyService.getStudyDuration(any(), any()))
                 .thenReturn(Optional.of(new Duration().setValue(5).setUnit(Duration.Unit.DAY)));
         when(observationService.listObservationsForGroup(any(), eq(participant.getStudyGroupId()))).thenReturn(
                 List.of(observationAbsolute, observationAbsoluteRecurrent, observationRelative, observationRelativeRecurrent));
+
+        when(interventionService.listInterventionsForGroup(any(), eq(participant.getStudyGroupId()))).thenReturn(
+                List.of(scheduledIntervention, relativeIntervention));
+        when(interventionService.getTriggerByIds(any(), eq(1))).thenReturn(relativeTrigger);
+        when(interventionService.getTriggerByIds(any(), eq(2))).thenReturn(scheduledTrigger);
 
         StudyTimeline timeline = calendarService.getTimeline(
                 1L,
@@ -150,7 +185,7 @@ class CalendarServiceTest {
         );
 
         assertEquals(7, timeline.observationTimelineEvents().size());
-
+        assertEquals(6, timeline.interventionTimelineEvents().size());
     }
 
 }

@@ -41,7 +41,7 @@ public class StudyService {
 
     private static final Logger log = LoggerFactory.getLogger(StudyService.class);
 
-    private static final Map<Study.Status, Set<Study.Status>> VALID_STUDY_TRANSITIONS = Map.of(
+    static final Map<Study.Status, Set<Study.Status>> VALID_STUDY_TRANSITIONS = Map.of(
             Study.Status.DRAFT, EnumSet.of(Study.Status.PREVIEW, Study.Status.ACTIVE),
             Study.Status.PREVIEW, EnumSet.of(Study.Status.PAUSED_PREVIEW, Study.Status.DRAFT),
             Study.Status.PAUSED_PREVIEW, EnumSet.of(Study.Status.PREVIEW, Study.Status.DRAFT),
@@ -142,7 +142,10 @@ public class StudyService {
                             )
                         );
                         participantService.alignParticipantsWithStudyState(s);
-                        elasticService.deleteIndex(s.getStudyId());
+                        if (s.getStudyState() == Study.Status.DRAFT) {
+                            log.info("Study {} transitioned back to {}, dropping collected observation data", study.getStudyId(), s.getStudyState());
+                            elasticService.deleteIndex(s.getStudyId());
+                        }
                     } catch (Exception e) {
                         log.warn("Could not set new state for study id {}; old state: {}; new state: {}", studyId, oldState.getValue(), s.getStudyState().getValue());
                         //ROLLBACK
@@ -216,11 +219,11 @@ public class StudyService {
                 .flatMap(study ->
                         Optional.ofNullable(study.getDuration())
                                 .or(() -> Optional.of(new Duration()
-                                        .setValue((int)
-                                                java.time.Duration.between(
+                                        .setValue(
+                                                java.time.Period.between(
                                                         Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
                                                         Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate())
-                                                ).toDays())
+                                                ).getDays())
                                         .setUnit(Duration.Unit.DAY)
                                 ))
                 );
@@ -232,7 +235,9 @@ public class StudyService {
         if (group.isEmpty()) return Optional.empty();
 
         return group
+                // Get the groups duration...
                 .map(StudyGroup::getDuration)
+                // ... of fallback to the study-duration if not set.
                 .or(() -> getStudyDuration(studyId));
     }
 }
