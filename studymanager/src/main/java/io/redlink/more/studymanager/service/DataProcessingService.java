@@ -9,11 +9,12 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.api.v1.model.DataPointDTO;
+import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.StudyGroup;
 import io.redlink.more.studymanager.model.data.MonitoringData;
 import io.redlink.more.studymanager.model.data.ParticipationData;
-import io.redlink.more.studymanager.model.StudyGroup;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -115,22 +116,17 @@ public class DataProcessingService {
 
     public MonitoringData getMonitoringData(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
         Observation observation = observationService.getObservation(studyId, observationId).orElseThrow(); //can be "<unknown>"
-        List<Participant> participants = new ArrayList<>();
 
-        if(participantId != null) {
-            participants.add(participantService.getParticipant(studyId, participantId));
-        } else if (studyGroupId != null) {
-            participants.addAll(participantService.listParticipants(studyId).stream()
-                    .filter( participant -> participant.getStudyGroupId() == null || Objects.equals(participant.getStudyGroupId(), studyGroupId))
-                    .toList());
+        List<MonitoringData.DataRow> dataRows;
+        if (participantId != null) {
+            dataRows = elasticService.getDataRows(studyId, observationId, null,  participantId, new Timeframe(from.toInstant(), to.toInstant()));
         } else {
-            participants.addAll(participantService.listParticipants(studyId));
+            dataRows = elasticService.getDataRows(studyId, observationId, studyGroupId, null, new Timeframe(from.toInstant(), to.toInstant()));
         }
-
         return new MonitoringData(
                 observation.getTitle(),
                 observation.getType(),
-                elasticService.getDataRows(studyId, observationId, participants, toIsoString(from), toIsoString(to)));
+                dataRows);
     }
 
     public List<DataPointDTO> getDataPoints(Long studyId, Integer size, Integer observationId, Integer participantId, OffsetDateTime date) {
