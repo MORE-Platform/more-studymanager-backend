@@ -6,10 +6,15 @@ import biweekly.util.Frequency;
 import biweekly.util.Recurrence;
 import biweekly.util.com.google.ical.compat.javautil.DateIterator;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.*;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import org.apache.commons.lang3.Range;
+import org.quartz.CronExpression;
 
+import java.sql.Date;
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -22,7 +27,7 @@ public final class SchedulerUtils {
 
         final List<Range<Instant>> events = new ArrayList<>();
 
-        Range<Instant> currentEvt = Range.between(
+        Range<Instant> currentEvt = Range.of(
                 toInstantFrom(event.getDtstart(), start),
                 toInstantFrom(event.getDtend(), start)
         );
@@ -36,7 +41,7 @@ public final class SchedulerUtils {
             while (currentEvt.getMaximum().isBefore(maxEnd)) {
                 events.add(currentEvt);
                 Instant estart = currentEvt.getMinimum().plus(rrule.getFrequency().getValue(), rrule.getFrequency().getUnit().toChronoUnit());
-                currentEvt = Range.between(estart, estart.plusMillis(durationInMs));
+                currentEvt = Range.of(estart, estart.plusMillis(durationInMs));
             }
         } else {
             events.add(currentEvt);
@@ -65,7 +70,7 @@ public final class SchedulerUtils {
                 Instant ostart = it.next().toInstant();
                 Instant oend = ostart.plus(eventDuration, ChronoUnit.SECONDS);
                 if (ostart.isBefore(end) && oend.isAfter(start)) {
-                    observationSchedules.add(Range.between(ostart, oend));
+                    observationSchedules.add(Range.of(ostart, oend));
                 }
             }
         }
@@ -111,6 +116,43 @@ public final class SchedulerUtils {
                 .orElse(signup),
             ZoneId.systemDefault()
         );
+    }
+
+    public static List<Instant> parseToInterventionSchedules(Trigger trigger, Instant start, Instant end) {
+        if(trigger == null) return Collections.emptyList();
+        if(Objects.equals(trigger.getType(), "relative-time-trigger")) {
+            return parseToInterventionSchedulesForRelativeTrigger(trigger, start);
+        } else if(Objects.equals(trigger.getType(), "scheduled-trigger")) {
+            return parseToInterventionSchedulesForScheduledTrigger(trigger, start, end);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    private static List<Instant> parseToInterventionSchedulesForRelativeTrigger(Trigger trigger, Instant start) {
+        return List.of(
+                toInstantFrom(
+                new RelativeDate()
+                        .setTime(LocalTime.of(trigger.getProperties().getInt("hour"), 0))
+                        .setOffset(new Duration().setValue(trigger.getProperties().getInt("day")).setUnit(Duration.Unit.DAY)),
+                start)
+        );
+    }
+
+    private static List<Instant> parseToInterventionSchedulesForScheduledTrigger(Trigger trigger, Instant start, Instant end) {
+        List<Instant> events = new ArrayList<>();
+        String cronString = trigger.getProperties().get("cronSchedule").toString();
+        if (CronExpression.isValidExpression(cronString)) {
+            try {
+                CronExpression cronExpression = new CronExpression(cronString);
+                Instant currentDate = cronExpression.getNextValidTimeAfter(Date.from(start)).toInstant();
+                while (currentDate.isBefore(end)) {
+                    events.add(currentDate);
+                    currentDate = cronExpression.getNextValidTimeAfter(Date.from(currentDate)).toInstant();
+                }
+            } catch (ParseException ignore) {}
+        }
+        return List.copyOf(events);
     }
 
     public static Instant shiftStartIfObservationAlreadyEnded(Instant start, List<Observation> observations) {

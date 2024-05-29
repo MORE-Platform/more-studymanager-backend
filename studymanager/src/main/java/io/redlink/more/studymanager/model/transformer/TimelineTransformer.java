@@ -48,9 +48,7 @@ public class TimelineTransformer {
                 .studyGroupId(interventionTimelineEvent.studyGroupId())
                 .title(interventionTimelineEvent.title())
                 .purpose(interventionTimelineEvent.purpose())
-                .type(interventionTimelineEvent.type())
                 .start(Transformers.toOffsetDateTime(interventionTimelineEvent.start()))
-                .end(Transformers.toOffsetDateTime(interventionTimelineEvent.end()))
                 .scheduleType(interventionTimelineEvent.scheduleType());
     }
 }

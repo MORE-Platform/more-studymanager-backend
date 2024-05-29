@@ -1,10 +1,13 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.NotFoundException;
+import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Duration;
+import io.redlink.more.studymanager.model.timeline.InterventionTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
 import io.redlink.more.studymanager.utils.SchedulerUtils;
@@ -16,6 +19,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.Range;
 import org.springframework.stereotype.Service;
 
@@ -27,21 +31,19 @@ public class CalendarService {
     private final ObservationService observationService;
     private final InterventionService interventionService;
     private final ParticipantService participantService;
-    private final StudyGroupService studyGroupService;
 
     public CalendarService(StudyService studyService, ObservationService observationService, InterventionService interventionService,
-                           ParticipantService participantService, StudyGroupService studyGroupService) {
+                           ParticipantService participantService) {
         this.studyService = studyService;
         this.observationService = observationService;
         this.interventionService = interventionService;
         this.participantService = participantService;
-        this.studyGroupService = studyGroupService;
     }
 
     public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, OffsetDateTime referenceDate, LocalDate from, LocalDate to) {
         final Study study = studyService.getStudy(studyId, null)
                 .orElseThrow(() -> NotFoundException.Study(studyId));
-        final Range<LocalDate> studyRange = Range.between(
+        final Range<LocalDate> studyRange = Range.of(
                 Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
                 Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate()),
                 LocalDate::compareTo
@@ -87,6 +89,7 @@ public class CalendarService {
         }
 
         final List<Observation> observations = observationService.listObservationsForGroup(studyId, effectiveGroup);
+        final List<Intervention> interventions = interventionService.listInterventionsForGroup(studyId, effectiveGroup);
 
         // Shift the effective study-start if the participant would miss a relative observation
         final LocalDate firstDayInStudy = SchedulerUtils.alignStartDateToSignupInstant(participantStart, observations);
@@ -105,18 +108,18 @@ public class CalendarService {
                 );
         // Note: the "lastDayInStudy" *could* be after the "(planned) study end", but that's OK
 
-        final Range<Instant> effectiveRange = Range.between(
+        final Range<Instant> effectiveRange = Range.of(
                 firstDayInStudy.atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
                 lastDayInStudy.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
         );
-        final Range<Instant> filterWindow = Range.between(
+        final Range<Instant> filterWindow = Range.of(
                 from.atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
                 to.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
         );
 
         return new StudyTimeline(
                 participantStart,
-                Range.between(firstDayInStudy, lastDayInStudy, LocalDate::compareTo),
+                Range.of(firstDayInStudy, lastDayInStudy, LocalDate::compareTo),
                 observations.stream()
                         .flatMap(o -> SchedulerUtils
                                 .parseToObservationSchedules(
@@ -128,7 +131,23 @@ public class CalendarService {
                                 .map(e -> ObservationTimelineEvent.fromObservation(o, e.getMinimum(), e.getMaximum()))
                         )
                         .toList(),
-                List.of()
+                interventions.stream()
+                        .map(intervention -> {
+                            Trigger trigger = interventionService.getTriggerByIds(studyId, intervention.getInterventionId());
+                            return SchedulerUtils.parseToInterventionSchedules(
+                                            trigger,
+                                            effectiveRange.getMinimum(),
+                                            effectiveRange.getMaximum()
+                                    )
+                                    .stream()
+                                    // Disabled client-side filter for now...
+                                    // .filter(filterWindow::contains)
+                                    .map(event -> InterventionTimelineEvent.fromInterventionAndTrigger(intervention, trigger, event))
+                                    .toList();
+                        })
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList())
+
         );
     }
 

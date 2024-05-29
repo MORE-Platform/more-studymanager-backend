@@ -219,11 +219,11 @@ public class StudyService {
                 .flatMap(study ->
                         Optional.ofNullable(study.getDuration())
                                 .or(() -> Optional.of(new Duration()
-                                        .setValue((int)
-                                                java.time.Duration.between(
+                                        .setValue(
+                                                java.time.Period.between(
                                                         Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
                                                         Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate())
-                                                ).toDays())
+                                                ).getDays())
                                         .setUnit(Duration.Unit.DAY)
                                 ))
                 );
@@ -235,7 +235,9 @@ public class StudyService {
         if (group.isEmpty()) return Optional.empty();
 
         return group
+                // Get the groups duration...
                 .map(StudyGroup::getDuration)
+                // ... of fallback to the study-duration if not set.
                 .or(() -> getStudyDuration(studyId));
     }
 }
