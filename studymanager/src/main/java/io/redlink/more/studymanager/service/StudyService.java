@@ -41,7 +41,7 @@ public class StudyService {
 
     private static final Logger log = LoggerFactory.getLogger(StudyService.class);
 
-    private static final Map<Study.Status, Set<Study.Status>> VALID_STUDY_TRANSITIONS = Map.of(
+    static final Map<Study.Status, Set<Study.Status>> VALID_STUDY_TRANSITIONS = Map.of(
             Study.Status.DRAFT, EnumSet.of(Study.Status.PREVIEW, Study.Status.ACTIVE),
             Study.Status.PREVIEW, EnumSet.of(Study.Status.PAUSED_PREVIEW, Study.Status.DRAFT),
             Study.Status.PAUSED_PREVIEW, EnumSet.of(Study.Status.PREVIEW, Study.Status.DRAFT),

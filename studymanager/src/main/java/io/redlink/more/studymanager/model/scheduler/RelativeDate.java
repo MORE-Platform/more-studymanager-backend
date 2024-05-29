@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.model.scheduler;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -13,6 +14,7 @@ public class RelativeDate {
     private Duration offset;
     @JsonSerialize(using = LocalTimeSerializer.class)
     @JsonDeserialize(using = LocalTimeDeserializer.class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalTime time;
 
     public RelativeDate() {
