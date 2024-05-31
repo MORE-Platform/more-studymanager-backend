@@ -100,6 +100,22 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    public ResponseEntity<EndpointTokenDTO> updateTokenLabel(Long studyId, Integer observationId, Integer tokenId, String tokenLabel) {
+        Optional<EndpointToken> token = integrationService.updateToken(studyId, observationId, tokenId, tokenLabel.replace("\"", ""));
+
+        if(token.isEmpty()) {
+            throw new BadRequestException("Token with given id doesn't exist for given observation");
+        }
+
+        return ResponseEntity.ok().body(
+                EndpointTokenTransformer.toEndpointTokenDTO(
+                        token.get()
+                )
+        );
+    }
+
+    @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<EndpointTokenDTO> getToken(Long studyId, Integer observationId, Integer tokenId) {
 
         Optional<EndpointToken> token = integrationService.getToken(studyId, observationId, tokenId);
