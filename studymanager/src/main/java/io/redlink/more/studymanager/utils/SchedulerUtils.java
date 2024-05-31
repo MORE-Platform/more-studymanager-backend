@@ -145,6 +145,7 @@ public final class SchedulerUtils {
         if (CronExpression.isValidExpression(cronString)) {
             try {
                 CronExpression cronExpression = new CronExpression(cronString);
+                cronExpression.setTimeZone(TimeZone.getTimeZone(ZoneId.of("Europe/Vienna")));
                 Instant currentDate = cronExpression.getNextValidTimeAfter(Date.from(start)).toInstant();
                 while (currentDate.isBefore(end)) {
                     events.add(currentDate);
