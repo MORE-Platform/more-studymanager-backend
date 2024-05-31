@@ -96,7 +96,10 @@ public class FirebaseMessagingService {
                 .builder()
                 .putHeader(apnsPriorityHeader, String.valueOf(priority.value))
                 .putHeader(apnsPushTypeHeader, type.value)
-                .setAps(Aps.builder().setCategory(apsCategory).build())
+                .setAps(Aps.builder()
+                        .setCategory(apsCategory)
+                        .setMutableContent(true)
+                        .build())
                 .build();
     }
 }
