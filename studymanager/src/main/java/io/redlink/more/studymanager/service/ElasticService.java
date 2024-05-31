@@ -137,7 +137,7 @@ public class ElasticService {
         return Query.of(f -> f.
                 term(t -> t.
                         field("observation_id").
-                        value(getObservationIdString(observationId))));
+                        value(observationId)));
     }
 
     private Query getStudyGroupFilter(Integer studyGroupId) {
@@ -238,10 +238,6 @@ public class ElasticService {
         return "study_" + id;
     }
 
-    static String getObservationIdString(Integer observationId) {
-        return "observation_" + observationId;
-    }
-
     static String getParticipantIdString(Integer participantId) {
         return "participant_" + participantId;
     }
@@ -334,12 +330,11 @@ public class ElasticService {
 
     public List<MonitoringData.DataRow> getDataRows(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
         SearchRequest.Builder builder = new SearchRequest.Builder();
-        builder.index(getStudyIdString(studyId))
-                .size(0)
-                .query(q -> q.
-                        bool(b -> b.
-                                filter(getFilters(studyId, observationId, studyGroupId, participantId, timerange))))
-                .sort(s -> s.field(f -> f.field("participant_id").order(SortOrder.Asc)))
+        builder.query(q -> q.bool(b -> b.must(m ->
+                        m.term(t -> t.field("study_id").value(getStudyIdString(studyId))))
+                        .filter(getFilters(studyId, observationId, studyGroupId, participantId, timerange))
+                        ))
+                .sort(s -> s.field(f -> f.field("participant_id.keyword").order(SortOrder.Asc)))
                 .sort(s -> s.field(f -> f.field("effective_time_frame").order(SortOrder.Asc)));
         try {
             Map<String, List<List<Object>>> dataRowMap = new HashMap<>();
