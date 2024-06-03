@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class IntegrationRepository {
-    private static final String GET_TOKEN_BY_IDS = "SELECT * FROM observation_api_tokens WHERE study_id = ? AND observation_id = ? AND token_id = ?";
     private static final String ADD_TOKEN =
             "INSERT INTO observation_api_tokens(study_id, observation_id, token_id, token_label, token) " +
             "VALUES (:study_id, :observation_id, (SELECT COALESCE(MAX(token_id),0)+1 FROM observation_api_tokens WHERE study_id = :study_id AND observation_id = :observation_id), :token_label, :token) " +
@@ -38,10 +37,12 @@ public class IntegrationRepository {
             "DELETE FROM observation_api_tokens " +
             "WHERE study_id = ? AND observation_id = ? AND token_id = ?";
     private static final String DELETE_ALL = "DELETE FROM observation_api_tokens";
-    private static final String UPDATE_TOKEN =
-            "UPDATE observation_api_tokens " +
-            "SET token_label = :token_label " +
-            "WHERE study_id = :study_id AND observation_id = :observation_id AND token_id = :token_id";
+    private static final String UPDATE_TOKEN = """
+            UPDATE observation_api_tokens
+            SET token_label = :token_label
+            WHERE study_id = :study_id AND observation_id = :observation_id AND token_id = :token_id
+            RETURNING token_id, token_label, created
+            """;
     private static final String DELETE_ALL_FOR_STUDY_ID =
             "DELETE FROM observation_api_tokens " +
             "WHERE study_id = ?";
@@ -93,21 +94,19 @@ public class IntegrationRepository {
 
     public Optional<EndpointToken> updateToken(Long studyId, Integer observationId, Integer tokenId, String tokenLabel) {
         try {
-            namedTemplate.update(UPDATE_TOKEN,
-                    new MapSqlParameterSource()
-                            .addValue("study_id", studyId)
-                            .addValue("observation_id", observationId)
-                            .addValue("token_id", tokenId)
-                            .addValue("token_label", tokenLabel)
-                            );
-            return getById(studyId, observationId, tokenId);
+            return Optional.ofNullable(
+                    namedTemplate.queryForObject(UPDATE_TOKEN,
+                            new MapSqlParameterSource()
+                                    .addValue("study_id", studyId)
+                                    .addValue("observation_id", observationId)
+                                    .addValue("token_id", tokenId)
+                                    .addValue("token_label", tokenLabel),
+                            getHiddenTokenRowMapper()
+                    )
+            );
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
-    }
-
-    public Optional<EndpointToken> getById(long studyId, int observationId, int tokenId) {
-        return Optional.ofNullable(template.queryForObject(GET_TOKEN_BY_IDS, getHiddenTokenRowMapper(), studyId, observationId, tokenId));
     }
 
     private static RowMapper<EndpointToken> getHiddenTokenRowMapper() {

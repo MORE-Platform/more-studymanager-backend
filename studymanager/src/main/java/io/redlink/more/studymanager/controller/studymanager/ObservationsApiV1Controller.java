@@ -83,10 +83,10 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
-    public ResponseEntity<EndpointTokenDTO> createToken(Long studyId, Integer observationId, String tokenLabel) {
-        if(tokenLabel.isBlank()) { return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); }
+    public ResponseEntity<EndpointTokenDTO> createToken(Long studyId, Integer observationId, EndpointTokenDTO token) {
+        if(token.getTokenLabel().isBlank()) { return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); }
 
-        Optional<EndpointToken> addedToken = integrationService.addToken(studyId, observationId, tokenLabel.replace("\"", ""));
+        Optional<EndpointToken> addedToken = integrationService.addToken(studyId, observationId, token.getTokenLabel());
         if(addedToken.isEmpty()) {
             throw new BadRequestException("Token with given label already exists for given observation");
         }
@@ -100,17 +100,11 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
-    public ResponseEntity<EndpointTokenDTO> updateTokenLabel(Long studyId, Integer observationId, Integer tokenId, String tokenLabel) {
-        Optional<EndpointToken> token = integrationService.updateToken(studyId, observationId, tokenId, tokenLabel.replace("\"", ""));
+    public ResponseEntity<EndpointTokenDTO> updateTokenLabel(Long studyId, Integer observationId, Integer tokenId, EndpointTokenDTO endpointToken) {
+        Optional<EndpointToken> token = integrationService.updateToken(studyId, observationId, tokenId, endpointToken.getTokenLabel());
 
-        if(token.isEmpty()) {
-            throw new BadRequestException("Token with given id doesn't exist for given observation");
-        }
-
-        return ResponseEntity.ok().body(
-                EndpointTokenTransformer.toEndpointTokenDTO(
-                        token.get()
-                )
+        return ResponseEntity.of(
+                token.map(EndpointTokenTransformer::toEndpointTokenDTO)
         );
     }
 
