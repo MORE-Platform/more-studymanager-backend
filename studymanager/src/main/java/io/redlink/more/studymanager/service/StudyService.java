@@ -223,7 +223,7 @@ public class StudyService {
                                                 java.time.Period.between(
                                                         Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
                                                         Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate())
-                                                ).getDays())
+                                                ).getDays() + 1)
                                         .setUnit(Duration.Unit.DAY)
                                 ))
                 );
