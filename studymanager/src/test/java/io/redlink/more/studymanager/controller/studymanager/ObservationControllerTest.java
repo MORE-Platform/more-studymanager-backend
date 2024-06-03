@@ -9,7 +9,7 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.redlink.more.studymanager.api.v1.model.EventDTO;
+import io.redlink.more.studymanager.api.v1.model.EndpointTokenDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationScheduleDTO;
 import io.redlink.more.studymanager.model.*;
@@ -18,6 +18,7 @@ import io.redlink.more.studymanager.service.IntegrationService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ObservationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.time.OffsetDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -164,26 +165,26 @@ class ObservationControllerTest {
     @Test
     @DisplayName("Add token should create and return token with id, label, timestamp and secret set, only if label is valid")
     void testAddToken() throws Exception{
-        EndpointToken token = new EndpointToken(
+        EndpointTokenDTO token = new EndpointTokenDTO(
                 1,
                 "testLabel",
-                Instant.now(),
+                OffsetDateTime.now(),
                 "test");
         when(integrationService.addToken(anyLong(), anyInt(), anyString()))
                 .thenAnswer(invocationOnMock -> Optional.of(new EndpointToken(
-                        token.tokenId(),
+                        token.getTokenId(),
                         invocationOnMock.getArgument(2),
-                        token.created(),
-                        token.token()
+                        Instant.now(),
+                        token.getToken()
                 )));
         mvc.perform(post("/api/v1/studies/1/observations/1/tokens")
-                        .content(token.tokenLabel())
+                        .content(mapper.writeValueAsString(token))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.tokenId").value(token.tokenId()))
-                .andExpect(jsonPath("$.tokenLabel").value(token.tokenLabel()))
-                .andExpect(jsonPath("$.token").value(token.token()))
+                .andExpect(jsonPath("$.tokenId").value(token.getTokenId()))
+                .andExpect(jsonPath("$.tokenLabel").value(token.getTokenLabel()))
+                .andExpect(jsonPath("$.token").value(token.getToken()))
                 .andExpect(jsonPath("$.created").exists());
 
         mvc.perform(post("/api/v1/studies/1/observations/1/tokens")

@@ -738,7 +738,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TokenLabel'
+              $ref: '#/components/schemas/EndpointToken'
       responses:
         '201':
           description: Token successfully added
@@ -789,6 +789,33 @@ paths:
         '404':
           description: not found
 
+    put:
+      tags:
+        - observations
+      description: Update label from observation endpoint token
+      operationId: updateTokenLabel
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - $ref: '#/components/parameters/ObservationId'
+        - $ref: '#/components/parameters/TokenId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndpointToken'
+      responses:
+        '200':
+          description: Token label successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndpointToken'
+
+        '400':
+          description: could not update observation
+        '404':
+          description: not found
 
     delete:
       tags:
@@ -1599,21 +1626,19 @@ components:
         tokenId:
           $ref: '#/components/schemas/Id'
         tokenLabel:
-          $ref: '#/components/schemas/TokenLabel'
+          type: string
         created:
           type: string
           format: date-time
           readOnly: true
         token:
           type: string
+          readOnly: true
       required:
         - tokenId
         - tokenLabel
         - created
         - token
-
-    TokenLabel:
-      type: string
 
     ParticipationData:
       type: object
