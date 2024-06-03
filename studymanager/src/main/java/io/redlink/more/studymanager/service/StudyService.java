@@ -131,15 +131,7 @@ public class StudyService {
                     try {
                         alignWithStudyState(s);
                         participantService.listParticipants(studyId).forEach(participant ->
-                            pushNotificationService.sendPushNotification(
-                                    studyId,
-                                    participant.getParticipantId(),
-                                    "Your Study has a new update",
-                                    "Your study was updated. For more information, please launch the app!",
-                                    Map.of("key", "STUDY_STATE_CHANGED",
-                                            "oldState", oldState.getValue(),
-                                            "newState", s.getStudyState().getValue())
-                            )
+                                pushNotificationService.sendStudyStateUpdate(participant, oldState, s.getStudyState())
                         );
                         participantService.alignParticipantsWithStudyState(s);
                         if (s.getStudyState() == Study.Status.DRAFT) {
@@ -162,14 +154,8 @@ public class StudyService {
         List<Participant> participantsToClose = participantService.listParticipantsForClosing();
         log.debug("Selected {} participants to close", participantsToClose.size());
         participantsToClose.forEach(participant -> {
-            pushNotificationService.sendPushNotification(
-                    participant.getStudyId(),
-                    participant.getParticipantId(),
-                    "Your Study has been closed",
-                    "Your study was updated. For more information, please launch the app!",
-                    Map.of("key", "STUDY_STATE_CHANGED",
-                            "oldState", Study.Status.ACTIVE.getValue(),
-                            "newState", Study.Status.CLOSED.getValue())
+            pushNotificationService.sendStudyStateUpdate(
+                    participant, Study.Status.ACTIVE, Study.Status.CLOSED
             );
             participantService.setStatus(
                     participant.getStudyId(), participant.getParticipantId(), Participant.Status.LOCKED
