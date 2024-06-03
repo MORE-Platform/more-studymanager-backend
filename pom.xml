@@ -319,7 +319,7 @@
                 <plugin>
                     <groupId>com.google.cloud.tools</groupId>
                     <artifactId>jib-maven-plugin</artifactId>
-                    <version>3.4.2</version>
+                    <version>3.4.3</version>
                     <executions>
                         <execution>
                             <id>jib-deploy</id>
@@ -445,7 +445,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>33.2.0-jre</version>
+                <version>33.2.1-jre</version>
             </dependency>
             <dependency>
                 <groupId>net.sf.biweekly</groupId>
