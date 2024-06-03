@@ -174,7 +174,7 @@ public final class SchedulerUtils {
         return java.time.Duration.between(event.getDateStart(), event.getDateEnd()).getSeconds();
     }
 
-    private static VEvent parseToICalEvent(Event event, Instant end) {
+    private static VEvent parseToICalEvent(Event event, Instant fallBackEnd) {
         VEvent iCalEvent = new VEvent();
         iCalEvent.setDateStart(Date.from(event.getDateStart()));
         iCalEvent.setDateEnd(Date.from(event.getDateEnd()));
@@ -182,11 +182,8 @@ public final class SchedulerUtils {
         RecurrenceRule eventRecurrence = event.getRRule();
         if (eventRecurrence != null) {
             Recurrence.Builder recurBuilder = new Recurrence.Builder(Frequency.valueOf(eventRecurrence.getFreq()));
-            if (eventRecurrence.getUntil() != null) {
-                setUntil(recurBuilder, eventRecurrence.getUntil());
-            } else {
-                setUntil(recurBuilder, end);
-            }
+
+            setUntil(recurBuilder, Objects.requireNonNullElse(eventRecurrence.getUntil(), fallBackEnd));
             setUntil(recurBuilder, eventRecurrence.getUntil());
             setCount(recurBuilder, eventRecurrence.getCount());
             setInterval(recurBuilder, eventRecurrence.getInterval());
