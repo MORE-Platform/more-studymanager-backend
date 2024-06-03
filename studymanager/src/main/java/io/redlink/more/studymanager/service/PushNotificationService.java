@@ -11,7 +11,9 @@ package io.redlink.more.studymanager.service;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MessagingErrorCode;
 import io.redlink.more.studymanager.model.Notification;
+import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.PushNotificationsToken;
+import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.NotificationRepository;
 import io.redlink.more.studymanager.repository.PushNotificationTokenRepository;
 
@@ -86,4 +88,26 @@ public class PushNotificationService {
             return false;
         }
     }
+
+    public void sendStudyStateUpdate(Participant participant, Study.Status oldState, Study.Status newState) {
+        sendPushNotification(
+                participant.getStudyId(),
+                participant.getParticipantId(),
+                "Your Study has a new update",
+                "Your study was updated. For more information, please launch the app!",
+                Map.of("key", "STUDY_STATE_CHANGED",
+                        "oldState", toAppState(oldState),
+                        "newState", toAppState(newState))
+        );
+    }
+
+    private static String toAppState(Study.Status state) {
+        // Translate the study-states to states the app also knows:
+        return (switch (state) {
+            case ACTIVE, PREVIEW -> Study.Status.ACTIVE;
+            case PAUSED, PAUSED_PREVIEW -> Study.Status.PAUSED;
+            default -> Study.Status.CLOSED;
+        }).getValue();
+    }
+
 }
