@@ -1,10 +1,13 @@
 package io.redlink.more.studymanager.model.scheduler;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.Instant;
 import java.util.List;
 
 public class RecurrenceRule {
     private String freq;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant until;
     private Integer count;
     private Integer interval;

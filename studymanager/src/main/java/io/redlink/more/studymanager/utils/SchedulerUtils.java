@@ -63,7 +63,7 @@ public final class SchedulerUtils {
     public static List<Range<Instant>> parseToObservationSchedulesForEvent(Event event, Instant start, Instant end) {
         List<Range<Instant>> observationSchedules = new ArrayList<>();
         if (event.getDateStart() != null && event.getDateEnd() != null) {
-            VEvent iCalEvent = parseToICalEvent(event);
+            VEvent iCalEvent = parseToICalEvent(event, end);
             long eventDuration = getEventTime(event);
             DateIterator it = iCalEvent.getDateIterator(TimeZone.getDefault());
             while (it.hasNext()) {
@@ -174,14 +174,19 @@ public final class SchedulerUtils {
         return java.time.Duration.between(event.getDateStart(), event.getDateEnd()).getSeconds();
     }
 
-    private static VEvent parseToICalEvent(Event event) {
+    private static VEvent parseToICalEvent(Event event, Instant end) {
         VEvent iCalEvent = new VEvent();
         iCalEvent.setDateStart(Date.from(event.getDateStart()));
         iCalEvent.setDateEnd(Date.from(event.getDateEnd()));
 
         RecurrenceRule eventRecurrence = event.getRRule();
-        if (event.getRRule() != null) {
+        if (eventRecurrence != null) {
             Recurrence.Builder recurBuilder = new Recurrence.Builder(Frequency.valueOf(eventRecurrence.getFreq()));
+            if (eventRecurrence.getUntil() != null) {
+                setUntil(recurBuilder, eventRecurrence.getUntil());
+            } else {
+                setUntil(recurBuilder, end);
+            }
             setUntil(recurBuilder, eventRecurrence.getUntil());
             setCount(recurBuilder, eventRecurrence.getCount());
             setInterval(recurBuilder, eventRecurrence.getInterval());
