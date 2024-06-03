@@ -37,7 +37,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.never;
@@ -200,7 +199,7 @@ class StudyServiceTest {
                 ).alignParticipantsWithStudyState(study);
                 verify(pushNotificationService,
                         times(pt.size()).description("%s -> %s should send %d notifications".formatted(from, to, pt.size()))
-                ).sendPushNotification(eq(study.getStudyId()), anyInt(), any(), any(), any());
+                ).sendStudyStateUpdate(any(), any(), any());
 
                 // ONLY when transitioning to back to DRAFT, clear the collected data in Elastic
                 if ((from == Study.Status.PREVIEW || from == Study.Status.PAUSED_PREVIEW)
