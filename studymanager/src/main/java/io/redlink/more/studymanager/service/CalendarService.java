@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -98,6 +99,14 @@ public class CalendarService {
         final Duration studyDuration = Optional.ofNullable(effectiveGroup)
                 .flatMap(eg -> studyService.getStudyDuration(studyId, eg))
                 .or(() -> studyService.getStudyDuration(studyId))
+                .or(() -> Optional.of(new Duration()
+                        .setValue(
+                                (int) ChronoUnit.DAYS.between(
+                                        Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
+                                        Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate())
+                                ) + 1)
+                        .setUnit(Duration.Unit.DAY)
+                ))
                 .orElseThrow(() -> NotFoundException.Study(studyId));
 
         final LocalDate lastDayInStudy = firstDayInStudy

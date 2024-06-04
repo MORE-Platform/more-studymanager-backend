@@ -204,17 +204,7 @@ public class StudyService {
 
     public Optional<Duration> getStudyDuration(Long studyId) {
         return studyRepository.getById(studyId)
-                .flatMap(study ->
-                        Optional.ofNullable(study.getDuration())
-                                .or(() -> Optional.of(new Duration()
-                                        .setValue(Long.valueOf(
-                                                 ChronoUnit.DAYS.between(
-                                                        Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
-                                                        Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate())
-                                                ) + 1).intValue())
-                                        .setUnit(Duration.Unit.DAY)
-                                ))
-                );
+                .map(Study::getDuration);
     }
 
     public Optional<Duration> getStudyDuration(Long studyId, Integer studyGroupId) {
