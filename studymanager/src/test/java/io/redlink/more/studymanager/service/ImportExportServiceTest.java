@@ -24,10 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.time.LocalDate;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -160,7 +157,7 @@ public class ImportExportServiceTest {
                 .setActions(Map.of(2, List.of(new Action()
                         .setType("sth")
                         .setProperties(new ActionProperties()))))
-                .setParticipantGroupAssignments(List.of(3, 0, 2, 3))
+                .setParticipantGroupAssignments(Map.of("0", 3, "2", 3, "4", 2))
             .setIntegrations(List.of(
                     new IntegrationInfo("Integration 1", 1),
                     new IntegrationInfo("Integration 2", 3)

@@ -20,7 +20,7 @@ public class StudyImportExport {
     private List<Intervention> interventions;
     private Map<Integer, Trigger> triggers;
     private Map<Integer, List<Action>> actions;
-    private List<Integer> participantGroupAssignments;
+    private Map<String,Integer> participantGroupAssignments;
     private List<IntegrationInfo> integrations;
 
     public Study getStudy() {
@@ -77,11 +77,12 @@ public class StudyImportExport {
         return this;
     }
 
-    public List<Integer> getParticipantGroupAssignments() {
+    public Map<String, Integer> getParticipantGroupAssignments() {
         return participantGroupAssignments;
     }
-    public StudyImportExport setParticipantGroupAssignments(Collection<Integer> integrations) {
-        this.participantGroupAssignments = integrations.stream().toList();
+
+    public StudyImportExport setParticipantGroupAssignments(Map<String, Integer> integrations) {
+        this.participantGroupAssignments = integrations;
         return this;
     }
 
