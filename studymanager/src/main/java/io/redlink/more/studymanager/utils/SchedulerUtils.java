@@ -10,6 +10,7 @@ import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.Range;
 import org.quartz.CronExpression;
 
@@ -121,7 +122,7 @@ public final class SchedulerUtils {
     public static List<Instant> parseToInterventionSchedules(Trigger trigger, Instant start, Instant end) {
         if(trigger == null) return Collections.emptyList();
         if(Objects.equals(trigger.getType(), "relative-time-trigger")) {
-            return parseToInterventionSchedulesForRelativeTrigger(trigger, start);
+            return parseToInterventionSchedulesForRelativeTrigger(trigger, start, end);
         } else if(Objects.equals(trigger.getType(), "scheduled-trigger")) {
             return parseToInterventionSchedulesForScheduledTrigger(trigger, start, end);
         } else {
@@ -129,14 +130,15 @@ public final class SchedulerUtils {
         }
     }
 
-    private static List<Instant> parseToInterventionSchedulesForRelativeTrigger(Trigger trigger, Instant start) {
-        return List.of(
-                toInstantFrom(
-                new RelativeDate()
-                        .setTime(LocalTime.of(trigger.getProperties().getInt("hour"), 0))
-                        .setOffset(new Duration().setValue(trigger.getProperties().getInt("day")).setUnit(Duration.Unit.DAY)),
-                start)
-        );
+    private static List<Instant> parseToInterventionSchedulesForRelativeTrigger(Trigger trigger, Instant start, Instant end) {
+        return Stream.of(toInstantFrom(
+                        new RelativeDate()
+                                .setTime(LocalTime.of(trigger.getProperties().getInt("hour"), 0))
+                                .setOffset(new Duration().setValue(trigger.getProperties().getInt("day")).setUnit(Duration.Unit.DAY)),
+                        start
+                ))
+                .filter(i -> i.isBefore(end))
+                .toList();
     }
 
     private static List<Instant> parseToInterventionSchedulesForScheduledTrigger(Trigger trigger, Instant start, Instant end) {
