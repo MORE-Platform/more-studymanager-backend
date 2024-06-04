@@ -8,10 +8,10 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.IntegrationExportDTO;
+import io.redlink.more.studymanager.api.v1.model.IntegrationInfoDTO;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyImportExportDTO;
-import io.redlink.more.studymanager.model.IntegrationExport;
+import io.redlink.more.studymanager.model.IntegrationInfo;
 import io.redlink.more.studymanager.model.StudyImportExport;
 
 import java.util.stream.Collectors;
@@ -65,16 +65,16 @@ public class ImportExportTransformer {
                                     .stream().map(ActionTransformer::toActionDTO_V1).toList())).toList())
                 .participantGroupAssignments(studyImportExport.getParticipantGroupAssignments())
                 .integrations(studyImportExport.getIntegrations()
-                        .stream().map(ImportExportTransformer::toIntegrationExportDTO_V1).toList());
+                        .stream().map(ImportExportTransformer::toIntegrationInfoDTO_V1).toList());
     }
 
-    private static IntegrationExportDTO toIntegrationExportDTO_V1(IntegrationExport integration) {
-        return new IntegrationExportDTO()
+    private static IntegrationInfoDTO toIntegrationInfoDTO_V1(IntegrationInfo integration) {
+        return new IntegrationInfoDTO()
                 .name(integration.name())
-                .observationIdRef(integration.observationId());
+                .observationId(integration.observationId());
     }
 
-    private static IntegrationExport fromIntegrationExportDTO_V1(IntegrationExportDTO integration) {
-        return new IntegrationExport(integration.getName(), integration.getObservationIdRef());
+    private static IntegrationInfo fromIntegrationExportDTO_V1(IntegrationInfoDTO integration) {
+        return new IntegrationInfo(integration.getName(), integration.getObservationId());
     }
 }

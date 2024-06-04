@@ -1790,9 +1790,9 @@ components:
         integrations:
           type: array
           items:
-            $ref: '#/components/schemas/integrationExport'
+            $ref: '#/components/schemas/integrationInfo'
 
-    integrationExport:
+    integrationInfo:
       type: object
       properties:
         name:

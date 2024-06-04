@@ -35,17 +35,20 @@ public class ImportExportService {
     private final ObservationService observationService;
     private final InterventionService interventionService;
     private final StudyGroupService studyGroupService;
+    private final IntegrationService integrationService;
 
     private final ElasticService elasticService;
 
     public ImportExportService(ParticipantService participantService, StudyService studyService, StudyStateService studyStateService,
-                               ObservationService observationService, InterventionService interventionService, StudyGroupService studyGroupService, ElasticService elasticService) {
+                               ObservationService observationService, InterventionService interventionService, StudyGroupService studyGroupService,
+                               IntegrationService integrationService, ElasticService elasticService) {
         this.participantService = participantService;
         this.studyService = studyService;
         this.studyStateService = studyStateService;
         this.observationService = observationService;
         this.interventionService = interventionService;
         this.studyGroupService = studyGroupService;
+        this.integrationService = integrationService;
         this.elasticService = elasticService;
     }
 
@@ -86,7 +89,25 @@ public class ImportExportService {
                 .setObservations(observationService.listObservations(studyId))
                 .setInterventions(interventionService.listInterventions(studyId))
                 .setActions(new HashMap<>())
-                .setTriggers(new HashMap<>());
+                .setTriggers(new HashMap<>())
+                .setIntegrations(new ArrayList<>());
+
+        //index 0 is for studyGroupId == null
+        Integer[] count = new Integer[export.getStudyGroups().size() + 1];
+        participantService.listParticipants(studyId).forEach(participant -> {
+                    Integer index = Objects.requireNonNullElse(participant.getStudyGroupId(), 0);
+                    count[index] = count[index]++;
+        });
+        export.setParticipantGroupAssignments(Arrays.stream(count).toList());
+
+        export.setIntegrations(
+                export.getObservations().stream()
+                        .map(Observation::getObservationId)
+                        .flatMap(observationId -> {
+                            List<EndpointToken> tokens = integrationService.getTokens(studyId, observationId);
+                            return tokens.stream().map(token -> new IntegrationInfo(token.tokenLabel(), observationId));
+                        }).toList()
+        );
 
         for(Integer interventionId: export.getInterventions().stream().map(Intervention::getInterventionId).toList()) {
             export.getActions()
@@ -116,6 +137,19 @@ public class ImportExportService {
                         studyImport.getActions().getOrDefault(intervention.getInterventionId(), Collections.emptyList())
                 )
         );
+        for(int i = 0; i < studyImport.getParticipantGroupAssignments().size(); i++) {
+            for(int n = 0; n < studyImport.getParticipantGroupAssignments().get(i); n++) {
+                participantService.createParticipant(
+                        new Participant()
+                                .setStudyId(studyId)
+                                .setAlias("Alias")
+                                .setStudyGroupId(i == 0 ? null : i));
+            }
+        }
+        studyImport.getIntegrations().forEach(integration ->
+                integrationService.addToken(studyId, integration.observationId(), integration.name())
+        );
+
         return newStudy;
     }
 

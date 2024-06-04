@@ -39,6 +39,9 @@ public class ImportExportServiceTest {
     @Spy
     private ParticipantService participantService = mock(ParticipantService.class);
 
+    @Spy
+    private IntegrationService integrationService = mock(IntegrationService.class);
+
     @Mock
     private StudyService studyService;
 
@@ -74,6 +77,12 @@ public class ImportExportServiceTest {
 
     @Captor
     private ArgumentCaptor<Long> idLongCaptor;
+
+    @Captor
+    private ArgumentCaptor<Integer> idIntegerCaptor;
+
+    @Captor
+    private ArgumentCaptor<String> aliasCaptor;
 
     private final AuthenticatedUser currentUser = new AuthenticatedUser(
             UUID.randomUUID().toString(),
@@ -150,7 +159,12 @@ public class ImportExportServiceTest {
                         .setProperties(new TriggerProperties())))
                 .setActions(Map.of(2, List.of(new Action()
                         .setType("sth")
-                        .setProperties(new ActionProperties()))));
+                        .setProperties(new ActionProperties()))))
+                .setParticipantGroupAssignments(List.of(3, 0, 2, 3))
+            .setIntegrations(List.of(
+                    new IntegrationInfo("Integration 1", 1),
+                    new IntegrationInfo("Integration 2", 3)
+            ));
 
         when(studyService.createStudy(any(), any()))
                 .thenAnswer(invocationOnMock ->
@@ -172,6 +186,8 @@ public class ImportExportServiceTest {
 
         verify(observationService, times(2)).importObservation(idLongCaptor.capture(), observationCaptor.capture());
         verify(interventionService, times(2)).importIntervention(idLongCaptor.capture(), interventionCaptor.capture(), triggerCaptor.capture(), actionCaptor.capture());
+        verify(participantService, times(8)).createParticipant(participantsCaptor.capture());
+        verify(integrationService, times(2)).addToken(idLongCaptor.capture(), idIntegerCaptor.capture(), aliasCaptor.capture());
 
         assertThat(observationCaptor.getAllValues().get(0).getObservationId()).isEqualTo(1);
         assertThat(observationCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(3);
