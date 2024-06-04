@@ -83,10 +83,10 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
-    public ResponseEntity<EndpointTokenDTO> createToken(Long studyId, Integer observationId, String tokenLabel) {
-        if(tokenLabel.isBlank()) { return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); }
+    public ResponseEntity<EndpointTokenDTO> createToken(Long studyId, Integer observationId, EndpointTokenDTO token) {
+        if(token.getTokenLabel().isBlank()) { return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); }
 
-        Optional<EndpointToken> addedToken = integrationService.addToken(studyId, observationId, tokenLabel.replace("\"", ""));
+        Optional<EndpointToken> addedToken = integrationService.addToken(studyId, observationId, token.getTokenLabel());
         if(addedToken.isEmpty()) {
             throw new BadRequestException("Token with given label already exists for given observation");
         }
@@ -95,6 +95,16 @@ public class ObservationsApiV1Controller implements ObservationsApi {
                 EndpointTokenTransformer.toEndpointTokenDTO(
                         addedToken.get()
                 )
+        );
+    }
+
+    @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    public ResponseEntity<EndpointTokenDTO> updateTokenLabel(Long studyId, Integer observationId, Integer tokenId, EndpointTokenDTO endpointToken) {
+        Optional<EndpointToken> token = integrationService.updateToken(studyId, observationId, tokenId, endpointToken.getTokenLabel());
+
+        return ResponseEntity.of(
+                token.map(EndpointTokenTransformer::toEndpointTokenDTO)
         );
     }
 

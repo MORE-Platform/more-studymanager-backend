@@ -37,7 +37,12 @@ public class IntegrationRepository {
             "DELETE FROM observation_api_tokens " +
             "WHERE study_id = ? AND observation_id = ? AND token_id = ?";
     private static final String DELETE_ALL = "DELETE FROM observation_api_tokens";
-
+    private static final String UPDATE_TOKEN = """
+            UPDATE observation_api_tokens
+            SET token_label = :token_label
+            WHERE study_id = :study_id AND observation_id = :observation_id AND token_id = :token_id
+            RETURNING token_id, token_label, created
+            """;
     private static final String DELETE_ALL_FOR_STUDY_ID =
             "DELETE FROM observation_api_tokens " +
             "WHERE study_id = ?";
@@ -85,6 +90,23 @@ public class IntegrationRepository {
 
     public void deleteToken(Long studyId, Integer observationId, Integer tokenId) {
         template.update(DELETE_TOKEN, studyId, observationId, tokenId);
+    }
+
+    public Optional<EndpointToken> updateToken(Long studyId, Integer observationId, Integer tokenId, String tokenLabel) {
+        try {
+            return Optional.ofNullable(
+                    namedTemplate.queryForObject(UPDATE_TOKEN,
+                            new MapSqlParameterSource()
+                                    .addValue("study_id", studyId)
+                                    .addValue("observation_id", observationId)
+                                    .addValue("token_id", tokenId)
+                                    .addValue("token_label", tokenLabel),
+                            getHiddenTokenRowMapper()
+                    )
+            );
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
     private static RowMapper<EndpointToken> getHiddenTokenRowMapper() {
