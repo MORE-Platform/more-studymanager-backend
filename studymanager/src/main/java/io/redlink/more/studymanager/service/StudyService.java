@@ -23,6 +23,8 @@ import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyGroupRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
+
+import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -205,11 +207,11 @@ public class StudyService {
                 .flatMap(study ->
                         Optional.ofNullable(study.getDuration())
                                 .or(() -> Optional.of(new Duration()
-                                        .setValue(
-                                                java.time.Period.between(
+                                        .setValue(Long.valueOf(
+                                                 ChronoUnit.DAYS.between(
                                                         Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
                                                         Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate())
-                                                ).getDays() + 1)
+                                                ) + 1).intValue())
                                         .setUnit(Duration.Unit.DAY)
                                 ))
                 );
