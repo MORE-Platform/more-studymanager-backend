@@ -1797,7 +1797,7 @@ components:
       properties:
         name:
           type: string
-        observationIdRef:
+        observationId:
           $ref: '#/components/schemas/Id'
 
     UserSearchResultList:

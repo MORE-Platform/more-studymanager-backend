@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.model;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,8 @@ public class StudyImportExport {
     private List<Intervention> interventions;
     private Map<Integer, Trigger> triggers;
     private Map<Integer, List<Action>> actions;
+    private List<Integer> participantGroupAssignments;
+    private List<IntegrationExport> integrations;
 
     public Study getStudy() {
         return study;
@@ -71,6 +74,23 @@ public class StudyImportExport {
 
     public StudyImportExport setActions(Map<Integer, List<Action>> actions) {
         this.actions = actions;
+        return this;
+    }
+
+    public List<Integer> getParticipantGroupAssignments() {
+        return participantGroupAssignments;
+    }
+    public StudyImportExport setParticipantGroupAssignments(Collection<Integer> integrations) {
+        this.participantGroupAssignments = integrations.stream().toList();
+        return this;
+    }
+
+    public List<IntegrationExport> getIntegrations() {
+        return integrations;
+    }
+
+    public StudyImportExport setIntegrations(Collection<IntegrationExport> integrations) {
+        this.integrations = integrations.stream().toList();
         return this;
     }
 }
