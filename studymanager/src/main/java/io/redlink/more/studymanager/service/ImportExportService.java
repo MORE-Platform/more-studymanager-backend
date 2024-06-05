@@ -94,7 +94,9 @@ public class ImportExportService {
                 .setIntegrations(new ArrayList<>());
 
         export.setParticipants(participantService.listParticipants(studyId).stream().map(participant ->
-                new Participant().setStudyGroupId(participant.getStudyGroupId())
+                new Participant()
+                        .setStudyGroupId(participant.getStudyGroupId())
+                        .setStatus(participant.getStatus())
         ).toList());
 
         export.setIntegrations(
