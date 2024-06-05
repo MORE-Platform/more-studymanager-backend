@@ -23,6 +23,8 @@ import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyGroupRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
+
+import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -202,17 +204,7 @@ public class StudyService {
 
     public Optional<Duration> getStudyDuration(Long studyId) {
         return studyRepository.getById(studyId)
-                .flatMap(study ->
-                        Optional.ofNullable(study.getDuration())
-                                .or(() -> Optional.of(new Duration()
-                                        .setValue(
-                                                java.time.Period.between(
-                                                        Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
-                                                        Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate())
-                                                ).getDays() + 1)
-                                        .setUnit(Duration.Unit.DAY)
-                                ))
-                );
+                .map(Study::getDuration);
     }
 
     public Optional<Duration> getStudyDuration(Long studyId, Integer studyGroupId) {
