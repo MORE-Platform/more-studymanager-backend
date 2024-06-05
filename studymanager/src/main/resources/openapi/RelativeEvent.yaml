@@ -3,6 +3,8 @@ info:
   title: TimeRange Model for Relative Events
   version: "1.0"
 
+paths: {}
+
 components:
   schemas:
     Duration:

@@ -158,14 +158,14 @@ public class ImportExportServiceTest {
                         .setType("sth")
                         .setProperties(new ActionProperties()))))
                 .setParticipants(List.of(
-                        new Participant().setStudyGroupId(0),
-                        new Participant().setStudyGroupId(0),
-                        new Participant().setStudyGroupId(0),
-                        new Participant().setStudyGroupId(2),
-                        new Participant().setStudyGroupId(2),
-                        new Participant().setStudyGroupId(2),
-                        new Participant().setStudyGroupId(4),
-                        new Participant().setStudyGroupId(4)
+                        new StudyImportExport.ParticipantInfo(0),
+                        new StudyImportExport.ParticipantInfo(0),
+                        new StudyImportExport.ParticipantInfo(0),
+                        new StudyImportExport.ParticipantInfo(2),
+                        new StudyImportExport.ParticipantInfo(2),
+                        new StudyImportExport.ParticipantInfo(2),
+                        new StudyImportExport.ParticipantInfo(4),
+                        new StudyImportExport.ParticipantInfo(4)
                 ))
             .setIntegrations(List.of(
                     new IntegrationInfo("Integration 1", 1),

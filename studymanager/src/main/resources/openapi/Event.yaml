@@ -4,6 +4,8 @@ info:
   version: "1.0"
   description: see https://www.rfc-editor.org/rfc/rfc8984.html#name-recurrence-properties
 
+paths: {}
+
 components:
   schemas:
     Event:
