@@ -90,13 +90,12 @@ public class ImportExportService {
                 .setInterventions(interventionService.listInterventions(studyId))
                 .setActions(new HashMap<>())
                 .setTriggers(new HashMap<>())
-                .setParticipantGroupAssignments(new HashMap<>())
+                .setParticipants(new ArrayList<>())
                 .setIntegrations(new ArrayList<>());
 
-        participantService.listParticipants(studyId).forEach(participant -> {
-            String group = participant.getStudyGroupId() == null ? "0" : String.valueOf(participant.getStudyGroupId());
-            export.getParticipantGroupAssignments().merge(group, 1, Integer::sum);
-        });
+        export.setParticipants(participantService.listParticipants(studyId).stream().map(participant ->
+                new Participant().setStudyGroupId(participant.getStudyGroupId())
+        ).toList());
 
         export.setIntegrations(
                 export.getObservations().stream()
@@ -135,15 +134,13 @@ public class ImportExportService {
                         studyImport.getActions().getOrDefault(intervention.getInterventionId(), Collections.emptyList())
                 )
         );
-        studyImport.getParticipantGroupAssignments().forEach((key, value) -> {
-            for (int i = 0; i < value; i++) {
-                participantService.createParticipant(
-                        new Participant()
-                                .setStudyId(studyId)
-                                .setAlias("Alias")
-                                .setStudyGroupId(Objects.equals((key), "0") ? null : Integer.valueOf(key)));
-            }
-        });
+        studyImport.getParticipants().forEach(participant ->
+            participantService.createParticipant(
+                    new Participant()
+                            .setStudyId(studyId)
+                            .setAlias("Participant")
+                            .setStudyGroupId(participant.getStudyGroupId())
+        ));
         studyImport.getIntegrations().forEach(integration ->
                 integrationService.addToken(studyId, integration.observationId(), integration.name())
         );

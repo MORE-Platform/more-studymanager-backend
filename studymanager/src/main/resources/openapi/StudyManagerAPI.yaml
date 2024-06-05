@@ -1783,17 +1783,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Intervention'
-        participantGroupAssignments:
-
-          additionalProperties:
-            type: integer
-            format: int32
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Participant'
         integrations:
           type: array
           items:
-            $ref: '#/components/schemas/integrationInfo'
+            $ref: '#/components/schemas/IntegrationInfo'
 
-    integrationInfo:
+    IntegrationInfo:
       type: object
       properties:
         name:

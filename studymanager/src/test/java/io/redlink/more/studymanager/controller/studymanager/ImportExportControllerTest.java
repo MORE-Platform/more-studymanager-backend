@@ -33,7 +33,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -136,7 +135,7 @@ class ImportExportControllerTest {
                 .setInterventions(List.of(intervention))
                 .setTriggers(Map.of(intervention.getInterventionId(), trigger))
                 .setActions(Map.of(intervention.getInterventionId(), List.of(action)))
-                .setParticipantGroupAssignments(new HashMap<>())
+                .setParticipants(new ArrayList<>())
                 .setIntegrations(new ArrayList<>());
 
         when(importExportService.exportStudy(anyLong(), any()))

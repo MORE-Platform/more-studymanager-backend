@@ -157,7 +157,16 @@ public class ImportExportServiceTest {
                 .setActions(Map.of(2, List.of(new Action()
                         .setType("sth")
                         .setProperties(new ActionProperties()))))
-                .setParticipantGroupAssignments(Map.of("0", 3, "2", 3, "4", 2))
+                .setParticipants(List.of(
+                        new Participant().setStudyGroupId(0),
+                        new Participant().setStudyGroupId(0),
+                        new Participant().setStudyGroupId(0),
+                        new Participant().setStudyGroupId(2),
+                        new Participant().setStudyGroupId(2),
+                        new Participant().setStudyGroupId(2),
+                        new Participant().setStudyGroupId(4),
+                        new Participant().setStudyGroupId(4)
+                ))
             .setIntegrations(List.of(
                     new IntegrationInfo("Integration 1", 1),
                     new IntegrationInfo("Integration 2", 3)

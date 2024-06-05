@@ -18,9 +18,9 @@ public class StudyImportExport {
     private List<StudyGroup> studyGroups;
     private List<Observation> observations;
     private List<Intervention> interventions;
+    private List<Participant> participants;
     private Map<Integer, Trigger> triggers;
     private Map<Integer, List<Action>> actions;
-    private Map<String,Integer> participantGroupAssignments;
     private List<IntegrationInfo> integrations;
 
     public Study getStudy() {
@@ -77,12 +77,12 @@ public class StudyImportExport {
         return this;
     }
 
-    public Map<String, Integer> getParticipantGroupAssignments() {
-        return participantGroupAssignments;
+    public List<Participant> getParticipants() {
+        return participants;
     }
 
-    public StudyImportExport setParticipantGroupAssignments(Map<String, Integer> integrations) {
-        this.participantGroupAssignments = integrations;
+    public StudyImportExport setParticipants(Collection<Participant> participants) {
+        this.participants = participants.stream().toList();
         return this;
     }
 

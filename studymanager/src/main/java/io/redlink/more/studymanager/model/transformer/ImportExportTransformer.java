@@ -41,7 +41,8 @@ public class ImportExportTransformer {
                                 InterventionDTO::getInterventionId, interventionDTO ->
                                         interventionDTO.getActions().stream().map(ActionTransformer::fromActionDTO_V1).toList()))
                 )
-                .setParticipantGroupAssignments(dto.getParticipantGroupAssignments())
+                .setParticipants(dto.getParticipants().stream().map(
+                        ParticipantTransformer::fromParticipantDTO_V1).toList())
                 .setIntegrations(dto.getIntegrations().stream().map(
                         ImportExportTransformer::fromIntegrationExportDTO_V1
                 ).toList());
@@ -63,9 +64,10 @@ public class ImportExportTransformer {
                             )
                             .actions(studyImportExport.getActions().get(intervention.getInterventionId())
                                     .stream().map(ActionTransformer::toActionDTO_V1).toList())).toList())
-                .participantGroupAssignments(studyImportExport.getParticipantGroupAssignments())
-                .integrations(studyImportExport.getIntegrations()
-                        .stream().map(ImportExportTransformer::toIntegrationInfoDTO_V1).toList());
+                .participants(studyImportExport.getParticipants().stream().map(
+                        ParticipantTransformer::toParticipantDTO_V1).toList())
+                .integrations(studyImportExport.getIntegrations().stream().map(
+                        ImportExportTransformer::toIntegrationInfoDTO_V1).toList());
     }
 
     private static IntegrationInfoDTO toIntegrationInfoDTO_V1(IntegrationInfo integration) {
