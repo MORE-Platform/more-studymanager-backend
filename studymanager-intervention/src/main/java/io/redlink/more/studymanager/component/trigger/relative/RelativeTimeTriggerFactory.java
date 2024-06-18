@@ -15,15 +15,15 @@ public class RelativeTimeTriggerFactory extends TriggerFactory<RelativeTimeTrigg
             new IntegerValue("day")
                     .setMin(1)
                     .setDefaultValue(1)
-                    .setName("Day")
-                    .setDescription("Day of participation")
+                    .setName("intervention.factory.trigger.relativeTime.configProps.day")
+                    .setDescription("intervention.factory.trigger.relativeTime.configProps.dayDesc")
                     .setRequired(true),
             new IntegerValue("hour")
                     .setMin(0)
                     .setMax(23)
                     .setDefaultValue(1)
-                    .setName("Hour")
-                    .setDescription("The hour of the given day")
+                    .setName("intervention.factory.trigger.relativeTime.configProps.hour")
+                    .setDescription("intervention.factory.trigger.relativeTime.configProps.hourDesc")
                     .setRequired(true)
     );
 
@@ -34,12 +34,12 @@ public class RelativeTimeTriggerFactory extends TriggerFactory<RelativeTimeTrigg
 
     @Override
     public String getTitle() {
-        return "Relative Time Trigger";
+        return "intervention.factory.trigger.relativeTime.title";
     }
 
     @Override
     public String getDescription() {
-        return "Triggers an action on a given relative time (day and hour-of-day)";
+        return "intervention.factory.trigger.relativeTime.description";
     }
 
     @Override
