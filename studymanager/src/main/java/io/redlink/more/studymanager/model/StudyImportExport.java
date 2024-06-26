@@ -17,8 +17,10 @@ public class StudyImportExport {
     private List<StudyGroup> studyGroups;
     private List<Observation> observations;
     private List<Intervention> interventions;
+    private List<ParticipantInfo> participants;
     private Map<Integer, Trigger> triggers;
     private Map<Integer, List<Action>> actions;
+    private List<IntegrationInfo> integrations;
 
     public Study getStudy() {
         return study;
@@ -73,4 +75,26 @@ public class StudyImportExport {
         this.actions = actions;
         return this;
     }
+
+    public List<ParticipantInfo> getParticipants() {
+        return participants;
+    }
+
+    public StudyImportExport setParticipants(List<ParticipantInfo> participants) {
+        this.participants = participants;
+        return this;
+    }
+
+    public List<IntegrationInfo> getIntegrations() {
+        return integrations;
+    }
+
+    public StudyImportExport setIntegrations(List<IntegrationInfo> integrations) {
+        this.integrations = integrations;
+        return this;
+    }
+
+    public record ParticipantInfo(
+            Integer groupId
+    ) {}
 }

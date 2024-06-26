@@ -1783,6 +1783,28 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Intervention'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipantInfo'
+        integrations:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntegrationInfo'
+
+    ParticipantInfo:
+      type: object
+      properties:
+        studyGroup:
+          type: integer
+
+    IntegrationInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        observationId:
+          $ref: '#/components/schemas/Id'
 
     UserSearchResultList:
       type: object
