@@ -8,9 +8,14 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
+import io.redlink.more.studymanager.api.v1.model.DataRowDTO;
 import io.redlink.more.studymanager.api.v1.model.IdTitleDTO;
+import io.redlink.more.studymanager.api.v1.model.MonitoringDataDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipationDataDTO;
-import io.redlink.more.studymanager.model.ParticipationData;
+import io.redlink.more.studymanager.model.data.MonitoringData;
+import io.redlink.more.studymanager.model.data.ParticipationData;
+
+import java.util.List;
 
 public class StudyDataTransformer {
 
@@ -31,5 +36,25 @@ public class StudyDataTransformer {
         return new IdTitleDTO()
                 .id(idTitle.id())
                 .title(idTitle.title());
+    }
+
+    public static MonitoringDataDTO toMonitoringDataDTO(MonitoringData monitoringData) {
+        return new MonitoringDataDTO()
+                .chartTitle(monitoringData.chartTitle())
+                .chartType(monitoringData.chartType())
+                .dataRows(toDataRowsDTO(monitoringData.dataRows()));
+    }
+
+    public static List<DataRowDTO> toDataRowsDTO(List<MonitoringData.DataRow> dataRows) {
+        return dataRows
+                .stream()
+                .map(StudyDataTransformer::toDataRowDTO)
+                .toList();
+    }
+
+    public static DataRowDTO toDataRowDTO(MonitoringData.DataRow dataRow) {
+        return new DataRowDTO()
+                .rowTitle(dataRow.rowTitle())
+                .data(dataRow.data());
     }
 }

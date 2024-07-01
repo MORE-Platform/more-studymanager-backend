@@ -9,6 +9,7 @@
 package io.redlink.more.studymanager.component.observation;
 
 import io.redlink.more.studymanager.component.observation.measurement.GenericMeasurementSets;
+import io.redlink.more.studymanager.component.observation.preview.GenericDataPreview;
 import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
@@ -16,6 +17,7 @@ import io.redlink.more.studymanager.core.io.Visibility;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
+import io.redlink.more.studymanager.core.ui.DataPreview;
 
 public class ExternalObservationFactory<C extends Observation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
@@ -56,4 +58,7 @@ public class ExternalObservationFactory<C extends Observation<P>, P extends Obse
     public Visibility getVisibility() {
         return visibility;
     }
+
+    @Override
+    public DataPreview getDataPreview() { return GenericDataPreview.NOT_SPECIFIED; }
 }

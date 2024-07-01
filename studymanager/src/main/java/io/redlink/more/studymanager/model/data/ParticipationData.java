@@ -6,7 +6,7 @@
  * Förderung der wissenschaftlichen Forschung).
  * Licensed under the Elastic License 2.0.
  */
-package io.redlink.more.studymanager.model;
+package io.redlink.more.studymanager.model.data;
 
 import java.time.Instant;
 import java.util.Comparator;
