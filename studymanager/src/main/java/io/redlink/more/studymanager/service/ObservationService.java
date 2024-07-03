@@ -50,11 +50,13 @@ public class ObservationService {
     }
 
     public Observation importObservation(Long studyId, Observation observation) {
-        Observation validated = validate(observation);
-        ObservationFactory factory = factory(validated);
-        ObservationProperties props = (ObservationProperties) factory.preImport(validated.getProperties());
-        validated.setProperties(props);
-        return repository.doImport(studyId, validated);
+        final ObservationFactory factory = factory(observation);
+        if (factory == null) {
+            throw NotFoundException.ObservationFactory(observation.getType());
+        }
+        ObservationProperties props = (ObservationProperties) factory.preImport(observation.getProperties());
+        observation.setProperties(props);
+        return repository.doImport(studyId, observation);
     }
 
     public void deleteObservation(Long studyId, Integer observationId) {

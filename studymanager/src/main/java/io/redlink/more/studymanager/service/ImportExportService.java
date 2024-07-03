@@ -35,17 +35,20 @@ public class ImportExportService {
     private final ObservationService observationService;
     private final InterventionService interventionService;
     private final StudyGroupService studyGroupService;
+    private final IntegrationService integrationService;
 
     private final ElasticService elasticService;
 
     public ImportExportService(ParticipantService participantService, StudyService studyService, StudyStateService studyStateService,
-                               ObservationService observationService, InterventionService interventionService, StudyGroupService studyGroupService, ElasticService elasticService) {
+                               ObservationService observationService, InterventionService interventionService, StudyGroupService studyGroupService,
+                               IntegrationService integrationService, ElasticService elasticService) {
         this.participantService = participantService;
         this.studyService = studyService;
         this.studyStateService = studyStateService;
         this.observationService = observationService;
         this.interventionService = interventionService;
         this.studyGroupService = studyGroupService;
+        this.integrationService = integrationService;
         this.elasticService = elasticService;
     }
 
@@ -64,7 +67,7 @@ public class ImportExportService {
         boolean isHeader = true;
         while (scanner.hasNext()) {
             String line = scanner.next();
-            if(!isHeader && StringUtils.isNotBlank(line)) {
+            if (!isHeader && StringUtils.isNotBlank(line)) {
                 participantService.createParticipant(new Participant().setStudyId(studyId).setAlias(line));
             } else {
                 isHeader = false;
@@ -86,9 +89,27 @@ public class ImportExportService {
                 .setObservations(observationService.listObservations(studyId))
                 .setInterventions(interventionService.listInterventions(studyId))
                 .setActions(new HashMap<>())
-                .setTriggers(new HashMap<>());
+                .setTriggers(new HashMap<>())
+                .setParticipants(new ArrayList<>())
+                .setIntegrations(new ArrayList<>());
 
-        for(Integer interventionId: export.getInterventions().stream().map(Intervention::getInterventionId).toList()) {
+        export.setParticipants(participantService.listParticipants(studyId)
+                .stream()
+                .sorted(Comparator.comparing(Participant::getParticipantId))
+                .map(participant -> new StudyImportExport.ParticipantInfo(participant.getStudyGroupId()))
+                .toList()
+        );
+
+        export.setIntegrations(
+                export.getObservations().stream()
+                        .map(Observation::getObservationId)
+                        .flatMap(observationId -> {
+                            List<EndpointToken> tokens = integrationService.getTokens(studyId, observationId);
+                            return tokens.stream().map(token -> new IntegrationInfo(token.tokenLabel(), observationId));
+                        }).toList()
+        );
+
+        for (Integer interventionId : export.getInterventions().stream().map(Intervention::getInterventionId).toList()) {
             export.getActions()
                     .put(interventionId, interventionService.listActions(studyId, interventionId));
             export.getTriggers()
@@ -116,11 +137,22 @@ public class ImportExportService {
                         studyImport.getActions().getOrDefault(intervention.getInterventionId(), Collections.emptyList())
                 )
         );
+        studyImport.getParticipants().forEach(participant ->
+                participantService.createParticipant(
+                        new Participant()
+                                .setStudyId(studyId)
+                                .setAlias("Participant")
+                                .setStudyGroupId(participant.groupId())
+                ));
+        studyImport.getIntegrations().forEach(integration ->
+                integrationService.addToken(studyId, integration.observationId(), integration.name())
+        );
+
         return newStudy;
     }
 
     public void exportStudyData(ServletOutputStream outputStream, Long studyId) {
-        if(studyService.existsStudy(studyId).orElse(false)) {
+        if (studyService.existsStudy(studyId).orElse(false)) {
             exportStudyDataAsync(outputStream, studyId);
         } else {
             throw NotFoundException.Study(studyId);
@@ -129,7 +161,7 @@ public class ImportExportService {
 
     @Async
     public void exportStudyDataAsync(ServletOutputStream outputStream, Long studyId) {
-        try(outputStream) {
+        try (outputStream) {
             outputStream.write("[".getBytes(StandardCharsets.UTF_8));
             elasticService.exportData(studyId, outputStream);
             outputStream.write("]".getBytes(StandardCharsets.UTF_8));
