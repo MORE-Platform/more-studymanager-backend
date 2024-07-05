@@ -8,14 +8,14 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.DataRowDTO;
-import io.redlink.more.studymanager.api.v1.model.IdTitleDTO;
-import io.redlink.more.studymanager.api.v1.model.MonitoringDataDTO;
-import io.redlink.more.studymanager.api.v1.model.ParticipationDataDTO;
-import io.redlink.more.studymanager.model.data.MonitoringData;
+import io.redlink.more.studymanager.api.v1.model.*;
+import io.redlink.more.studymanager.core.ui.DataView;
+import io.redlink.more.studymanager.core.ui.DataViewInfo;
+import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.model.data.ParticipationData;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class StudyDataTransformer {
 
@@ -38,23 +38,32 @@ public class StudyDataTransformer {
                 .title(idTitle.title());
     }
 
-    public static MonitoringDataDTO toMonitoringDataDTO(MonitoringData monitoringData) {
-        return new MonitoringDataDTO()
-                .chartTitle(monitoringData.chartTitle())
-                .chartType(monitoringData.chartType())
-                .dataRows(toDataRowsDTO(monitoringData.dataRows()));
+    public static ObservationDataViewDataDTO toObservationDataViewDataDTO(DataView dataView){
+        return new ObservationDataViewDataDTO()
+                .view(toObservationDataViewDTO(dataView.viewInfo()))
+                .chartType(toChartTypeEnumDTO(dataView.chartType()))
+                .labels(dataView.labels())
+                .data(toObservationDataViewDataRowDTO(dataView.data()));
     }
 
-    public static List<DataRowDTO> toDataRowsDTO(List<MonitoringData.DataRow> dataRows) {
-        return dataRows
-                .stream()
-                .map(StudyDataTransformer::toDataRowDTO)
-                .toList();
+    public static ObservationDataViewDTO toObservationDataViewDTO(DataViewInfo dataViewInfo) {
+        return new ObservationDataViewDTO()
+                .id(dataViewInfo.id())
+                .title(dataViewInfo.title())
+                .description(dataViewInfo.description());
     }
 
-    public static DataRowDTO toDataRowDTO(MonitoringData.DataRow dataRow) {
-        return new DataRowDTO()
-                .rowTitle(dataRow.rowTitle())
-                .data(dataRow.data());
+    private static ObservationDataViewDataDTO.ChartTypeEnum toChartTypeEnumDTO(DataView.ChartType chartType) {
+        return switch (chartType) {
+            case LINE -> ObservationDataViewDataDTO.ChartTypeEnum.LINE;
+            case BAR -> ObservationDataViewDataDTO.ChartTypeEnum.BAR;
+            case PIE -> ObservationDataViewDataDTO.ChartTypeEnum.PIE;
+        };
+    }
+
+    private static List<ObservationDataViewDataRowDTO> toObservationDataViewDataRowDTO(List<DataViewRow> dataViewRow) {
+        return dataViewRow.stream()
+                .map(row -> new ObservationDataViewDataRowDTO().label(row.label()).values(row.values()))
+                .collect(Collectors.toList());
     }
 }

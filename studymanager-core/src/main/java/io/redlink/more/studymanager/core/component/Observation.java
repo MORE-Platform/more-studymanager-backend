@@ -9,8 +9,13 @@
 package io.redlink.more.studymanager.core.component;
 
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
+import io.redlink.more.studymanager.core.ui.DataView;
+import io.redlink.more.studymanager.core.ui.DataViewInfo;
+
+import java.util.Set;
 
 public abstract class Observation<C extends ObservationProperties> extends Component<C> {
 
@@ -19,6 +24,15 @@ public abstract class Observation<C extends ObservationProperties> extends Compo
         super(properties);
         this.sdk = sdk;
     }
+
+    public Set<DataViewInfo> listViews() {
+        return Set.of();
+    }
+
+    public DataView getView(String viewId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
+        return null;
+    }
+
 
     @Override
     public void activate() {

@@ -20,7 +20,6 @@ import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.io.Visibility;
 import io.redlink.more.studymanager.core.model.User;
 import io.redlink.more.studymanager.core.properties.ComponentProperties;
-import io.redlink.more.studymanager.core.ui.DataPreview;
 import io.redlink.more.studymanager.core.webcomponent.WebComponent;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
@@ -155,7 +154,6 @@ public class ComponentApiV1Controller implements ComponentsApi {
         if(ObservationFactory.class.isAssignableFrom(factory.getClass())) {
             c.hidden(((ObservationFactory) factory).getHidden());
             c.visibility(toVisibilityDTO(((ObservationFactory) factory).getVisibility()));
-            c.dataPreview(toDataPreviewDTO(((ObservationFactory) factory).getDataPreview()));
         }
         return c;
     }
@@ -164,13 +162,6 @@ public class ComponentApiV1Controller implements ComponentsApi {
         return new VisibilityDTO()
                 .changeable(visibility.isChangeable())
                 .hiddenByDefault(visibility.isHiddenByDefault());
-    }
-
-    private DataPreviewDTO toDataPreviewDTO(DataPreview preview) {
-        return new DataPreviewDTO()
-                .chartTitle(preview.getChartTitle())
-                .chartType(preview.getChartType())
-                .measurements(preview.getMeasurements().stream().toList());
     }
 
     private List<ComponentFactoryMeasurementsInnerDTO> getMeasurements(ComponentFactory factory) {

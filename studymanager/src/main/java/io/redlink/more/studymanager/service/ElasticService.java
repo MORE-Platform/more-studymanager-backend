@@ -15,7 +15,9 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
@@ -23,16 +25,14 @@ import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Iterables;
 import io.redlink.more.studymanager.core.io.TimeRange;
-import io.redlink.more.studymanager.model.data.MonitoringData;
-import io.redlink.more.studymanager.model.data.ParticipationData;
+import io.redlink.more.studymanager.core.ui.DataViewRow;
+import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
+import io.redlink.more.studymanager.model.data.ParticipationData;
 import io.redlink.more.studymanager.model.data.SimpleDataPoint;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import io.redlink.more.studymanager.utils.MapperUtils;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -42,10 +42,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -110,20 +109,20 @@ public class ElasticService {
     }
 
     private List<Query> getFilters(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
-        List<Query> queries = new ArrayList<>();
-        queries.add(getStudyFilter(studyId));
-        queries.add(getObservationFilter(observationId));
+        List<Query> filters = new ArrayList<>();
+        filters.add(getStudyFilter(studyId));
+        filters.add(getObservationFilter(observationId));
 
         if(participantId != null) {
-            queries.add(getParticipantFilter(participantId));
+            filters.add(getParticipantFilter(participantId));
         } else if(studyGroupId != null) {
-            queries.add(getStudyGroupFilter(studyGroupId));
+            filters.add(getStudyGroupFilter(studyGroupId));
         }
 
         if (timerange != null && timerange.getFromString() != null && timerange.getToString() != null) {
-            queries.add(getTimeRangeFilter(timerange));
+            filters.add(getTimeRangeFilter(timerange));
         }
-        return queries;
+        return filters;
     }
 
     private Query getStudyFilter(Long studyId) {
@@ -328,44 +327,90 @@ public class ElasticService {
         }
     }
 
-    public List<MonitoringData.DataRow> getDataRows(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
-        SearchRequest.Builder builder = new SearchRequest.Builder();
-        builder.query(q -> q.bool(b -> b.must(m ->
-                        m.term(t -> t.field("study_id").value(getStudyIdString(studyId))))
-                        .filter(getFilters(studyId, observationId, studyGroupId, participantId, timerange))
-                        ))
-                .sort(s -> s.field(f -> f.field("participant_id.keyword").order(SortOrder.Asc)))
-                .sort(s -> s.field(f -> f.field("effective_time_frame").order(SortOrder.Asc)));
-        try {
-            Map<String, List<List<Object>>> dataRowMap = new HashMap<>();
-
-            SearchResponse<Map> searchResponse = client.search(builder.build(), Map.class);
-            searchResponse.hits().hits().forEach(h -> {
-                String pid = h.source().get("participant_id").toString().substring(12);
-                List<Object> dataEntry = new ArrayList<>();
-                dataEntry.add(h.source().get("effective_time_frame").toString());
-                dataEntry.addAll(toData(h.source()).values());
-                if(dataRowMap.get(pid) == null) {
-                    List<List<Object>> participantData = new ArrayList<>();
-                    participantData.add(dataEntry);
-                    dataRowMap.put(pid, participantData);
-                } else {
-                    dataRowMap.get(pid).add(dataEntry);
-                }
-            });
-
-            List<MonitoringData.DataRow> dataRows = new ArrayList<>();
-            dataRowMap.forEach((k, v) -> dataRows.add(new MonitoringData.DataRow(k, v)));
-            return dataRows;
-        } catch (IOException | ElasticsearchException e) {
-            if (e instanceof ElasticsearchException ee) {
-                if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
-                    return List.of();
-                }
-            }
-            LOG.warn("Elastic Query failed", e);
-            return new ArrayList<>();
-        }
+    public List<DataViewRow> queryData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) {
+        return List.of();
+//        SearchRequest.Builder builder = new SearchRequest.Builder();
+//        List<Query> filters = getFilters(studyId, observationId, studyGroupId, participantId, timerange);
+//        "query": {
+//            "bool" : {
+//                "filter": [
+//                {"term" : { "study_id" : "study_55" } },
+//                {"term" : { "observation_id" : "1" } }
+//          ]
+//            }
+//        }
+//        GET study_55/_search
+//        {
+//            "size": 0,
+//                "query": {
+//            "bool" : {
+//                "filter": [
+//                {"term" : { "study_id" : "study_55" } },
+//                {"term" : { "observation_id" : "1" } }
+//          ]
+//            }
+//        },
+//            "aggs": {
+//            "heartrate_over_time": {
+//                "auto_date_histogram": {
+//                    "field": "effective_time_frame",
+//                    "buckets": 50
+//                },
+//                "aggs": {
+//                    "hr_per_participant": {
+//                        "terms": {
+//                            "field": "participant_id.keyword"
+//                        },
+//                        "aggs": {
+//                            "hr": {
+//                                "stats": {
+//                                    "field": "data_hr"
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        }
+//        builder.query(
+//                q -> q.bool(
+//                        b -> b.must(
+//                                m -> m.term(
+//                                        t -> t.field("study_id").value(getStudyIdString(studyId))))
+//                                .filter(filters)))
+//                .sort(
+//                        s -> s.field(
+//                                f -> f.field("participant_id.keyword").order(SortOrder.Asc)))
+//                .sort(
+//                        s -> s.field(
+//                                f -> f.field("effective_time_frame").order(SortOrder.Asc)));
+//
+//        try {
+//            SearchResponse<Map> searchResponse = client.search(builder.build(), Map.class);
+//
+//            Map<String, List<Integer>> dataViewRowMap = new HashMap<>();
+//
+//            searchResponse.hits().hits().forEach(h -> {
+//                String dataHr = h.source().get("data_hr").toString();
+//                Integer value = Integer.valueOf(h.source().get("value").toString());
+//
+//                dataViewRowMap.computeIfAbsent(dataHr, k -> new ArrayList<>()).add(value);
+//            });
+//
+//            List<DataViewRow> dataViewRow = new ArrayList<>();
+//            dataViewRowMap.forEach((label, values) -> dataViewRow.add(new DataViewRow(label, values.toArray(new Integer[0]))));
+//
+//            return dataViewRow.isEmpty() ? null : dataViewRow.get(0);
+//        } catch (IOException | ElasticsearchException e) {
+//            if (e instanceof ElasticsearchException ee) {
+//                if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
+//                    return null;
+//                }
+//            }
+//            LOG.warn("Elastic Query failed", e);
+//            return null;
+//        }
     }
 
     public void exportData(Long studyId, OutputStream outputStream) throws IOException {

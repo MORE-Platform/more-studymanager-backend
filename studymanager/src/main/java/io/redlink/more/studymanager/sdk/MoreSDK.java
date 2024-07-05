@@ -15,6 +15,8 @@ import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
+import io.redlink.more.studymanager.core.ui.DataViewRow;
+import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.data.ElasticActionDataPoint;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
@@ -33,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.Serializable;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -168,5 +169,9 @@ public class MoreSDK {
 
     public void removePropertiesForParticipant(long studyId, Integer participantId, int observationId) {
         observationRepository.removeParticipantProperties(studyId, participantId, observationId);
+    }
+
+    public List<DataViewRow> queryData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) {
+        return elasticService.queryData(viewConfig, studyId, studyGroupId, observationId, participantId, timerange);
     }
 }

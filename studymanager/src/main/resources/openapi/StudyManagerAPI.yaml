@@ -1186,15 +1186,39 @@ paths:
         '404':
           description: not found
 
-  /studies/{studyId}/observations/{observationId}/data:
+  /studies/{studyId}/observations/{observationId}/views:
+    parameters:
+      - $ref: '#/components/parameters/StudyId'
+      - $ref: '#/components/parameters/ObservationId'
+    get:
+      operationId: listViewsForObservation
+      description: "Get a list of available views"
+      tags:
+        - data
+      responses:
+        200:
+          description: List of available Views
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ObservationDataView'
+
+  /studies/{studyId}/observations/{observationId}/views/{viewId}:
     get:
       tags:
         - data
-      description: Get Study Monitoring Data
-      operationId: getMonitoringData
+      description: "Get observation view data"
+      operationId: getObservationData
       parameters:
         - $ref: '#/components/parameters/StudyId'
         - $ref: '#/components/parameters/ObservationId'
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
         - name: studyGroupId
           in: query
           schema:
@@ -1213,7 +1237,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MonitoringData'
+                $ref: '#/components/schemas/ObservationDataViewData'
         '404':
           description: not found
 
@@ -1315,6 +1339,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/FrontendConfiguration'
 
+  /config/buildInfo:
+    get:
+      tags:
+        - configuration
+      description: retrieve the build info
+      operationId: getBuildInfo
+      responses:
+        200:
+          description: the build-info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildInfo'
 
 components:
   schemas:
@@ -1341,8 +1378,6 @@ components:
                 type: string
               type:
                 type: string
-        dataPreview:
-          $ref: '#/components/schemas/DataPreview'
         defaultProperties:
           type: object
         hasWebComponent:
@@ -1359,18 +1394,6 @@ components:
           type: boolean
         hiddenByDefault:
           type: boolean
-
-    DataPreview:
-      type: object
-      properties:
-        chartTitle:
-          type: string
-        chartType:
-          type: string
-        measurements:
-          type: array
-          items:
-            type: string
 
     ValidationReport:
       type: object
@@ -1703,29 +1726,47 @@ components:
           format: date-time
           readOnly: true
 
-    MonitoringData:
+    ObservationDataView:
       type: object
       properties:
-        chartTitle:
+        id:
           type: string
+        title:
+          type: string
+        description:
+          type: string
+      required:
+        - id
+
+    ObservationDataViewData:
+      type: object
+      properties:
+        view:
+          $ref: '#/components/schemas/ObservationDataView'
         chartType:
           type: string
-        dataRows:
+          enum:
+            - line
+            - bar
+            - pie
+        labels:
           type: array
           items:
-            $ref: '#/components/schemas/DataRow'
-
-    DataRow:
-      type: object
-      properties:
-        rowTitle:
-          type: string
+            type: string
         data:
           type: array
           items:
-            type: array
-            items:
-              type: object
+            $ref: '#/components/schemas/ObservationDataViewDataRow'
+
+    ObservationDataViewDataRow:
+      type: object
+      properties:
+        label:
+          type: string
+        values:
+          type: array
+          items:
+            type: integer
 
     DataPoint:
       type: object
@@ -2072,6 +2113,23 @@ components:
       required:
         - auth
       readOnly: true
+
+    BuildInfo:
+      type: object
+      properties:
+        version:
+          type: string
+          default: '0.0.0'
+        date:
+          type: string
+          format: date-time
+        branch:
+          type: string
+        rev:
+          type: string
+      required:
+        - version
+        - date
 
   parameters:
     StudyId:

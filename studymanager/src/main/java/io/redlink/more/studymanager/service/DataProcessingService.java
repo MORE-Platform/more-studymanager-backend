@@ -10,10 +10,11 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.api.v1.model.DataPointDTO;
 import io.redlink.more.studymanager.core.io.Timeframe;
+import io.redlink.more.studymanager.core.ui.DataView;
+import io.redlink.more.studymanager.core.ui.DataViewInfo;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.StudyGroup;
-import io.redlink.more.studymanager.model.data.MonitoringData;
 import io.redlink.more.studymanager.model.data.ParticipationData;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -114,19 +115,12 @@ public class DataProcessingService {
         return participationDataList;
     }
 
-    public MonitoringData getMonitoringData(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
-        Observation observation = observationService.getObservation(studyId, observationId).orElseThrow(); //can be "<unknown>"
+    public Set<DataViewInfo> listDataViews(Long studyId, Integer observationId) {
+        return observationService.listDataViews(studyId, observationId);
+    }
 
-        List<MonitoringData.DataRow> dataRows;
-        if (participantId != null) {
-            dataRows = elasticService.getDataRows(studyId, observationId, null,  participantId, new Timeframe(from.toInstant(), to.toInstant()));
-        } else {
-            dataRows = elasticService.getDataRows(studyId, observationId, studyGroupId, null, new Timeframe(from.toInstant(), to.toInstant()));
-        }
-        return new MonitoringData(
-                observation.getTitle(),
-                observation.getType(),
-                dataRows);
+    public DataView getDataView(Long studyId, Integer observationId, String viewId, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
+        return observationService.queryData(studyId, observationId, viewId, studyGroupId, participantId, new Timeframe(from.toInstant(), to.toInstant()));
     }
 
     public List<DataPointDTO> getDataPoints(Long studyId, Integer size, Integer observationId, Integer participantId, OffsetDateTime date) {

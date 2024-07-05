@@ -10,7 +10,6 @@ package io.redlink.more.studymanager.component.observation.lime;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.redlink.more.studymanager.component.observation.measurement.GenericMeasurementSets;
-import io.redlink.more.studymanager.component.observation.preview.GenericDataPreview;
 import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
@@ -21,7 +20,6 @@ import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.properties.model.StringValue;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
-import io.redlink.more.studymanager.core.ui.DataPreview;
 
 import java.util.List;
 import java.util.Optional;
@@ -109,7 +107,4 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
     public MeasurementSet getMeasurementSet() {
         return GenericMeasurementSets.NOT_SPECIFIED;
     }
-
-    @Override
-    public DataPreview getDataPreview() { return GenericDataPreview.NOT_SPECIFIED; }
 }

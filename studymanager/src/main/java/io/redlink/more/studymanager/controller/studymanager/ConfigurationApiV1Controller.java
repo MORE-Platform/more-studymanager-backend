@@ -3,6 +3,7 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
+import io.redlink.more.studymanager.api.v1.model.BuildInfoDTO;
 import io.redlink.more.studymanager.api.v1.model.FrontendConfigurationDTO;
 import io.redlink.more.studymanager.api.v1.model.KeycloakSettingsDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ConfigurationApi;
@@ -22,6 +23,11 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
 
     public ConfigurationApiV1Controller(FrontendConfigurationProperties uiConfig) {
         this.uiConfig = uiConfig;
+    }
+
+    @Override
+    public ResponseEntity<BuildInfoDTO> getBuildInfo() {
+        return null;
     }
 
     @Override

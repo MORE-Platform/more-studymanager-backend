@@ -14,7 +14,6 @@ import io.redlink.more.studymanager.core.io.Visibility;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
-import io.redlink.more.studymanager.core.ui.DataPreview;
 
 public abstract class ObservationFactory<C extends Observation<P>, P extends ObservationProperties> extends ComponentFactory<C, P> {
     public abstract C create(MoreObservationSDK sdk, P properties) throws ConfigurationValidationException;
@@ -25,8 +24,6 @@ public abstract class ObservationFactory<C extends Observation<P>, P extends Obs
     }
 
     public abstract MeasurementSet getMeasurementSet();
-
-    public abstract DataPreview getDataPreview();
 
     @Deprecated
     public Boolean getHidden() {
