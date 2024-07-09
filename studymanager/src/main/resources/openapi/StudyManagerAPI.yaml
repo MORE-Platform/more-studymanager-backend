@@ -1359,6 +1359,7 @@ components:
       properties:
         componentId:
           type: string
+          readOnly: true
         title:
           type: string
         description:
@@ -1439,9 +1440,11 @@ components:
         start:
           type: string
           format: date
+          readOnly: true
         end:
           type: string
           format: date
+          readOnly: true
         plannedStart:
           type: string
           format: date
@@ -1451,15 +1454,18 @@ components:
         created:
           type: string
           format: date-time
+          readOnly: true
         modified:
           type: string
           format: date-time
+          readOnly: true
         userRoles:
           type: array
           description: the roles the _current user_ has within _this_ study.
           items:
             $ref: '#/components/schemas/StudyRole'
           uniqueItems: true
+          readOnly: true
           minItems: 1
         contact:
           $ref: '#/components/schemas/Contact'
@@ -1492,6 +1498,7 @@ components:
         - active
         - paused
         - closed
+      readOnly: true
       default: draft
 
     StudyGroup:
@@ -1509,12 +1516,15 @@ components:
           $ref: '#/components/schemas/StudyDuration'
         numberOfParticipants:
           type: integer
+          readOnly: true
         created:
           type: string
           format: date-time
+          readOnly: true
         modified:
           type: string
           format: date-time
+          readOnly: true
     StudyDuration:
       type: object
       properties:
@@ -1540,17 +1550,21 @@ components:
           $ref: '#/components/schemas/Id'
         registrationToken:
           type: string
+          readOnly: true
         status:
           $ref: '#/components/schemas/ParticipantStatus'
         start:
           type: string
           format: date-time
+          readOnly: true
         created:
           type: string
           format: date-time
+          readOnly: true
         modified:
           type: string
           format: date-time
+          readOnly: true
 
     ParticipantStatus:
       type: string
@@ -1596,9 +1610,11 @@ components:
         created:
           type: string
           format: date-time
+          readOnly: true
         modified:
           type: string
           format: date-time
+          readOnly: true
         hidden:
           type: boolean
         noSchedule:
@@ -1681,8 +1697,10 @@ components:
         created:
           type: string
           format: date-time
+          readOnly: true
         token:
           type: string
+          readOnly: true
       required:
         - tokenId
         - tokenLabel
@@ -1705,6 +1723,7 @@ components:
         lastDataReceived:
           type: string
           format: date-time
+          readOnly: true
 
     ObservationDataView:
       type: object
@@ -1800,12 +1819,15 @@ components:
         created:
           type: string
           format: date-time
+          readOnly: true
         modified:
           type: string
           format: date-time
+          readOnly: true
 
     Trigger:
       type: object
+      readOnly: true
       properties:
         type:
           type: string
@@ -1815,9 +1837,11 @@ components:
         created:
           type: string
           format: date-time
+          readOnly: true
         modified:
           type: string
           format: date-time
+          readOnly: true
 
     Action:
       type: object
@@ -1832,17 +1856,21 @@ components:
         created:
           type: string
           format: date-time
+          readOnly: true
         modified:
           type: string
           format: date-time
+          readOnly: true
 
     StudyId:
       type: integer
       format: int64
+      readOnly: true
 
     Id:
       type: integer
       format: int32
+      readOnly: true
 
     IdReference:
       type: integer
@@ -1929,15 +1957,20 @@ components:
       properties:
         uid:
           type: string
+          readOnly: true
         name:
           type: string
+          readOnly: true
         institution:
           type: string
+          readOnly: true
         email:
           type: string
           format: email
+          readOnly: true
       required:
         - uid
+      readOnly: true
 
     CurrentUser:
       description: |
@@ -1949,11 +1982,13 @@ components:
             completeProfile:
               type: boolean
               default: false
+              readOnly: true
             roles:
               type: array
               items:
                 $ref: '#/components/schemas/PlatformRole'
               uniqueItems: true
+              readOnly: true
             links:
               title: ProfileLinks
               type: object
@@ -1961,12 +1996,16 @@ components:
                 profile:
                   type: string
                   format: uri
+                  readOnly: true
                 userManagement:
                   type: string
                   format: uri
+                  readOnly: true
+              readOnly: true
           required:
             - roles
             - links
+          readOnly: true
 
     Collaborator:
       type: object
@@ -1978,9 +2017,11 @@ components:
           items:
             $ref: '#/components/schemas/StudyRole'
           uniqueItems: true
+          readOnly: true
       required:
         - user
         - roles
+      readOnly: true
 
     CollaboratorDetails:
       type: object
@@ -2003,10 +2044,13 @@ components:
             required:
               - role
               - assignedAt
+            readOnly: true
           uniqueItems: true
+          readOnly: true
       required:
         - user
         - roles
+      readOnly: true
 
     PlatformRole:
       description: |
@@ -2064,8 +2108,10 @@ components:
             - clientId
           externalDocs:
             url: https://www.keycloak.org/docs/latest/securing_apps/index.html#javascript-adapter-reference
+          readOnly: true
       required:
         - auth
+      readOnly: true
 
     BuildInfo:
       type: object
@@ -2139,18 +2185,21 @@ components:
       schema:
         type: string
         format: date-time
+        readOnly: true
     From:
       name: from
       in: query
       schema:
         type: string
         format: date-time
+        readOnly: true
     To:
       name: to
       in: query
       schema:
         type: string
         format: date-time
+        readOnly: true
 
   securitySchemes:
     OAuth:
