@@ -56,17 +56,16 @@ public class DataApiV1Controller implements DataApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
-    public ResponseEntity<ObservationDataViewDataDTO> getObservationData(Long studyId, Integer observationId, String viewId, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
+    public ResponseEntity<ObservationDataViewDataDTO> getObservationData(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
         return ResponseEntity.ok().body(
                 StudyDataTransformer.toObservationDataViewDataDTO(
-                        dataProcessingService.getDataView(studyId, observationId, viewId, studyGroupId, participantId, from, to)
+                        dataProcessingService.getDataView(studyId, observationId, viewName, studyGroupId, participantId, from, to)
                 )
         );
     }
 
     @Override
-    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
-    public ResponseEntity<List<ObservationDataViewDTO>> listViewsForObservation(Long studyId, Integer observationId) {
+    public ResponseEntity<List<ObservationDataViewDTO>> getViewsForObservation(Long studyId, Integer observationId) {
         return ResponseEntity.ok().body(
                 dataProcessingService.listDataViews(studyId, observationId).stream()
                         .map(StudyDataTransformer::toObservationDataViewDTO)
