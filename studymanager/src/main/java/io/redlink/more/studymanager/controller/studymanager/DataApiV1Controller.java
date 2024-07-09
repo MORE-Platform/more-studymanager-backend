@@ -65,6 +65,7 @@ public class DataApiV1Controller implements DataApi {
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
     public ResponseEntity<List<ObservationDataViewDTO>> getViewsForObservation(Long studyId, Integer observationId) {
         return ResponseEntity.ok().body(
                 dataProcessingService.listDataViews(studyId, observationId).stream()
