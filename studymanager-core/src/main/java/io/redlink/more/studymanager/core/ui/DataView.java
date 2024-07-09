@@ -13,8 +13,7 @@ import java.util.List;
 public record DataView(
         DataViewInfo viewInfo,
         ChartType chartType,
-        List<String> labels,
-        List<DataViewRow> data
+        DataViewData data
 ) {
     public enum ChartType {
         LINE,

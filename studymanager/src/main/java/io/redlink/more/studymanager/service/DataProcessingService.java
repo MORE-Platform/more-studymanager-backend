@@ -119,8 +119,13 @@ public class DataProcessingService {
         return observationService.listDataViews(studyId, observationId);
     }
 
-    public DataView getDataView(Long studyId, Integer observationId, String viewId, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
-        return observationService.queryData(studyId, observationId, viewId, studyGroupId, participantId, new Timeframe(from.toInstant(), to.toInstant()));
+    public DataView getDataView(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
+        if (participantId != null) {
+            return observationService.queryData(studyId, observationId, viewName, null, participantId, from != null && to != null ? new Timeframe(from.toInstant(), to.toInstant()) : null);
+        } else if (studyGroupId != null) {
+            return observationService.queryData(studyId, observationId, viewName, studyGroupId, null, from != null && to != null ? new Timeframe(from.toInstant(), to.toInstant()) : null);
+        }
+        return observationService.queryData(studyId, observationId, viewName, studyGroupId, participantId, from != null && to != null ? new Timeframe(from.toInstant(), to.toInstant()) : null);
     }
 
     public List<DataPointDTO> getDataPoints(Long studyId, Integer size, Integer observationId, Integer participantId, OffsetDateTime date) {

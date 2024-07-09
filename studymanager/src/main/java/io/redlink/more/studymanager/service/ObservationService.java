@@ -115,12 +115,12 @@ public class ObservationService {
         ).listViews();
     }
 
-    public DataView queryData(Long studyId, Integer observationId, String viewId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
+    public DataView queryData(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, TimeRange timerange) {
         var obs = getObservation(studyId, observationId).orElseThrow();
 
         return factory(obs).create(
                 sdk.scopedObservationSDK(obs.getStudyId(), obs.getStudyGroupId(), obs.getObservationId()), obs.getProperties()
-        ).getView(viewId, studyGroupId, participantId, timerange);
+        ).getView(viewName, studyGroupId, participantId, timerange);
     }
 
     private ObservationFactory factory(Observation observation) {

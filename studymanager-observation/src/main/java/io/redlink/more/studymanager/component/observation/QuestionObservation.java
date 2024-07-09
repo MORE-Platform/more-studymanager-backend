@@ -26,36 +26,42 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
         super(sdk, properties);
     }
 
-    private enum DataViewInfoType {
-        QUESTIONS("questions", "Questions", "All answers summed up."),
-        ANSWERS_BY_GROUP("answersByGroup", "Questions grouped", "All answers summed by group."),
-        GROUP_BY_ANSWERS("groupByAnswers", "Questions answers", "All answers summed by answers.");
+    private enum DataViewInfoType implements DataViewInfo {
+        questions("Questions", "All answers summed up."),
+        answers_by_group("By Study group", "All answers summed by group."),
+        group_by_answers("By Answers", "All answers summed by answers.");
 
-        private final DataViewInfo dataViewInfo;
+        private final String title;
+        private final String description;
 
-        DataViewInfoType(String key, String displayName, String description) {
-            this.dataViewInfo = new DataViewInfo(key, displayName, description);
+        DataViewInfoType(String title, String description) {
+            this.title = title;
+            this.description = description;
         }
 
-        public DataViewInfo getDataViewInfo() {
-            return dataViewInfo;
+        @Override
+        public String title() {
+            return this.title;
+        }
+
+        @Override
+        public String description() {
+            return this.description;
         }
     }
 
     @Override
     public Set<DataViewInfo> listViews() {
         return Stream.of(DataViewInfoType.values())
-                .map(DataViewInfoType::getDataViewInfo)
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public DataView getView(String viewId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
-        return switch (viewId) {
-            case "questions" -> createQuestionsView(studyGroupId, participantId, timerange);
-            case "answersByGroup" -> createAnswersByGroupView(studyGroupId, participantId, timerange);
-            case "groupByAnswers" -> createGroupByAnswersView(studyGroupId, participantId, timerange);
-            default -> null;
+    public DataView getView(String viewName, Integer studyGroupId, Integer participantId, TimeRange timerange) {
+        return switch (DataViewInfoType.valueOf(viewName)) {
+            case questions -> createQuestionsView(studyGroupId, participantId, timerange);
+            case answers_by_group -> createAnswersByGroupView(studyGroupId, participantId, timerange);
+            case group_by_answers -> createGroupByAnswersView(studyGroupId, participantId, timerange);
         };
     }
 
@@ -67,13 +73,12 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
                 new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
         );
 
-        List<DataViewRow> rows = sdk.queryData(viewConfig, participantId, timerange);
+        DataViewData dataViewData = sdk.queryData(viewConfig, participantId, timerange);
 
         return new DataView(
-                DataViewInfoType.QUESTIONS.getDataViewInfo(),
+                DataViewInfoType.questions,
                 DataView.ChartType.PIE,
-                List.of(),
-                rows
+                dataViewData
         );
     }
 
@@ -85,13 +90,12 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
                 new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
         );
 
-        List<DataViewRow> rows = sdk.queryData(viewConfig, participantId, timerange);
-        // TODO nitber: make chart type configurable by func parameter
+        DataViewData dataViewData = sdk.queryData(viewConfig, participantId, timerange);
+
         return new DataView(
-                DataViewInfoType.QUESTIONS.getDataViewInfo(),
+                DataViewInfoType.answers_by_group,
                 DataView.ChartType.BAR,
-                List.of(),
-                rows
+                dataViewData
         );
     }
 
@@ -103,13 +107,11 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
                 new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
         );
 
-        List<DataViewRow> rows = sdk.queryData(viewConfig, participantId, timerange);
-        // TODO nitber: make chart type configurable by func parameter
+        DataViewData dataViewData = sdk.queryData(viewConfig, participantId, timerange);
         return new DataView(
-                DataViewInfoType.QUESTIONS.getDataViewInfo(),
+                DataViewInfoType.group_by_answers,
                 DataView.ChartType.BAR,
-                List.of(),
-                rows
+                dataViewData
         );
     }
 }

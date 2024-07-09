@@ -15,6 +15,7 @@ import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
+import io.redlink.more.studymanager.core.ui.DataViewData;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.Participant;
@@ -171,7 +172,7 @@ public class MoreSDK {
         observationRepository.removeParticipantProperties(studyId, participantId, observationId);
     }
 
-    public List<DataViewRow> queryData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) {
+    public DataViewData queryData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) {
         return elasticService.queryData(viewConfig, studyId, studyGroupId, observationId, participantId, timerange);
     }
 }

@@ -25,31 +25,37 @@ public class PolarVerityObservation<C extends ObservationProperties> extends Obs
         super(sdk, properties);
     }
 
-    private enum DataViewInfoType {
-        HEART_RATE("heartRate", "Heart rate", "Heart rate per participant over time.");
+    private enum DataViewInfoType implements DataViewInfo {
+        heart_rate("Heart rate", "Heart rate per participant over time.");
 
-        private final DataViewInfo dataViewInfo;
+        private final String title;
+        private final String description;
 
-        DataViewInfoType(String key, String displayName, String description) {
-            this.dataViewInfo = new DataViewInfo(key, displayName, description);
+        DataViewInfoType(String title, String description) {
+            this.title = title;
+            this.description = description;
         }
 
-        public DataViewInfo getDataViewInfo() {
-            return dataViewInfo;
+        @Override
+        public String title() {
+            return this.title;
+        }
+
+        @Override
+        public String description() {
+            return this.description;
         }
     }
 
     public Set<DataViewInfo> listViews() {
         return Stream.of(DataViewInfoType.values())
-                .map(DataViewInfoType::getDataViewInfo)
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public DataView getView(String viewId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
-        return switch (viewId) {
-            case "hr" -> createHeartRateView(studyGroupId, participantId, timerange);
-            default -> null;
+    public DataView getView(String viewName, Integer studyGroupId, Integer participantId, TimeRange timerange) {
+        return switch (DataViewInfoType.valueOf(viewName)) {
+            case heart_rate -> createHeartRateView(studyGroupId, participantId, timerange);
         };
     }
 
@@ -61,12 +67,11 @@ public class PolarVerityObservation<C extends ObservationProperties> extends Obs
                 new ViewConfig.Operation(ViewConfig.Operator.AVG, "hr")
         );
 
-        List<DataViewRow> rows = sdk.queryData(viewConfig, participantId, timerange);
+        DataViewData dataViewData = sdk.queryData(viewConfig, participantId, timerange);
         return new DataView(
-                DataViewInfoType.HEART_RATE.getDataViewInfo(),
+                DataViewInfoType.heart_rate,
                 DataView.ChartType.LINE,
-                List.of(),
-                rows
+                dataViewData
         );
     }
 }

@@ -10,6 +10,7 @@ package io.redlink.more.studymanager.core.sdk;
 
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
+import io.redlink.more.studymanager.core.ui.DataViewData;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.core.ui.ViewConfig;
 
@@ -26,7 +27,7 @@ public interface MoreObservationSDK extends MorePlatformSDK {
 
     void storeDataPoint(Integer participantId, String observationType, Map data);
 
-    List<DataViewRow> queryData(ViewConfig viewConfig, Integer participantId, TimeRange timerange);
+    DataViewData queryData(ViewConfig viewConfig, Integer participantId, TimeRange timerange);
 
     int getObservationId();
 }

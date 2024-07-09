@@ -42,13 +42,13 @@ public class StudyDataTransformer {
         return new ObservationDataViewDataDTO()
                 .view(toObservationDataViewDTO(dataView.viewInfo()))
                 .chartType(toChartTypeEnumDTO(dataView.chartType()))
-                .labels(dataView.labels())
-                .data(toObservationDataViewDataRowDTO(dataView.data()));
+                .labels(dataView.data().labels())
+                .data(toObservationDataViewDataRowDTO(dataView.data().rows()));
     }
 
     public static ObservationDataViewDTO toObservationDataViewDTO(DataViewInfo dataViewInfo) {
         return new ObservationDataViewDTO()
-                .id(dataViewInfo.id())
+                .name(dataViewInfo.name())
                 .title(dataViewInfo.title())
                 .description(dataViewInfo.description());
     }

@@ -8,9 +8,9 @@
  */
 package io.redlink.more.studymanager.core.ui;
 
-public record DataViewInfo(
-        String id,
-        String title,
-        String description
-) {
+public interface DataViewInfo
+{
+    String name();
+    String title();
+    String description();
 }

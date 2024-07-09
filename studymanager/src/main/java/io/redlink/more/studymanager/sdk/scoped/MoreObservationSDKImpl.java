@@ -11,6 +11,7 @@ package io.redlink.more.studymanager.sdk.scoped;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
+import io.redlink.more.studymanager.core.ui.DataViewData;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
@@ -85,7 +86,7 @@ public class MoreObservationSDKImpl extends MorePlatformSDKImpl implements MoreO
     }
 
     @Override
-    public List<DataViewRow> queryData(ViewConfig viewConfig, Integer participantId, TimeRange timerange) {
+    public DataViewData queryData(ViewConfig viewConfig, Integer participantId, TimeRange timerange) {
         return sdk.queryData(viewConfig, studyId, studyGroupId, observationId, participantId, timerange);
     }
 }

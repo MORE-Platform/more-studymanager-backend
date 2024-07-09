@@ -25,6 +25,7 @@ import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Iterables;
 import io.redlink.more.studymanager.core.io.TimeRange;
+import io.redlink.more.studymanager.core.ui.DataViewData;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.Study;
@@ -113,7 +114,7 @@ public class ElasticService {
         filters.add(getStudyFilter(studyId));
         filters.add(getObservationFilter(observationId));
 
-        if(participantId != null) {
+        if (participantId != null) {
             filters.add(getParticipantFilter(participantId));
         } else if(studyGroupId != null) {
             filters.add(getStudyGroupFilter(studyGroupId));
@@ -327,90 +328,181 @@ public class ElasticService {
         }
     }
 
-    public List<DataViewRow> queryData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) {
-        return List.of();
-//        SearchRequest.Builder builder = new SearchRequest.Builder();
-//        List<Query> filters = getFilters(studyId, observationId, studyGroupId, participantId, timerange);
-//        "query": {
-//            "bool" : {
-//                "filter": [
-//                {"term" : { "study_id" : "study_55" } },
-//                {"term" : { "observation_id" : "1" } }
-//          ]
-//            }
-//        }
-//        GET study_55/_search
-//        {
-//            "size": 0,
-//                "query": {
-//            "bool" : {
-//                "filter": [
-//                {"term" : { "study_id" : "study_55" } },
-//                {"term" : { "observation_id" : "1" } }
-//          ]
-//            }
-//        },
-//            "aggs": {
-//            "heartrate_over_time": {
-//                "auto_date_histogram": {
-//                    "field": "effective_time_frame",
-//                    "buckets": 50
-//                },
-//                "aggs": {
-//                    "hr_per_participant": {
-//                        "terms": {
-//                            "field": "participant_id.keyword"
-//                        },
-//                        "aggs": {
-//                            "hr": {
-//                                "stats": {
-//                                    "field": "data_hr"
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        }
-//        builder.query(
-//                q -> q.bool(
-//                        b -> b.must(
-//                                m -> m.term(
-//                                        t -> t.field("study_id").value(getStudyIdString(studyId))))
-//                                .filter(filters)))
-//                .sort(
-//                        s -> s.field(
-//                                f -> f.field("participant_id.keyword").order(SortOrder.Asc)))
-//                .sort(
-//                        s -> s.field(
-//                                f -> f.field("effective_time_frame").order(SortOrder.Asc)));
-//
-//        try {
-//            SearchResponse<Map> searchResponse = client.search(builder.build(), Map.class);
-//
-//            Map<String, List<Integer>> dataViewRowMap = new HashMap<>();
-//
-//            searchResponse.hits().hits().forEach(h -> {
-//                String dataHr = h.source().get("data_hr").toString();
-//                Integer value = Integer.valueOf(h.source().get("value").toString());
-//
-//                dataViewRowMap.computeIfAbsent(dataHr, k -> new ArrayList<>()).add(value);
-//            });
-//
-//            List<DataViewRow> dataViewRow = new ArrayList<>();
-//            dataViewRowMap.forEach((label, values) -> dataViewRow.add(new DataViewRow(label, values.toArray(new Integer[0]))));
-//
-//            return dataViewRow.isEmpty() ? null : dataViewRow.get(0);
-//        } catch (IOException | ElasticsearchException e) {
-//            if (e instanceof ElasticsearchException ee) {
-//                if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
-//                    return null;
-//                }
-//            }
-//            LOG.warn("Elastic Query failed", e);
-//            return null;
-//        }
+    private SearchRequest.Builder buildQuestionRequest(ViewConfig viewConfig, List<Query> filters, long studyId) {
+        SearchRequest.Builder builder = new SearchRequest.Builder();
+
+        if (viewConfig.rowAggregation() == null && viewConfig.seriesAggregation() == null) {
+            // "questions"
+            builder.index(getStudyIdString(studyId))
+                    .size(0)
+                    .query(
+                            q -> q.bool(
+                                    b -> b.filter(filters)
+                            )
+                    )
+                    .aggregations("question_answer",
+                            a -> a.terms(
+                                    t -> t.field("data_answer.keyword"))
+                    );
+        } else if (viewConfig.seriesAggregation() != null && viewConfig.rowAggregation() == null) {
+            // "answersByGroup"
+            builder.index(getStudyIdString(studyId))
+                    .size(0)
+                    .query(q -> q.bool(b -> b.filter(filters)))
+                    .aggregations("question_answer",
+                            a -> a.terms(t -> t.field("data_answer.keyword"))
+                                    .aggregations("by_study_group",
+                                            aggs -> aggs.terms(t -> t.field("study_group_id.keyword")
+                                                    .minDocCount(0)
+                                                    .missing("Entire study"))))
+                    .aggregations("all_answers",
+                            a -> a.terms(t -> t.field("data_answer.keyword").size(30)));
+        } else if (viewConfig.rowAggregation() != null && viewConfig.seriesAggregation() == null) {
+            // "groupByAnswers"
+            builder.index(getStudyIdString(studyId))
+                    .size(0)
+                    .query(q -> q.bool(b -> b.filter(filters)))
+                    .aggregations("question_answer",
+                            a -> a.terms(t -> t.field("data_answer.keyword"))
+                                    .aggregations("by_study_group",
+                                            aggs -> aggs.terms(t -> t.field("study_group_id.keyword")
+                                                    .minDocCount(0)
+                                                    .missing("Entire study"))))
+                    .aggregations("all_study_groups",
+                            a -> a.terms(t -> t.field("study_group_id.keyword")
+                                    .size(1000)
+                                    .missing("Entire study")));
+
+        }
+
+        return builder;
+    }
+
+    private DataViewData processQuestionResponse(ViewConfig viewConfig, SearchResponse<Map> searchResponse) {
+        List<String> dataViewLabels = new ArrayList<>();
+        List<DataViewRow> dataViewRows = new ArrayList<>();
+
+        if (viewConfig.rowAggregation() == null && viewConfig.seriesAggregation() == null) {
+            // "questions"
+            List<StringTermsBucket> buckets = searchResponse
+                    .aggregations()
+                    .get("question_answer")
+                    .sterms()
+                    .buckets()
+                    .array();
+
+            for (StringTermsBucket bucket : buckets) {
+                String label = bucket.key().stringValue();
+                List<Integer> values = List.of((int) bucket.docCount());
+                dataViewRows.add(new DataViewRow(label, values));
+            }
+        } else if (viewConfig.seriesAggregation() != null && viewConfig.rowAggregation() == null) {
+            // "answersByGroup"
+            List<StringTermsBucket> answerBuckets = searchResponse.aggregations()
+                    .get("question_answer")
+                    .sterms()
+                    .buckets()
+                    .array();
+
+            for (StringTermsBucket answerBucket : answerBuckets) {
+                String answer = answerBucket.key().stringValue();
+                List<StringTermsBucket> groupBuckets = answerBucket.aggregations()
+                        .get("by_study_group")
+                        .sterms()
+                        .buckets()
+                        .array();
+
+                for (StringTermsBucket groupBucket : groupBuckets) {
+                    String group = groupBucket.key().stringValue();
+                    long count = groupBucket.docCount();
+                    dataViewRows.add(new DataViewRow(group, List.of((int) count)));
+                }
+            }
+
+            List<StringTermsBucket> allAnswerBuckets = searchResponse.aggregations()
+                    .get("all_answers")
+                    .sterms()
+                    .buckets()
+                    .array();
+
+            for (StringTermsBucket allAnswerBucket : allAnswerBuckets) {
+                String answer = allAnswerBucket.key().stringValue();
+                dataViewLabels.add(answer);
+            }
+
+        } else if (viewConfig.rowAggregation() != null && viewConfig.seriesAggregation() == null) {
+            // "groupByAnswers"
+            Map<String, Map<String, Integer>> groupedData = new HashMap<>();
+
+            List<StringTermsBucket> groupBuckets = searchResponse.aggregations()
+                    .get("question_answer")
+                    .sterms()
+                    .buckets()
+                    .array();
+
+            for (StringTermsBucket groupBucket : groupBuckets) {
+                String group = groupBucket.key().stringValue();
+                List<StringTermsBucket> answerBuckets = groupBucket.aggregations()
+                        .get("by_study_group")
+                        .sterms()
+                        .buckets()
+                        .array();
+
+                Map<String, Integer> answersMap = new HashMap<>();
+                for (StringTermsBucket answerBucket : answerBuckets) {
+                    String answer = answerBucket.key().stringValue();
+                    long count = answerBucket.docCount();
+                    answersMap.put(answer, (int) count);
+                }
+                groupedData.put(group, answersMap);
+            }
+
+            List<StringTermsBucket> allAnswerBuckets = searchResponse.aggregations()
+                    .get("all_study_groups")
+                    .sterms()
+                    .buckets()
+                    .array();
+
+            for (StringTermsBucket allAnswerBucket : allAnswerBuckets) {
+                String answer = allAnswerBucket.key().stringValue();
+                dataViewLabels.add(answer);
+            }
+
+            for (Map.Entry<String, Map<String, Integer>> groupEntry : groupedData.entrySet()) {
+                String group = groupEntry.getKey();
+                Map<String, Integer> answersMap = groupEntry.getValue();
+
+                List<Integer> values = new ArrayList<>();
+                for (String answer : dataViewLabels) {
+                    values.add(answersMap.getOrDefault(answer, 0));
+                }
+
+                dataViewRows.add(new DataViewRow(group, values));
+            }
+
+        }
+
+        return new DataViewData(dataViewLabels, dataViewRows);
+    }
+
+    public DataViewData queryData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) {
+        List<Query> filters = getFilters(studyId, observationId, studyGroupId, participantId, timerange);
+        SearchRequest.Builder builder = buildQuestionRequest(viewConfig, filters, studyId);
+
+        try {
+            SearchResponse<Map> searchResponse = client.search(builder.build(), Map.class);
+            DataViewData dataViewData = processQuestionResponse(viewConfig, searchResponse);
+
+            return dataViewData;
+        } catch (IOException | ElasticsearchException e) {
+            if (e instanceof ElasticsearchException ee) {
+                if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
+                    return null;
+                }
+            }
+            LOG.warn("Elastic Query failed", e);
+            return null;
+        }
     }
 
     public void exportData(Long studyId, OutputStream outputStream) throws IOException {

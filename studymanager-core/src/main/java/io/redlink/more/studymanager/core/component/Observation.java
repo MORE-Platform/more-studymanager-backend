@@ -29,7 +29,7 @@ public abstract class Observation<C extends ObservationProperties> extends Compo
         return Set.of();
     }
 
-    public DataView getView(String viewId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
+    public DataView getView(String viewName, Integer studyGroupId, Integer participantId, TimeRange timerange) {
         return null;
     }
 
