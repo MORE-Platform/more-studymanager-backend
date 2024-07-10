@@ -2185,21 +2185,18 @@ components:
       schema:
         type: string
         format: date-time
-        readOnly: true
     From:
       name: from
       in: query
       schema:
         type: string
         format: date-time
-        readOnly: true
     To:
       name: to
       in: query
       schema:
         type: string
         format: date-time
-        readOnly: true
 
   securitySchemes:
     OAuth:
