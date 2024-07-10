@@ -342,7 +342,7 @@ public class ElasticService {
                     )
                     .aggregations("question_answer",
                             a -> a.terms(
-                                    t -> t.field("data_answer.keyword"))
+                                    t -> t.field(String.format("data_%s.keyword", viewConfig.operation().field())))
                     );
         } else if (viewConfig.seriesAggregation() != null && viewConfig.rowAggregation() == null) {
             // "answersByGroup"
@@ -350,20 +350,20 @@ public class ElasticService {
                     .size(0)
                     .query(q -> q.bool(b -> b.filter(filters)))
                     .aggregations("question_answer",
-                            a -> a.terms(t -> t.field("data_answer.keyword"))
+                            a -> a.terms(t -> t.field(String.format("data_%s.keyword", viewConfig.operation().field())))
                                     .aggregations("by_study_group",
                                             aggs -> aggs.terms(t -> t.field("study_group_id.keyword")
                                                     .minDocCount(0)
                                                     .missing("Entire study"))))
                     .aggregations("all_answers",
-                            a -> a.terms(t -> t.field("data_answer.keyword").size(30)));
+                            a -> a.terms(t -> t.field(String.format("data_%s.keyword", viewConfig.operation().field())).size(30)));
         } else if (viewConfig.rowAggregation() != null && viewConfig.seriesAggregation() == null) {
             // "groupByAnswers"
             builder.index(getStudyIdString(studyId))
                     .size(0)
                     .query(q -> q.bool(b -> b.filter(filters)))
                     .aggregations("question_answer",
-                            a -> a.terms(t -> t.field("data_answer.keyword"))
+                            a -> a.terms(t -> t.field(String.format("data_%s.keyword", viewConfig.operation().field())))
                                     .aggregations("by_study_group",
                                             aggs -> aggs.terms(t -> t.field("study_group_id.keyword")
                                                     .minDocCount(0)

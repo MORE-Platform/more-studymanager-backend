@@ -27,7 +27,7 @@ public interface MoreObservationSDK extends MorePlatformSDK {
 
     void storeDataPoint(Integer participantId, String observationType, Map data);
 
-    DataViewData queryData(ViewConfig viewConfig, Integer participantId, TimeRange timerange);
+    DataViewData queryData(ViewConfig viewConfig, Integer studyGroupId, Integer participantId, TimeRange timerange);
 
     int getObservationId();
 }

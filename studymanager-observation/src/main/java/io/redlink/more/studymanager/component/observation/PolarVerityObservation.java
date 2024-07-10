@@ -67,7 +67,7 @@ public class PolarVerityObservation<C extends ObservationProperties> extends Obs
                 new ViewConfig.Operation(ViewConfig.Operator.AVG, "hr")
         );
 
-        DataViewData dataViewData = sdk.queryData(viewConfig, participantId, timerange);
+        DataViewData dataViewData = sdk.queryData(viewConfig, studyGroupId, participantId, timerange);
         return new DataView(
                 DataViewInfoType.heart_rate,
                 DataView.ChartType.LINE,

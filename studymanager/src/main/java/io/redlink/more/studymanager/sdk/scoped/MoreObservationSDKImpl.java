@@ -86,7 +86,7 @@ public class MoreObservationSDKImpl extends MorePlatformSDKImpl implements MoreO
     }
 
     @Override
-    public DataViewData queryData(ViewConfig viewConfig, Integer participantId, TimeRange timerange) {
+    public DataViewData queryData(ViewConfig viewConfig, Integer studyGroupId, Integer participantId, TimeRange timerange) {
         return sdk.queryData(viewConfig, studyId, studyGroupId, observationId, participantId, timerange);
     }
 }

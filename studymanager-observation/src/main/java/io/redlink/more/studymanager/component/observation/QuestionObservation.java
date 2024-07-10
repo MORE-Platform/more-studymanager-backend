@@ -27,7 +27,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
     }
 
     private enum DataViewInfoType implements DataViewInfo {
-        questions("Questions", "All answers summed up."),
+        questions("Answers", "All answers summed up."),
         answers_by_group("By Study group", "All answers summed by group."),
         group_by_answers("By Answers", "All answers summed by answers.");
 
@@ -73,7 +73,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
                 new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
         );
 
-        DataViewData dataViewData = sdk.queryData(viewConfig, participantId, timerange);
+        DataViewData dataViewData = sdk.queryData(viewConfig, studyGroupId, participantId, timerange);
 
         return new DataView(
                 DataViewInfoType.questions,
@@ -90,7 +90,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
                 new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
         );
 
-        DataViewData dataViewData = sdk.queryData(viewConfig, participantId, timerange);
+        DataViewData dataViewData = sdk.queryData(viewConfig, studyGroupId, participantId, timerange);
 
         return new DataView(
                 DataViewInfoType.answers_by_group,
@@ -107,7 +107,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
                 new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
         );
 
-        DataViewData dataViewData = sdk.queryData(viewConfig, participantId, timerange);
+        DataViewData dataViewData = sdk.queryData(viewConfig, studyGroupId, participantId, timerange);
         return new DataView(
                 DataViewInfoType.group_by_answers,
                 DataView.ChartType.BAR,
