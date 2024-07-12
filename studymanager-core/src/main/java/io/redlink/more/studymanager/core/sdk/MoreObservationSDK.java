@@ -14,7 +14,6 @@ import io.redlink.more.studymanager.core.ui.DataViewData;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.core.ui.ViewConfig;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 

@@ -39,16 +39,23 @@ public class StudyDataTransformer {
     }
 
     public static ObservationDataViewDataDTO toObservationDataViewDataDTO(DataView dataView){
-        return new ObservationDataViewDataDTO()
+        var observationDataViewDataDTO = new ObservationDataViewDataDTO()
                 .view(toObservationDataViewDTO(dataView.viewInfo()))
-                .chartType(toChartTypeEnumDTO(dataView.chartType()))
-                .labels(dataView.data().labels())
-                .data(toObservationDataViewDataRowDTO(dataView.data().rows()));
+                .chartType(toChartTypeEnumDTO(dataView.chartType()));
+
+        if (dataView.data() != null) {
+            observationDataViewDataDTO
+                    .labels(dataView.data().labels())
+                    .data(toObservationDataViewDataRowDTO(dataView.data().rows()));
+        }
+
+        return observationDataViewDataDTO;
     }
 
     public static ObservationDataViewDTO toObservationDataViewDTO(DataViewInfo dataViewInfo) {
         return new ObservationDataViewDTO()
                 .name(dataViewInfo.name())
+                .label(dataViewInfo.label())
                 .title(dataViewInfo.title())
                 .description(dataViewInfo.description());
     }

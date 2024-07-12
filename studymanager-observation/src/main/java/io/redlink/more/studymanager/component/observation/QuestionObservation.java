@@ -27,16 +27,23 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
     }
 
     private enum DataViewInfoType implements DataViewInfo {
-        questions("Answers", "All answers summed up."),
-        answers_by_group("By Study group", "All answers summed by group."),
-        group_by_answers("By Answers", "All answers summed by answers.");
+        response_distribution("data.charts.simpleQuestion.responseDistribution.label", "data.charts.simpleQuestion.responseDistribution.title", "data.charts.simpleQuestion.responseDistribution.description"),
+        answers_by_group("data.charts.simpleQuestion.responseDistributionStudyGroup.label", "data.charts.simpleQuestion.responseDistributionStudyGroup.title", "data.charts.simpleQuestion.responseDistributionStudyGroup.description"),
+        group_by_answers("data.charts.simpleQuestion.responseDistributionResponse.label", "data.charts.simpleQuestion.responseDistributionResponse.title", "data.charts.simpleQuestion.responseDistributionResponse.description");
 
+        private final String label;
         private final String title;
         private final String description;
 
-        DataViewInfoType(String title, String description) {
+        DataViewInfoType(String label, String title, String description) {
+            this.label = label;
             this.title = title;
             this.description = description;
+        }
+
+        @Override
+        public String label() {
+            return this.label;
         }
 
         @Override
@@ -59,7 +66,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
     @Override
     public DataView getView(String viewName, Integer studyGroupId, Integer participantId, TimeRange timerange) {
         return switch (DataViewInfoType.valueOf(viewName)) {
-            case questions -> createQuestionsView(studyGroupId, participantId, timerange);
+            case response_distribution -> createQuestionsView(studyGroupId, participantId, timerange);
             case answers_by_group -> createAnswersByGroupView(studyGroupId, participantId, timerange);
             case group_by_answers -> createGroupByAnswersView(studyGroupId, participantId, timerange);
         };
@@ -76,7 +83,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
         DataViewData dataViewData = sdk.queryData(viewConfig, studyGroupId, participantId, timerange);
 
         return new DataView(
-                DataViewInfoType.questions,
+                DataViewInfoType.response_distribution,
                 DataView.ChartType.PIE,
                 dataViewData
         );

@@ -11,6 +11,7 @@ package io.redlink.more.studymanager.core.ui;
 public interface DataViewInfo
 {
     String name();
+    String label();
     String title();
     String description();
 }

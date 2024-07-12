@@ -26,14 +26,21 @@ public class PolarVerityObservation<C extends ObservationProperties> extends Obs
     }
 
     private enum DataViewInfoType implements DataViewInfo {
-        heart_rate("Heart rate", "Heart rate per participant over time.");
+        heart_rate("data.charts.polarVerity.avgHeartRate.label", "data.charts.polarVerity.avgHeartRate.title", "data.charts.polarVerity.avgHeartRate.description");
 
+        private final String label;
         private final String title;
         private final String description;
 
-        DataViewInfoType(String title, String description) {
+        DataViewInfoType(String label, String title, String description) {
+            this.label = label;
             this.title = title;
             this.description = description;
+        }
+
+        @Override
+        public String label() {
+            return this.label;
         }
 
         @Override
@@ -68,6 +75,31 @@ public class PolarVerityObservation<C extends ObservationProperties> extends Obs
         );
 
         DataViewData dataViewData = sdk.queryData(viewConfig, studyGroupId, participantId, timerange);
+
+//        var allParticipants = participantService.listParticipants(studyId);
+//
+//        for (int i = 0; i < dataViewData.rows().size(); i++) {
+//            final int index = i;
+//            DataViewRow currentRow = dataViewData.rows().get(i);
+//            String label = currentRow.label();
+//            String[] parts = label.split("_");
+//            if (parts.length == 2 && parts[0].equals("participant")) {
+//                try {
+//                    int participantIdFromLabel = Integer.parseInt(parts[1]);
+//                    Optional<Participant> matchingParticipant = allParticipants.stream()
+//                            .filter(participant -> participant.getParticipantId() == participantIdFromLabel)
+//                            .findFirst();
+//
+//                    matchingParticipant.ifPresent(participant -> {
+//                        dataView.data().rows().set(index, new DataViewRow(participant.getAlias(), currentRow.values()));
+//                    });
+//                } catch (NumberFormatException e) {
+//                    System.err.println("Invalid participant ID format in label: " + label);
+//                }
+//            }
+//        }
+
+
         return new DataView(
                 DataViewInfoType.heart_rate,
                 DataView.ChartType.LINE,

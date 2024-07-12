@@ -13,7 +13,7 @@ import co.elastic.clients.elasticsearch._types.Conflicts;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -22,6 +22,7 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
+import co.elastic.clients.util.ObjectBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Iterables;
 import io.redlink.more.studymanager.core.io.TimeRange;
@@ -341,10 +342,9 @@ public class ElasticService {
                             )
                     )
                     .aggregations("question_answer",
-                            a -> a.terms(
-                                    t -> t.field(String.format("data_%s.keyword", viewConfig.operation().field())))
+                            a -> applyOperation(a, viewConfig.operation())
                     );
-        } else if (viewConfig.seriesAggregation() != null && viewConfig.rowAggregation() == null) {
+        } else if (viewConfig.rowAggregation() == null && viewConfig.seriesAggregation() != null) {
             // "answersByGroup"
             builder.index(getStudyIdString(studyId))
                     .size(0)
@@ -373,9 +373,48 @@ public class ElasticService {
                                     .size(1000)
                                     .missing("Entire study")));
 
+        } else if (viewConfig.rowAggregation() != null && viewConfig.seriesAggregation() != null) {
+            // "avgHeartRateByParticipantOverTime"
+            builder.index(getStudyIdString(studyId))
+                    .size(0)
+                    .query(q -> q.bool(b -> b.filter(filters)))
+                    .aggregations("average_heart_rate_by_participant_over_time",
+                            a -> a.dateHistogram(
+                                    dh -> dh.field("effective_time_frame")
+                                            .calendarInterval(CalendarInterval.Minute)
+                                            .format("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+                                            .minDocCount(0)
+
+                            ).aggregations("participant",
+                                    ag -> ag.terms(t -> t.field("participant_id.keyword"))
+                                            .aggregations("average_heart_rate",
+                                                    subAggs -> subAggs.avg(r -> r.field(String.format("data_%s", viewConfig.operation().field()))))
+                            )
+                    )
+                    .aggregations("all_participants",
+                            a -> a.terms(t -> t.field("participant_id.keyword")
+                                    .size(1000)
+                            ));
         }
 
         return builder;
+    }
+
+    private ObjectBuilder<Aggregation> applyOperation(Aggregation.Builder a, ViewConfig.Operation operation) {
+        switch (operation.operator()) {
+            case AVG:
+                return null;
+            case SUM:
+                return null;
+            case MIN:
+                return null;
+            case MAX:
+                return null;
+            case COUNT:
+                return a.terms(
+                        t -> t.field(String.format("data_%s.keyword", operation.field())));
+        }
+        return null;
     }
 
     private DataViewData processQuestionResponse(ViewConfig viewConfig, SearchResponse<Map> searchResponse) {
@@ -480,6 +519,64 @@ public class ElasticService {
                 dataViewRows.add(new DataViewRow(group, values));
             }
 
+        } else if (viewConfig.rowAggregation() != null && viewConfig.seriesAggregation() != null) {
+            // "avgHeartRateByParticipantOverTime"
+            List<DateHistogramBucket> timeBuckets = searchResponse.aggregations()
+                    .get("average_heart_rate_by_participant_over_time")
+                    .dateHistogram()
+                    .buckets()
+                    .array();
+
+            List<String> allParticipantIds = searchResponse.aggregations()
+                    .get("all_participants")
+                    .sterms()
+                    .buckets()
+                    .array()
+                    .stream()
+                    .map(StringTermsBucket::key)
+                    .map(FieldValue::stringValue)
+                    .toList();
+
+            Map<String, List<Integer>> participantDataMap = new HashMap<>();
+
+            for (DateHistogramBucket timeBucket : timeBuckets) {
+                List<StringTermsBucket> participantBuckets = timeBucket.aggregations()
+                        .get("participant")
+                        .sterms()
+                        .buckets()
+                        .array();
+
+                if (participantBuckets.size() > 0) {
+                    String timeLabel = timeBucket.keyAsString();
+                    dataViewLabels.add(timeLabel);
+                }
+
+                for (StringTermsBucket participantBucket : participantBuckets) {
+                    String participant = participantBucket.key().stringValue();
+                    double avgHrValue = participantBucket.aggregations()
+                            .get("average_heart_rate")
+                            .avg()
+                            .value();
+
+                    participantDataMap.computeIfAbsent(participant, k -> new ArrayList<>());
+                    participantDataMap.get(participant).add((int) Math.round(avgHrValue));
+                    // Add default 0 value for all other participants, to ensure equal x/y axis assignment
+                    if (participantBuckets.size() == 1) {
+                        for (String id : allParticipantIds) {
+                            if (!id.equals(participant)) {
+                                participantDataMap.computeIfAbsent(id, k -> new ArrayList<>());
+                                participantDataMap.get(id).add(null);
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (Map.Entry<String, List<Integer>> entry : participantDataMap.entrySet()) {
+                String participant = entry.getKey();
+                List<Integer> avgHrValues = entry.getValue();
+                dataViewRows.add(new DataViewRow(participant, avgHrValues));
+            }
         }
 
         return new DataViewData(dataViewLabels, dataViewRows);

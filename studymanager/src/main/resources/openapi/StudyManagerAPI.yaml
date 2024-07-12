@@ -1730,6 +1730,8 @@ components:
       properties:
         name:
           type: string
+        label:
+          type: string
         title:
           type: string
         description:
