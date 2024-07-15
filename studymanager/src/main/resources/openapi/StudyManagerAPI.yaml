@@ -1767,7 +1767,8 @@ components:
         values:
           type: array
           items:
-            type: integer
+            type: number
+            format: double
 
     DataPoint:
       type: object

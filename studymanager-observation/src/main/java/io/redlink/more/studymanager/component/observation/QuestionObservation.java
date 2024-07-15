@@ -13,8 +13,10 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
-import io.redlink.more.studymanager.core.ui.*;
-
+import io.redlink.more.studymanager.core.ui.DataView;
+import io.redlink.more.studymanager.core.ui.DataViewData;
+import io.redlink.more.studymanager.core.ui.DataViewInfo;
+import io.redlink.more.studymanager.core.ui.ViewConfig;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -76,7 +78,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
         var viewConfig = new ViewConfig(
                 List.of(),
                 null,
-                null,
+                ViewConfig.Aggregation.TERM_FIELD,
                 new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
         );
 
@@ -92,7 +94,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
     private DataView createAnswersByGroupView(Integer studyGroupId, Integer participantId, TimeRange timerange) {
         var viewConfig = new ViewConfig(
                 List.of(),
-                null,
+                ViewConfig.Aggregation.TERM_FIELD,
                 ViewConfig.Aggregation.STUDY_GROUP,
                 new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
         );
@@ -110,7 +112,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
         var viewConfig = new ViewConfig(
                 List.of(),
                 ViewConfig.Aggregation.STUDY_GROUP,
-                null,
+                ViewConfig.Aggregation.TERM_FIELD,
                 new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
         );
 

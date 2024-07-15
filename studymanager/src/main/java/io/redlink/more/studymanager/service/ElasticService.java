@@ -13,7 +13,9 @@ import co.elastic.clients.elasticsearch._types.Conflicts;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.aggregations.*;
+import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
+import co.elastic.clients.elasticsearch._types.aggregations.DateHistogramBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -22,7 +24,6 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
-import co.elastic.clients.util.ObjectBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Iterables;
 import io.redlink.more.studymanager.core.io.TimeRange;
@@ -35,19 +36,22 @@ import io.redlink.more.studymanager.model.data.ParticipationData;
 import io.redlink.more.studymanager.model.data.SimpleDataPoint;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import io.redlink.more.studymanager.utils.MapperUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.stereotype.Service;
 
 @Service
 @EnableConfigurationProperties({ElasticProperties.class})
@@ -97,7 +101,7 @@ public class ElasticService {
         }
     }
 
-    private List<Query> getFilters(Long studyId, Integer studyGroupId, TimeRange timerange) {
+    static List<Query> getFilters(Long studyId, Integer studyGroupId, TimeRange timerange) {
         List<Query> queries = new ArrayList<>();
         queries.add(getStudyFilter(studyId));
         if (studyGroupId != null) {
@@ -110,7 +114,7 @@ public class ElasticService {
         return queries;
     }
 
-    private List<Query> getFilters(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
+    static List<Query> getFilters(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
         List<Query> filters = new ArrayList<>();
         filters.add(getStudyFilter(studyId));
         filters.add(getObservationFilter(observationId));
@@ -127,35 +131,35 @@ public class ElasticService {
         return filters;
     }
 
-    private Query getStudyFilter(Long studyId) {
+    static Query getStudyFilter(Long studyId) {
         return Query.of(f -> f.
                 term(t -> t.
                         field("study_id").
                         value(getStudyIdString(studyId))));
     }
 
-    private Query getObservationFilter(Integer observationId) {
+    static Query getObservationFilter(Integer observationId) {
         return Query.of(f -> f.
                 term(t -> t.
                         field("observation_id").
                         value(observationId)));
     }
 
-    private Query getStudyGroupFilter(Integer studyGroupId) {
+    static Query getStudyGroupFilter(Integer studyGroupId) {
         return Query.of(f -> f.
                 term(t -> t.
                         field("study_group_id").
                         value(getStudyGroupIdString(studyGroupId))));
     }
 
-    private Query getParticipantFilter(Integer participantId) {
+    static Query getParticipantFilter(Integer participantId) {
         return Query.of(f -> f.
                 term(t -> t.
                         field("participant_id").
                         value(getParticipantIdString(participantId))));
     }
 
-    private Query getTimeRangeFilter(TimeRange timerange) {
+    static Query getTimeRangeFilter(TimeRange timerange) {
         return Query.of(f -> f.
                 range(r -> r.
                         field("effective_time_frame").
@@ -231,7 +235,7 @@ public class ElasticService {
         return getStudyIdString(study.getStudyId());
     }
 
-    private String getStudyGroupIdString(Integer studyGroupId) {
+    static String getStudyGroupIdString(Integer studyGroupId) {
         return "study_group_" + studyGroupId;
     }
 
@@ -329,6 +333,7 @@ public class ElasticService {
         }
     }
 
+
     private SearchRequest.Builder buildQuestionRequest(ViewConfig viewConfig, List<Query> filters, long studyId) {
         SearchRequest.Builder builder = new SearchRequest.Builder();
 
@@ -336,13 +341,10 @@ public class ElasticService {
             // "questions"
             builder.index(getStudyIdString(studyId))
                     .size(0)
-                    .query(
-                            q -> q.bool(
-                                    b -> b.filter(filters)
-                            )
-                    )
+                    .query(q -> q.bool(b -> b.filter(filters)))
                     .aggregations("question_answer",
-                            a -> applyOperation(a, viewConfig.operation())
+                            a -> a.terms(
+                                    t -> t.field(String.format("data_%s.keyword", viewConfig.operation().field())))
                     );
         } else if (viewConfig.rowAggregation() == null && viewConfig.seriesAggregation() != null) {
             // "answersByGroup"
@@ -400,22 +402,6 @@ public class ElasticService {
         return builder;
     }
 
-    private ObjectBuilder<Aggregation> applyOperation(Aggregation.Builder a, ViewConfig.Operation operation) {
-        switch (operation.operator()) {
-            case AVG:
-                return null;
-            case SUM:
-                return null;
-            case MIN:
-                return null;
-            case MAX:
-                return null;
-            case COUNT:
-                return a.terms(
-                        t -> t.field(String.format("data_%s.keyword", operation.field())));
-        }
-        return null;
-    }
 
     private DataViewData processQuestionResponse(ViewConfig viewConfig, SearchResponse<Map> searchResponse) {
         List<String> dataViewLabels = new ArrayList<>();
@@ -432,7 +418,7 @@ public class ElasticService {
 
             for (StringTermsBucket bucket : buckets) {
                 String label = bucket.key().stringValue();
-                List<Integer> values = List.of((int) bucket.docCount());
+                List<Double> values = List.of((double) bucket.docCount());
                 dataViewRows.add(new DataViewRow(label, values));
             }
         } else if (viewConfig.seriesAggregation() != null && viewConfig.rowAggregation() == null) {
@@ -454,7 +440,7 @@ public class ElasticService {
                 for (StringTermsBucket groupBucket : groupBuckets) {
                     String group = groupBucket.key().stringValue();
                     long count = groupBucket.docCount();
-                    dataViewRows.add(new DataViewRow(group, List.of((int) count)));
+                    dataViewRows.add(new DataViewRow(group, List.of((double) count)));
                 }
             }
 
@@ -471,7 +457,7 @@ public class ElasticService {
 
         } else if (viewConfig.rowAggregation() != null && viewConfig.seriesAggregation() == null) {
             // "groupByAnswers"
-            Map<String, Map<String, Integer>> groupedData = new HashMap<>();
+            Map<String, Map<String, Double>> groupedData = new HashMap<>();
 
             List<StringTermsBucket> groupBuckets = searchResponse.aggregations()
                     .get("question_answer")
@@ -487,11 +473,11 @@ public class ElasticService {
                         .buckets()
                         .array();
 
-                Map<String, Integer> answersMap = new HashMap<>();
+                Map<String, Double> answersMap = new HashMap<>();
                 for (StringTermsBucket answerBucket : answerBuckets) {
                     String answer = answerBucket.key().stringValue();
                     long count = answerBucket.docCount();
-                    answersMap.put(answer, (int) count);
+                    answersMap.put(answer, (double) count);
                 }
                 groupedData.put(group, answersMap);
             }
@@ -507,13 +493,13 @@ public class ElasticService {
                 dataViewLabels.add(answer);
             }
 
-            for (Map.Entry<String, Map<String, Integer>> groupEntry : groupedData.entrySet()) {
+            for (Map.Entry<String, Map<String, Double>> groupEntry : groupedData.entrySet()) {
                 String group = groupEntry.getKey();
-                Map<String, Integer> answersMap = groupEntry.getValue();
+                Map<String, Double> answersMap = groupEntry.getValue();
 
-                List<Integer> values = new ArrayList<>();
+                List<Double> values = new ArrayList<>();
                 for (String answer : dataViewLabels) {
-                    values.add(answersMap.getOrDefault(answer, 0));
+                    values.add(answersMap.getOrDefault(answer, 0d));
                 }
 
                 dataViewRows.add(new DataViewRow(group, values));
@@ -537,7 +523,7 @@ public class ElasticService {
                     .map(FieldValue::stringValue)
                     .toList();
 
-            Map<String, List<Integer>> participantDataMap = new HashMap<>();
+            Map<String, List<Double>> participantDataMap = new HashMap<>();
 
             for (DateHistogramBucket timeBucket : timeBuckets) {
                 List<StringTermsBucket> participantBuckets = timeBucket.aggregations()
@@ -559,7 +545,7 @@ public class ElasticService {
                             .value();
 
                     participantDataMap.computeIfAbsent(participant, k -> new ArrayList<>());
-                    participantDataMap.get(participant).add((int) Math.round(avgHrValue));
+                    participantDataMap.get(participant).add(avgHrValue);
                     // Add default 0 value for all other participants, to ensure equal x/y axis assignment
                     if (participantBuckets.size() == 1) {
                         for (String id : allParticipantIds) {
@@ -572,9 +558,9 @@ public class ElasticService {
                 }
             }
 
-            for (Map.Entry<String, List<Integer>> entry : participantDataMap.entrySet()) {
+            for (Map.Entry<String, List<Double>> entry : participantDataMap.entrySet()) {
                 String participant = entry.getKey();
-                List<Integer> avgHrValues = entry.getValue();
+                List<Double> avgHrValues = entry.getValue();
                 dataViewRows.add(new DataViewRow(participant, avgHrValues));
             }
         }

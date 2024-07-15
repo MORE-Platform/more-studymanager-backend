@@ -12,6 +12,6 @@ import java.util.List;
 
 public record DataViewRow(
         String label,
-        List<Integer> values
+        List<Double> values
 ) {
 }

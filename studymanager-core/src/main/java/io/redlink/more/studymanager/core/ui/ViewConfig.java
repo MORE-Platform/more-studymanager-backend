@@ -26,6 +26,7 @@ public record ViewConfig(
         TIME,
         STUDY_GROUP,
         PARTICIPANT,
+        TERM_FIELD,
     }
 
     public record Operation(
