@@ -1167,13 +1167,13 @@ paths:
           description: bad request
 
   /studies/{studyId}/data:
+    parameters:
+      - $ref: '#/components/parameters/StudyId'
     get:
       tags:
         - data
       description: Get Study Participation Data
       operationId: getParticipationData
-      parameters:
-        - $ref: '#/components/parameters/StudyId'
       responses:
         '200':
           description: Operation successful
@@ -1191,7 +1191,7 @@ paths:
       - $ref: '#/components/parameters/StudyId'
       - $ref: '#/components/parameters/ObservationId'
     get:
-      operationId: getViewsForObservation
+      operationId: listObservationViews
       description: "Get a list of available views"
       tags:
         - data
@@ -1206,19 +1206,20 @@ paths:
                   $ref: '#/components/schemas/ObservationDataView'
 
   /studies/{studyId}/observations/{observationId}/views/{viewName}:
+    parameters:
+      - $ref: '#/components/parameters/StudyId'
+      - $ref: '#/components/parameters/ObservationId'
+      - name: viewName
+        in: path
+        required: true
+        schema:
+          type: string
     get:
       tags:
         - data
       description: "Get observation view data"
-      operationId: getObservationData
+      operationId: getObservationViewData
       parameters:
-        - $ref: '#/components/parameters/StudyId'
-        - $ref: '#/components/parameters/ObservationId'
-        - name: viewName
-          in: path
-          required: true
-          schema:
-            type: string
         - name: studyGroupId
           in: query
           schema:
@@ -1242,13 +1243,14 @@ paths:
           description: not found
 
   /studies/{studyId}/datapoints:
+    parameters:
+      - $ref: '#/components/parameters/StudyId'
     get:
       tags:
         - data
       description: Get Data Points
       operationId: getDataPoints
       parameters:
-        - $ref: '#/components/parameters/StudyId'
         - name: observationId
           in: query
           schema:

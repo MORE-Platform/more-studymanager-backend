@@ -13,8 +13,6 @@ import co.elastic.clients.elasticsearch._types.Conflicts;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
-import co.elastic.clients.elasticsearch._types.aggregations.DateHistogramBucket;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
@@ -27,9 +25,6 @@ import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Iterables;
 import io.redlink.more.studymanager.core.io.TimeRange;
-import io.redlink.more.studymanager.core.ui.DataViewData;
-import io.redlink.more.studymanager.core.ui.DataViewRow;
-import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
 import io.redlink.more.studymanager.model.data.ParticipationData;
@@ -333,261 +328,6 @@ public class ElasticService {
         }
     }
 
-
-    private SearchRequest.Builder buildQuestionRequest(ViewConfig viewConfig, List<Query> filters, long studyId) {
-        SearchRequest.Builder builder = new SearchRequest.Builder();
-
-        if (viewConfig.rowAggregation() == null && viewConfig.seriesAggregation() == null) {
-            // "questions"
-            builder.index(getStudyIdString(studyId))
-                    .size(0)
-                    .query(q -> q.bool(b -> b.filter(filters)))
-                    .aggregations("question_answer",
-                            a -> a.terms(
-                                    t -> t.field(String.format("data_%s.keyword", viewConfig.operation().field())))
-                    );
-        } else if (viewConfig.rowAggregation() == null && viewConfig.seriesAggregation() != null) {
-            // "answersByGroup"
-            builder.index(getStudyIdString(studyId))
-                    .size(0)
-                    .query(q -> q.bool(b -> b.filter(filters)))
-                    .aggregations("question_answer",
-                            a -> a.terms(t -> t.field(String.format("data_%s.keyword", viewConfig.operation().field())))
-                                    .aggregations("by_study_group",
-                                            aggs -> aggs.terms(t -> t.field("study_group_id.keyword")
-                                                    .minDocCount(0)
-                                                    .missing("Entire study"))))
-                    .aggregations("all_answers",
-                            a -> a.terms(t -> t.field(String.format("data_%s.keyword", viewConfig.operation().field())).size(30)));
-        } else if (viewConfig.rowAggregation() != null && viewConfig.seriesAggregation() == null) {
-            // "groupByAnswers"
-            builder.index(getStudyIdString(studyId))
-                    .size(0)
-                    .query(q -> q.bool(b -> b.filter(filters)))
-                    .aggregations("question_answer",
-                            a -> a.terms(t -> t.field(String.format("data_%s.keyword", viewConfig.operation().field())))
-                                    .aggregations("by_study_group",
-                                            aggs -> aggs.terms(t -> t.field("study_group_id.keyword")
-                                                    .minDocCount(0)
-                                                    .missing("Entire study"))))
-                    .aggregations("all_study_groups",
-                            a -> a.terms(t -> t.field("study_group_id.keyword")
-                                    .size(1000)
-                                    .missing("Entire study")));
-
-        } else if (viewConfig.rowAggregation() != null && viewConfig.seriesAggregation() != null) {
-            // "avgHeartRateByParticipantOverTime"
-            builder.index(getStudyIdString(studyId))
-                    .size(0)
-                    .query(q -> q.bool(b -> b.filter(filters)))
-                    .aggregations("average_heart_rate_by_participant_over_time",
-                            a -> a.dateHistogram(
-                                    dh -> dh.field("effective_time_frame")
-                                            .calendarInterval(CalendarInterval.Minute)
-                                            .format("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-                                            .minDocCount(0)
-
-                            ).aggregations("participant",
-                                    ag -> ag.terms(t -> t.field("participant_id.keyword"))
-                                            .aggregations("average_heart_rate",
-                                                    subAggs -> subAggs.avg(r -> r.field(String.format("data_%s", viewConfig.operation().field()))))
-                            )
-                    )
-                    .aggregations("all_participants",
-                            a -> a.terms(t -> t.field("participant_id.keyword")
-                                    .size(1000)
-                            ));
-        }
-
-        return builder;
-    }
-
-
-    private DataViewData processQuestionResponse(ViewConfig viewConfig, SearchResponse<Map> searchResponse) {
-        List<String> dataViewLabels = new ArrayList<>();
-        List<DataViewRow> dataViewRows = new ArrayList<>();
-
-        if (viewConfig.rowAggregation() == null && viewConfig.seriesAggregation() == null) {
-            // "questions"
-            List<StringTermsBucket> buckets = searchResponse
-                    .aggregations()
-                    .get("question_answer")
-                    .sterms()
-                    .buckets()
-                    .array();
-
-            for (StringTermsBucket bucket : buckets) {
-                String label = bucket.key().stringValue();
-                List<Double> values = List.of((double) bucket.docCount());
-                dataViewRows.add(new DataViewRow(label, values));
-            }
-        } else if (viewConfig.seriesAggregation() != null && viewConfig.rowAggregation() == null) {
-            // "answersByGroup"
-            List<StringTermsBucket> answerBuckets = searchResponse.aggregations()
-                    .get("question_answer")
-                    .sterms()
-                    .buckets()
-                    .array();
-
-            for (StringTermsBucket answerBucket : answerBuckets) {
-                String answer = answerBucket.key().stringValue();
-                List<StringTermsBucket> groupBuckets = answerBucket.aggregations()
-                        .get("by_study_group")
-                        .sterms()
-                        .buckets()
-                        .array();
-
-                for (StringTermsBucket groupBucket : groupBuckets) {
-                    String group = groupBucket.key().stringValue();
-                    long count = groupBucket.docCount();
-                    dataViewRows.add(new DataViewRow(group, List.of((double) count)));
-                }
-            }
-
-            List<StringTermsBucket> allAnswerBuckets = searchResponse.aggregations()
-                    .get("all_answers")
-                    .sterms()
-                    .buckets()
-                    .array();
-
-            for (StringTermsBucket allAnswerBucket : allAnswerBuckets) {
-                String answer = allAnswerBucket.key().stringValue();
-                dataViewLabels.add(answer);
-            }
-
-        } else if (viewConfig.rowAggregation() != null && viewConfig.seriesAggregation() == null) {
-            // "groupByAnswers"
-            Map<String, Map<String, Double>> groupedData = new HashMap<>();
-
-            List<StringTermsBucket> groupBuckets = searchResponse.aggregations()
-                    .get("question_answer")
-                    .sterms()
-                    .buckets()
-                    .array();
-
-            for (StringTermsBucket groupBucket : groupBuckets) {
-                String group = groupBucket.key().stringValue();
-                List<StringTermsBucket> answerBuckets = groupBucket.aggregations()
-                        .get("by_study_group")
-                        .sterms()
-                        .buckets()
-                        .array();
-
-                Map<String, Double> answersMap = new HashMap<>();
-                for (StringTermsBucket answerBucket : answerBuckets) {
-                    String answer = answerBucket.key().stringValue();
-                    long count = answerBucket.docCount();
-                    answersMap.put(answer, (double) count);
-                }
-                groupedData.put(group, answersMap);
-            }
-
-            List<StringTermsBucket> allAnswerBuckets = searchResponse.aggregations()
-                    .get("all_study_groups")
-                    .sterms()
-                    .buckets()
-                    .array();
-
-            for (StringTermsBucket allAnswerBucket : allAnswerBuckets) {
-                String answer = allAnswerBucket.key().stringValue();
-                dataViewLabels.add(answer);
-            }
-
-            for (Map.Entry<String, Map<String, Double>> groupEntry : groupedData.entrySet()) {
-                String group = groupEntry.getKey();
-                Map<String, Double> answersMap = groupEntry.getValue();
-
-                List<Double> values = new ArrayList<>();
-                for (String answer : dataViewLabels) {
-                    values.add(answersMap.getOrDefault(answer, 0d));
-                }
-
-                dataViewRows.add(new DataViewRow(group, values));
-            }
-
-        } else if (viewConfig.rowAggregation() != null && viewConfig.seriesAggregation() != null) {
-            // "avgHeartRateByParticipantOverTime"
-            List<DateHistogramBucket> timeBuckets = searchResponse.aggregations()
-                    .get("average_heart_rate_by_participant_over_time")
-                    .dateHistogram()
-                    .buckets()
-                    .array();
-
-            List<String> allParticipantIds = searchResponse.aggregations()
-                    .get("all_participants")
-                    .sterms()
-                    .buckets()
-                    .array()
-                    .stream()
-                    .map(StringTermsBucket::key)
-                    .map(FieldValue::stringValue)
-                    .toList();
-
-            Map<String, List<Double>> participantDataMap = new HashMap<>();
-
-            for (DateHistogramBucket timeBucket : timeBuckets) {
-                List<StringTermsBucket> participantBuckets = timeBucket.aggregations()
-                        .get("participant")
-                        .sterms()
-                        .buckets()
-                        .array();
-
-                if (participantBuckets.size() > 0) {
-                    String timeLabel = timeBucket.keyAsString();
-                    dataViewLabels.add(timeLabel);
-                }
-
-                for (StringTermsBucket participantBucket : participantBuckets) {
-                    String participant = participantBucket.key().stringValue();
-                    double avgHrValue = participantBucket.aggregations()
-                            .get("average_heart_rate")
-                            .avg()
-                            .value();
-
-                    participantDataMap.computeIfAbsent(participant, k -> new ArrayList<>());
-                    participantDataMap.get(participant).add(avgHrValue);
-                    // Add default 0 value for all other participants, to ensure equal x/y axis assignment
-                    if (participantBuckets.size() == 1) {
-                        for (String id : allParticipantIds) {
-                            if (!id.equals(participant)) {
-                                participantDataMap.computeIfAbsent(id, k -> new ArrayList<>());
-                                participantDataMap.get(id).add(null);
-                            }
-                        }
-                    }
-                }
-            }
-
-            for (Map.Entry<String, List<Double>> entry : participantDataMap.entrySet()) {
-                String participant = entry.getKey();
-                List<Double> avgHrValues = entry.getValue();
-                dataViewRows.add(new DataViewRow(participant, avgHrValues));
-            }
-        }
-
-        return new DataViewData(dataViewLabels, dataViewRows);
-    }
-
-    public DataViewData queryData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) {
-        List<Query> filters = getFilters(studyId, observationId, studyGroupId, participantId, timerange);
-        SearchRequest.Builder builder = buildQuestionRequest(viewConfig, filters, studyId);
-
-        try {
-            SearchResponse<Map> searchResponse = client.search(builder.build(), Map.class);
-            DataViewData dataViewData = processQuestionResponse(viewConfig, searchResponse);
-
-            return dataViewData;
-        } catch (IOException | ElasticsearchException e) {
-            if (e instanceof ElasticsearchException ee) {
-                if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
-                    return null;
-                }
-            }
-            LOG.warn("Elastic Query failed", e);
-            return null;
-        }
-    }
-
     public void exportData(Long studyId, OutputStream outputStream) throws IOException {
         String index = getStudyIdString(studyId);
 
@@ -681,16 +421,16 @@ public class ElasticService {
         return result;
     }
 
-    private static <R, T extends Exception> R handleIndexNotFoundException(T e, Supplier<R> supplier) throws T {
+    static <R, T extends Exception> R handleIndexNotFoundException(T e, Supplier<R> supplier) throws T {
         return ElasticService.handleIndexNotFoundException(e, supplier, Function.identity());
     }
 
-    private static <R, E extends Exception, T extends Exception> R handleIndexNotFoundException(E e, Supplier<R> supplier, Function<E, T> exceptionTFunction) throws T {
+    static <R, E extends Exception, T extends Exception> R handleIndexNotFoundException(E e, Supplier<R> supplier, Function<E, T> exceptionTFunction) throws T {
         if (isElasticIndexNotFound(e)) return supplier.get();
         throw exceptionTFunction.apply(e);
     }
 
-    private static boolean isElasticIndexNotFound(Exception e) {
+    static boolean isElasticIndexNotFound(Exception e) {
         if (e instanceof ElasticsearchException ee) {
             if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
                 LOG.debug("Swallowing Index-Not-Found from Elastic");
@@ -700,11 +440,11 @@ public class ElasticService {
         return false;
     }
 
-    private static <E extends Exception> void handleIndexNotFoundException(E e) throws E {
+    static <E extends Exception> void handleIndexNotFoundException(E e) throws E {
         handleIndexNotFoundException(e, Function.identity());
     }
 
-    private static <E extends Exception, T extends Exception> void handleIndexNotFoundException(E e, Function<E, T> exceptionWrapper) throws T {
+    static <E extends Exception, T extends Exception> void handleIndexNotFoundException(E e, Function<E, T> exceptionWrapper) throws T {
         if (!isElasticIndexNotFound(e))
             throw exceptionWrapper.apply(e);
     }

@@ -16,13 +16,15 @@ import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.ui.DataViewData;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.core.ui.ViewConfig;
+import io.redlink.more.studymanager.model.StudyGroup;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -35,29 +37,32 @@ public class ElasticDataService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ElasticDataService.class);
 
+    private static final String AGG_NAME_SERIES = "series";
+    private static final String AGG_NAME_ROWS = "rows";
+    private static final String AGG_NAME_VALUES = "values";
+
     private final ElasticsearchClient client;
 
-    public ElasticDataService(ElasticsearchClient client) {
+    private final ParticipantService participantService;
+    private final StudyGroupService studyGroupService;
+
+    public ElasticDataService(ElasticsearchClient client, ParticipantService participantService, StudyGroupService studyGroupService) {
         this.client = client;
+        this.participantService = participantService;
+        this.studyGroupService = studyGroupService;
     }
 
-    public DataViewData queryObservationViewData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) {
+    public DataViewData queryObservationViewData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) throws IOException {
         final List<Query> filters = getFilters(studyId, observationId, studyGroupId, participantId, timerange);
 
         final SearchRequest.Builder builder = buildDataPreviewRequest(viewConfig, filters, studyId);
         final SearchRequest request = builder.build();
 
         try {
-            SearchResponse<Void> searchResponse = client.search(request, Void.class);
-            return processDataPreviewResponse(viewConfig, searchResponse);
+            final SearchResponse<Void> searchResponse = client.search(request, Void.class);
+            return processDataPreviewResponse(viewConfig, searchResponse, studyId);
         } catch (IOException | ElasticsearchException e) {
-            if (e instanceof ElasticsearchException ee) {
-                if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
-                    return null;
-                }
-            }
-            LOG.warn("Elastic Query failed", e);
-            return null;
+            return ElasticService.handleIndexNotFoundException(e, () -> null, IOException::new);
         }
     }
 
@@ -68,11 +73,11 @@ public class ElasticDataService {
                 .index(getStudyIdString(studyId))
                 .size(0)
                 .query(q -> q.bool(b -> b.filter(filters)))
-                .aggregations("series", s ->
+                .aggregations(AGG_NAME_SERIES, s ->
                         applyAggregation(s, series, viewConfig.operation())
-                                .aggregations("rows", r ->
+                                .aggregations(AGG_NAME_ROWS, r ->
                                         applyAggregation(r, rows, viewConfig.operation())
-                                                .aggregations("values", d -> applyOperation(d, viewConfig))
+                                                .aggregations(AGG_NAME_VALUES, d -> applyOperation(d, viewConfig))
                                 )
 
                 )
@@ -82,76 +87,99 @@ public class ElasticDataService {
                 ;
     }
 
-    private DataViewData processDataPreviewResponse(ViewConfig viewConfig, SearchResponse<Void> searchResponse) {
-        List<? extends MultiBucketBase> seriesBuckets;
-        if (viewConfig.seriesAggregation() == ViewConfig.Aggregation.TIME) {
-            seriesBuckets = searchResponse.aggregations().get("series")
-                    .autoDateHistogram()
+    private List<? extends MultiBucketBase> readBuckets(Map<String, Aggregate> aggregations, String aggName) {
+        final var agg = aggregations.get(aggName);
+        if (agg.isAutoDateHistogram()) {
+            return agg.autoDateHistogram()
                     .buckets().array();
-        } else {
-            seriesBuckets = searchResponse.aggregations().get("series")
-                    .sterms()
+        } else if (agg.isSterms()) {
+            return agg.sterms()
                     .buckets().array();
         }
+        throw new IllegalStateException("Unknown aggregation type: " + agg._kind());
+    }
 
-        final LinkedList<String> labels = new LinkedList<>();
-        final LinkedHashMap<String, List<Double>> rowMap = new LinkedHashMap<>();
+    private String readBucketKey(MultiBucketBase bucket) {
+        if (bucket instanceof StringTermsBucket str) {
+            return str.key().stringValue();
+        } else if (bucket instanceof DateHistogramBucket date) {
+            return date.keyAsString();
+        } else {
+            return null;
+        }
+    }
+
+    private Function<String, String> createTitleResolver(ViewConfig.Aggregation aggregation, long studyId) {
+        if (aggregation == null) {
+            return Function.identity();
+        }
+
+        final Map<String, String> mapping =  switch (aggregation) {
+            case PARTICIPANT ->
+                participantService.listParticipants(studyId)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                p -> ElasticService.getParticipantIdString(p.getParticipantId()),
+                                p -> String.format("%s (%d)", p.getAlias(), p.getParticipantId())
+                        ));
+
+            case STUDY_GROUP ->
+                studyGroupService.listStudyGroups(studyId)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                g -> ElasticService.getStudyGroupIdString(g.getStudyGroupId()),
+                                StudyGroup::getTitle
+                        ));
+
+            default -> Map.of();
+        };
+        return l -> mapping.getOrDefault(l, l);
+    }
+
+    private DataViewData processDataPreviewResponse(ViewConfig viewConfig, SearchResponse<Void> searchResponse, long studyId) {
+
+        final List<? extends MultiBucketBase> seriesBuckets = readBuckets(searchResponse.aggregations(), AGG_NAME_SERIES);
         final int seriesCount = seriesBuckets.size();
-        final Supplier<ArrayList<Double>> genArray = () -> {
-            ArrayList<Double> array = new ArrayList<>(seriesCount);
+        final List<String> labels = new ArrayList<>(seriesCount);
+        final Supplier<ArrayList<Double>> createValueArray = () -> {
+            final ArrayList<Double> array = new ArrayList<>(seriesCount);
             for (int i = 0; i < seriesCount; i++) {
                 array.add(null);
             }
             return array;
         };
 
+        final LinkedHashMap<String, List<Double>> rowMap = new LinkedHashMap<>();
+
+        final Function<String, String> labelsTitleResolver = createTitleResolver(viewConfig.seriesAggregation(), studyId);
         for (MultiBucketBase bucket : seriesBuckets) {
-            final String bucketKey;
-            if (bucket instanceof StringTermsBucket str) {
-                bucketKey = str.key().stringValue();
-            } else if (bucket instanceof DateHistogramBucket date) {
-                bucketKey = date.keyAsString();
-            } else {
-                continue;
-            }
+            final String bucketKey = readBucketKey(bucket);
 
-            labels.add(bucketKey);
-            final int seriesIdx = labels.indexOf(bucketKey);
+            labels.add(labelsTitleResolver.apply(bucketKey));
+            final int seriesIdx = labels.size() - 1;
 
-            final Aggregate rows = bucket.aggregations().get("rows");
-            final List<? extends MultiBucketBase> rowsBuckets;
-            if (viewConfig.rowAggregation() == ViewConfig.Aggregation.TIME) {
-                rowsBuckets = rows.autoDateHistogram().buckets().array();
-            } else {
-                rowsBuckets = rows.sterms().buckets().array();
-            }
-
+            final List<? extends MultiBucketBase> rowsBuckets = readBuckets(bucket.aggregations(), AGG_NAME_ROWS);
             for (MultiBucketBase rowBucket : rowsBuckets) {
-                final String rowKey;
-                if (rowBucket instanceof StringTermsBucket str) {
-                    rowKey = str.key().stringValue();
-                } else if (rowBucket instanceof DateHistogramBucket date) {
-                    rowKey = date.keyAsString();
-                } else {
-                    continue;
-                }
+                final String rowKey = readBucketKey(rowBucket);
 
-                final var valueAgg = rowBucket.aggregations().get("values");
+                final var valueAgg = rowBucket.aggregations().get(AGG_NAME_VALUES);
                 final var value = switch (viewConfig.operation().operator()) {
                     case SUM, COUNT -> valueAgg.sum().value();
                     case MIN -> valueAgg.min().value();
                     case MAX -> valueAgg.max().value();
                     case AVG -> valueAgg.avg().value();
                 };
-                rowMap.computeIfAbsent(rowKey, k -> genArray.get()).set(seriesIdx, value);
+                rowMap.computeIfAbsent(rowKey, k -> createValueArray.get())
+                        .set(seriesIdx, value);
             }
         }
 
+        final Function<String, String> rowTitleResolver = createTitleResolver(viewConfig.rowAggregation(), studyId);
         return new DataViewData(
                 List.copyOf(labels),
                 rowMap.entrySet().stream()
                         .map(e -> new DataViewRow(
-                                e.getKey(),
+                                rowTitleResolver.apply(e.getKey()),
                                 e.getValue()
                         ))
                         .toList()
@@ -167,7 +195,7 @@ public class ElasticDataService {
         return switch (aggregation) {
             case TIME -> a.autoDateHistogram(dateHistogram -> dateHistogram
                     .field("effective_time_frame")
-                    .buckets(500) // TODO: Hidden magic number!
+                    .buckets(1000) // TODO: Hidden magic number, aligned with chart-width in the UI!
                     .minimumInterval(MinimumInterval.Minute)
                     .format("yyyy-MM-dd'T'HH:mmZ")
             );

@@ -32,6 +32,7 @@ import io.redlink.more.studymanager.service.ElasticDataService;
 import io.redlink.more.studymanager.service.ElasticService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import io.redlink.more.studymanager.service.PushNotificationService;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -180,6 +181,11 @@ public class MoreSDK {
     }
 
     public DataViewData queryData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) {
-        return elasticDataService.queryObservationViewData(viewConfig, studyId, studyGroupId, observationId, participantId, timerange);
+        try {
+            return elasticDataService.queryObservationViewData(viewConfig, studyId, studyGroupId, observationId, participantId, timerange);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to query observation data for view config {}", viewConfig, e);
+            return null;
+        }
     }
 }

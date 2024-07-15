@@ -17,14 +17,12 @@ import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyDataTransformer;
 import io.redlink.more.studymanager.service.DataProcessingService;
-
+import java.time.OffsetDateTime;
+import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.time.OffsetDateTime;
-import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -56,7 +54,7 @@ public class DataApiV1Controller implements DataApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
-    public ResponseEntity<ObservationDataViewDataDTO> getObservationData(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
+    public ResponseEntity<ObservationDataViewDataDTO> getObservationViewData(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
         return ResponseEntity.ok().body(
                 StudyDataTransformer.toObservationDataViewDataDTO(
                         dataProcessingService.getDataView(studyId, observationId, viewName, studyGroupId, participantId, from, to)
@@ -66,7 +64,7 @@ public class DataApiV1Controller implements DataApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
-    public ResponseEntity<List<ObservationDataViewDTO>> getViewsForObservation(Long studyId, Integer observationId) {
+    public ResponseEntity<List<ObservationDataViewDTO>> listObservationViews(Long studyId, Integer observationId) {
         return ResponseEntity.ok().body(
                 dataProcessingService.listDataViews(studyId, observationId).stream()
                         .map(StudyDataTransformer::toObservationDataViewDTO)
