@@ -27,13 +27,10 @@ public record ViewConfig(
     /**
      * Represents a filter applied to the data view.
      */
-    public record Filter(
-
-    ) {
-    }
+    public record Filter() { }
 
     /**
-     * Enumeration of possible aggregation methods.
+     * Enumeration of possible aggregation/grouping methods.
      */
     public enum Aggregation {
         /**
@@ -49,7 +46,8 @@ public record ViewConfig(
          */
         PARTICIPANT,
         /**
-         * Group by a String-Value Field of the Observation, in most cases should be used together with the COUNT-operator
+         * Group by a String-Value Field of the Observation, in most cases should be used together with
+         * the {@link Operator#COUNT COUNT}-operator
          */
         TERM_FIELD,
     }
