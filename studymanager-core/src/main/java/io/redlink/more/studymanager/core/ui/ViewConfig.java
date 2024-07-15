@@ -14,8 +14,8 @@ import java.util.List;
  * Represents the configuration of a data view.
  *
  * @param filters the list of filters applied to the data view
- * @param rowAggregation the aggregation method for rows
- * @param seriesAggregation the aggregation method for series
+ * @param rowAggregation the aggregation method for rows. In most cases, this will be the data-legend in the view/chart.
+ * @param seriesAggregation the aggregation method for series. In most cases, this will result in the x-axis of the view/chart
  * @param operation the operation applied to the data
  */
 public record ViewConfig(
@@ -36,9 +36,21 @@ public record ViewConfig(
      * Enumeration of possible aggregation methods.
      */
     public enum Aggregation {
+        /**
+         * Group by timestamp of the observation
+         */
         TIME,
+        /**
+         * Group by Study-Group
+         */
         STUDY_GROUP,
+        /**
+         * Group by Participant
+         */
         PARTICIPANT,
+        /**
+         * Group by a String-Value Field of the Observation, in most cases should be used together with the COUNT-operator
+         */
         TERM_FIELD,
     }
 
