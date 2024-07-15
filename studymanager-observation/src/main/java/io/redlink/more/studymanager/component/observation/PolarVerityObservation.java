@@ -13,8 +13,10 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
-import io.redlink.more.studymanager.core.ui.*;
-
+import io.redlink.more.studymanager.core.ui.DataView;
+import io.redlink.more.studymanager.core.ui.DataViewData;
+import io.redlink.more.studymanager.core.ui.DataViewInfo;
+import io.redlink.more.studymanager.core.ui.ViewConfig;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,16 +28,39 @@ public class PolarVerityObservation<C extends ObservationProperties> extends Obs
     }
 
     private enum DataViewInfoType implements DataViewInfo {
-        heart_rate("data.charts.polarVerity.avgHeartRate.label", "data.charts.polarVerity.avgHeartRate.title", "data.charts.polarVerity.avgHeartRate.description");
+        heart_rate("avgHeartRate",
+                DataView.ChartType.LINE,
+                new ViewConfig(
+                        List.of(),
+                        ViewConfig.Aggregation.PARTICIPANT,
+                        ViewConfig.Aggregation.TIME,
+                        new ViewConfig.Operation(ViewConfig.Operator.AVG, "hr")
+                )
+        );
 
         private final String label;
         private final String title;
         private final String description;
+        private final DataView.ChartType chartType;
 
-        DataViewInfoType(String label, String title, String description) {
+        private final ViewConfig viewConfig;
+
+        DataViewInfoType(String i18nKey, DataView.ChartType chartType, ViewConfig viewConfig) {
+            this(
+                    "data.charts.polarVerity.%s.label".formatted(i18nKey),
+                    "data.charts.polarVerity.%s.title".formatted(i18nKey),
+                    "data.charts.polarVerity.%s.description".formatted(i18nKey),
+                    chartType,
+                    viewConfig
+            );
+        }
+
+        DataViewInfoType(String label, String title, String description, DataView.ChartType chartType, ViewConfig viewConfig) {
             this.label = label;
             this.title = title;
             this.description = description;
+            this.chartType = chartType;
+            this.viewConfig = viewConfig;
         }
 
         @Override
@@ -52,6 +77,14 @@ public class PolarVerityObservation<C extends ObservationProperties> extends Obs
         public String description() {
             return this.description;
         }
+
+        public DataView.ChartType chartType() {
+            return chartType;
+        }
+
+        public ViewConfig getViewConfig() {
+            return viewConfig;
+        }
     }
 
     public Set<DataViewInfo> listViews() {
@@ -61,49 +94,14 @@ public class PolarVerityObservation<C extends ObservationProperties> extends Obs
 
     @Override
     public DataView getView(String viewName, Integer studyGroupId, Integer participantId, TimeRange timerange) {
-        return switch (DataViewInfoType.valueOf(viewName)) {
-            case heart_rate -> createHeartRateView(studyGroupId, participantId, timerange);
-        };
-    }
-
-    private DataView createHeartRateView(Integer studyGroupId, Integer participantId, TimeRange timerange) {
-        var viewConfig = new ViewConfig(
-                List.of(),
-                ViewConfig.Aggregation.PARTICIPANT,
-                ViewConfig.Aggregation.TIME,
-                new ViewConfig.Operation(ViewConfig.Operator.AVG, "hr")
-        );
-
-        DataViewData dataViewData = sdk.queryData(viewConfig, studyGroupId, participantId, timerange);
-
-//        var allParticipants = participantService.listParticipants(studyId);
-//
-//        for (int i = 0; i < dataViewData.rows().size(); i++) {
-//            final int index = i;
-//            DataViewRow currentRow = dataViewData.rows().get(i);
-//            String label = currentRow.label();
-//            String[] parts = label.split("_");
-//            if (parts.length == 2 && parts[0].equals("participant")) {
-//                try {
-//                    int participantIdFromLabel = Integer.parseInt(parts[1]);
-//                    Optional<Participant> matchingParticipant = allParticipants.stream()
-//                            .filter(participant -> participant.getParticipantId() == participantIdFromLabel)
-//                            .findFirst();
-//
-//                    matchingParticipant.ifPresent(participant -> {
-//                        dataView.data().rows().set(index, new DataViewRow(participant.getAlias(), currentRow.values()));
-//                    });
-//                } catch (NumberFormatException e) {
-//                    System.err.println("Invalid participant ID format in label: " + label);
-//                }
-//            }
-//        }
-
+        final DataViewInfoType dataView = DataViewInfoType.valueOf(viewName);
+        final DataViewData dataViewData = sdk.queryData(dataView.getViewConfig(), studyGroupId, participantId, timerange);
 
         return new DataView(
-                DataViewInfoType.heart_rate,
-                DataView.ChartType.LINE,
+                dataView,
+                dataView.chartType(),
                 dataViewData
         );
+
     }
 }

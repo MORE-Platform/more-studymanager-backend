@@ -8,10 +8,10 @@
  */
 package io.redlink.more.studymanager.core.ui;
 
-public interface DataViewInfo
-{
+public interface DataViewInfo {
     String name();
     String label();
     String title();
     String description();
+    DataView.ChartType chartType();
 }
