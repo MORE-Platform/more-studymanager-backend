@@ -10,6 +10,12 @@ package io.redlink.more.studymanager.core.ui;
 
 import java.util.List;
 
+/**
+ * Represents a row of data in a data view.
+ *
+ * @param label the label of the data row
+ * @param values the list of values in the data row
+ */
 public record DataViewRow(
         String label,
         List<Double> values

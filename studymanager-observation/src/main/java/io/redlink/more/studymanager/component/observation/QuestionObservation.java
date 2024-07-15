@@ -18,9 +18,6 @@ import io.redlink.more.studymanager.core.ui.DataViewData;
 import io.redlink.more.studymanager.core.ui.DataViewInfo;
 import io.redlink.more.studymanager.core.ui.ViewConfig;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class QuestionObservation<C extends ObservationProperties> extends Observation<C> {
 

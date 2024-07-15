@@ -8,11 +8,21 @@
  */
 package io.redlink.more.studymanager.core.ui;
 
+/**
+ * Represents a data view with information, chart type, and data.
+ *
+ * @param viewInfo the information about the data view
+ * @param chartType the type of chart to be displayed
+ * @param data the data to be displayed in the view
+ */
 public record DataView(
         DataViewInfo viewInfo,
         ChartType chartType,
         DataViewData data
 ) {
+    /**
+     * Enumeration of possible chart types.
+     */
     public enum ChartType {
         LINE,
         BAR,

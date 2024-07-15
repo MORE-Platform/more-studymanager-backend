@@ -15,8 +15,6 @@ import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.ui.DataView;
 import io.redlink.more.studymanager.core.ui.DataViewInfo;
 
-import java.util.Set;
-
 public abstract class Observation<C extends ObservationProperties> extends Component<C> {
 
     protected final MoreObservationSDK sdk;
@@ -25,10 +23,24 @@ public abstract class Observation<C extends ObservationProperties> extends Compo
         this.sdk = sdk;
     }
 
+    /**
+     * Gets an array of DataViewInfo, which represents all possibilities to show this observation data.
+     *
+     * @return an array of DataViewInfo representing all possible views of the observation data
+     */
     public DataViewInfo[] listViews() {
         return new DataViewInfo[0];
     }
 
+    /**
+     * Retrieves a specific DataView based on the given parameters.
+     *
+     * @param viewName the name of the view to retrieve
+     * @param studyGroupId the ID of the study group for filter reasons
+     * @param participantId the ID of the participant for filter reasons
+     * @param timerange the time range for the data view for filter reasons
+     * @return the requested DataView, or null if not found
+     */
     public DataView getView(String viewName, Integer studyGroupId, Integer participantId, TimeRange timerange) {
         return null;
     }
