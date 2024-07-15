@@ -19,6 +19,7 @@ import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.StudyGroup;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,7 @@ public class ElasticDataService {
     private static final String AGG_NAME_SERIES = "series";
     private static final String AGG_NAME_ROWS = "rows";
     private static final String AGG_NAME_VALUES = "values";
+    private static final String NO_GROUP_KEY = "no_group";
 
     private final ElasticsearchClient client;
 
@@ -123,14 +125,18 @@ public class ElasticDataService {
                                 p -> String.format("%s (%d)", p.getAlias(), p.getParticipantId())
                         ));
 
-            case STUDY_GROUP ->
-                studyGroupService.listStudyGroups(studyId)
+            case STUDY_GROUP -> {
+                final Map<String, String> m = new HashMap<>(
+                        studyGroupService.listStudyGroups(studyId)
                         .stream()
                         .collect(Collectors.toMap(
                                 g -> ElasticService.getStudyGroupIdString(g.getStudyGroupId()),
                                 StudyGroup::getTitle
-                        ));
-
+                        ))
+                );
+                m.put(NO_GROUP_KEY, "i18n.global.placeholder.noGroup");
+                yield m;
+            }
             default -> Map.of();
         };
         return l -> mapping.getOrDefault(l, l);
@@ -199,12 +205,10 @@ public class ElasticDataService {
                     .minimumInterval(MinimumInterval.Minute)
                     .format("yyyy-MM-dd'T'HH:mmZ")
             );
-            case PARTICIPANT -> a.terms(pt -> pt.field("participant_id.keyword")
-                    .minDocCount(0)
-            );
+            case PARTICIPANT -> a.terms(pt -> pt.field("participant_id.keyword"));
             case STUDY_GROUP -> a.terms(sg -> sg.field("study_group_id.keyword")
                     .minDocCount(0)
-                    .missing("no_group")
+                    .missing(NO_GROUP_KEY)
             );
             case TERM_FIELD -> a.terms(tf -> tf.field("data_%s.keyword".formatted(operation.field()))
                     .minDocCount(0)
