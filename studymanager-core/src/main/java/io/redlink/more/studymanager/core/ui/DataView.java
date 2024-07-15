@@ -8,8 +8,6 @@
  */
 package io.redlink.more.studymanager.core.ui;
 
-import java.util.List;
-
 public record DataView(
         DataViewInfo viewInfo,
         ChartType chartType,

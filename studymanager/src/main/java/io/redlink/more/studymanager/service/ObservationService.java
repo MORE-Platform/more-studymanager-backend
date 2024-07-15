@@ -107,7 +107,7 @@ public class ObservationService {
                 .toList();
     }
 
-    public Set<DataViewInfo> listDataViews(Long studyId, Integer observationId) {
+    public DataViewInfo[] listDataViews(Long studyId, Integer observationId) {
         var obs = getObservation(studyId, observationId).orElseThrow();
 
         return factory(obs).create(

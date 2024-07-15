@@ -18,6 +18,7 @@ import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyDataTransformer;
 import io.redlink.more.studymanager.service.DataProcessingService;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -66,7 +67,7 @@ public class DataApiV1Controller implements DataApi {
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
     public ResponseEntity<List<ObservationDataViewDTO>> listObservationViews(Long studyId, Integer observationId) {
         return ResponseEntity.ok().body(
-                dataProcessingService.listDataViews(studyId, observationId).stream()
+                Arrays.stream(dataProcessingService.listDataViews(studyId, observationId))
                         .map(StudyDataTransformer::toObservationDataViewDTO)
                         .toList()
         );

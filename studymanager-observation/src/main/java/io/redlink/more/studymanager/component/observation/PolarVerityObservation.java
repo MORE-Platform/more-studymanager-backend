@@ -87,9 +87,8 @@ public class PolarVerityObservation<C extends ObservationProperties> extends Obs
         }
     }
 
-    public Set<DataViewInfo> listViews() {
-        return Stream.of(DataViewInfoType.values())
-                .collect(Collectors.toSet());
+    public DataViewInfo[] listViews() {
+        return DataViewInfoType.values();
     }
 
     @Override

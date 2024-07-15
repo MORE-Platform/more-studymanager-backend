@@ -115,7 +115,7 @@ public class DataProcessingService {
         return participationDataList;
     }
 
-    public Set<DataViewInfo> listDataViews(Long studyId, Integer observationId) {
+    public DataViewInfo[] listDataViews(Long studyId, Integer observationId) {
         return observationService.listDataViews(studyId, observationId);
     }
 

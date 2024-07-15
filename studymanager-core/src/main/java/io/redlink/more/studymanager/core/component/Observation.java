@@ -25,8 +25,8 @@ public abstract class Observation<C extends ObservationProperties> extends Compo
         this.sdk = sdk;
     }
 
-    public Set<DataViewInfo> listViews() {
-        return Set.of();
+    public DataViewInfo[] listViews() {
+        return new DataViewInfo[0];
     }
 
     public DataView getView(String viewName, Integer studyGroupId, Integer participantId, TimeRange timerange) {
