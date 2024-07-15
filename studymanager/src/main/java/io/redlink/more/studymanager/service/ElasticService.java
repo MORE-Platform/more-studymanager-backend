@@ -129,28 +129,28 @@ public class ElasticService {
     static Query getStudyFilter(Long studyId) {
         return Query.of(f -> f.
                 term(t -> t.
-                        field("study_id").
+                        field("study_id.keyword").
                         value(getStudyIdString(studyId))));
     }
 
     static Query getObservationFilter(Integer observationId) {
         return Query.of(f -> f.
                 term(t -> t.
-                        field("observation_id").
+                        field("observation_id.keyword").
                         value(observationId)));
     }
 
     static Query getStudyGroupFilter(Integer studyGroupId) {
         return Query.of(f -> f.
                 term(t -> t.
-                        field("study_group_id").
+                        field("study_group_id.keyword").
                         value(getStudyGroupIdString(studyGroupId))));
     }
 
     static Query getParticipantFilter(Integer participantId) {
         return Query.of(f -> f.
                 term(t -> t.
-                        field("participant_id").
+                        field("participant_id.keyword").
                         value(getParticipantIdString(participantId))));
     }
 
