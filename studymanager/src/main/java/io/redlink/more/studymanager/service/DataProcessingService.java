@@ -9,10 +9,13 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.api.v1.model.DataPointDTO;
+import io.redlink.more.studymanager.core.io.Timeframe;
+import io.redlink.more.studymanager.core.ui.DataView;
+import io.redlink.more.studymanager.core.ui.DataViewInfo;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
-import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.data.ParticipationData;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -110,6 +113,19 @@ public class DataProcessingService {
         }
         Collections.sort(participationDataList);
         return participationDataList;
+    }
+
+    public DataViewInfo[] listDataViews(Long studyId, Integer observationId) {
+        return observationService.listDataViews(studyId, observationId);
+    }
+
+    public DataView getDataView(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
+        if (participantId != null) {
+            return observationService.queryData(studyId, observationId, viewName, null, participantId, from != null && to != null ? new Timeframe(from.toInstant(), to.toInstant()) : null);
+        } else if (studyGroupId != null) {
+            return observationService.queryData(studyId, observationId, viewName, studyGroupId, null, from != null && to != null ? new Timeframe(from.toInstant(), to.toInstant()) : null);
+        }
+        return observationService.queryData(studyId, observationId, viewName, studyGroupId, participantId, from != null && to != null ? new Timeframe(from.toInstant(), to.toInstant()) : null);
     }
 
     public List<DataPointDTO> getDataPoints(Long studyId, Integer size, Integer observationId, Integer participantId, OffsetDateTime date) {

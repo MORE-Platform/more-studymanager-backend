@@ -15,7 +15,9 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
@@ -23,20 +25,12 @@ import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Iterables;
 import io.redlink.more.studymanager.core.io.TimeRange;
-import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
+import io.redlink.more.studymanager.model.data.ParticipationData;
 import io.redlink.more.studymanager.model.data.SimpleDataPoint;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import io.redlink.more.studymanager.utils.MapperUtils;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -45,7 +39,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.stereotype.Service;
 
 @Service
 @EnableConfigurationProperties({ElasticProperties.class})
@@ -95,27 +96,71 @@ public class ElasticService {
         }
     }
 
-    private List<Query> getFilters(Long studyId, Integer studyGroupId, TimeRange timerange) {
+    static List<Query> getFilters(Long studyId, Integer studyGroupId, TimeRange timerange) {
         List<Query> queries = new ArrayList<>();
-        queries.add(Query.of(f -> f.
-                term(t -> t.
-                        field("study_id").
-                        value(getStudyIdString(studyId)))));
+        queries.add(getStudyFilter(studyId));
         if (studyGroupId != null) {
-            queries.add(Query.of(f -> f.term(t -> t.
-                    field("study_group_id").
-                    value(getStudyGroupIdString(studyGroupId)))));
+            queries.add(getStudyGroupFilter(studyGroupId));
         }
 
         if (timerange != null && timerange.getFromString() != null && timerange.getToString() != null) {
-            queries.add(Query.of(f -> f.
-                    range(r -> r.
-                            field("effective_time_frame").
-                            from(timerange.getFromString()).
-                            to(timerange.getToString())
-                    )));
+            queries.add(getTimeRangeFilter(timerange));
         }
         return queries;
+    }
+
+    static List<Query> getFilters(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
+        List<Query> filters = new ArrayList<>();
+        filters.add(getStudyFilter(studyId));
+        filters.add(getObservationFilter(observationId));
+
+        if (participantId != null) {
+            filters.add(getParticipantFilter(participantId));
+        } else if(studyGroupId != null) {
+            filters.add(getStudyGroupFilter(studyGroupId));
+        }
+
+        if (timerange != null && timerange.getFromString() != null && timerange.getToString() != null) {
+            filters.add(getTimeRangeFilter(timerange));
+        }
+        return filters;
+    }
+
+    static Query getStudyFilter(Long studyId) {
+        return Query.of(f -> f.
+                term(t -> t.
+                        field("study_id.keyword").
+                        value(getStudyIdString(studyId))));
+    }
+
+    static Query getObservationFilter(Integer observationId) {
+        return Query.of(f -> f.
+                term(t -> t.
+                        field("observation_id.keyword").
+                        value(observationId)));
+    }
+
+    static Query getStudyGroupFilter(Integer studyGroupId) {
+        return Query.of(f -> f.
+                term(t -> t.
+                        field("study_group_id.keyword").
+                        value(getStudyGroupIdString(studyGroupId))));
+    }
+
+    static Query getParticipantFilter(Integer participantId) {
+        return Query.of(f -> f.
+                term(t -> t.
+                        field("participant_id.keyword").
+                        value(getParticipantIdString(participantId))));
+    }
+
+    static Query getTimeRangeFilter(TimeRange timerange) {
+        return Query.of(f -> f.
+                range(r -> r.
+                        field("effective_time_frame").
+                        from(timerange.getFromString()).
+                        to(timerange.getToString())
+                ));
     }
 
     public boolean indexExists(long studyId) {
@@ -185,12 +230,16 @@ public class ElasticService {
         return getStudyIdString(study.getStudyId());
     }
 
-    private String getStudyGroupIdString(Integer studyGroupId) {
+    static String getStudyGroupIdString(Integer studyGroupId) {
         return "study_group_" + studyGroupId;
     }
 
     static String getStudyIdString(Long id) {
         return "study_" + id;
+    }
+
+    static String getParticipantIdString(Integer participantId) {
+        return "participant_" + participantId;
     }
 
     public void setDataPoint(Long studyId, ElasticDataPoint elasticActionDataPoint) {
@@ -372,16 +421,16 @@ public class ElasticService {
         return result;
     }
 
-    private static <R, T extends Exception> R handleIndexNotFoundException(T e, Supplier<R> supplier) throws T {
+    static <R, T extends Exception> R handleIndexNotFoundException(T e, Supplier<R> supplier) throws T {
         return ElasticService.handleIndexNotFoundException(e, supplier, Function.identity());
     }
 
-    private static <R, E extends Exception, T extends Exception> R handleIndexNotFoundException(E e, Supplier<R> supplier, Function<E, T> exceptionTFunction) throws T {
+    static <R, E extends Exception, T extends Exception> R handleIndexNotFoundException(E e, Supplier<R> supplier, Function<E, T> exceptionTFunction) throws T {
         if (isElasticIndexNotFound(e)) return supplier.get();
         throw exceptionTFunction.apply(e);
     }
 
-    private static boolean isElasticIndexNotFound(Exception e) {
+    static boolean isElasticIndexNotFound(Exception e) {
         if (e instanceof ElasticsearchException ee) {
             if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
                 LOG.debug("Swallowing Index-Not-Found from Elastic");
@@ -391,11 +440,11 @@ public class ElasticService {
         return false;
     }
 
-    private static <E extends Exception> void handleIndexNotFoundException(E e) throws E {
+    static <E extends Exception> void handleIndexNotFoundException(E e) throws E {
         handleIndexNotFoundException(e, Function.identity());
     }
 
-    private static <E extends Exception, T extends Exception> void handleIndexNotFoundException(E e, Function<E, T> exceptionWrapper) throws T {
+    static <E extends Exception, T extends Exception> void handleIndexNotFoundException(E e, Function<E, T> exceptionWrapper) throws T {
         if (!isElasticIndexNotFound(e))
             throw exceptionWrapper.apply(e);
     }

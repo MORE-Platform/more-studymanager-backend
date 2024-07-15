@@ -8,9 +8,14 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.IdTitleDTO;
-import io.redlink.more.studymanager.api.v1.model.ParticipationDataDTO;
-import io.redlink.more.studymanager.model.ParticipationData;
+import io.redlink.more.studymanager.api.v1.model.*;
+import io.redlink.more.studymanager.core.ui.DataView;
+import io.redlink.more.studymanager.core.ui.DataViewInfo;
+import io.redlink.more.studymanager.core.ui.DataViewRow;
+import io.redlink.more.studymanager.model.data.ParticipationData;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class StudyDataTransformer {
 
@@ -31,5 +36,41 @@ public class StudyDataTransformer {
         return new IdTitleDTO()
                 .id(idTitle.id())
                 .title(idTitle.title());
+    }
+
+    public static ObservationDataViewDataDTO toObservationDataViewDataDTO(DataView dataView){
+        var observationDataViewDataDTO = new ObservationDataViewDataDTO()
+                .view(toObservationDataViewDTO(dataView.viewInfo()))
+                .chartType(toChartTypeEnumDTO(dataView.chartType()));
+
+        if (dataView.data() != null) {
+            observationDataViewDataDTO
+                    .labels(dataView.data().labels())
+                    .data(toObservationDataViewDataRowDTO(dataView.data().rows()));
+        }
+
+        return observationDataViewDataDTO;
+    }
+
+    public static ObservationDataViewDTO toObservationDataViewDTO(DataViewInfo dataViewInfo) {
+        return new ObservationDataViewDTO()
+                .name(dataViewInfo.name())
+                .label(dataViewInfo.label())
+                .title(dataViewInfo.title())
+                .description(dataViewInfo.description());
+    }
+
+    private static ObservationDataViewDataDTO.ChartTypeEnum toChartTypeEnumDTO(DataView.ChartType chartType) {
+        return switch (chartType) {
+            case LINE -> ObservationDataViewDataDTO.ChartTypeEnum.LINE;
+            case BAR -> ObservationDataViewDataDTO.ChartTypeEnum.BAR;
+            case PIE -> ObservationDataViewDataDTO.ChartTypeEnum.PIE;
+        };
+    }
+
+    private static List<ObservationDataViewDataRowDTO> toObservationDataViewDataRowDTO(List<DataViewRow> dataViewRow) {
+        return dataViewRow.stream()
+                .map(row -> new ObservationDataViewDataRowDTO().label(row.label()).values(row.values()))
+                .collect(Collectors.toList());
     }
 }

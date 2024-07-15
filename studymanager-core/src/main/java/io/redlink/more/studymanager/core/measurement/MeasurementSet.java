@@ -15,7 +15,7 @@ public record MeasurementSet(String id, Set<Measurement> values) {
 
     public MeasurementSet {
         if (id == null || values == null) {
-            throw new IllegalArgumentException("Is and values must not be null");
+            throw new IllegalArgumentException("Id and values must not be null");
         }
     }
 }
