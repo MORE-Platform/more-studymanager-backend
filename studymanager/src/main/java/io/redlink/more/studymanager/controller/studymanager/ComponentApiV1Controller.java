@@ -9,7 +9,10 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.redlink.more.studymanager.api.v1.model.*;
+import io.redlink.more.studymanager.api.v1.model.ComponentFactoryDTO;
+import io.redlink.more.studymanager.api.v1.model.ComponentFactoryMeasurementsInnerDTO;
+import io.redlink.more.studymanager.api.v1.model.ValidationReportDTO;
+import io.redlink.more.studymanager.api.v1.model.VisibilityDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ComponentsApi;
 import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
@@ -21,18 +24,18 @@ import io.redlink.more.studymanager.core.io.Visibility;
 import io.redlink.more.studymanager.core.model.User;
 import io.redlink.more.studymanager.core.properties.ComponentProperties;
 import io.redlink.more.studymanager.core.webcomponent.WebComponent;
+import io.redlink.more.studymanager.model.transformer.ValidationReportTransformer;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -73,15 +76,7 @@ public class ComponentApiV1Controller implements ComponentsApi {
                         f.validate((ComponentProperties) MapperUtils.MAPPER.convertValue(body, f.getPropertyClass()));
                         return new ValidationReportDTO().valid(true);
                     } catch (ConfigurationValidationException e) {
-                        return new ValidationReportDTO()
-                                .valid(false)
-                                .errors(e.getReport().getErrors().stream()
-                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).propertyId(i.getPropertyId()).type("error"))
-                                        .toList()
-                                ).warnings(e.getReport().getWarnings().stream()
-                                        .map(i -> new ValidationReportItemDTO().message(i.getMessage()).propertyId(i.getPropertyId()).type("warning"))
-                                        .toList()
-                                );
+                        return ValidationReportTransformer.validationReportDTO_V1(e);
                     }
                 })
                 .map(ResponseEntity::ok)
