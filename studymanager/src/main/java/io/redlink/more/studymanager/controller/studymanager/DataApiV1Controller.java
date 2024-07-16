@@ -17,7 +17,7 @@ import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyDataTransformer;
 import io.redlink.more.studymanager.service.DataProcessingService;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.http.MediaType;
@@ -36,7 +36,7 @@ public class DataApiV1Controller implements DataApi {
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
     public ResponseEntity<List<DataPointDTO>> getDataPoints(
-            Long studyId, Integer size, Integer observationId, Integer participantId, OffsetDateTime date
+            Long studyId, Integer size, Integer observationId, Integer participantId, Instant date
     ) {
         return ResponseEntity.ok().body(
                 dataProcessingService.getDataPoints(studyId, size, observationId, participantId, date)
@@ -55,7 +55,7 @@ public class DataApiV1Controller implements DataApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
-    public ResponseEntity<ObservationDataViewDataDTO> getObservationViewData(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
+    public ResponseEntity<ObservationDataViewDataDTO> getObservationViewData(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, Instant from, Instant to) {
         return ResponseEntity.ok().body(
                 StudyDataTransformer.toObservationDataViewDataDTO(
                         dataProcessingService.getDataView(studyId, observationId, viewName, studyGroupId, participantId, from, to)

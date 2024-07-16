@@ -10,6 +10,13 @@ import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
 import io.redlink.more.studymanager.service.CalendarService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.UUID;
 import org.apache.commons.lang3.Range;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,13 +27,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -69,7 +69,7 @@ public class CalendarControllerTest {
         LocalDate from = LocalDate.of(2024, 2, 1);
         LocalDate to = LocalDate.of(2024, 5, 1);
 
-        when(service.getTimeline(any(), any(), any(), any(OffsetDateTime.class), any(LocalDate.class), any(LocalDate.class)))
+        when(service.getTimeline(any(), any(), any(), any(Instant.class), any(LocalDate.class), any(LocalDate.class)))
                 .thenAnswer(invocationOnMock -> {
                     return new StudyTimeline(
                             referenceDate,

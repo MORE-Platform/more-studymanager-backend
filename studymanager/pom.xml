@@ -235,15 +235,26 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <configOptions>
-                                <useTags>true</useTags>
-                            </configOptions>
+                            <generatorName>spring</generatorName>
+                            <library>spring-boot</library>
+
                             <inputSpec>${project.basedir}/src/main/resources/openapi/StudyManagerAPI.yaml</inputSpec>
                             <output>${project.build.directory}/generated-sources/study-manager</output>
+
+                            <packageName>io.redlink.more.studymanager.api.v1</packageName>
+                            <generateApis>true</generateApis>
                             <apiPackage>io.redlink.more.studymanager.api.v1.webservices</apiPackage>
+                            <generateModels>true</generateModels>
                             <modelPackage>io.redlink.more.studymanager.api.v1.model</modelPackage>
+                            <modelNameSuffix>DTO</modelNameSuffix>
+
+                            <generateApiTests>false</generateApiTests>
+                            <generateApiDocumentation>true</generateApiDocumentation>
+                            <generateModelTests>false</generateModelTests>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+
                             <typeMappings>
-                                <!-- typeMapping>string+date-time=Instant</typeMapping -->
+                                <typeMapping>string+date-time=Instant</typeMapping>
                                 <typeMapping>string+time=LocalTime</typeMapping>
                             </typeMappings>
                             <schemaMappings>
@@ -254,37 +265,20 @@
                                 <importMapping>Instant=java.time.Instant</importMapping>
                                 <importMapping>LocalTime=java.time.LocalTime</importMapping>
                             </importMappings>
+
+                            <configOptions>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <sourceFolder>src</sourceFolder>
+                                <documentationProvider>source</documentationProvider>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
+                                <openApiNullable>false</openApiNullable>
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <requestMappingMode>api_interface</requestMappingMode>
+                            </configOptions>
                         </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <generatorName>spring</generatorName>
-                    <library>spring-boot</library>
-
-                    <packageName>io.redlink.more.studymanager.api.v1</packageName>
-
-                    <generateApis>true</generateApis>
-                    <apiPackage>io.redlink.more.studymanager.api.v1.webservices</apiPackage>
-
-                    <generateModels>true</generateModels>
-                    <modelPackage>io.redlink.more.studymanager.api.v1.model</modelPackage>
-                    <modelNameSuffix>DTO</modelNameSuffix>
-
-                    <generateApiTests>false</generateApiTests>
-                    <generateApiDocumentation>true</generateApiDocumentation>
-                    <generateModelTests>false</generateModelTests>
-                    <generateSupportingFiles>false</generateSupportingFiles>
-
-                    <configOptions>
-                        <useSpringBoot3>true</useSpringBoot3>
-                        <sourceFolder>src</sourceFolder>
-                        <documentationProvider>source</documentationProvider>
-                        <interfaceOnly>true</interfaceOnly>
-                        <useTags>false</useTags>
-                        <openApiNullable>false</openApiNullable>
-                        <skipDefaultInterface>true</skipDefaultInterface>
-                    </configOptions>
-                </configuration>
             </plugin>
         </plugins>
     </build>

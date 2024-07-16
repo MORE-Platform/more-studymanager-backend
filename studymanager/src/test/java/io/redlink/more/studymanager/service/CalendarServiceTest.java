@@ -14,9 +14,10 @@ import io.redlink.more.studymanager.model.scheduler.RelativeDate;
 import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
 import io.redlink.more.studymanager.model.scheduler.RelativeRecurrenceRule;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
@@ -52,7 +53,7 @@ class CalendarServiceTest {
     @Test
     void testStudyNotFound() {
         when(studyService.getStudy(any(), any())).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> calendarService.getTimeline(1L, 1, 1, OffsetDateTime.now(), LocalDate.now(), LocalDate.now()));
+        assertThrows(NotFoundException.class, () -> calendarService.getTimeline(1L, 1, 1, Instant.now(), LocalDate.now(), LocalDate.now()));
     }
 
     @Test
@@ -65,7 +66,7 @@ class CalendarServiceTest {
                                 .setPlannedStartDate(LocalDate.now())
                                 .setPlannedEndDate(LocalDate.now().plusDays(3))
                 ));
-        assertThrows(NotFoundException.class, () -> calendarService.getTimeline(1L, 1,1, OffsetDateTime.now(), LocalDate.now(), LocalDate.now()));
+        assertThrows(NotFoundException.class, () -> calendarService.getTimeline(1L, 1,1, Instant.now(), LocalDate.now(), LocalDate.now()));
     }
 
     @Test
@@ -176,10 +177,10 @@ class CalendarServiceTest {
                 1L,
                 1,
                 2,
-                OffsetDateTime.of(
+                LocalDateTime.of(
                         LocalDate.of(2024, 5, 11),
-                        LocalTime.of(10,10,10),
-                        OffsetDateTime.now().getOffset()),
+                        LocalTime.of(10,10,10)
+                ).atZone(ZoneId.systemDefault()).toInstant(),
                 LocalDate.of(2024, 5, 9),
                 LocalDate.of(2024,5,17)
         );

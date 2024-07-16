@@ -22,7 +22,6 @@ import io.redlink.more.studymanager.utils.SchedulerUtils;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -49,7 +48,7 @@ public class CalendarService {
         this.participantService = participantService;
     }
 
-    public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, OffsetDateTime referenceDate, LocalDate from, LocalDate to) {
+    public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, Instant referenceDate, LocalDate from, LocalDate to) {
         final Study study = studyService.getStudy(studyId, null)
                 .orElseThrow(() -> NotFoundException.Study(studyId));
         final Range<LocalDate> studyRange = Range.of(
@@ -74,7 +73,7 @@ public class CalendarService {
          */
         final Instant participantStart;
         if (referenceDate != null) {
-            participantStart = referenceDate.toInstant();
+            participantStart = referenceDate;
         } else if (participant != null && participant.getStart() != null) {
             participantStart = participant.getStart();
         } else {

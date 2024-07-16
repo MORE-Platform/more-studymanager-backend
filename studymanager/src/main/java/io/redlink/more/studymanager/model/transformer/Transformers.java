@@ -9,7 +9,6 @@
 package io.redlink.more.studymanager.model.transformer;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.function.Function;
 
@@ -23,12 +22,12 @@ public final class Transformers {
     private Transformers() {
     }
 
-    public static OffsetDateTime toOffsetDateTime(Instant instant) {
-        return transform(instant, i -> i.atZone(HOME).toOffsetDateTime());
+    public static Instant toOffsetDateTime(Instant instant) {
+        return instant;
     }
 
-    public static Instant toInstant(OffsetDateTime offsetDateTime) {
-        return transform(offsetDateTime, OffsetDateTime::toInstant);
+    public static Instant toInstant(Instant offsetDateTime) {
+        return offsetDateTime;
     }
 
     /**

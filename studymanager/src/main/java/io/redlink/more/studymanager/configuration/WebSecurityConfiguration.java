@@ -11,19 +11,24 @@ package io.redlink.more.studymanager.configuration;
 import io.redlink.more.studymanager.properties.MoreAuthProperties;
 import io.redlink.more.studymanager.repository.UserRepository;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
@@ -32,9 +37,6 @@ import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -50,6 +52,7 @@ import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -71,20 +74,24 @@ public class WebSecurityConfiguration {
                                               OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
                                               UserRepository userRepository) throws Exception {
         // Basics
-        http.csrf()
+        http.csrf(csrf -> csrf
                 .ignoringRequestMatchers("/kibana/**")
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
-        http.cors().disable();
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+        );
+        http.cors(AbstractHttpConfigurer::disable);
 
         // Restricted Paths
-        http.authorizeHttpRequests()
-                .requestMatchers("/api", "/api/v1/me").permitAll()
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.GET, "/api", "/api/v1/me").permitAll()
                 // Allow unauthenticated access to the ui-/auth-settings
                 .requestMatchers(HttpMethod.GET, "/api/v1/config/ui").permitAll()
+                // Allow unauthenticated access to the build-info
+                .requestMatchers(HttpMethod.GET, "/api/v1/config/buildInfo").permitAll()
                 //TODO specific handling of temporary sidecar
                 .requestMatchers("/api/v1/components/observation/lime-survey-observation/end.html").permitAll()
-                .requestMatchers("/api/v1/studies/*/export/studydata/*").permitAll()
-                .requestMatchers("/api/v1/studies/*/calendar.ics").permitAll()
+                // Study-Data-Export is authenticated internally using individual access-tokens
+                .requestMatchers(HttpMethod.GET, "/api/v1/studies/*/export/studydata/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/studies/*/calendar.ics").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
                 .requestMatchers("/kibana/**").authenticated()
                 .requestMatchers("/login/init").authenticated()
@@ -96,30 +103,44 @@ public class WebSecurityConfiguration {
                         )
                 ).permitAll()
                 .requestMatchers("/error").authenticated()
-                .anyRequest().denyAll();
+                .anyRequest().denyAll()
+        );
 
         // API-Calls should not be redirected to the login page, but answered with a 401
-        http.exceptionHandling()
-                .defaultAuthenticationEntryPointFor(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), new AntPathRequestMatcher("/api/**"));
+        http.exceptionHandling(exHandling -> exHandling
+                .defaultAuthenticationEntryPointFor(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                        new AndRequestMatcher(
+                                new AntPathRequestMatcher("/api/**"),
+                                new NegatedRequestMatcher(
+                                        new AntPathRequestMatcher("/api/v1/studies/*/export/studydata/*")
+                                )
+                        )
+                )
+        );
 
         // Logout Config
-        http.logout()
+        http.logout(logout -> logout
                 .logoutSuccessHandler(oidcLogoutSuccessHandler())
-                .logoutSuccessUrl("/");
+                .logoutSuccessUrl("/")
+        );
 
         // Enable OAuth2
-        http.oauth2Login()
+        http.oauth2Login(oauth -> oauth
                 // register oauth2-provider under this baseurl to simplify routing
-                .authorizationEndpoint().baseUri("/login/oauth").and()
+                .authorizationEndpoint(ep -> ep.baseUri("/login/oauth"))
                 .authorizedClientService(
                         new UserSyncingOAuth2AuthorizedClientService(oAuth2AuthorizedClientService, oAuth2AuthenticationService, userRepository)
-                );
+                )
+        );
 
         // Enable OAuth2 client_credentials flow (insomnia)
-        http.oauth2ResourceServer().jwt();
+        http.oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
 
         //TODO maybe disable in production
-        http.headers().frameOptions().disable();
+        http.headers(headers -> headers
+                .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
+        );
 
         return http.build();
     }
