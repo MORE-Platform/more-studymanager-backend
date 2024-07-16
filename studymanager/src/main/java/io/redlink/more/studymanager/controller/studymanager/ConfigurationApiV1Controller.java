@@ -13,6 +13,7 @@ import io.redlink.more.studymanager.api.v1.model.FrontendConfigurationDTO;
 import io.redlink.more.studymanager.api.v1.model.KeycloakSettingsDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ConfigurationApi;
 import io.redlink.more.studymanager.properties.FrontendConfigurationProperties;
+import java.time.Instant;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,14 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
 
     @Override
     public ResponseEntity<BuildInfoDTO> getBuildInfo() {
-        return null;
+        return ResponseEntity.ok(
+                new BuildInfoDTO(
+                        "null",
+                        Instant.MIN
+                )
+                        .branch("undefined")
+                        .rev("*dirty")
+        );
     }
 
     @Override
@@ -43,13 +51,13 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
     }
 
     private static FrontendConfigurationDTO transform(FrontendConfigurationProperties uiConfig) {
-        return new FrontendConfigurationDTO()
+        return new FrontendConfigurationDTO(
+                new KeycloakSettingsDTO(
+                        uiConfig.keycloak().server(),
+                        uiConfig.keycloak().realm(),
+                        uiConfig.keycloak().clientId()
+                ))
                 .title(uiConfig.title())
-                .auth(new KeycloakSettingsDTO()
-                        .server(uiConfig.keycloak().server())
-                        .realm(uiConfig.keycloak().realm())
-                        .clientId(uiConfig.keycloak().clientId())
-                )
                 ;
     }
 }

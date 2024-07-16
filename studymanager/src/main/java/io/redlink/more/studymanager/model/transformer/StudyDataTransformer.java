@@ -8,16 +8,19 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.*;
+import io.redlink.more.studymanager.api.v1.model.IdTitleDTO;
+import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDTO;
+import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDataDTO;
+import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDataRowDTO;
+import io.redlink.more.studymanager.api.v1.model.ParticipationDataDTO;
 import io.redlink.more.studymanager.core.ui.DataView;
 import io.redlink.more.studymanager.core.ui.DataViewInfo;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.model.data.ParticipationData;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class StudyDataTransformer {
+public final class StudyDataTransformer {
 
     private StudyDataTransformer(){}
 
@@ -28,7 +31,7 @@ public class StudyDataTransformer {
                 .participantNamedId(toIdTitleDTO_V1(participationData.participantNamedId()))
                 .studyGroupNamedId(toIdTitleDTO_V1(participationData.studyGroupNamedId()))
                 .dataReceived(participationData.dataReceived())
-                .lastDataReceived(Transformers.toOffsetDateTime(participationData.lastDataReceived()));
+                .lastDataReceived(participationData.lastDataReceived());
     }
     public static IdTitleDTO toIdTitleDTO_V1(ParticipationData.NamedId idTitle){
         if(idTitle == null)

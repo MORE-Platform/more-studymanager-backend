@@ -16,13 +16,17 @@ import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.StudyGroup;
 import io.redlink.more.studymanager.model.data.ParticipationData;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
 
 @Service
 public class DataProcessingService {
@@ -119,16 +123,16 @@ public class DataProcessingService {
         return observationService.listDataViews(studyId, observationId);
     }
 
-    public DataView getDataView(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, OffsetDateTime from, OffsetDateTime to) {
+    public DataView getDataView(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, Instant from, Instant to) {
         if (participantId != null) {
-            return observationService.queryData(studyId, observationId, viewName, null, participantId, from != null && to != null ? new Timeframe(from.toInstant(), to.toInstant()) : null);
+            return observationService.queryData(studyId, observationId, viewName, null, participantId, from != null && to != null ? new Timeframe(from, to) : null);
         } else if (studyGroupId != null) {
-            return observationService.queryData(studyId, observationId, viewName, studyGroupId, null, from != null && to != null ? new Timeframe(from.toInstant(), to.toInstant()) : null);
+            return observationService.queryData(studyId, observationId, viewName, studyGroupId, null, from != null && to != null ? new Timeframe(from, to) : null);
         }
-        return observationService.queryData(studyId, observationId, viewName, studyGroupId, participantId, from != null && to != null ? new Timeframe(from.toInstant(), to.toInstant()) : null);
+        return observationService.queryData(studyId, observationId, viewName, studyGroupId, participantId, from != null && to != null ? new Timeframe(from, to) : null);
     }
 
-    public List<DataPointDTO> getDataPoints(Long studyId, Integer size, Integer observationId, Integer participantId, OffsetDateTime date) {
+    public List<DataPointDTO> getDataPoints(Long studyId, Integer size, Integer observationId, Integer participantId, Instant date) {
         try {
             return elasticService.listDataPoints(studyId, participantId, observationId, toIsoString(date), size).stream()
                     .map(dp -> new DataPointDTO()
@@ -145,8 +149,8 @@ public class DataProcessingService {
         }
     }
 
-    private String toIsoString(OffsetDateTime date) {
-        return date != null ? date.format(DateTimeFormatter.ISO_INSTANT) : null;
+    private String toIsoString(Instant date) {
+        return date != null ? DateTimeFormatter.ISO_INSTANT.format(date) : null;
     }
 
     @Cacheable("participants")

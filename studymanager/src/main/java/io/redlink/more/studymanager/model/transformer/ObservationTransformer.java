@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.time.Instant;
 
 public final class ObservationTransformer {
 
@@ -34,6 +35,8 @@ public final class ObservationTransformer {
     }
 
     public static ObservationDTO toObservationDTO_V1(Observation observation) {
+        Instant instant = observation.getModified();
+        Instant instant1 = observation.getCreated();
         return new ObservationDTO()
                 .studyId(observation.getStudyId())
                 .observationId(observation.getObservationId())
@@ -44,8 +47,8 @@ public final class ObservationTransformer {
                 .studyGroupId(observation.getStudyGroupId())
                 .properties(observation.getProperties())
                 .schedule(EventTransformer.toObservationScheduleDTO_V1(observation.getSchedule()))
-                .created(Transformers.toOffsetDateTime(observation.getCreated()))
-                .modified(Transformers.toOffsetDateTime(observation.getModified()))
+                .created(instant1)
+                .modified(instant)
                 .hidden(observation.getHidden())
                 .noSchedule(observation.getNoSchedule());
     }

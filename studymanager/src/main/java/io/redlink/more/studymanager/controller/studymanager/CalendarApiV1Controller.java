@@ -15,8 +15,8 @@ import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.TimelineTransformer;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.CalendarService;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +46,7 @@ public class CalendarApiV1Controller implements CalendarApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
-    public ResponseEntity<StudyTimelineDTO> getStudyTimeline(Long studyId, Integer participant, Integer studyGroup, OffsetDateTime referenceDate, LocalDate from, LocalDate to) {
+    public ResponseEntity<StudyTimelineDTO> getStudyTimeline(Long studyId, Integer participant, Integer studyGroup, Instant referenceDate, LocalDate from, LocalDate to) {
         return ResponseEntity.ok(
                 TimelineTransformer.toStudyTimelineDTO(
                         service.getTimeline(studyId, participant, studyGroup, referenceDate, from, to)
