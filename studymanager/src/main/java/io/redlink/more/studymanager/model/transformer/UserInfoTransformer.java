@@ -81,7 +81,7 @@ public final class UserInfoTransformer {
         return new CollaboratorRoleDetailsDTO()
                 .role(RoleTransformer.toStudyRoleDTO(role.role()))
                 .assignedBy(toUserInfoDTO(role.creator()))
-                .assignedAt(Transformers.toOffsetDateTime(role.created()))
+                .assignedAt(role.created())
                 ;
     }
 

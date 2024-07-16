@@ -18,12 +18,12 @@ import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
 
 
-public class TimelineTransformer {
+public final class TimelineTransformer {
     private TimelineTransformer() {}
 
     public static StudyTimelineDTO toStudyTimelineDTO(StudyTimeline studyTimeline) {
         return new StudyTimelineDTO()
-                .participantSignup(Transformers.toOffsetDateTime(studyTimeline.signup()))
+                .participantSignup(studyTimeline.signup())
                 .studyDuration(
                         new StudyTimelineStudyDurationDTO()
                                 .from(studyTimeline.participationRange().getMinimum())
@@ -44,8 +44,8 @@ public class TimelineTransformer {
                 .title(observationTimelineEvent.title())
                 .purpose(observationTimelineEvent.purpose())
                 .type(observationTimelineEvent.type())
-                .start(Transformers.toOffsetDateTime(observationTimelineEvent.start()))
-                .end(Transformers.toOffsetDateTime(observationTimelineEvent.end()))
+                .start(observationTimelineEvent.start())
+                .end(observationTimelineEvent.end())
                 .hidden(observationTimelineEvent.hidden())
                 .scheduleType(observationTimelineEvent.scheduleType());
     }
@@ -56,7 +56,7 @@ public class TimelineTransformer {
                 .studyGroupId(interventionTimelineEvent.studyGroupId())
                 .title(interventionTimelineEvent.title())
                 .purpose(interventionTimelineEvent.purpose())
-                .start(Transformers.toOffsetDateTime(interventionTimelineEvent.start()))
+                .start(interventionTimelineEvent.start())
                 .scheduleType(interventionTimelineEvent.scheduleType());
     }
 }

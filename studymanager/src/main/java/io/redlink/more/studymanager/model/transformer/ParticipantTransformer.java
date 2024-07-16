@@ -11,8 +11,9 @@ package io.redlink.more.studymanager.model.transformer;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipantStatusDTO;
 import io.redlink.more.studymanager.model.Participant;
+import java.time.Instant;
 
-public class ParticipantTransformer {
+public final class ParticipantTransformer {
 
     private ParticipantTransformer() {
 
@@ -27,6 +28,9 @@ public class ParticipantTransformer {
     }
 
     public static ParticipantDTO toParticipantDTO_V1(Participant participant) {
+        Instant instant = participant.getCreated();
+        Instant instant1 = participant.getModified();
+        Instant instant2 = participant.getStart();
         return new ParticipantDTO()
                 .studyId(participant.getStudyId())
                 .participantId(participant.getParticipantId())
@@ -34,9 +38,9 @@ public class ParticipantTransformer {
                 .studyGroupId(participant.getStudyGroupId())
                 .registrationToken(participant.getRegistrationToken())
                 .status(ParticipantStatusDTO.fromValue(participant.getStatus().getValue()))
-                .start(Transformers.toOffsetDateTime(participant.getStart()))
-                .modified(Transformers.toOffsetDateTime(participant.getModified()))
-                .created(Transformers.toOffsetDateTime(participant.getCreated()));
+                .start(instant2)
+                .modified(instant1)
+                .created(instant);
     }
 
 }

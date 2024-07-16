@@ -73,7 +73,7 @@ public class CalendarControllerTest {
                 .thenAnswer(invocationOnMock -> {
                     return new StudyTimeline(
                             referenceDate,
-                            Range.between(from, to, LocalDate::compareTo),
+                            Range.of(from, to, LocalDate::compareTo),
                             List.of(
                                     ObservationTimelineEvent.fromObservation(
                                             new Observation()
