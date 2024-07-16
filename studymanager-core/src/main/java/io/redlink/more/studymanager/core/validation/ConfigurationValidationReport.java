@@ -16,24 +16,23 @@ public class ConfigurationValidationReport {
     private final List<ValidationIssue> issues;
 
     private ConfigurationValidationReport(List<ValidationIssue> issues) {
-        this.issues = issues;
+        this.issues = new ArrayList<>(issues);
     }
 
     public static ConfigurationValidationReport init() {
-        return new ConfigurationValidationReport(new ArrayList<>());
+        return new ConfigurationValidationReport(List.of());
     }
 
     public static ConfigurationValidationReport of(List<ValidationIssue> issues) {
-        //TODO copy
         return new ConfigurationValidationReport(issues);
     }
 
     public static ConfigurationValidationReport of(ValidationIssue issue) {
-        return new ConfigurationValidationReport(List.of(issue));
+        return of(List.of(issue));
     }
 
     public ConfigurationValidationReport error(String message) {
-        this.issues.add(ValidationIssue.error(null,message));
+        this.issues.add(ValidationIssue.error(null, message));
         return this;
     }
 
@@ -47,8 +46,9 @@ public class ConfigurationValidationReport {
     }
 
     public boolean isValid() {
-        return this.listIssues().size() == 0;
+        return issues.isEmpty();
     }
+
     List<ValidationIssue> listIssues() {
         return issues;
     }
