@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -152,7 +152,7 @@ public class ImportExportService {
         return newStudy;
     }
 
-    public void exportStudyData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, LocalDate from, LocalDate to) {
+    public void exportStudyData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
         if (studyService.existsStudy(studyId).orElse(false)) {
             exportStudyDataAsync(outputStream, studyId, studyGroupId, participantId, observationId, from, to);
         } else {
@@ -161,7 +161,7 @@ public class ImportExportService {
     }
 
     @Async
-    public void exportStudyDataAsync(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, LocalDate from, LocalDate to) {
+    public void exportStudyDataAsync(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
         try (outputStream) {
             outputStream.write("[".getBytes(StandardCharsets.UTF_8));
             elasticService.exportData(outputStream, studyId, studyGroupId, participantId, observationId, from, to);
