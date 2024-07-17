@@ -21,14 +21,26 @@ import io.redlink.more.studymanager.repository.DownloadTokenRepository;
 import io.redlink.more.studymanager.service.ImportExportService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 
@@ -84,26 +96,30 @@ public class ImportExportApiV1Controller implements ImportExportApi {
     }
 
     @Override
-    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
-    public ResponseEntity<GenerateDownloadToken200ResponseDTO> generateDownloadToken(Long studyId) {
-        return ResponseEntity.ok(new GenerateDownloadToken200ResponseDTO().token(
-                tokenRepository.createToken(studyId).getToken()
-        ));
+    public ResponseEntity<StreamingResponseBody> exportStudyData(Long studyId, String token, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, LocalDate from, LocalDate to) {
+        Optional<DownloadToken> dt = tokenRepository.getToken(token).filter(t -> t.getStudyId().equals(studyId));
+
+        if (dt.isPresent()) {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.set("Content-Disposition", "attachment;filename=" + dt.get().getFilename());
+
+            return ResponseEntity
+                    .ok()
+                    .headers(responseHeaders)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(outputStream -> service.exportStudyData(outputStream, studyId, studyGroupId, participantId, observationId, from, to));
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    @RequestMapping(
-            method = RequestMethod.GET,
-            value = "/studies/{studyId}/export/studydata/{token}",
-            produces = { "application/json" }
-    )
-    public void exportStudyData(@PathVariable Long studyId, @PathVariable("token") String token, HttpServletResponse response) throws IOException {
-        Optional<DownloadToken> dt = tokenRepository.getToken(token).filter(t -> t.getStudyId().equals(studyId));
-        if(dt.isPresent()) {
-            response.setHeader("Content-Disposition", "attachment;filename=" + dt.get().getFilename());
-            service.exportStudyData(response.getOutputStream(), studyId);
-        } else {
-            response.setStatus(403);
-        }
+    @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    public ResponseEntity<GenerateDownloadToken200ResponseDTO> generateDownloadToken(Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, LocalDate from, LocalDate to) {
+        var token = tokenRepository.createToken(studyId).getToken();
+        var uri = ServletUriComponentsBuilder.fromCurrentRequest().pathSegment(token).build(true).toUri();
+
+        return ResponseEntity.created(uri).body(new GenerateDownloadToken200ResponseDTO().token(token));
     }
 
     @Override
