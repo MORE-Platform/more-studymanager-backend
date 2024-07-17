@@ -10,7 +10,6 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.*;
-import jakarta.servlet.ServletOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -151,19 +152,19 @@ public class ImportExportService {
         return newStudy;
     }
 
-    public void exportStudyData(ServletOutputStream outputStream, Long studyId) {
+    public void exportStudyData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, LocalDate from, LocalDate to) {
         if (studyService.existsStudy(studyId).orElse(false)) {
-            exportStudyDataAsync(outputStream, studyId);
+            exportStudyDataAsync(outputStream, studyId, studyGroupId, participantId, observationId, from, to);
         } else {
             throw NotFoundException.Study(studyId);
         }
     }
 
     @Async
-    public void exportStudyDataAsync(ServletOutputStream outputStream, Long studyId) {
+    public void exportStudyDataAsync(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, LocalDate from, LocalDate to) {
         try (outputStream) {
             outputStream.write("[".getBytes(StandardCharsets.UTF_8));
-            elasticService.exportData(studyId, outputStream);
+            elasticService.exportData(outputStream, studyId, studyGroupId, participantId, observationId, from, to);
             outputStream.write("]".getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             LOGGER.error("Cannot export study data for {}", studyId, e);

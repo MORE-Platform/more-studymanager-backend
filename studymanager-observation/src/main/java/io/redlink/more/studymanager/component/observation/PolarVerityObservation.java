@@ -44,9 +44,9 @@ public class PolarVerityObservation<C extends ObservationProperties> extends Obs
 
         DataViewInfoType(String i18nKey, DataView.ChartType chartType, ViewConfig viewConfig) {
             this(
-                    "data.charts.polarVerity.%s.label".formatted(i18nKey),
-                    "data.charts.polarVerity.%s.title".formatted(i18nKey),
-                    "data.charts.polarVerity.%s.description".formatted(i18nKey),
+                    "monitoring.charts.polarVerity.%s.label".formatted(i18nKey),
+                    "monitoring.charts.polarVerity.%s.title".formatted(i18nKey),
+                    "monitoring.charts.polarVerity.%s.description".formatted(i18nKey),
                     chartType,
                     viewConfig
             );

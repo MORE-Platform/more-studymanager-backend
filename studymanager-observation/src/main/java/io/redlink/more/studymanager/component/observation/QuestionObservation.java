@@ -65,9 +65,9 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
 
         DataViewInfoType(String i18nKey, DataView.ChartType chartType, ViewConfig viewConfig) {
             this(
-                    "data.charts.simpleQuestion.%s.label".formatted(i18nKey),
-                    "data.charts.simpleQuestion.%s.title".formatted(i18nKey),
-                    "data.charts.simpleQuestion.%s.description".formatted(i18nKey),
+                    "monitoring.charts.simpleQuestion.%s.label".formatted(i18nKey),
+                    "monitoring.charts.simpleQuestion.%s.title".formatted(i18nKey),
+                    "monitoring.charts.simpleQuestion.%s.description".formatted(i18nKey),
                     chartType,
                     viewConfig
             );
