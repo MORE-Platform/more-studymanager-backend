@@ -8,9 +8,19 @@
  */
 package io.redlink.more.studymanager.core.properties.model;
 
+import io.redlink.more.studymanager.core.validation.ValidationIssue;
+
 public class StringValue extends Value<String> {
     public StringValue(String id) {
         super(id);
+    }
+
+    @Override
+    protected ValidationIssue doValidate(String s) {
+        if (isRequired() && s.trim().isEmpty()) {
+            return ValidationIssue.requiredMissing(this);
+        }
+        return super.doValidate(s);
     }
 
     @Override

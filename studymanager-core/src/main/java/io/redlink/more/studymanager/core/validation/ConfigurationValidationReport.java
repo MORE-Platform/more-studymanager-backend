@@ -46,7 +46,7 @@ public class ConfigurationValidationReport {
     }
 
     public boolean isValid() {
-        return issues.isEmpty();
+        return issues.stream().anyMatch(i -> i.getType() != ValidationIssue.Type.None);
     }
 
     List<ValidationIssue> listIssues() {

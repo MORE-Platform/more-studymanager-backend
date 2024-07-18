@@ -42,6 +42,14 @@ public class ValidationIssue {
         return new ValidationIssue(Type.WARNING, Optional.ofNullable(value).map(Value::getId).orElse(null), message);
     }
 
+    public static ValidationIssue requiredMissing(Value<?> value) {
+        return error(value, "..."); /* FIXME */
+    }
+
+    public static ValidationIssue immutablePropertyChanged(Value<?> value) {
+        return error(value, "..."); /* FIXME */
+    }
+
     public Type getType() {
         return type;
     }
