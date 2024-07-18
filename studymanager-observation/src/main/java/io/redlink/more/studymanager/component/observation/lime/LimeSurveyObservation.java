@@ -13,7 +13,6 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -35,15 +34,15 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
         Set<Integer> participantIds = sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL);
         participantIds.removeIf(id -> sdk.getPropertiesForParticipant(id).isPresent());
         limeSurveyRequestService.activateParticipants(participantIds, surveyId)
-                .forEach(data -> {
+                .forEach(data ->
                     sdk.setPropertiesForParticipant(
                             Integer.parseInt(data.firstname()),
                             new ObservationProperties(
                                     Map.of("token", data.token(),
                                             "limeUrl", limeSurveyRequestService.getBaseUrl())
                             )
-                    );
-                });
+                    )
+                );
         limeSurveyRequestService.setSurveyEndUrl(surveyId, sdk.getStudyId(), sdk.getObservationId());
         limeSurveyRequestService.activateSurvey(surveyId);
         sdk.setValue(LIME_SURVEY_ID, surveyId);
@@ -54,6 +53,8 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
         String activeSurveyId = sdk.getValue(LIME_SURVEY_ID, String.class).orElse(null);
 
         if(activeSurveyId != null && !activeSurveyId.equals(newSurveyId)) {
+            // TODO: throw new ConfigurationValidationException(ConfigurationValidationReport.of(ValidationIssue.immutablePropertyChanged(LimeSurveyObservationFactory.limeSurveyId)));
+
             throw new RuntimeException(String.format(
                     "SurveyId on Observation %s must not be changed: %s -> %s",
                     sdk.getObservationId(),
@@ -80,21 +81,22 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
 
     public boolean writeDataPoints(String token, int surveyId, int savedId) {
         //check if token exists, get participant and answer and store as datapoint
-        getParticipantForToken(token).ifPresent(participantId -> {
-            limeSurveyRequestService.getAnswer(token, surveyId, savedId).ifPresent(m -> {
-                sdk.storeDataPoint(participantId, "lime-survey-observation", m);
-            });
-        });
+        getParticipantForToken(token).ifPresent(participantId ->
+                limeSurveyRequestService.getAnswer(token, surveyId, savedId).ifPresent(m ->
+                        sdk.storeDataPoint(participantId, "lime-survey-observation", m)
+                )
+        );
         return true;
     }
 
     public Optional<Integer> getParticipantForToken(String token) {
-        return sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL).stream().filter(id -> {
-            return sdk.getPropertiesForParticipant(id)
-                    .map(o -> o.getString("token"))
-                    .map(t -> t.equals(token))
-                    .orElse(false);
-        }).findFirst();
-
+        return sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL).stream()
+                .filter(id ->
+                        sdk.getPropertiesForParticipant(id)
+                                .map(o -> o.getString("token"))
+                                .map(t -> t.equals(token))
+                                .orElse(false)
+                )
+                .findFirst();
     }
 }
