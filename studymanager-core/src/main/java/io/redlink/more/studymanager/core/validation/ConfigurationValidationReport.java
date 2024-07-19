@@ -31,6 +31,10 @@ public class ConfigurationValidationReport {
         return of(List.of(issue));
     }
 
+    public static ConfigurationValidationReport ofError(String message) {
+        return init().error(message);
+    }
+
     public ConfigurationValidationReport error(String message) {
         this.issues.add(ValidationIssue.error(null, message));
         return this;
