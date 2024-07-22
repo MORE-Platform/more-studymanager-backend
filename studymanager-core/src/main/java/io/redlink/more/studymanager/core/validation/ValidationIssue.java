@@ -43,11 +43,11 @@ public class ValidationIssue {
     }
 
     public static ValidationIssue requiredMissing(Value<?> value) {
-        return error(value, "..."); /* FIXME */
+        return error(value, "global.error.required");
     }
 
     public static ValidationIssue immutablePropertyChanged(Value<?> value) {
-        return error(value, "..."); /* FIXME */
+        return error(value, "global.error.immutable");
     }
 
     public Type getType() {

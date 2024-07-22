@@ -17,7 +17,7 @@ public class StringValue extends Value<String> {
 
     @Override
     protected ValidationIssue doValidate(String s) {
-        if (isRequired() && s.trim().isEmpty()) {
+        if (isRequired() && (s == null || s.trim().isEmpty())) {
             return ValidationIssue.requiredMissing(this);
         }
         return super.doValidate(s);

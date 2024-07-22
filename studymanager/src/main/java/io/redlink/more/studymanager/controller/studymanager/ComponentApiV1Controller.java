@@ -80,7 +80,7 @@ public class ComponentApiV1Controller implements ComponentsApi {
                     }
                 })
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @Override

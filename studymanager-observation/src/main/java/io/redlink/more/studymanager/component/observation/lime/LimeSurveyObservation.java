@@ -13,6 +13,11 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
+import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
+import io.redlink.more.studymanager.core.validation.ValidationIssue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -21,6 +26,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
 
     public static final String LIME_SURVEY_ID = "limeSurveyId";
     private final LimeSurveyRequestService limeSurveyRequestService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(LimeSurveyObservation.class);
 
     public LimeSurveyObservation(MoreObservationSDK sdk, C properties, LimeSurveyRequestService limeSurveyRequestService) throws ConfigurationValidationException {
         super(sdk, properties);
@@ -51,22 +57,18 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     protected String checkAndGetSurveyId() {
         String newSurveyId = properties.getString(LIME_SURVEY_ID);
         String activeSurveyId = sdk.getValue(LIME_SURVEY_ID, String.class).orElse(null);
-
-        if(activeSurveyId != null && !activeSurveyId.equals(newSurveyId)) {
-            // TODO: throw new ConfigurationValidationException(ConfigurationValidationReport.of(ValidationIssue.immutablePropertyChanged(LimeSurveyObservationFactory.limeSurveyId)));
-
-            throw new RuntimeException(String.format(
+        if (activeSurveyId != null && !activeSurveyId.equals(newSurveyId)) {
+            LOGGER.error(String.format(
                     "SurveyId on Observation %s must not be changed: %s -> %s",
                     sdk.getObservationId(),
                     activeSurveyId,
                     newSurveyId
             ));
+            throw new ConfigurationValidationException(ConfigurationValidationReport.of(ValidationIssue.immutablePropertyChanged(LimeSurveyObservationFactory.limeSurveyId)));
         } else {
             return newSurveyId;
         }
     }
-
-
 
     @Override
     public void deactivate() {

@@ -23,8 +23,7 @@ public class ExceptionControllerAdvice {
     public ResponseEntity<ValidationReportDTO> handleConfigurationValidationException(ConfigurationValidationException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .header("Error-Message", e.getMessage())
-                .body(ValidationReportTransformer.validationReportDTO_V1(e))
-                ;
+                .body(ValidationReportTransformer.validationReportDTO_V1(e));
     }
 
 }

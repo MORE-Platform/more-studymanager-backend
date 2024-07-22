@@ -50,7 +50,7 @@ public class ConfigurationValidationReport {
     }
 
     public boolean isValid() {
-        return issues.stream().anyMatch(i -> i.getType() != ValidationIssue.Type.None);
+        return issues.stream().noneMatch(i -> i.getType() != ValidationIssue.Type.None);
     }
 
     List<ValidationIssue> listIssues() {
