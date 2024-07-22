@@ -14,7 +14,9 @@ import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -22,6 +24,7 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
+import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Iterables;
 import io.redlink.more.studymanager.core.io.TimeRange;
@@ -31,22 +34,19 @@ import io.redlink.more.studymanager.model.data.ParticipationData;
 import io.redlink.more.studymanager.model.data.SimpleDataPoint;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import io.redlink.more.studymanager.utils.MapperUtils;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Service
 @EnableConfigurationProperties({ElasticProperties.class})
@@ -328,23 +328,23 @@ public class ElasticService {
         }
     }
 
-    public void exportData(Long studyId, OutputStream outputStream) throws IOException {
+    public void exportData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) throws IOException {
         String index = getStudyIdString(studyId);
 
         if(!client.indices().exists(e -> e.index(index)).value()) {
             return;
         }
 
-        SearchRequest request = getQuery(index, null);
+        SearchRequest request = getQuery(index, studyGroupId, participantId, observationId, from, to, null);
         SearchResponse<JsonNode> rsp = client.search(request, JsonNode.class);
 
         while (rsp.hits().hits().size() > 0) {
             writeHits(rsp.hits().hits(), outputStream);
             outputStream.flush();
             List<FieldValue> searchAfterSort = Iterables.getLast(rsp.hits().hits()).sort();
-            request = getQuery(index, searchAfterSort);
+            request = getQuery(index, studyGroupId, participantId, observationId, from, to, searchAfterSort);
             rsp = client.search(request, JsonNode.class);
-            if(rsp.hits().hits().size() > 0) {
+            if (rsp.hits().hits().size() > 0) {
                 outputStream.write(",".getBytes(StandardCharsets.UTF_8));
             }
         }
@@ -358,20 +358,45 @@ public class ElasticService {
         outputStream.write(datapoints.getBytes(StandardCharsets.UTF_8));
     }
 
-    private SearchRequest getQuery(String index, List<FieldValue> searchAfterSort) {
+    private SearchRequest getQuery(String index, List<Integer> studyGroupIds, List<Integer> participantIds, List<Integer> observationIds, Instant from, Instant to, List<FieldValue> searchAfterSort) {
         SearchRequest.Builder builder = new SearchRequest.Builder();
+        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
+
+        if (studyGroupIds != null && !studyGroupIds.isEmpty()) {
+            List<String> studyGroupIdsStrings = studyGroupIds.stream()
+                    .map(ElasticService::getStudyGroupIdString)
+                    .toList();
+            boolQueryBuilder.filter(f -> f.terms(t -> t.field("study_group_id").terms(TermsQueryField.of(tf -> tf.value(studyGroupIdsStrings.stream().map(FieldValue::of).collect(Collectors.toList()))))));
+        }
+
+        if (participantIds != null && !participantIds.isEmpty()) {
+            List<String> participantIdStrings = participantIds.stream()
+                    .map(ElasticService::getParticipantIdString)
+                    .toList();
+            boolQueryBuilder.filter(f -> f.terms(t -> t.field("participant_id").terms(TermsQueryField.of(tf -> tf.value(participantIdStrings.stream().map(FieldValue::of).collect(Collectors.toList()))))));
+        }
+
+        if (observationIds != null && !observationIds.isEmpty()) {
+            boolQueryBuilder.filter(f -> f.terms(t -> t.field("observation_id").terms(v -> v.value(observationIds.stream().map(FieldValue::of).collect(Collectors.toList())))));
+        }
+
+        if (from != null && to != null) {
+            boolQueryBuilder.filter(f -> f.range(r -> r.field("effective_time_frame").gte(JsonData.of(from)).lte(JsonData.of(to))));
+        }
+
         builder.index(index)
-                .query(q -> q.matchAll(m -> m))
-                //.pit(p -> p.id(pitId).keepAlive(k -> k.time("1m")))
+                .query(q -> q.bool(boolQueryBuilder.build()))
                 .sort(s -> s.field(f -> f.field("effective_time_frame").order(SortOrder.Asc)))
+                .sort(s -> s.field(f -> f.field("datapoint_id.keyword").order(SortOrder.Asc)))
                 .size(BATCH_SIZE_FOR_EXPORT_REQUESTS);
 
-        if(searchAfterSort != null) {
+        if (searchAfterSort != null) {
             builder.searchAfter(searchAfterSort);
         }
 
         return builder.build();
     }
+
 
     public List<SimpleDataPoint> listDataPoints(
             Long studyId, Integer participantId, Integer observationId, String isoDate, int size) throws IOException {
