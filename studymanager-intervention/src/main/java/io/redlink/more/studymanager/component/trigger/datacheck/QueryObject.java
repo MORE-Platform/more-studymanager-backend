@@ -34,7 +34,7 @@ public class QueryObject {
     public Set<DataPointQuery> parameter;
 
     public String toQueryString() {
-        return "(" + parameter.stream().map(DataPointQuery::toQueryString).collect(Collectors.joining(" AND ")) + ")";
+        return parameter.stream().map(DataPointQuery::toQueryString).collect(Collectors.joining(" AND "));
     }
 
 }
