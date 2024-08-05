@@ -36,10 +36,10 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
         return ResponseEntity.ok(
                 new BuildInfoDTO(
                         "null",
-                        Instant.MIN
+                        Instant.EPOCH
                 )
                         .branch("undefined")
-                        .rev("*dirty")
+                        .rev("unknown")
         );
     }
 
