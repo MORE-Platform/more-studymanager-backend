@@ -219,7 +219,7 @@ public class ElasticDataService {
                     .missing(NO_GROUP_KEY)
             );
             case TERM_FIELD -> a.terms(tf -> tf.field("data_%s.keyword".formatted(operation.field()))
-                    .minDocCount(0)
+                    .minDocCount(1)
             );
         };
     }
