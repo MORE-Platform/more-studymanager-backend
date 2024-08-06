@@ -18,16 +18,18 @@ public class ValidationIssue {
         WARNING
     }
 
-    public static ValidationIssue NONE = new ValidationIssue(Type.None, null, null);
+    public static ValidationIssue NONE = new ValidationIssue(Type.None, null, null, null);
 
     private final Type type;
     private final String propertyId;
     private final String message;
+    private String componentTitle;
 
-    private ValidationIssue(Type type, String propertyId, String message) {
+    private ValidationIssue(Type type, String propertyId, String message, String componentTitle) {
         this.type = type;
         this.propertyId = propertyId;
         this.message = message;
+        this.componentTitle = componentTitle;
     }
 
     public static boolean nonNone(ValidationIssue issue) {
@@ -35,11 +37,11 @@ public class ValidationIssue {
     }
 
     public static ValidationIssue error(Value<?> value, String message) {
-        return new ValidationIssue(Type.ERROR, Optional.ofNullable(value).map(Value::getId).orElse(null), message);
+        return new ValidationIssue(Type.ERROR, Optional.ofNullable(value).map(Value::getId).orElse(null), message, null);
     }
 
     public static ValidationIssue warning(Value<?> value, String message) {
-        return new ValidationIssue(Type.WARNING, Optional.ofNullable(value).map(Value::getId).orElse(null), message);
+        return new ValidationIssue(Type.WARNING, Optional.ofNullable(value).map(Value::getId).orElse(null), message, null);
     }
 
     public static ValidationIssue requiredMissing(Value<?> value) {
@@ -60,5 +62,13 @@ public class ValidationIssue {
 
     public String getPropertyId() {
         return propertyId;
+    }
+
+    public String getComponentTitle() {
+        return componentTitle;
+    }
+
+    public void setComponentTitle(String componentTitle) {
+        this.componentTitle = componentTitle;
     }
 }

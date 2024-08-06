@@ -1460,6 +1460,8 @@ components:
           type: string
         propertyId:
           type: string
+        componentTitle:
+          type: string
         type:
           type: string
 

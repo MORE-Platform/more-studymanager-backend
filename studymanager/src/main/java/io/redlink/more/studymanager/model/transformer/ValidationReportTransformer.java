@@ -42,6 +42,7 @@ public final class ValidationReportTransformer {
         return new ValidationReportItemDTO()
                 .message(issue.getMessage())
                 .propertyId(issue.getPropertyId())
+                .componentTitle(issue.getComponentTitle())
                 .type(type);
     }
 
