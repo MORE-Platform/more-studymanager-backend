@@ -15,6 +15,7 @@ import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.ui.DataView;
 import io.redlink.more.studymanager.core.ui.DataViewInfo;
+import io.redlink.more.studymanager.core.validation.ValidationIssue;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
@@ -97,14 +98,35 @@ public class ObservationService {
 
     private void deactivateObservationsFor(Study study){ listObservationsFor(study).forEach(Component::deactivate); }
 
+    private void validateProperties(List<Observation> observations) {
+        for (Observation observation : observations) {
+            try {
+                factory(observation).validate(observation.getProperties());
+            } catch (ConfigurationValidationException e) {
+                for (ValidationIssue issue : e.getReport().getIssues()) {
+                    issue.setComponentTitle(observation.getTitle());
+                }
+
+                throw e;
+            }
+        }
+    }
+
     public List<io.redlink.more.studymanager.core.component.Observation> listObservationsFor(Study study){
-        return listObservations(study.getStudyId()).stream()
-                .map(observation -> factory(observation)
-                        .create(
-                                sdk.scopedObservationSDK(observation.getStudyId(), observation.getStudyGroupId(), observation.getObservationId()),
-                                observation.getProperties()
-                        ))
-                .toList();
+        List<Observation> observations = listObservations(study.getStudyId());
+        List<io.redlink.more.studymanager.core.component.Observation> result = new ArrayList<>();
+
+        validateProperties(observations);
+
+        for (Observation observation : observations) {
+            result.add(factory(observation)
+                    .create(
+                            sdk.scopedObservationSDK(observation.getStudyId(), observation.getStudyGroupId(), observation.getObservationId()),
+                            observation.getProperties()
+                    ));
+        }
+
+        return result;
     }
 
     public DataViewInfo[] listDataViews(Long studyId, Integer observationId) {
