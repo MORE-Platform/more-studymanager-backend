@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.sdk;
 
+import io.redlink.more.studymanager.core.io.SimpleParticipant;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
@@ -42,7 +43,7 @@ public class MoreSDK {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MoreSDK.class);
 
-    private final NameValuePairRepository nvpairs;
+    public final NameValuePairRepository nvpairs;
 
     private final SchedulingService schedulingService;
 
@@ -66,18 +67,6 @@ public class MoreSDK {
         this.elasticService = elasticService;
         this.pushNotificationService = pushNotificationService;
         this.observationRepository = observationRepository;
-    }
-
-    public <T extends Serializable> void setValue(String issuer, String name, T value) {
-        nvpairs.setValue(issuer, name, value);
-    }
-
-    public <T extends Serializable> Optional<T> getValue(String issuer, String name, Class<T> tClass) {
-        return nvpairs.getValue(issuer, name, tClass);
-    }
-
-    public void removeValue(String issuer, String name) {
-        nvpairs.removeValue(issuer, name);
     }
 
     public MoreActionSDK scopedActionSDK(Long studyId, Integer studyGroupId, int interventionId, int actionId, String actionType, int participantId) {
@@ -110,16 +99,17 @@ public class MoreSDK {
         schedulingService.unscheduleJob(issuer, id, TriggerJob.class);
     }
 
-    public Set<Integer> listParticipants(long studyId, Integer studyGroupId, Set<Participant.Status> status) {
+    public Set<SimpleParticipant> listParticipants(long studyId, Integer studyGroupId, Set<Participant.Status> status) {
         return participantService.listParticipants(studyId).stream()
                 .filter(p -> studyGroupId == null || studyGroupId.equals(p.getStudyGroupId()))
                 .filter(p -> status == null || status.contains(p.getStatus()))
-                .map(Participant::getParticipantId)
+                .map(p -> new SimpleParticipant(p.getParticipantId(), p.getStart()))
                 .collect(Collectors.toSet());
     }
 
     public Set<Integer> listActiveParticipantsByQuery(long studyId, Integer studyGroupId, String query, TimeRange timerange) {
-        Set<Integer> participants = listParticipants(studyId, studyGroupId, Set.of(Participant.Status.ACTIVE));
+        Set<Integer> participants = listParticipants(studyId, studyGroupId, Set.of(Participant.Status.ACTIVE))
+                .stream().map(SimpleParticipant::getId).collect(Collectors.toSet());
         Set<Integer> allThatMatchQuery = new HashSet<>(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timerange));
         participants.retainAll(allThatMatchQuery);
         return participants;

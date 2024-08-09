@@ -12,6 +12,8 @@ import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.User;
+import io.redlink.more.studymanager.model.scheduler.Duration;
+import io.redlink.more.studymanager.utils.MapperUtils;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -25,8 +27,8 @@ import org.springframework.stereotype.Component;
 public class StudyRepository {
 
     private static final String INSERT_STUDY =
-            "INSERT INTO studies (title,purpose,participant_info,consent_info,finish_text,planned_start_date,planned_end_date,institute,contact_person,contact_email,contact_phone) " +
-            "VALUES (:title,:purpose,:participant_info,:consent_info,:finish_text,:planned_start_date,:planned_end_date,:institute,:contact_person,:contact_email,:contact_phone) " +
+            "INSERT INTO studies (title,purpose,participant_info,consent_info,finish_text,planned_start_date,planned_end_date,duration,institute,contact_person,contact_email,contact_phone) " +
+            "VALUES (:title,:purpose,:participant_info,:consent_info,:finish_text,:planned_start_date,:planned_end_date,:duration::jsonb,:institute,:contact_person,:contact_email,:contact_phone) " +
             "RETURNING *";
     private static final String GET_STUDY_BY_ID =
             "SELECT *, " +
@@ -48,16 +50,20 @@ public class StudyRepository {
             "ORDER BY modified DESC";
     private static final String UPDATE_STUDY =
             "UPDATE studies SET title = :title, purpose = :purpose, participant_info = :participant_info, consent_info = :consent_info, finish_text = :finish_text, planned_start_date = :planned_start_date, " +
-                    "planned_end_date = :planned_end_date, modified = now(), institute = :institute, contact_person = :contact_person, contact_email = :contact_email, contact_phone = :contact_phone " +
+                    "planned_end_date = :planned_end_date, duration = :duration::jsonb, modified = now(), institute = :institute, contact_person = :contact_person, contact_email = :contact_email, contact_phone = :contact_phone " +
             "WHERE study_id = :study_id " +
             "RETURNING *, (SELECT user_roles FROM study_roles_by_user WHERE study_roles_by_user.study_id = studies.study_id AND user_id = :userId) AS user_roles";
 
     private static final String DELETE_BY_ID = "DELETE FROM studies WHERE study_id = ?";
     private static final String CLEAR_STUDIES = "DELETE FROM studies";
-    private static final String SET_DRAFT_STATE_BY_ID = "UPDATE studies SET status = 'draft', start_date = NULL, end_date = NULL, modified = now() WHERE study_id = ?";
-    private static final String SET_ACTIVE_STATE_BY_ID = "UPDATE studies SET status = 'active', start_date = now(), modified = now() WHERE study_id = ?";
-    private static final String SET_PAUSED_STATE_BY_ID = "UPDATE studies SET status = 'paused', modified = now() WHERE study_id = ?";
-    private static final String SET_CLOSED_STATE_BY_ID = "UPDATE studies SET status = 'closed', end_date = now(), modified = now() WHERE study_id = ?";
+    private static final String SET_STUDY_STATE = """
+            UPDATE studies
+            SET status = :newState::study_state,
+                modified = now(),
+                start_date = CASE WHEN :setStart = 0 THEN NULL WHEN :setStart = 1 THEN now() ELSE start_date END,
+                end_date = CASE WHEN :setEnd = 0 THEN NULL WHEN :setEnd = 1 THEN now() ELSE end_date END
+            WHERE study_id = :studyId
+            RETURNING *""";
     private static final String STUDY_HAS_STATE = "SELECT study_id FROM studies WHERE study_id = :study_id AND status::varchar IN (:study_status)";
 
     private final JdbcTemplate template;
@@ -113,17 +119,29 @@ public class StudyRepository {
         template.update(DELETE_BY_ID, id);
     }
 
-    public void setStateById(long id, Study.Status status) {
-        template.update(getStatusQuery(status), id);
-    }
+    public Optional<Study> setStateById(long id, Study.Status status) {
+        final int toNull = 0, toNow = 1, keepCurrentValue = -1;
+        int setStart = keepCurrentValue, setEnd = keepCurrentValue;
+        switch (status) {
+            case DRAFT -> {
+                setStart = toNull;
+                setEnd = toNull;
+            }
+            case ACTIVE, PREVIEW -> setStart = toNow;
+            case CLOSED -> setEnd = toNow;
+        }
 
-    private String getStatusQuery(Study.Status status) {
-        return switch (status) {
-            case DRAFT -> SET_DRAFT_STATE_BY_ID;
-            case ACTIVE -> SET_ACTIVE_STATE_BY_ID;
-            case PAUSED -> SET_PAUSED_STATE_BY_ID;
-            case CLOSED -> SET_CLOSED_STATE_BY_ID;
-        };
+        try (var stream = namedTemplate.queryForStream(SET_STUDY_STATE,
+                new MapSqlParameterSource()
+                        .addValue("studyId", id)
+                        .addValue("newState", status.getValue())
+                        .addValue("setStart", setStart)
+                        .addValue("setEnd", setEnd),
+                getStudyRowMapper()
+        )) {
+            return stream
+                    .findFirst();
+        }
     }
 
     private static MapSqlParameterSource studyToParams(Study study) {
@@ -135,6 +153,7 @@ public class StudyRepository {
                 .addValue("finish_text", study.getFinishText())
                 .addValue("planned_start_date", study.getPlannedStartDate())
                 .addValue("planned_end_date", study.getPlannedEndDate())
+                .addValue("duration", MapperUtils.writeValueAsString(study.getDuration()))
                 .addValue("institute", study.getContact().getInstitute())
                 .addValue("contact_person", study.getContact().getPerson())
                 .addValue("contact_email", study.getContact().getEmail())
@@ -154,9 +173,10 @@ public class StudyRepository {
                 .setPlannedEndDate(RepositoryUtils.readLocalDate(rs,"planned_end_date"))
                 .setStartDate(RepositoryUtils.readLocalDate(rs,"start_date"))
                 .setEndDate(RepositoryUtils.readLocalDate(rs,"end_date"))
+                .setDuration(MapperUtils.readValue(rs.getString("duration"), Duration.class))
                 .setCreated(RepositoryUtils.readInstant(rs, "created"))
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
-                .setStudyState(Study.Status.valueOf(rs.getString("status").toUpperCase()))
+                .setStudyState(Study.Status.fromValue(rs.getString("status").toUpperCase()))
                 .setContact(new Contact()
                         .setInstitute(rs.getString("institute"))
                         .setPerson(rs.getString("contact_person"))

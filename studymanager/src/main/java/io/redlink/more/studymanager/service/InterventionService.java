@@ -11,11 +11,13 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.core.component.Component;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
+import io.redlink.more.studymanager.core.factory.TriggerFactory;
+import io.redlink.more.studymanager.core.properties.ActionProperties;
+import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Action;
-import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.Trigger;
@@ -23,20 +25,19 @@ import io.redlink.more.studymanager.repository.InterventionRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.utils.LoggingUtils;
-
 import java.text.ParseException;
-
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class InterventionService {
@@ -69,8 +70,33 @@ public class InterventionService {
         return repository.insert(intervention);
     }
 
+    @Transactional
+    public Intervention importIntervention(Long studyId, Intervention intervention, Trigger trigger, List<Action> actions) {
+        Intervention imported = repository.importIntervention(studyId, intervention);
+
+        {
+            Trigger validated = validateTrigger(trigger);
+            TriggerFactory factory = factory(validated);
+            validated.setProperties((TriggerProperties) factory.preImport(validated.getProperties()));
+            repository.importTrigger(studyId, imported.getInterventionId(), validateTrigger(validated));
+        }
+
+        actions.forEach(a -> {
+            Action validated = validateAction(a);
+            ActionFactory factory = factory(validated);
+            validated.setProperties((ActionProperties) factory.preImport(validated.getProperties()));
+            repository.importAction(studyId, imported.getInterventionId(), validateAction(validated));
+        });
+
+        return imported;
+    }
+
     public List<Intervention> listInterventions(Long studyId) {
         return repository.listInterventions(studyId);
+    }
+
+    public List<Intervention> listInterventionsForGroup(Long studyId, Integer groupId) {
+        return repository.listInterventionsForGroup(studyId, groupId);
     }
 
     public Intervention getIntervention(Long studyId, Integer interventionId) {
@@ -131,7 +157,7 @@ public class InterventionService {
     }
 
     public void alignInterventionsWithStudyState(Study study) {
-        if (study.getStudyState() == Study.Status.ACTIVE) {
+        if (EnumSet.of(Study.Status.ACTIVE, Study.Status.PREVIEW).contains(study.getStudyState())) {
             activateInterventionsFor(study);
         } else {
             deactivateInterventionsFor(study);

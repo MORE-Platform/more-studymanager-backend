@@ -10,6 +10,7 @@ package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.scheduler.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -64,6 +65,7 @@ class StudyRepositoryTest {
     void testUpdate() {
         Study insert = new Study()
                 .setTitle("some title")
+                .setDuration(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
                 .setContact(new Contact().setPerson("test").setEmail("test"));
 
         Study inserted = studyRepository.insert(insert);
@@ -71,12 +73,12 @@ class StudyRepositoryTest {
         Study update = new Study()
                 .setStudyId(inserted.getStudyId())
                 .setTitle("some new title")
+                .setDuration(new Duration().setValue(2).setUnit(Duration.Unit.HOUR))
                 .setContact(new Contact().setPerson("test2").setEmail("test2"));
 
         Optional<Study> optUpdated = studyRepository.update(update, null);
         assertThat(optUpdated).isPresent();
         Study updated = optUpdated.get();
-
 
         Optional<Study> optQueried = studyRepository.getById(inserted.getStudyId());
         assertThat(optQueried).isPresent();
@@ -89,11 +91,20 @@ class StudyRepositoryTest {
         assertThat(queried.getContact().getEmail()).isEqualTo(updated.getContact().getEmail());
 
         assertThat(update.getTitle()).isEqualTo(updated.getTitle());
+        assertThat(update.getDuration().getValue()).isEqualTo(updated.getDuration().getValue());
+        assertThat(update.getDuration().getUnit()).isEqualTo(updated.getDuration().getUnit());
         assertThat(inserted.getStudyId()).isEqualTo(updated.getStudyId());
         assertThat(inserted.getCreated()).isEqualTo(updated.getCreated());
-        assertThat(inserted.getModified().toEpochMilli()).isLessThan(updated.getModified().toEpochMilli());
+        assertThat(inserted.getModified()).isBefore(updated.getModified());
         assertThat(inserted.getContact().getPerson()).isNotEqualTo(updated.getContact().getPerson());
         assertThat(inserted.getContact().getEmail()).isNotEqualTo(updated.getContact().getEmail());
+
+        Study insert_no_duration = new Study()
+                .setTitle("some title")
+                .setContact(new Contact().setPerson("test").setEmail("test"));
+
+        Study inserted_no_duration = studyRepository.insert(insert_no_duration);
+        assertThat(inserted_no_duration.getDuration()).isNull();
     }
 
     @Test
@@ -120,9 +131,24 @@ class StudyRepositoryTest {
         Study study = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test")));
         assertThat(study.getStudyState()).isEqualTo(Study.Status.DRAFT);
         assertThat(study.getStartDate()).isNull();
+        assertThat(study.getEndDate()).isNull();
+
+        study = assertPresent(studyRepository.setStateById(study.getStudyId(), Study.Status.PREVIEW));
+        assertThat(study.getStudyState()).isEqualTo(Study.Status.PREVIEW);
+        assertThat(study.getStartDate()).isNotNull();
+        assertThat(study.getEndDate()).isNull();
+
+        study = assertPresent(studyRepository.setStateById(study.getStudyId(), Study.Status.PAUSED_PREVIEW));
+        assertThat(study.getStudyState()).isEqualTo(Study.Status.PAUSED_PREVIEW);
+        assertThat(study.getStartDate()).isNotNull();
+        assertThat(study.getEndDate()).isNull();
+
+        study = assertPresent(studyRepository.setStateById(study.getStudyId(), Study.Status.DRAFT));
+        assertThat(study.getStudyState()).isEqualTo(Study.Status.DRAFT);
+        assertThat(study.getStartDate()).isNull();
+        assertThat(study.getEndDate()).isNull();
 
         studyRepository.setStateById(study.getStudyId(), Study.Status.ACTIVE);
-
         study = assertPresent(studyRepository.getById(study.getStudyId()));
         assertThat(study.getStudyState()).isEqualTo(Study.Status.ACTIVE);
         assertThat(study.getStartDate()).isNotNull();

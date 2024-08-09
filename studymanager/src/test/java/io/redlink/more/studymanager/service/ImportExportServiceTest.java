@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.scheduler.Event;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,10 +24,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.time.LocalDate;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -36,6 +35,9 @@ public class ImportExportServiceTest {
 
     @Spy
     private ParticipantService participantService = mock(ParticipantService.class);
+
+    @Spy
+    private IntegrationService integrationService = mock(IntegrationService.class);
 
     @Mock
     private StudyService studyService;
@@ -68,10 +70,16 @@ public class ImportExportServiceTest {
     private ArgumentCaptor<Trigger> triggerCaptor;
 
     @Captor
-    private ArgumentCaptor<Action> actionCaptor;
+    private ArgumentCaptor<List<Action>> actionCaptor;
 
     @Captor
-    private ArgumentCaptor<Integer> idCaptor;
+    private ArgumentCaptor<Long> idLongCaptor;
+
+    @Captor
+    private ArgumentCaptor<Integer> idIntegerCaptor;
+
+    @Captor
+    private ArgumentCaptor<String> aliasCaptor;
 
     private final AuthenticatedUser currentUser = new AuthenticatedUser(
             UUID.randomUUID().toString(),
@@ -93,6 +101,7 @@ public class ImportExportServiceTest {
     @Test
     @DisplayName("Study configuration should be imported and set id's correctly")
     void testImportStudy() {
+        Long studyId = 1L;
         StudyImportExport studyImport = new StudyImportExport()
                 .setStudy(new Study()
                         .setTitle("title")
@@ -103,6 +112,7 @@ public class ImportExportServiceTest {
                         .setPlannedEndDate(LocalDate.now()))
                 .setObservations(List.of(
                         new Observation()
+                                .setObservationId(1)
                                 .setTitle("observation Title")
                                 .setPurpose("observation purpose")
                                 .setParticipantInfo("observation info")
@@ -111,6 +121,7 @@ public class ImportExportServiceTest {
                                 .setProperties(new ObservationProperties())
                                 .setSchedule(new Event()),
                         new Observation()
+                                .setObservationId(3)
                                 .setTitle("observation Title")
                                 .setPurpose("observation purpose")
                                 .setParticipantInfo("observation info")
@@ -145,36 +156,56 @@ public class ImportExportServiceTest {
                         .setProperties(new TriggerProperties())))
                 .setActions(Map.of(2, List.of(new Action()
                         .setType("sth")
-                        .setProperties(new ActionProperties()))));
+                        .setProperties(new ActionProperties()))))
+                .setParticipants(List.of(
+                        new StudyImportExport.ParticipantInfo(0),
+                        new StudyImportExport.ParticipantInfo(0),
+                        new StudyImportExport.ParticipantInfo(0),
+                        new StudyImportExport.ParticipantInfo(2),
+                        new StudyImportExport.ParticipantInfo(2),
+                        new StudyImportExport.ParticipantInfo(2),
+                        new StudyImportExport.ParticipantInfo(4),
+                        new StudyImportExport.ParticipantInfo(4)
+                ))
+            .setIntegrations(List.of(
+                    new IntegrationInfo("Integration 1", 1),
+                    new IntegrationInfo("Integration 2", 3)
+            ));
 
         when(studyService.createStudy(any(), any()))
                 .thenAnswer(invocationOnMock ->
-                        ((Study) invocationOnMock.getArgument(0)).setStudyId(1L));
-        when(studyGroupService.createStudyGroup(any()))
+                        ((Study) invocationOnMock.getArgument(0)).setStudyId(studyId));
+        when(observationService.importObservation(any(), any()))
                 .thenAnswer(invocationOnMock ->
-                        ((StudyGroup) invocationOnMock.getArgument(0)).setStudyGroupId(
-                                ((StudyGroup) invocationOnMock.getArgument(0)).getStudyGroupId()-1));
-        when(interventionService.addIntervention(interventionCaptor.capture())).thenAnswer(
-                invocationOnMock ->
-                        ((Intervention) invocationOnMock.getArgument(0)).setInterventionId(
-                                ((Intervention) invocationOnMock.getArgument(0)).getInterventionId()-1));
+                                ((Observation) invocationOnMock.getArgument(1)).setStudyId(studyId));
+        when(interventionService.importIntervention(any(), any(), any(), any()))
+                .thenAnswer(invocationOnMock ->
+                        ((Intervention) invocationOnMock.getArgument(1)).setStudyId(studyId));
 
         importExportService.importStudy(studyImport, currentUser);
 
-        verify(observationService, times(2)).addObservation(observationCaptor.capture());
-        verify(interventionService, times(1)).updateTrigger(any(), idCaptor.capture(), triggerCaptor.capture());
-        verify(interventionService, times(1)).createAction(any(), idCaptor.capture(), actionCaptor.capture());
+        ArgumentCaptor<StudyGroup> studyGroupCaptor = ArgumentCaptor.forClass(StudyGroup.class);
+        verify(studyGroupService, times(2)).importStudyGroup(idLongCaptor.capture(), studyGroupCaptor.capture());
+        assertThat(studyGroupCaptor.getAllValues()).hasSize(2);
+        assertThat(studyGroupCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(2);
+        assertThat(studyGroupCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
 
-        assertThat(observationCaptor.getAllValues().get(0).getStudyId()).isEqualTo(1L);
-        assertThat(observationCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(2);
+        verify(observationService, times(2)).importObservation(idLongCaptor.capture(), observationCaptor.capture());
+        verify(interventionService, times(2)).importIntervention(idLongCaptor.capture(), interventionCaptor.capture(), triggerCaptor.capture(), actionCaptor.capture());
+        verify(participantService, times(8)).createParticipant(participantsCaptor.capture());
+        verify(integrationService, times(2)).addToken(idLongCaptor.capture(), idIntegerCaptor.capture(), aliasCaptor.capture());
+
+        assertThat(observationCaptor.getAllValues().get(0).getObservationId()).isEqualTo(1);
+        assertThat(observationCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(3);
+        assertThat(observationCaptor.getAllValues().get(1).getObservationId()).isEqualTo(3);
         assertThat(observationCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(null);
 
-        assertThat(interventionCaptor.getAllValues().get(0).getStudyId()).isEqualTo(1L);
-        assertThat(interventionCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(1);
-        assertThat(interventionCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(2);
+        assertThat(interventionCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(2);
+        assertThat(interventionCaptor.getAllValues().get(0).getInterventionId()).isEqualTo(2);
+        assertThat(interventionCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
+        assertThat(interventionCaptor.getAllValues().get(1).getInterventionId()).isEqualTo(3);
 
-        assertThat(idCaptor.getAllValues().get(0)).isEqualTo(2);
-        assertThat(idCaptor.getAllValues().get(1)).isEqualTo(1);
+        assertThat(idLongCaptor.getAllValues()).allMatch(Predicate.isEqual(1L));
     }
 
 

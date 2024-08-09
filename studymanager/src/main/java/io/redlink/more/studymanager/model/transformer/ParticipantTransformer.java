@@ -34,6 +34,7 @@ public class ParticipantTransformer {
                 .studyGroupId(participant.getStudyGroupId())
                 .registrationToken(participant.getRegistrationToken())
                 .status(ParticipantStatusDTO.fromValue(participant.getStatus().getValue()))
+                .start(Transformers.toOffsetDateTime(participant.getStart()))
                 .modified(Transformers.toOffsetDateTime(participant.getModified()))
                 .created(Transformers.toOffsetDateTime(participant.getCreated()));
     }

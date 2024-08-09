@@ -70,6 +70,11 @@ public class IntegrationService {
         repository.deleteToken(studyId, observationId, tokenId);
     }
 
+    public Optional<EndpointToken> updateToken(Long studyId, Integer observationId, Integer tokenId, String tokenLabel) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
+        return repository.updateToken(studyId, observationId, tokenId, tokenLabel);
+    }
+
     public void alignIntegrationsWithStudyState(Study study) {
         if(study.getStudyState() == Study.Status.CLOSED) {
             repository.clearForStudyId(study.getStudyId());

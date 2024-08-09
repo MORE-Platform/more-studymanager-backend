@@ -12,7 +12,7 @@ import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Action;
-import io.redlink.more.studymanager.model.Event;
+import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.utils.MapperUtils;
@@ -22,8 +22,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -33,18 +31,22 @@ import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNu
 @Component
 public class InterventionRepository {
 
-    private static final String INSERT_INTERVENTION = "INSERT INTO interventions(study_id,intervention_id,title,purpose,study_group_id,schedule) VALUES (:study_id,(SELECT COALESCE(MAX(intervention_id),0)+1 FROM interventions WHERE study_id = :study_id),:title,:purpose,:study_group_id,:schedule::jsonb)";
+    private static final String INSERT_INTERVENTION = "INSERT INTO interventions(study_id,intervention_id,title,purpose,study_group_id,schedule) VALUES (:study_id,(SELECT COALESCE(MAX(intervention_id),0)+1 FROM interventions WHERE study_id = :study_id),:title,:purpose,:study_group_id,:schedule::jsonb) RETURNING *";
+    private static final String IMPORT_INTERVENTION = "INSERT INTO interventions(study_id,intervention_id,title,purpose,study_group_id,schedule) VALUES (:study_id,:intervention_id,:title,:purpose,:study_group_id,:schedule::jsonb) RETURNING *";
     private static final String GET_INTERVENTION_BY_IDS = "SELECT * FROM interventions WHERE study_id = ? AND intervention_id = ?";
     private static final String LIST_INTERVENTIONS = "SELECT * FROM interventions WHERE study_id = ?";
+    private static final String LIST_INTERVENTIONS_FOR_GROUP = "SELECT * FROM interventions WHERE study_id = :study_id AND (study_group_id IS NULL OR study_group_id = :study_group_id)";
     private static final String DELETE_INTERVENTION_BY_IDS = "DELETE FROM interventions WHERE study_id = ? AND intervention_id = ?";
     private static final String DELETE_ALL = "DELETE FROM interventions";
     private static final String UPDATE_INTERVENTION = "UPDATE interventions SET title=:title, study_group_id=:study_group_id, purpose=:purpose, schedule=:schedule::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id";
-    private static final String CREATE_ACTION = "INSERT INTO actions(study_id,intervention_id,action_id,type,properties) VALUES (:study_id,:intervention_id,(SELECT COALESCE(MAX(action_id),0)+1 FROM actions WHERE study_id = :study_id AND intervention_id=:intervention_id),:type,:properties::jsonb)";
+    private static final String CREATE_ACTION = "INSERT INTO actions(study_id,intervention_id,action_id,type,properties) VALUES (:study_id,:intervention_id,(SELECT COALESCE(MAX(action_id),0)+1 FROM actions WHERE study_id = :study_id AND intervention_id=:intervention_id),:type,:properties::jsonb) RETURNING *";
+    private static final String IMPORT_ACTION = "INSERT INTO actions(study_id,intervention_id,action_id,type,properties) VALUES (:study_id,:intervention_id,:action_id,:type,:properties::jsonb) RETURNING *";
     private static final String GET_ACTION_BY_IDS = "SELECT * FROM actions WHERE study_id=? AND intervention_id=? AND action_id=?";
     private static final String LIST_ACTIONS = "SELECT * FROM actions WHERE study_id = ? AND intervention_id = ?";
     private static final String DELETE_ACTION_BY_ID = "DELETE FROM actions WHERE study_id = ? AND intervention_id = ? AND action_id = ?";
     private static final String UPDATE_ACTION = "UPDATE actions SET properties=:properties::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id AND action_id=:action_id";
     private static final String UPSERT_TRIGGER = "INSERT INTO triggers(study_id,intervention_id,type,properties) VALUES(:study_id,:intervention_id,:type,:properties::jsonb) ON CONFLICT ON CONSTRAINT triggers_pkey DO UPDATE SET type=:type, properties=:properties::jsonb, modified = now()";
+    private static final String IMPORT_TRIGGER = "INSERT INTO triggers(study_id,intervention_id,type,properties) VALUES(:study_id,:intervention_id,:type,:properties::jsonb) RETURNING *";
     private static final String GET_TRIGGER_BY_IDS = "SELECT * FROM triggers WHERE study_id = ? AND intervention_id = ?";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -55,17 +57,40 @@ public class InterventionRepository {
     }
 
     public Intervention insert(Intervention intervention) {
-        final KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
-            namedTemplate.update(INSERT_INTERVENTION, interventionToParams(intervention), keyHolder, new String[] { "intervention_id" });
+            return namedTemplate.queryForObject(INSERT_INTERVENTION, interventionToParams(intervention), getInterventionRowMapper());
         } catch (DataIntegrityViolationException e) {
             throw new BadRequestException("Study group " + intervention.getStudyGroupId() + " does not exist on study " + intervention.getStudyId());
         }
-        return getByIds(intervention.getStudyId(), keyHolder.getKey().intValue());
+    }
+
+    public Intervention importIntervention(Long studyId, Intervention intervention) {
+        try {
+            return namedTemplate.queryForObject(IMPORT_INTERVENTION,
+                    interventionToParams(intervention)
+                            .addValue("study_id", studyId)
+                            .addValue("intervention_id", intervention.getInterventionId()),
+                    getInterventionRowMapper());
+        } catch (DataIntegrityViolationException e) {
+            throw new BadRequestException(
+                    "Error during import of intervention " +
+                            intervention.getInterventionId() +
+                            "for study " +
+                            intervention.getStudyId()
+            );
+        }
     }
 
     public List<Intervention> listInterventions(Long studyId) {
         return template.query(LIST_INTERVENTIONS, getInterventionRowMapper(), studyId);
+    }
+
+    public List<Intervention> listInterventionsForGroup(Long studyId, Integer groupId) {
+        return namedTemplate.query(LIST_INTERVENTIONS_FOR_GROUP,
+                new MapSqlParameterSource("study_id", studyId)
+                        .addValue("study_group_id", groupId),
+                getInterventionRowMapper()
+        );
     }
 
     public Intervention getByIds(Long studyId, Integer interventionId) {
@@ -86,6 +111,23 @@ public class InterventionRepository {
         return getTriggerByIds(studyId, interventionId);
     }
 
+    public Trigger importTrigger(Long studyId, Integer interventionId, Trigger trigger) {
+        try {
+            return namedTemplate.queryForObject(
+                    IMPORT_TRIGGER,
+                    triggerToParams(studyId, interventionId, trigger),
+                    getTriggerRowMapper()
+            );
+        } catch (DataIntegrityViolationException e) {
+            throw new BadRequestException(
+                    "Error during import of trigger for intervention " +
+                            interventionId +
+                            "for study " +
+                            studyId
+            );
+        }
+    }
+
     public Trigger getTriggerByIds(Long studyId, Integer interventionId) {
         try {
             return template.queryForObject(GET_TRIGGER_BY_IDS, getTriggerRowMapper(), studyId, interventionId);
@@ -95,13 +137,29 @@ public class InterventionRepository {
     }
 
     public Action createAction(Long studyId, Integer interventionId, Action action) {
-        final KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
-            namedTemplate.update(CREATE_ACTION, actionToParams(studyId, interventionId, action), keyHolder, new String[] { "action_id" });
+            return namedTemplate.queryForObject(CREATE_ACTION, actionToParams(studyId, interventionId, action), getActionRowMapper());
         } catch (DataIntegrityViolationException e) {
             throw new BadRequestException("Intervention " + interventionId + " does not exist on study " + studyId);
         }
-        return getActionByIds(studyId, interventionId, keyHolder.getKey().intValue());
+    }
+
+    public Action importAction(Long studyId, Integer interventionId, Action action) {
+        try {
+            return namedTemplate.queryForObject(
+                    IMPORT_ACTION,
+                    actionToParams(studyId, interventionId, action)
+                            .addValue("action_id", action.getActionId()),
+                    getActionRowMapper()
+            );
+        } catch (DataIntegrityViolationException e) {
+            throw new BadRequestException(
+                    "Error during import of action for intervention " +
+                            interventionId +
+                            "for study " +
+                            studyId
+            );
+        }
     }
 
     public Action getActionByIds(Long studyId, Integer interventionId, Integer actionId) {
@@ -179,5 +237,4 @@ public class InterventionRepository {
                 .setCreated(RepositoryUtils.readInstant(rs,"created"))
                 .setModified(RepositoryUtils.readInstant(rs,"modified"));
         }
-
 }

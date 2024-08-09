@@ -8,7 +8,6 @@
  */
 package io.redlink.more.studymanager.service;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
@@ -17,15 +16,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ParticipantServiceTest {
@@ -36,8 +33,8 @@ class ParticipantServiceTest {
     @Mock
     StudyStateService studyStateService;
 
-    @Spy
-    ElasticService elasticService = new ElasticService(mock(ElasticsearchClient.class));
+    @Mock
+    ElasticService elasticService;
 
     @InjectMocks
     ParticipantService participantService;

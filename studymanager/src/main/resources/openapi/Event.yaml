@@ -4,11 +4,16 @@ info:
   version: "1.0"
   description: see https://www.rfc-editor.org/rfc/rfc8984.html#name-recurrence-properties
 
+paths: {}
+
 components:
   schemas:
     Event:
       type: object
       properties:
+        type:
+          type: string
+          default: Event
         dtstart:
           type: string
           format: date-time

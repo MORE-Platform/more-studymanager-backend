@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.repository;
 
+import com.google.common.base.Supplier;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Participant;
 import java.util.List;
@@ -24,15 +25,20 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNullableIntegerValue;
-import static io.redlink.more.studymanager.repository.RepositoryUtils.toParam;
+import static io.redlink.more.studymanager.repository.RepositoryUtils.intReader;
 
 @Component
 public class ParticipantRepository {
 
     private static final String INSERT_PARTICIPANT_AND_TOKEN =
             "WITH p AS (INSERT INTO participants(study_id,participant_id,alias,study_group_id) VALUES (:study_id,(SELECT COALESCE(MAX(participant_id),0)+1 FROM participants WHERE study_id = :study_id),:alias,:study_group_id) RETURNING participant_id, study_id) INSERT INTO registration_tokens(participant_id,study_id,token) SELECT participant_id, study_id, :token FROM p";
-    private static final String GET_PARTICIPANT_BY_IDS = "SELECT p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, p.modified FROM participants p LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id WHERE p.study_id = ? AND p.participant_id = ?";
-    private static final String LIST_PARTICIPANTS_BY_STUDY = "SELECT p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, p.modified FROM participants p LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id WHERE p.study_id = ?";
+    private static final String UPDATE_REGISTRATION_TOKEN = """
+            INSERT INTO registration_tokens(study_id, participant_id, token)
+            VALUES (:study_id, :participant_id, :token)
+            ON CONFLICT (study_id, participant_id) DO UPDATE SET token = excluded.token
+            """;
+    private static final String GET_PARTICIPANT_BY_IDS = "SELECT p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, p.modified, p.start FROM participants p LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id WHERE p.study_id = ? AND p.participant_id = ?";
+    private static final String LIST_PARTICIPANTS_BY_STUDY = "SELECT p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, p.modified, p.start FROM participants p LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id WHERE p.study_id = ?";
     private static final String DELETE_PARTICIPANT =
             "DELETE FROM participants " +
             "WHERE study_id=? AND participant_id=?";
@@ -49,6 +55,18 @@ public class ParticipantRepository {
             "WHERE study_id = :study_id AND participant_id = :participant_id " +
             "   AND status = :current_status::participant_status " +
             "RETURNING *, (SELECT token FROM registration_tokens t WHERE t.study_id = p.study_id AND t.participant_id = p.participant_id ) as token";
+
+    private static final String LIST_PARTICIPANTS_FOR_CLOSING =
+            "SELECT DISTINCT p.*, 't' as token " +
+            "FROM studies s " +
+            "    JOIN participants p ON s.study_id = p.study_id " +
+            "    LEFT JOIN study_groups sg ON p.study_group_id = sg.study_group_id AND p.study_id = sg.study_id " +
+            "WHERE s.status = 'active' " +
+            "  AND p.status = 'active' " +
+            "  AND  p.start IS NOT NULL " +
+            "  AND COALESCE(sg.duration, s.duration) IS NOT NULL " +
+            "  AND (p.start + ((COALESCE(sg.duration, s.duration)->>'value')::int || ' ' || (COALESCE(sg.duration, s.duration)->>'unit'))::interval) < NOW()";
+
     private static final String DELETE_ALL = "DELETE FROM participants";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -79,6 +97,10 @@ public class ParticipantRepository {
 
     public List<Participant> listParticipants(Long studyId) {
         return template.query(LIST_PARTICIPANTS_BY_STUDY, getParticipantRowMapper(), studyId);
+    }
+
+    public List<Participant> listParticipantsForClosing() {
+        return template.query(LIST_PARTICIPANTS_FOR_CLOSING, getParticipantRowMapper());
     }
 
     @Transactional
@@ -116,6 +138,25 @@ public class ParticipantRepository {
         namedTemplate.update("DELETE FROM push_notifications_token WHERE study_id = :study_id", params);
     }
 
+    @Transactional
+    public void resetParticipants(final Long studyId, final Supplier<String> tokenSource) {
+        // First clear credentials and tokens...
+        cleanupParticipants(studyId);
+        // ... then reset participant-status and start-date ...
+        final var pIDs = namedTemplate.query(
+                "UPDATE participants SET status = DEFAULT, start = NULL WHERE study_id = :study_id RETURNING *",
+                toParams(studyId),
+                intReader("participant_id")
+        );
+        // ... and finally create new token for the participants
+        namedTemplate.batchUpdate(
+                UPDATE_REGISTRATION_TOKEN,
+                pIDs.stream()
+                        .map(pid -> toParams(studyId, pid).addValue("token", tokenSource.get()))
+                        .toArray(MapSqlParameterSource[]::new)
+        );
+    }
+
     public void clear() {
         template.update(DELETE_ALL);
     }
@@ -147,6 +188,7 @@ public class ParticipantRepository {
                 .setCreated(RepositoryUtils.readInstant(rs, "created"))
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setStatus(RepositoryUtils.readParticipantStatus(rs, "status"))
+                .setStart(RepositoryUtils.readInstant(rs, "start"))
                 .setRegistrationToken(rs.getString("token"));
     }
 }

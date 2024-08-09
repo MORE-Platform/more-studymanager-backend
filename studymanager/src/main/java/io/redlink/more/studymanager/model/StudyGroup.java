@@ -8,6 +8,8 @@
  */
 package io.redlink.more.studymanager.model;
 
+import io.redlink.more.studymanager.model.scheduler.Duration;
+
 import java.time.Instant;
 
 public class StudyGroup {
@@ -15,6 +17,7 @@ public class StudyGroup {
     private Integer studyGroupId;
     private String title;
     private String purpose;
+    private Duration duration;
     private Instant created;
     private Instant modified;
 
@@ -51,6 +54,15 @@ public class StudyGroup {
 
     public StudyGroup setPurpose(String purpose) {
         this.purpose = purpose;
+        return this;
+    }
+
+    public Duration getDuration() {
+        return duration;
+    }
+
+    public StudyGroup setDuration(Duration duration) {
+        this.duration = duration;
         return this;
     }
 

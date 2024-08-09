@@ -9,6 +9,7 @@
 package io.redlink.more.studymanager.model;
 
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
+import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
 
 import java.time.Instant;
 
@@ -21,7 +22,7 @@ public class Observation {
     private String type;
     private Integer studyGroupId;
     private ObservationProperties properties;
-    private Event schedule;
+    private ScheduleEvent schedule;
     private Instant created;
     private Instant modified;
     private Boolean hidden;
@@ -99,11 +100,11 @@ public class Observation {
         return this;
     }
 
-    public Event getSchedule() {
+    public ScheduleEvent getSchedule() {
         return schedule;
     }
 
-    public Observation setSchedule(Event schedule) {
+    public Observation setSchedule(ScheduleEvent schedule) {
         this.schedule = schedule;
         return this;
     }

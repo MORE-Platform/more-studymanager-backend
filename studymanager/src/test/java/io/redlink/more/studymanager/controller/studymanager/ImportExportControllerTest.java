@@ -13,6 +13,8 @@ import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.scheduler.Event;
+import io.redlink.more.studymanager.model.scheduler.RecurrenceRule;
 import io.redlink.more.studymanager.repository.DownloadTokenRepository;
 import io.redlink.more.studymanager.service.ImportExportService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
@@ -30,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -131,7 +134,9 @@ class ImportExportControllerTest {
                 .setObservations(List.of(observation))
                 .setInterventions(List.of(intervention))
                 .setTriggers(Map.of(intervention.getInterventionId(), trigger))
-                .setActions(Map.of(intervention.getInterventionId(), List.of(action)));
+                .setActions(Map.of(intervention.getInterventionId(), List.of(action)))
+                .setParticipants(new ArrayList<>())
+                .setIntegrations(new ArrayList<>());
 
         when(importExportService.exportStudy(anyLong(), any()))
                 .thenAnswer(invocationOnMock -> studyImportExport);
