@@ -1,3 +1,11 @@
+/*
+ * Copyright LBI-DHP and/or licensed to LBI-DHP under one or more
+ * contributor license agreements (LBI-DHP: Ludwig Boltzmann Institute
+ * for Digital Health and Prevention -- A research institute of the
+ * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
+ * Förderung der wissenschaftlichen Forschung).
+ * Licensed under the Elastic License 2.0.
+ */
 package io.redlink.more.studymanager.utils;
 
 import biweekly.component.VEvent;
@@ -7,19 +15,29 @@ import biweekly.util.Recurrence;
 import biweekly.util.com.google.ical.compat.javautil.DateIterator;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Trigger;
-import io.redlink.more.studymanager.model.scheduler.*;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.stream.Stream;
-import org.apache.commons.lang3.Range;
-import org.quartz.CronExpression;
-
+import io.redlink.more.studymanager.model.scheduler.Duration;
+import io.redlink.more.studymanager.model.scheduler.Event;
+import io.redlink.more.studymanager.model.scheduler.RecurrenceRule;
+import io.redlink.more.studymanager.model.scheduler.RelativeDate;
+import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
+import io.redlink.more.studymanager.model.scheduler.RelativeRecurrenceRule;
+import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
 import java.sql.Date;
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.TimeZone;
+import java.util.stream.Stream;
+import org.apache.commons.lang3.Range;
+import org.quartz.CronExpression;
 
 public final class SchedulerUtils {
 

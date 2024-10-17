@@ -14,12 +14,11 @@ import io.redlink.more.studymanager.api.v1.model.ParticipantInfoDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyImportExportDTO;
 import io.redlink.more.studymanager.model.IntegrationInfo;
 import io.redlink.more.studymanager.model.StudyImportExport;
-
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ImportExportTransformer {
+public final class ImportExportTransformer {
 
     private ImportExportTransformer() {}
 

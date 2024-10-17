@@ -1,12 +1,19 @@
 /*
- * Copyright (c) 2023 Redlink GmbH.
+ * Copyright LBI-DHP and/or licensed to LBI-DHP under one or more
+ * contributor license agreements (LBI-DHP: Ludwig Boltzmann Institute
+ * for Digital Health and Prevention -- A research institute of the
+ * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
+ * Förderung der wissenschaftlichen Forschung).
+ * Licensed under the Elastic License 2.0.
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
+import io.redlink.more.studymanager.api.v1.model.BuildInfoDTO;
 import io.redlink.more.studymanager.api.v1.model.FrontendConfigurationDTO;
 import io.redlink.more.studymanager.api.v1.model.KeycloakSettingsDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ConfigurationApi;
 import io.redlink.more.studymanager.properties.FrontendConfigurationProperties;
+import java.time.Instant;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +32,18 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
     }
 
     @Override
+    public ResponseEntity<BuildInfoDTO> getBuildInfo() {
+        return ResponseEntity.ok(
+                new BuildInfoDTO(
+                        "null",
+                        Instant.EPOCH
+                )
+                        .branch("undefined")
+                        .rev("unknown")
+        );
+    }
+
+    @Override
     public ResponseEntity<FrontendConfigurationDTO> getFrontendConfig() {
         return ResponseEntity.ok(
                 transform(uiConfig)
@@ -32,13 +51,13 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
     }
 
     private static FrontendConfigurationDTO transform(FrontendConfigurationProperties uiConfig) {
-        return new FrontendConfigurationDTO()
+        return new FrontendConfigurationDTO(
+                new KeycloakSettingsDTO(
+                        uiConfig.keycloak().server(),
+                        uiConfig.keycloak().realm(),
+                        uiConfig.keycloak().clientId()
+                ))
                 .title(uiConfig.title())
-                .auth(new KeycloakSettingsDTO()
-                        .server(uiConfig.keycloak().server())
-                        .realm(uiConfig.keycloak().realm())
-                        .clientId(uiConfig.keycloak().clientId())
-                )
                 ;
     }
 }
