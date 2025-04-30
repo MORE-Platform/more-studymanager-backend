@@ -4,18 +4,17 @@ import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.scheduler.RelativeDate;
 import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
+import org.junit.jupiter.api.Test;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SchedulerUtilsTest {
-
-
     @Test
     void alignStartDateToSignupInstant() {
         final Observation observation = new Observation()

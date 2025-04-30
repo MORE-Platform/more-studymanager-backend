@@ -18,7 +18,6 @@ public class Participant {
     private Instant created;
     private Instant modified;
     private Instant start;
-
     private String registrationToken;
 
     public Long getStudyId() {

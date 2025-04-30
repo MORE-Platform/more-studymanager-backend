@@ -3,6 +3,7 @@ spring:
     banner-mode: off
   application:
     name: "More Studymanager"
+    api-base-path: ${API_BASE_PATH:/api/v1}
 
   security:
     oauth2:
