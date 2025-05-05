@@ -1,13 +1,10 @@
 package io.redlink.more.studymanager.utils;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.env.Environment;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -17,17 +14,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class ParticipantUtilsTest {
-    @Mock
-    private Environment environment;
-
-    private ParticipantUtils participantUtils;
-
-    @BeforeEach
-    void setUp() {
-        participantUtils = new ParticipantUtils(environment);
-        when(environment.getProperty("spring.application.api-base-path")).thenReturn("api");
-    }
-
     @Test
     void testGetRegistrationUriWithEmptyToken() {
         // Test with null token
@@ -45,7 +31,7 @@ public class ParticipantUtilsTest {
     void testGetRegistrationUriWithValidToken() throws UnknownHostException {
         String hostname = "test-host";
         String token = "test-token";
-        String expectedUri = "https://" + hostname + "/api/signup?token=" + token;
+        String expectedUri = "https://" + hostname + "/api/v1/signup?token=" + token;
 
         try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
             InetAddress mockedAddress = Mockito.mock(InetAddress.class);
@@ -63,7 +49,7 @@ public class ParticipantUtilsTest {
     @Test
     void testGetRegistrationUriWithHostnameException() {
         String token = "test-token";
-        String expectedUri = "https://localhost/api/signup?token=" + token;
+        String expectedUri = "https://localhost/api/v1/signup?token=" + token;
 
         try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
             mockedInetAddress.when(InetAddress::getLocalHost).thenThrow(new UnknownHostException("Test exception"));

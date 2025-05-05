@@ -37,7 +37,6 @@ public class ParticipantUtils {
         String apiBasePath = ParticipantUtils.environment.getProperty("spring.application.api-base-path");
         return "https://" +
                 host +
-                "/" +
                 apiBasePath +
                 SIGNUP_PATH +
                 "?" +
