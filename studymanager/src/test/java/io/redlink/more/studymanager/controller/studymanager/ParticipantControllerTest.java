@@ -13,6 +13,7 @@ import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.PlatformRole;
+import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,14 +26,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,17 +41,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({ParticipantsApiV1Controller.class})
 @AutoConfigureMockMvc(addFilters = false)
 class ParticipantControllerTest {
-
     @MockBean
     ParticipantService participantService;
     @MockBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
+    @MockBean
+    GatewayProperties gatewayProperties;
 
     @Autowired
     ObjectMapper mapper;
 
     @Autowired
     private MockMvc mvc;
+
+    String signupUrl = "https://example.com/api/v1";
 
     @BeforeEach
     void setUp() {
@@ -61,6 +65,13 @@ class ParticipantControllerTest {
                         EnumSet.allOf(PlatformRole.class)
                 )
         );
+
+        when(gatewayProperties.baseUrl()).thenReturn(signupUrl);
+        when(gatewayProperties.generateSignupUrl(any(Participant.class))).thenAnswer(invocation -> {
+            Participant participant = invocation.getArgument(0);
+            if (participant.getRegistrationToken() == null) return null;
+            return URI.create(signupUrl + "/signup?token=" + participant.getRegistrationToken());
+        });
     }
 
     @Test
@@ -138,7 +149,8 @@ class ParticipantControllerTest {
                         .setStatus(Participant.Status.NEW)
                         .setAlias("person x")
                         .setCreated(Instant.ofEpochMilli(0))
-                        .setModified(Instant.ofEpochMilli(0)));
+                        .setModified(Instant.ofEpochMilli(0))
+                        .setRegistrationToken("TEST123"));
 
         ParticipantDTO participantRequest = new ParticipantDTO()
                 .studyId(1L)
@@ -157,5 +169,73 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$.alias").value(participantRequest.getAlias()))
                 .andExpect(jsonPath("$.modified").exists())
                 .andExpect(jsonPath("$.created").exists());
+    }
+
+    @Test
+    @DisplayName("The created signup URI of an participant with a token is correct")
+    void testRegistrationUri() throws Exception {
+        String token = "laskdfjlkasdfj1z239i1uf";
+        when(participantService.getParticipant(1L, 1)).thenAnswer(invocationOnMock ->
+                new Participant()
+                        .setStudyId(invocationOnMock.getArgument(0, Long.class))
+                        .setParticipantId(invocationOnMock.getArgument(1, Integer.class))
+                        .setStudyGroupId(1)
+                        .setStatus(Participant.Status.NEW)
+                        .setAlias("person x")
+                        .setCreated(Instant.ofEpochMilli(0))
+                        .setModified(Instant.ofEpochMilli(0))
+                        .setRegistrationToken(token));
+
+        ParticipantDTO participantRequest = new ParticipantDTO()
+                .studyId(1L)
+                .participantId(1)
+                .studyGroupId(1)
+                .alias("person x");
+
+        mvc.perform(get("/api/v1/studies/1/participants/1")
+                        .content(mapper.writeValueAsString(participantRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.studyId").value(participantRequest.getStudyId()))
+                .andExpect(jsonPath("$.participantId").value(participantRequest.getParticipantId()))
+                .andExpect(jsonPath("$.studyGroupId").value(participantRequest.getStudyGroupId()))
+                .andExpect(jsonPath("$.modified").exists())
+                .andExpect(jsonPath("$.created").exists())
+                .andExpect(jsonPath("$.registrationUrl").value(signupUrl + "/signup?token=" + token));
+    }
+
+
+    @Test
+    @DisplayName("The created signup URI of an participant without a token is null")
+    void testNoRegistrationUri() throws Exception {
+        when(participantService.getParticipant(1L, 1)).thenAnswer(invocationOnMock ->
+                new Participant()
+                        .setStudyId(invocationOnMock.getArgument(0, Long.class))
+                        .setParticipantId(invocationOnMock.getArgument(1, Integer.class))
+                        .setStudyGroupId(1)
+                        .setStatus(Participant.Status.NEW)
+                        .setAlias("person x")
+                        .setCreated(Instant.ofEpochMilli(0))
+                        .setModified(Instant.ofEpochMilli(0))
+                        .setRegistrationToken(null));
+
+        ParticipantDTO participantRequest = new ParticipantDTO()
+                .studyId(1L)
+                .participantId(1)
+                .studyGroupId(1)
+                .alias("person x");
+
+        mvc.perform(get("/api/v1/studies/1/participants/1")
+                        .content(mapper.writeValueAsString(participantRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.studyId").value(participantRequest.getStudyId()))
+                .andExpect(jsonPath("$.participantId").value(participantRequest.getParticipantId()))
+                .andExpect(jsonPath("$.studyGroupId").value(participantRequest.getStudyGroupId()))
+                .andExpect(jsonPath("$.modified").exists())
+                .andExpect(jsonPath("$.created").exists())
+                .andExpect(jsonPath("$.registrationUrl").isEmpty());
     }
 }

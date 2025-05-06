@@ -8,18 +8,21 @@
  */
 package io.redlink.more.studymanager.properties;
 
+import io.redlink.more.studymanager.model.Participant;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
 
 @ConfigurationProperties(prefix = "more.gateway")
-public class GatewayProperties {
-    private String baseUrl;
+public record GatewayProperties(String baseUrl) {
+    public URI generateSignupUrl(Participant participant) {
+        if (participant.getRegistrationToken() == null) return null;
 
-    public String getBaseUrl() {
-        return baseUrl;
-    }
-
-    public GatewayProperties setBaseUrl(String baseUrl) {
-        this.baseUrl = baseUrl;
-        return this;
+        return UriComponentsBuilder.fromUriString(baseUrl)
+                .path("signup")
+                .queryParam("token", participant.getRegistrationToken())
+                .build()
+                .toUri();
     }
 }
