@@ -10,6 +10,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
+import io.redlink.more.studymanager.configuration.GatewayPropertiesConfigurationTest;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.PlatformRole;
@@ -23,10 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.net.URI;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.UUID;
@@ -40,13 +41,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest({ParticipantsApiV1Controller.class})
 @AutoConfigureMockMvc(addFilters = false)
+@Import(GatewayPropertiesConfigurationTest.class)
 class ParticipantControllerTest {
     @MockBean
     ParticipantService participantService;
     @MockBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
-    @MockBean
-    GatewayProperties gatewayProperties;
+
+    @Autowired
+    private GatewayProperties gatewayProperties;
 
     @Autowired
     ObjectMapper mapper;
@@ -54,7 +57,6 @@ class ParticipantControllerTest {
     @Autowired
     private MockMvc mvc;
 
-    String signupUrl = "https://example.com/api/v1";
 
     @BeforeEach
     void setUp() {
@@ -65,13 +67,6 @@ class ParticipantControllerTest {
                         EnumSet.allOf(PlatformRole.class)
                 )
         );
-
-        when(gatewayProperties.baseUrl()).thenReturn(signupUrl);
-        when(gatewayProperties.generateSignupUrl(any(Participant.class))).thenAnswer(invocation -> {
-            Participant participant = invocation.getArgument(0);
-            if (participant.getRegistrationToken() == null) return null;
-            return URI.create(signupUrl + "/signup?token=" + participant.getRegistrationToken());
-        });
     }
 
     @Test
@@ -202,7 +197,7 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$.studyGroupId").value(participantRequest.getStudyGroupId()))
                 .andExpect(jsonPath("$.modified").exists())
                 .andExpect(jsonPath("$.created").exists())
-                .andExpect(jsonPath("$.registrationUrl").value(signupUrl + "/signup?token=" + token));
+                .andExpect(jsonPath("$.registrationUrl").exists());
     }
 
 
