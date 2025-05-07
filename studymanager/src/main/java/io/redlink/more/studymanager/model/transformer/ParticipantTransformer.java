@@ -18,6 +18,9 @@ import java.time.Instant;
 import java.util.Optional;
 
 public final class ParticipantTransformer {
+    private ParticipantTransformer() {
+    }
+
     public static Participant fromParticipantDTO_V1(ParticipantDTO participantDTO) {
         return new Participant()
                 .setStudyId(participantDTO.getStudyId())

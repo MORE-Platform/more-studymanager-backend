@@ -20,7 +20,7 @@ public record GatewayProperties(String baseUrl) {
         if (participant.getRegistrationToken() == null) return null;
 
         return UriComponentsBuilder.fromUriString(baseUrl)
-                .path("signup")
+                .pathSegment("api", "v1", "signup")
                 .queryParam("token", participant.getRegistrationToken())
                 .build()
                 .toUri();
