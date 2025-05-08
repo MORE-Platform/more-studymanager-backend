@@ -32,9 +32,7 @@ public final class ParticipantTransformer {
         Instant instant = participant.getCreated();
         Instant instant1 = participant.getModified();
         Instant instant2 = participant.getStart();
-
-        URI uri = gatewayProps.generateSignupUrl(participant);
-        String registrationUrl = uri == null ? null : uri.toString();
+        URI regustrationUri = gatewayProps.generateSignupUrl(participant);
 
         return new ParticipantDTO()
                 .studyId(participant.getStudyId())
@@ -42,7 +40,7 @@ public final class ParticipantTransformer {
                 .alias(participant.getAlias())
                 .studyGroupId(participant.getStudyGroupId())
                 .registrationToken(participant.getRegistrationToken())
-                .registrationUrl(registrationUrl)
+                .registrationUrl(regustrationUri)
                 .status(ParticipantStatusDTO.fromValue(participant.getStatus().getValue()))
                 .start(instant2)
                 .modified(instant1)
