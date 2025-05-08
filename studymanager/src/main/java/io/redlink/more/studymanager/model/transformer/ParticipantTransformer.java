@@ -15,7 +15,6 @@ import io.redlink.more.studymanager.properties.GatewayProperties;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.Optional;
 
 public final class ParticipantTransformer {
     private ParticipantTransformer() {
@@ -34,9 +33,8 @@ public final class ParticipantTransformer {
         Instant instant1 = participant.getModified();
         Instant instant2 = participant.getStart();
 
-        String registrationUrl = Optional.ofNullable(gatewayProps.generateSignupUrl(participant))
-                .map(URI::toString)
-                .orElse(null);
+        URI uri = gatewayProps.generateSignupUrl(participant);
+        String registrationUrl = uri == null ? null : uri.toString();
 
         return new ParticipantDTO()
                 .studyId(participant.getStudyId())
