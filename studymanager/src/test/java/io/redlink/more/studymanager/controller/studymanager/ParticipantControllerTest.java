@@ -16,6 +16,9 @@ import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ParticipantService;
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,35 +28,21 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.Instant;
-import java.util.EnumSet;
-import java.util.UUID;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-@TestConfiguration
-class GatewayPropertiesConfigurationTest {
-    public static final String SIGNUP_URL = "https://example.com";
-
-    @Bean
-    GatewayProperties gatewayProperties() {
-        return new GatewayProperties(SIGNUP_URL);
-    }
-}
-
 @WebMvcTest({ParticipantsApiV1Controller.class})
 @AutoConfigureMockMvc(addFilters = false)
-@Import(GatewayPropertiesConfigurationTest.class)
 class ParticipantControllerTest {
     @MockBean
     ParticipantService participantService;
@@ -69,6 +58,15 @@ class ParticipantControllerTest {
     @Autowired
     private MockMvc mvc;
 
+    @TestConfiguration
+    static class GatewayPropertiesConfigurationTest {
+        public static final String SIGNUP_URL = "https://example.com";
+
+        @Bean
+        GatewayProperties gatewayProperties() {
+            return new GatewayProperties(SIGNUP_URL);
+        }
+    }
 
     @BeforeEach
     void setUp() {
