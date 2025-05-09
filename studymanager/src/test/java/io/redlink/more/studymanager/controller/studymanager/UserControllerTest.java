@@ -32,11 +32,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -53,14 +55,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = "more.auth.claims.roles=my_roles")
 class UserControllerTest {
 
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        OAuth2AuthenticationService oAuth2AuthenticationService(MoreAuthProperties authProperties) {
+            return new OAuth2AuthenticationService(authProperties);
+        }
+    }
+
     @Autowired
     private MoreAuthProperties moreAuthProperties;
 
-    @SpyBean
-    @Autowired
+    @MockitoSpyBean
     OAuth2AuthenticationService authService;
 
-    @MockBean
+    @MockitoBean
     UserService userService;
 
     @Autowired
