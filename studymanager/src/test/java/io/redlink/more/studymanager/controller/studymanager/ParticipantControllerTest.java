@@ -16,9 +16,6 @@ import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ParticipantService;
-import java.time.Instant;
-import java.util.EnumSet;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,11 +28,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.UUID;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,6 +43,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({ParticipantsApiV1Controller.class})
 @AutoConfigureMockMvc(addFilters = false)
 class ParticipantControllerTest {
+    public static final String SIGNUP_URL = "https://example.com";
+
     @MockBean
     ParticipantService participantService;
     @MockBean
@@ -60,7 +61,6 @@ class ParticipantControllerTest {
 
     @TestConfiguration
     static class GatewayPropertiesConfigurationTest {
-        public static final String SIGNUP_URL = "https://example.com";
 
         @Bean
         GatewayProperties gatewayProperties() {
@@ -207,7 +207,7 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$.studyGroupId").value(participantRequest.getStudyGroupId()))
                 .andExpect(jsonPath("$.modified").exists())
                 .andExpect(jsonPath("$.created").exists())
-                .andExpect(jsonPath("$.registrationUrl").exists());
+                .andExpect(jsonPath("$.registrationUrl").value(SIGNUP_URL + "/api/v1/signup?token=" + token));
     }
 
 
