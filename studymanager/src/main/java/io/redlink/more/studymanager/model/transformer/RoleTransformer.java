@@ -37,9 +37,9 @@ public final class RoleTransformer {
 
     public static StudyRoleDTO toStudyRoleDTO(StudyRole studyRole) {
         return switch (studyRole) {
-            case STUDY_VIEWER -> StudyRoleDTO.VIEWER;
-            case STUDY_OPERATOR -> StudyRoleDTO.OPERATOR;
-            case STUDY_ADMIN -> StudyRoleDTO.ADMIN;
+            case STUDY_VIEWER -> StudyRoleDTO.STUDY_VIEWER;
+            case STUDY_OPERATOR -> StudyRoleDTO.STUDY_OPERATOR;
+            case STUDY_ADMIN -> StudyRoleDTO.STUDY_ADMIN;
         };
     }
 
@@ -57,9 +57,9 @@ public final class RoleTransformer {
 
     public static StudyRole toStudyRole(StudyRoleDTO studyRole) {
         return switch (studyRole) {
-            case VIEWER -> StudyRole.STUDY_VIEWER;
-            case OPERATOR -> StudyRole.STUDY_OPERATOR;
-            case ADMIN -> StudyRole.STUDY_ADMIN;
+            case STUDY_VIEWER -> StudyRole.STUDY_VIEWER;
+            case STUDY_OPERATOR -> StudyRole.STUDY_OPERATOR;
+            case STUDY_ADMIN -> StudyRole.STUDY_ADMIN;
         };
     }
 
@@ -78,9 +78,9 @@ public final class RoleTransformer {
 
     public static PlatformRoleDTO toPlatformRoleDTO(PlatformRole role) {
         return switch (role) {
-            case MORE_VIEWER -> PlatformRoleDTO.VIEWER;
-            case MORE_OPERATOR -> PlatformRoleDTO.OPERATOR;
-            case MORE_ADMIN -> PlatformRoleDTO.ADMIN;
+            case MORE_VIEWER -> PlatformRoleDTO.MORE_VIEWER;
+            case MORE_OPERATOR -> PlatformRoleDTO.MORE_OPERATOR;
+            case MORE_ADMIN -> PlatformRoleDTO.MORE_ADMIN;
         };
     }
 
@@ -98,9 +98,9 @@ public final class RoleTransformer {
 
     public static PlatformRole toPlatformRole(PlatformRoleDTO role) {
         return switch (role) {
-            case VIEWER -> PlatformRole.MORE_VIEWER;
-            case OPERATOR -> PlatformRole.MORE_OPERATOR;
-            case ADMIN -> PlatformRole.MORE_ADMIN;
+            case MORE_VIEWER -> PlatformRole.MORE_VIEWER;
+            case MORE_OPERATOR -> PlatformRole.MORE_OPERATOR;
+            case MORE_ADMIN -> PlatformRole.MORE_ADMIN;
         };
     }
 
