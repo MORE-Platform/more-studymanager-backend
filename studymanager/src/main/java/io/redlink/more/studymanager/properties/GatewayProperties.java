@@ -21,7 +21,7 @@ public record GatewayProperties(String baseUrl) {
 
         return UriComponentsBuilder.fromUriString(baseUrl)
                 .pathSegment("api", "v1", "signup")
-                .queryParam("token", "{token}")
-                .build("token", participant.getRegistrationToken());
+                .queryParam("token", participant.getRegistrationToken())
+                .build("token");
     }
 }
