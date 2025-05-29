@@ -36,7 +36,7 @@
 
         <java.version>17</java.version>
         <spring-boot.version>3.5.0</spring-boot.version>
-        <testcontainers.version>1.21.0</testcontainers.version>
+        <testcontainers.version>1.21.1</testcontainers.version>
 
         <docker.namespace>more-project</docker.namespace>
 
