@@ -341,9 +341,19 @@
                             </configuration>
                         </execution>
                         <execution>
-                            <id>jib-install</id>
-                            <phase>install</phase>
-                            <goals><goal>dockerBuild</goal></goals>
+                         <id>jib-install</id>
+                         <phase>install</phase>
+                         <goals><goal>dockerBuild</goal></goals>
+                         <configuration>
+                           <from>
+                             <platforms>
+                               <platform>
+                                 <architecture>arm64</architecture>
+                                 <os>linux</os>
+                               </platform>
+                             </platforms>
+                           </from>
+                         </configuration>
                         </execution>
                         <execution>
                             <id>jib-package</id>

@@ -17,7 +17,15 @@ import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
 
 public class HealthKitObservationFactory <C extends Observation<P>, P extends ObservationProperties> extends ObservationFactory<C, P> {
-    
+
+    private static final List<Value> PROPERTIES= List.of(
+        new StringValue("ObservationType")
+        .setDefaultValue("StepsRecord")
+        .setRequired(true)
+        .setName("Observation Type")
+        .setDescription("This is the type of observation we are getting data from")
+    );
+
    @Override
     public String getId() {
         return "healthkit-mobile-observation";
@@ -25,15 +33,17 @@ public class HealthKitObservationFactory <C extends Observation<P>, P extends Ob
 
     @Override
     public String getTitle() {
-        return "observation.factory.Healthkit.title";
+        return "HealthKit observation(Android)";
     }
 
     @Override
     public String getDescription() {
-        return
-"""
-observation.factory.Healthkit.description
-""";
+        return "Enables getting healthkit data from android devices";
+  
+    }
+    @Override
+    public List<Value> getProperties(){
+        return PROPERTIES;
     }
     @Override
     public HealthKitObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
@@ -41,15 +51,9 @@ observation.factory.Healthkit.description
     }
 
    
-    //public List<MeasurementSet> getMeasurementSetList() {
-    //    return List.of(
-    //        GenericMeasurementSets.STEPS,
-    //        GenericMeasurementSets.HEART_RATE
-    //    );
-    //}
 
     @Override
     public MeasurementSet getMeasurementSet(){
-        return GenericMeasurementSets.STEPS;
+        return GenericMeasurementSets.HEALTHKIT_DATA;
     }
 }

@@ -36,8 +36,8 @@ public class GenericMeasurementSets {
             new Measurement("hr", Measurement.Type.INTEGER)
     ));
 
-    public static MeasurementSet STEPS = new MeasurementSet("STEPS", Set.of(
-        new Measurement("count", Measurement.Type.INTEGER)
+    public static MeasurementSet HEALTHKIT_DATA = new MeasurementSet("HEALTHKIT_DATA", Set.of(
+        new Measurement("data", Measurement.Type.OBJECT)
     ));
 
     public static MeasurementSet NOT_SPECIFIED = new MeasurementSet("NOT_SPECIFIED", Set.of(
