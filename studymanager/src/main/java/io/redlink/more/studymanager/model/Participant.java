@@ -19,7 +19,6 @@ public class Participant {
     private Instant modified;
     private Instant start;
     private String registrationToken;
-    private String registrationUrl;
 
     public Long getStudyId() {
         return this.studyId;
@@ -120,10 +119,6 @@ public class Participant {
         return this;
     }
 
-    public String getRegistrationUrl() {
-        return registrationUrl;
-    }
-
     @Override
     public String toString() {
         return "Participant{" +
@@ -136,7 +131,6 @@ public class Participant {
                 ", modified=" + modified +
                 ", start=" + start +
                 ", registrationToken='" + registrationToken + '\'' +
-                ", registrationUrl='" + registrationUrl + '\'' +
                 '}';
     }
 }
