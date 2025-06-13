@@ -118,4 +118,19 @@ public class Participant {
         this.registrationToken = registrationToken;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "Participant{" +
+                "studyId=" + studyId +
+                ", participantId=" + participantId +
+                ", alias='" + alias + '\'' +
+                ", studyGroupId=" + studyGroupId +
+                ", status=" + status +
+                ", created=" + created +
+                ", modified=" + modified +
+                ", start=" + start +
+                ", registrationToken='" + registrationToken + '\'' +
+                '}';
+    }
 }
