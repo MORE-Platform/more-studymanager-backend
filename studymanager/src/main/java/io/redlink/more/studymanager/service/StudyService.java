@@ -23,12 +23,9 @@ import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyGroupRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
-
-import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
@@ -118,7 +115,7 @@ public class StudyService {
     }
 
     @Transactional
-    public void setStatus(Long studyId, Study.Status newState, User user) {
+    public Optional<Study> setStatus(Long studyId, Study.Status newState, User user) {
         final Study study = getStudy(studyId, user)
                 .orElseThrow(() -> NotFoundException.Study(studyId));
         final Study.Status oldState = study.getStudyState();
@@ -128,8 +125,8 @@ public class StudyService {
             throw BadRequestException.StateChange(oldState, newState);
         }
 
-        studyRepository.setStateById(studyId, newState)
-                .ifPresent(s -> {
+        return studyRepository.setStateById(studyId, newState)
+                .map(s -> {
                     try {
                         alignWithStudyState(s);
                         participantService.listParticipants(studyId).forEach(participant ->
@@ -147,6 +144,7 @@ public class StudyService {
                         studyRepository.getById(studyId).ifPresent(this::alignWithStudyState);
                         throw new BadRequestException("Study cannot be initialized", e);
                     }
+                    return s;
                 });
     }
 

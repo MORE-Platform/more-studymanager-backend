@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.time.Instant;
 
 public final class TriggerTransformer {
 
@@ -25,10 +26,12 @@ public final class TriggerTransformer {
     }
 
     public static TriggerDTO toTriggerDTO_V1(Trigger trigger) {
+        Instant instant = trigger.getModified();
+        Instant instant1 = trigger.getCreated();
         return new TriggerDTO()
                 .type(trigger.getType())
                 .properties(trigger.getProperties())
-                .created(Transformers.toOffsetDateTime(trigger.getCreated()))
-                .modified(Transformers.toOffsetDateTime(trigger.getModified()));
+                .created(instant1)
+                .modified(instant);
     }
 }

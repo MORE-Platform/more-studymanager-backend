@@ -17,6 +17,7 @@ import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyTransformer;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyService;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -24,8 +25,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -92,9 +91,12 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     @RequiresStudyRole(StudyRole.STUDY_ADMIN)
-    public ResponseEntity<Void> setStatus(Long studyId, StatusChangeDTO statusChangeDTO) {
+    public ResponseEntity<StudyDTO> setStatus(Long studyId, StatusChangeDTO statusChangeDTO) {
         final var currentUser = authService.getCurrentUser();
-        service.setStatus(studyId, StudyTransformer.fromStatusChangeDTO_V1(statusChangeDTO), currentUser);
-        return ResponseEntity.ok().build();
+
+        return ResponseEntity.of(
+                service.setStatus(studyId, StudyTransformer.fromStatusChangeDTO_V1(statusChangeDTO), currentUser)
+                        .map(StudyTransformer::toStudyDTO_V1)
+        );
     }
 }

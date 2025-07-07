@@ -15,6 +15,8 @@ import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
+import io.redlink.more.studymanager.core.ui.DataViewData;
+import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.data.ElasticActionDataPoint;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
@@ -26,17 +28,22 @@ import io.redlink.more.studymanager.scheduling.TriggerJob;
 import io.redlink.more.studymanager.sdk.scoped.MoreActionSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreObservationSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreTriggerSDKImpl;
+import io.redlink.more.studymanager.service.ElasticDataService;
 import io.redlink.more.studymanager.service.ElasticService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import io.redlink.more.studymanager.service.PushNotificationService;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 public class MoreSDK {
@@ -51,6 +58,8 @@ public class MoreSDK {
 
     private final ElasticService elasticService;
 
+    private final ElasticDataService elasticDataService;
+
     private final PushNotificationService pushNotificationService;
 
     private final ObservationRepository observationRepository;
@@ -59,12 +68,13 @@ public class MoreSDK {
             NameValuePairRepository nvpairs,
             SchedulingService schedulingService,
             ParticipantService participantService,
-            ElasticService elasticService,
+            ElasticService elasticService, ElasticDataService elasticDataService,
             PushNotificationService pushNotificationService, ObservationRepository observationRepository) {
         this.nvpairs = nvpairs;
         this.schedulingService = schedulingService;
         this.participantService = participantService;
         this.elasticService = elasticService;
+        this.elasticDataService = elasticDataService;
         this.pushNotificationService = pushNotificationService;
         this.observationRepository = observationRepository;
     }
@@ -168,5 +178,14 @@ public class MoreSDK {
 
     public void removePropertiesForParticipant(long studyId, Integer participantId, int observationId) {
         observationRepository.removeParticipantProperties(studyId, participantId, observationId);
+    }
+
+    public DataViewData queryData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) {
+        try {
+            return elasticDataService.queryObservationViewData(viewConfig, studyId, studyGroupId, observationId, participantId, timerange);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to query observation data for view config {}", viewConfig, e);
+            return null;
+        }
     }
 }

@@ -8,9 +8,11 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.*;
-import jakarta.servlet.ServletOutputStream;
+import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
+import io.redlink.more.studymanager.properties.GatewayProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -38,10 +42,11 @@ public class ImportExportService {
     private final IntegrationService integrationService;
 
     private final ElasticService elasticService;
+    private final GatewayProperties gatewayProperties;
 
     public ImportExportService(ParticipantService participantService, StudyService studyService, StudyStateService studyStateService,
                                ObservationService observationService, InterventionService interventionService, StudyGroupService studyGroupService,
-                               IntegrationService integrationService, ElasticService elasticService) {
+                               IntegrationService integrationService, ElasticService elasticService, GatewayProperties gatewayProperties) {
         this.participantService = participantService;
         this.studyService = studyService;
         this.studyStateService = studyStateService;
@@ -50,13 +55,17 @@ public class ImportExportService {
         this.studyGroupService = studyGroupService;
         this.integrationService = integrationService;
         this.elasticService = elasticService;
+        this.gatewayProperties = gatewayProperties;
     }
 
     public Resource exportParticipants(Long studyId, User user) {
-        List<Participant> participantList = participantService.listParticipants(studyId);
+        List<ParticipantDTO> participantList = participantService.listParticipants(studyId)
+                .stream()
+                .map(participant -> ParticipantTransformer.toParticipantDTO_V1(participant, gatewayProperties))
+                .toList();
         Study study = studyService.getStudy(studyId, user)
                 .orElseThrow(() -> new NotFoundException("study", studyId));
-        StringBuilder str = new StringBuilder("STUDYID;TITLE;ALIAS;PARTICIPANTID;REGISTRATIONTOKEN\n");
+        StringBuilder str = new StringBuilder("STUDYID;TITLE;ALIAS;PARTICIPANTID;REGISTRATIONTOKEN;REGISTRATIONURL\n");
         participantList.forEach(p -> str.append(writeToParticipantCsv(p, study)));
         return new ByteArrayResource(str.toString().getBytes(StandardCharsets.UTF_8));
     }
@@ -76,9 +85,9 @@ public class ImportExportService {
         scanner.close();
     }
 
-    private String writeToParticipantCsv(Participant participant, Study study) {
-        return "%d;%s;%s;%d;%s\n".formatted(study.getStudyId(), study.getTitle(), participant.getAlias(),
-                participant.getParticipantId(), participant.getRegistrationToken());
+    private String writeToParticipantCsv(ParticipantDTO participant, Study study) {
+        return "%d;%s;%s;%d;%s;%s\n".formatted(study.getStudyId(), study.getTitle(), participant.getAlias(),
+                participant.getParticipantId(), participant.getRegistrationToken(), participant.getRegistrationUrl());
     }
 
     public StudyImportExport exportStudy(Long studyId, User user) {
@@ -151,19 +160,19 @@ public class ImportExportService {
         return newStudy;
     }
 
-    public void exportStudyData(ServletOutputStream outputStream, Long studyId) {
+    public void exportStudyData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
         if (studyService.existsStudy(studyId).orElse(false)) {
-            exportStudyDataAsync(outputStream, studyId);
+            exportStudyDataAsync(outputStream, studyId, studyGroupId, participantId, observationId, from, to);
         } else {
             throw NotFoundException.Study(studyId);
         }
     }
 
     @Async
-    public void exportStudyDataAsync(ServletOutputStream outputStream, Long studyId) {
+    public void exportStudyDataAsync(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
         try (outputStream) {
             outputStream.write("[".getBytes(StandardCharsets.UTF_8));
-            elasticService.exportData(studyId, outputStream);
+            elasticService.exportData(outputStream, studyId, studyGroupId, participantId, observationId, from, to);
             outputStream.write("]".getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             LOGGER.error("Cannot export study data for {}", studyId, e);

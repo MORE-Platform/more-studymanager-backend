@@ -140,8 +140,10 @@ public class LimeSurveyRequestService {
 
             String rsp = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
 
-            if(rsp.contains("Error: Invalid survey ID")) {
+            if (rsp.contains("Error: Invalid survey ID")) {
                 throw new RuntimeException("Invalid survey ID: " + surveyId);
+            } else if (rsp.contains("Invalid session key")) {
+                throw new RuntimeException("Connection to Limesurvey failed");
             }
 
             List<ParticipantData> data = mapper.readValue(
@@ -159,17 +161,24 @@ public class LimeSurveyRequestService {
         }
     }
 
-    private String getSessionKey(){
+    private String getSessionKey() {
         try {
             HttpRequest request = createHttpRequest(
                         parseRequest("get_session_key",
                                 List.of(properties.get("username"), properties.get("password")))
                 );
-            return mapper.readValue(
-                    client.send(request, HttpResponse.BodyHandlers.ofString()).body(),
-                    LimeSurveyObjectResponse.class)
-                    .result().toString();
-        } catch(IOException | InterruptedException e){
+            var rsp = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+            var values = mapper.readValue(rsp, LimeSurveyObjectResponse.class);
+            var result = values.result().toString();
+
+            if (result.contains("Invalid user name or password")) {
+                throw new RuntimeException("Not possible to get session key for Limesurvey because of invalid credentials.");
+            } else if (result.contains("You have exceeded the number of maximum login attempts. Please wait 10 minutes before trying again")) {
+                throw new RuntimeException("Too many login attempts for Limesurvey. Try again in 10 minutes.");
+            }
+
+            return result;
+        } catch(IOException | InterruptedException e) {
             LOGGER.error("Error getting session key for Limesurvey remote control");
             throw new RuntimeException(e);
         }

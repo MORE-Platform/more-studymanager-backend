@@ -11,19 +11,22 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.core.component.Component;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
+import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
+import io.redlink.more.studymanager.core.ui.DataView;
+import io.redlink.more.studymanager.core.ui.DataViewInfo;
+import io.redlink.more.studymanager.core.validation.ValidationIssue;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
-import java.util.EnumSet;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.OffsetDateTime;
+import java.util.*;
+
+import org.springframework.stereotype.Service;
 
 @Service
 public class ObservationService {
@@ -95,14 +98,51 @@ public class ObservationService {
 
     private void deactivateObservationsFor(Study study){ listObservationsFor(study).forEach(Component::deactivate); }
 
+    private void validateProperties(List<Observation> observations) {
+        for (Observation observation : observations) {
+            try {
+                factory(observation).validate(observation.getProperties());
+            } catch (ConfigurationValidationException e) {
+                for (ValidationIssue issue : e.getReport().getIssues()) {
+                    issue.setComponentTitle(observation.getTitle());
+                }
+
+                throw e;
+            }
+        }
+    }
+
     public List<io.redlink.more.studymanager.core.component.Observation> listObservationsFor(Study study){
-        return listObservations(study.getStudyId()).stream()
-                .map(observation -> factory(observation)
-                        .create(
-                                sdk.scopedObservationSDK(observation.getStudyId(), observation.getStudyGroupId(), observation.getObservationId()),
-                                observation.getProperties()
-                        ))
-                .toList();
+        List<Observation> observations = listObservations(study.getStudyId());
+        List<io.redlink.more.studymanager.core.component.Observation> result = new ArrayList<>();
+
+        validateProperties(observations);
+
+        for (Observation observation : observations) {
+            result.add(factory(observation)
+                    .create(
+                            sdk.scopedObservationSDK(observation.getStudyId(), observation.getStudyGroupId(), observation.getObservationId()),
+                            observation.getProperties()
+                    ));
+        }
+
+        return result;
+    }
+
+    public DataViewInfo[] listDataViews(Long studyId, Integer observationId) {
+        var obs = getObservation(studyId, observationId).orElseThrow();
+
+        return factory(obs).create(
+                sdk.scopedObservationSDK(obs.getStudyId(), obs.getStudyGroupId(), obs.getObservationId()), obs.getProperties()
+        ).listViews();
+    }
+
+    public DataView queryData(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, TimeRange timerange) {
+        var obs = getObservation(studyId, observationId).orElseThrow();
+
+        return factory(obs).create(
+                sdk.scopedObservationSDK(obs.getStudyId(), obs.getStudyGroupId(), obs.getObservationId()), obs.getProperties()
+        ).getView(viewName, studyGroupId, participantId, timerange);
     }
 
     private ObservationFactory factory(Observation observation) {

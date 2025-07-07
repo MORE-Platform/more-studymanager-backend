@@ -8,26 +8,21 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
-import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.model.Intervention;
+import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.StudyImportExport;
+import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.scheduler.RecurrenceRule;
 import io.redlink.more.studymanager.repository.DownloadTokenRepository;
 import io.redlink.more.studymanager.service.ImportExportService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -35,6 +30,15 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,17 +55,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class ImportExportControllerTest {
 
-    @MockBean
+    @MockitoBean
     ImportExportService importExportService;
 
-    @MockBean
+    @MockitoBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
 
-    @MockBean
+    @MockitoBean
     DownloadTokenRepository tokenRepository;
-
-    @Autowired
-    ObjectMapper mapper;
 
     @Autowired
     private MockMvc mvc;
@@ -70,7 +71,7 @@ class ImportExportControllerTest {
     @DisplayName("Participants should be exported in csv format as a Resource")
     void testExportParticipants() throws Exception {
 
-        String csv = "STUDYID;TITLE;PARTICIPANTID;ALIAS;REGISTRATIONTOKEN\n1;Study;1;SomeAlias;SomeToken";
+        String csv = "STUDYID;TITLE;PARTICIPANTID;ALIAS;REGISTRATIONTOKEN;REGISTRATIONURL\n1;Study;1;SomeAlias;SomeToken;http://examle.com/signup";
 
         when(importExportService.exportParticipants(any(Long.class), any()))
                 .thenAnswer(invocationOnMock -> new ByteArrayResource(csv.getBytes(StandardCharsets.UTF_8)));

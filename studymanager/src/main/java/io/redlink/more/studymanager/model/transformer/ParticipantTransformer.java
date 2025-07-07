@@ -11,11 +11,13 @@ package io.redlink.more.studymanager.model.transformer;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipantStatusDTO;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.properties.GatewayProperties;
 
-public class ParticipantTransformer {
+import java.net.URI;
+import java.time.Instant;
 
+public final class ParticipantTransformer {
     private ParticipantTransformer() {
-
     }
 
     public static Participant fromParticipantDTO_V1(ParticipantDTO participantDTO) {
@@ -26,17 +28,22 @@ public class ParticipantTransformer {
                 .setStudyGroupId(participantDTO.getStudyGroupId());
     }
 
-    public static ParticipantDTO toParticipantDTO_V1(Participant participant) {
+    public static ParticipantDTO toParticipantDTO_V1(Participant participant, GatewayProperties gatewayProps) {
+        Instant instant = participant.getCreated();
+        Instant instant1 = participant.getModified();
+        Instant instant2 = participant.getStart();
+        URI registrationUri = gatewayProps.generateSignupUrl(participant);
+
         return new ParticipantDTO()
                 .studyId(participant.getStudyId())
                 .participantId(participant.getParticipantId())
                 .alias(participant.getAlias())
                 .studyGroupId(participant.getStudyGroupId())
                 .registrationToken(participant.getRegistrationToken())
+                .registrationUrl(registrationUri)
                 .status(ParticipantStatusDTO.fromValue(participant.getStatus().getValue()))
-                .start(Transformers.toOffsetDateTime(participant.getStart()))
-                .modified(Transformers.toOffsetDateTime(participant.getModified()))
-                .created(Transformers.toOffsetDateTime(participant.getCreated()));
+                .start(instant2)
+                .modified(instant1)
+                .created(instant);
     }
-
 }

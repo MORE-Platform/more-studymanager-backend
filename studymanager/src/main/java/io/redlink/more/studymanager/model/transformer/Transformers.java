@@ -1,11 +1,13 @@
 /*
- * Copyright (c) 2023 Redlink GmbH.
+ * Copyright LBI-DHP and/or licensed to LBI-DHP under one or more
+ * contributor license agreements (LBI-DHP: Ludwig Boltzmann Institute
+ * for Digital Health and Prevention -- A research institute of the
+ * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
+ * Förderung der wissenschaftlichen Forschung).
+ * Licensed under the Elastic License 2.0.
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.function.Function;
 
 /**
@@ -13,17 +15,7 @@ import java.util.function.Function;
  */
 public final class Transformers {
 
-    private static final ZoneId HOME = ZoneId.of("Europe/Vienna");
-
     private Transformers() {
-    }
-
-    public static OffsetDateTime toOffsetDateTime(Instant instant) {
-        return transform(instant, i -> i.atZone(HOME).toOffsetDateTime());
-    }
-
-    public static Instant toInstant(OffsetDateTime offsetDateTime) {
-        return transform(offsetDateTime, OffsetDateTime::toInstant);
     }
 
     /**

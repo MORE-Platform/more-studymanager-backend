@@ -14,7 +14,6 @@ import io.redlink.more.studymanager.core.factory.ActionFactory;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
-import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Action;
@@ -215,7 +214,7 @@ public class InterventionService {
                 try {
                     CronExpression.validateExpression(trigger.getProperties().get("cronSchedule").toString());
                 } catch (ParseException e) {
-                    throw new ConfigurationValidationException(ConfigurationValidationReport.init().error(e.getMessage()));
+                    throw ConfigurationValidationException.ofError(e.getMessage());
                 }
             }
         } catch (ConfigurationValidationException e) {
