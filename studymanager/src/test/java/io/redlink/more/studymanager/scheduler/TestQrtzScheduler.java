@@ -9,26 +9,32 @@
 package io.redlink.more.studymanager.scheduler;
 
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
-import io.redlink.more.studymanager.sdk.MoreSDK;
-import org.junit.jupiter.api.Test;
-import org.quartz.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.scheduling.quartz.SchedulerFactoryBean;
-import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.Test;
+import org.quartz.JobDetail;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.Trigger;
+import org.quartz.TriggerKey;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.scheduling.quartz.SchedulerFactoryBean;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
@@ -36,16 +42,16 @@ import static org.quartz.TriggerBuilder.newTrigger;
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("test-containers-flyway")
-public class TestQrtzScheduler {
+class TestQrtzScheduler {
 
-    @MockBean
+    @MockitoBean
     private MoreTriggerSDK moreSDK;
 
     @Autowired
     private SchedulerFactoryBean factory;
 
     @Test
-    public void testScheduling() throws SchedulerException, InterruptedException {
+    void testScheduling() throws SchedulerException, InterruptedException {
 
         Map<String, AtomicInteger> store = new HashMap<>();
 
@@ -92,7 +98,7 @@ public class TestQrtzScheduler {
     }
 
     @Test
-    public void testTriggerStopWithStringKey() throws SchedulerException, InterruptedException {
+    void testTriggerStopWithStringKey() throws SchedulerException, InterruptedException {
         Scheduler scheduler = factory.getScheduler();
         scheduler.start();
         JobDetail job = jobDetail("job");

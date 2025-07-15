@@ -18,7 +18,6 @@ public class Participant {
     private Instant created;
     private Instant modified;
     private Instant start;
-
     private String registrationToken;
 
     public Long getStudyId() {
@@ -118,5 +117,20 @@ public class Participant {
     public Participant setRegistrationToken(String registrationToken) {
         this.registrationToken = registrationToken;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "Participant{" +
+                "studyId=" + studyId +
+                ", participantId=" + participantId +
+                ", alias='" + alias + '\'' +
+                ", studyGroupId=" + studyGroupId +
+                ", status=" + status +
+                ", created=" + created +
+                ", modified=" + modified +
+                ", start=" + start +
+                ", registrationToken='" + registrationToken + '\'' +
+                '}';
     }
 }

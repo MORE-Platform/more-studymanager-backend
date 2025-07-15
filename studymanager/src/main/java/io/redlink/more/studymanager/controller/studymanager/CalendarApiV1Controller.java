@@ -15,13 +15,14 @@ import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.TimelineTransformer;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.CalendarService;
-import java.time.Instant;
-import java.time.LocalDate;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Instant;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -40,7 +41,7 @@ public class CalendarApiV1Controller implements CalendarApi {
     public ResponseEntity<String> getStudyCalendar(Long studyId) {
         return ResponseEntity
                 .status(301)
-                .header("Location", properties.getBaseUrl() + "/api/v1/calendar/studies/" + studyId + "/calendar.ics")
+                .header("Location", properties.baseUrl() + "/api/v1/calendar/studies/" + studyId + "/calendar.ics")
                 .build();
     }
 

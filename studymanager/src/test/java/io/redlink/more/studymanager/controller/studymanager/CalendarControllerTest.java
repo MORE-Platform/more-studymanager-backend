@@ -1,6 +1,5 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.PlatformRole;
@@ -13,7 +12,6 @@ import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
@@ -24,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -36,15 +34,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(CalendarApiV1Controller.class)
 @AutoConfigureMockMvc(addFilters = false)
-public class CalendarControllerTest {
-    @MockBean
+class CalendarControllerTest {
+    @MockitoBean
     CalendarService service;
 
-    @MockBean
+    @MockitoBean
     OAuth2AuthenticationService authService;
-
-    @Autowired
-    ObjectMapper mapper;
 
     @Autowired
     MockMvc mvc;
@@ -105,8 +100,6 @@ public class CalendarControllerTest {
                             List.of()
                     );
                 });
-
-        DateTimeFormatter pattern = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX").withZone(ZoneId.systemDefault());
 
         mvc.perform(get("/api/v1/studies/3/timeline")
                         .param("participant", String.valueOf(2))
