@@ -8,8 +8,11 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
+import io.redlink.more.studymanager.properties.GatewayProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,10 +42,11 @@ public class ImportExportService {
     private final IntegrationService integrationService;
 
     private final ElasticService elasticService;
+    private final GatewayProperties gatewayProperties;
 
     public ImportExportService(ParticipantService participantService, StudyService studyService, StudyStateService studyStateService,
                                ObservationService observationService, InterventionService interventionService, StudyGroupService studyGroupService,
-                               IntegrationService integrationService, ElasticService elasticService) {
+                               IntegrationService integrationService, ElasticService elasticService, GatewayProperties gatewayProperties) {
         this.participantService = participantService;
         this.studyService = studyService;
         this.studyStateService = studyStateService;
@@ -51,13 +55,17 @@ public class ImportExportService {
         this.studyGroupService = studyGroupService;
         this.integrationService = integrationService;
         this.elasticService = elasticService;
+        this.gatewayProperties = gatewayProperties;
     }
 
     public Resource exportParticipants(Long studyId, User user) {
-        List<Participant> participantList = participantService.listParticipants(studyId);
+        List<ParticipantDTO> participantList = participantService.listParticipants(studyId)
+                .stream()
+                .map(participant -> ParticipantTransformer.toParticipantDTO_V1(participant, gatewayProperties))
+                .toList();
         Study study = studyService.getStudy(studyId, user)
                 .orElseThrow(() -> new NotFoundException("study", studyId));
-        StringBuilder str = new StringBuilder("STUDYID;TITLE;ALIAS;PARTICIPANTID;REGISTRATIONTOKEN\n");
+        StringBuilder str = new StringBuilder("STUDYID;TITLE;ALIAS;PARTICIPANTID;REGISTRATIONTOKEN;REGISTRATIONURL\n");
         participantList.forEach(p -> str.append(writeToParticipantCsv(p, study)));
         return new ByteArrayResource(str.toString().getBytes(StandardCharsets.UTF_8));
     }
@@ -77,9 +85,9 @@ public class ImportExportService {
         scanner.close();
     }
 
-    private String writeToParticipantCsv(Participant participant, Study study) {
-        return "%d;%s;%s;%d;%s\n".formatted(study.getStudyId(), study.getTitle(), participant.getAlias(),
-                participant.getParticipantId(), participant.getRegistrationToken());
+    private String writeToParticipantCsv(ParticipantDTO participant, Study study) {
+        return "%d;%s;%s;%d;%s;%s\n".formatted(study.getStudyId(), study.getTitle(), participant.getAlias(),
+                participant.getParticipantId(), participant.getRegistrationToken(), participant.getRegistrationUrl());
     }
 
     public StudyImportExport exportStudy(Long studyId, User user) {
