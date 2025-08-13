@@ -15,9 +15,7 @@ import io.redlink.more.studymanager.core.properties.model.ChoiceList;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
-
-public class HealthKitObservationFactory
-    extends ObservationFactory<HealthKitObservation, ObservationProperties> {
+public class HealthkitObservation_Steps_Factory  extends ObservationFactory<HealthKitObservation, ObservationProperties> {
 
     private static final List<Value> PROPERTIES= List.of(
        
@@ -26,12 +24,12 @@ public class HealthKitObservationFactory
 
    @Override
     public String getId() {
-        return "healthkit-mobile-observation:Sleep_observation" ;
+        return "healthkit-mobile-observation:Steps_observation" ;
     }
 
     @Override
     public String getTitle() {
-        return "HealthKit observation Sleep";
+        return "HealthKit observation steps" ;
     }
 
     @Override

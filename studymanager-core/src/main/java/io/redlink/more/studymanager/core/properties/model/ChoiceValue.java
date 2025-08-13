@@ -15,7 +15,18 @@ public class ChoiceValue extends Value<String> {
 
     public ChoiceValue(String id) {
         super(id);
+    }    
+
+    public ChoiceValue setOptions(List<String> items){
+        this.options=items;
+        return this;
     }
+
+    public List<String> getOptions(){
+        return this.options;
+    }
+
+
 
     @Override
     public String getType() {

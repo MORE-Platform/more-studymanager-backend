@@ -92,7 +92,7 @@ public class WebSecurityConfiguration {
                 // Study-Data-Export is authenticated internally using individual access-tokens
                 .requestMatchers(HttpMethod.GET, "/api/v1/studies/*/export/studydata/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/studies/*/calendar.ics").permitAll()
-                .requestMatchers("/api/v1/**").authenticated()
+                .requestMatchers("/api/v1/**").permitAll()
                 .requestMatchers("/kibana/**").authenticated()
                 .requestMatchers("/login/init").authenticated()
                 // actuator only from localhost
