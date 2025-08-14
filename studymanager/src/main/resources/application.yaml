@@ -19,7 +19,7 @@ spring:
             authorization-grant-type: authorization_code
         provider:
           keycloak:
-            issuer-uri: ${OAUTH2_SERVER:https://auth.more.redlink.io/realms/Auth-Client-Test}
+            issuer-uri: ${OAUTH2_SERVER:https://auth.more-health.at/realms/MORE-Platform-new}
             user-name-attribute: preferred_username
       # This enables the client_credentials grant/flow
       resourceserver:
@@ -110,6 +110,6 @@ more:
   frontend:
     title: "${MORE_FE_TITLE:MORE Studymanager}"
     keycloak:
-      server: "${MORE_FE_KC_SERVER:https://auth.more.redlink.io/}"
-      realm: "${MORE_FE_KC_REALM:Auth-Client-Test}"
-      client-id: "${MORE_FE_KC_CLIENT_ID:oauth2-pkce-client}"
+      server: "${MORE_FE_KC_SERVER:https://auth.more-health.at/}"
+      realm: "${MORE_FE_KC_REALM:MORE-Platform-new}"
+      client-id: "${MORE_FE_KC_CLIENT_ID:study-manager}"
