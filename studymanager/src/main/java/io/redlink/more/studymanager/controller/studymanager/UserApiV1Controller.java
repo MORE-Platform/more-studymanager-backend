@@ -84,7 +84,7 @@ public class UserApiV1Controller implements UsersApi {
         return null;
     }
 
-    @Override
+    @Override //FIXME: This Method does not work with AuditLog as it does not have a Study as context
     public ResponseEntity<UserSearchResultListDTO> findUsers(String q, Integer offset, Integer limit) {
         limit = Math.min(limit, 15);
         return ResponseEntity.ok(

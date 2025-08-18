@@ -10,6 +10,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.StudyGroupDTO;
 import io.redlink.more.studymanager.api.v1.webservices.StudyGroupsApi;
+import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyGroup;
 import io.redlink.more.studymanager.model.StudyRole;
@@ -40,6 +41,7 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<StudyGroupDTO> createStudyGroup(Long studyId, StudyGroupDTO studyGroupDTO) {
         StudyGroup studyGroup = service.createStudyGroup(
                 StudyGroupTransformer.fromStudyGroupDTO_V1(studyGroupDTO)
@@ -52,6 +54,7 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
 
     @Override
     @RequiresStudyRole
+    @Audited
     public ResponseEntity<List<StudyGroupDTO>> listStudyGroups(Long studyId) {
         return ResponseEntity.ok(
                 service.listStudyGroups(studyId).stream()
@@ -62,6 +65,7 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
 
     @Override
     @RequiresStudyRole
+    @Audited
     public ResponseEntity<StudyGroupDTO> getStudyGroup(Long studyId, Integer studyGroupId) {
         return ResponseEntity.ok(
                 StudyGroupTransformer.toStudyGroupDTO_V1(service.getStudyGroup(studyId, studyGroupId))
@@ -70,6 +74,7 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<StudyGroupDTO> updateStudyGroup(Long studyId, Integer studyGroupId, StudyGroupDTO studyGroupDTO) {
         return ResponseEntity.ok(
                 StudyGroupTransformer.toStudyGroupDTO_V1(
@@ -82,6 +87,7 @@ public class StudyGroupApiV1Controller implements StudyGroupsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<Void> deleteStudyGroup(Long studyId, Integer studyGroupId) {
         service.deleteStudyGroup(studyId, studyGroupId);
         return ResponseEntity.noContent().build();

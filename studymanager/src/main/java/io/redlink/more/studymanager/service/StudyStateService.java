@@ -13,6 +13,7 @@ import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -30,7 +31,7 @@ public class StudyStateService {
         return study;
     }
 
-    public Study assertStudyNotInState(final Study study, Set<Study.Status> states) {
+    public Study assertStudyNotInState(final Study study, Collection<Study.Status> states) {
         assertStudyNotInState(study.getStudyId(), states);
         return study;
     }
@@ -39,7 +40,7 @@ public class StudyStateService {
         return assertStudyNotInState(studyId, Set.of(states));
     }
 
-    public Long assertStudyNotInState(Long studyId, Set<Study.Status> states) {
+    public Long assertStudyNotInState(Long studyId, Collection<Study.Status> states) {
         return assertStudyState(studyId, EnumSet.complementOf(EnumSet.copyOf(states)));
     }
 
@@ -48,7 +49,7 @@ public class StudyStateService {
         return study;
     }
 
-    public Study assertStudyState(final Study study, Set<Study.Status> states) {
+    public Study assertStudyState(final Study study, Collection<Study.Status> states) {
         assertStudyState(study.getStudyId(), states);
         return study;
     }
@@ -57,11 +58,17 @@ public class StudyStateService {
         return assertStudyState(studyId, Set.of(states));
     }
 
-    public Long assertStudyState(Long studyId, Set<Study.Status> states) {
-        if (studyId == null)
-            throw new IllegalArgumentException("studyId must not be null");
-        if (studyRepository.hasState(studyId, states))
+    public Long assertStudyState(Long studyId, Collection<Study.Status> states) {
+        if(hasStudyState(studyId, states)){
             return studyId;
+        }
         throw BadStudyStateException.state();
     }
+
+    public boolean hasStudyState(Long studyId, Collection<Study.Status> states) {
+        if (studyId == null)
+            throw new IllegalArgumentException("studyId must not be null");
+        return studyRepository.hasState(studyId, states);
+    }
+
 }

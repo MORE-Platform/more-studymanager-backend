@@ -8,12 +8,19 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
+import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.MoreUser;
+import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyPermissionService;
 import io.redlink.more.studymanager.service.StudyService;
+
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,10 +55,21 @@ class StudyPermissionControllerTest {
     @MockitoBean
     StudyPermissionService studyPermissionService;
 
+    @MockitoBean
+    OAuth2AuthenticationService authService;
+
     @Autowired
     private WebApplicationContext context;
 
     private MockMvc mvc;
+
+    private final AuthenticatedUser authUser = new AuthenticatedUser(
+            UUID.randomUUID().toString(),
+            "More User",
+            "more@example.com",
+            "The Hospital",
+            EnumSet.allOf(PlatformRole.class));
+
 
     @BeforeEach
     void init() {
@@ -73,6 +91,7 @@ class StudyPermissionControllerTest {
     @Test
     @WithMockUser
     void testRoleChecksAccepted() throws Exception {
+        when(authService.getCurrentUser()).thenReturn(authUser); //required by AuditLogging
         when(studyPermissionService.hasAnyRole(anyLong(),anyString(),anySet())).thenReturn(true);
         when(studyService.getACL(anyLong())).thenReturn(Map.of(new MoreUser("test","test","test","test"), Set.of(StudyRole.STUDY_VIEWER)));
         mvc.perform(get("/api/v1/studies/1/collaborators")
