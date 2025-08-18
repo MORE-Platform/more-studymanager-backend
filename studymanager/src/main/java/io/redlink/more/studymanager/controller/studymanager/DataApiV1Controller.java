@@ -13,6 +13,7 @@ import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDataDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipationDataDTO;
 import io.redlink.more.studymanager.api.v1.webservices.DataApi;
+import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyDataTransformer;
@@ -35,6 +36,7 @@ public class DataApiV1Controller implements DataApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
+    @Audited
     public ResponseEntity<List<DataPointDTO>> getDataPoints(
             Long studyId, Integer size, Integer observationId, Integer participantId, Instant date
     ) {
@@ -45,6 +47,7 @@ public class DataApiV1Controller implements DataApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
+    @Audited
     public ResponseEntity<List<ParticipationDataDTO>> getParticipationData(Long studyId){
         return ResponseEntity.ok().body(
                 dataProcessingService.getParticipationData(studyId).stream()
@@ -55,6 +58,7 @@ public class DataApiV1Controller implements DataApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
+    @Audited
     public ResponseEntity<ObservationDataViewDataDTO> getObservationViewData(Long studyId, Integer observationId, String viewName, Integer studyGroupId, Integer participantId, Instant from, Instant to) {
         return ResponseEntity.ok().body(
                 StudyDataTransformer.toObservationDataViewDataDTO(
@@ -65,6 +69,7 @@ public class DataApiV1Controller implements DataApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})
+    @Audited
     public ResponseEntity<List<ObservationDataViewDTO>> listObservationViews(Long studyId, Integer observationId) {
         return ResponseEntity.ok().body(
                 Arrays.stream(dataProcessingService.listDataViews(studyId, observationId))
