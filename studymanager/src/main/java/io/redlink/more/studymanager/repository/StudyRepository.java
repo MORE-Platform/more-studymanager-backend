@@ -210,7 +210,7 @@ public class StudyRepository {
                 var stream = namedTemplate.queryForStream(STUDY_HAS_STATE,
                         new MapSqlParameterSource()
                                 .addValue("study_id", studyId)
-                                .addValue("study_status", allowedStates.stream().map(Study.Status::getValue).toList()),
+                                .addValue("study_status", allowedStates.stream().map(Study.Status::getValue).distinct().toList()),
                         (rs, rowNum) -> rs.getLong("study_id")
                 )) {
             return stream.findFirst().isPresent();

@@ -32,7 +32,7 @@ public class AuditLog {
     private String userId; // User Identifier
     private Long studyId;
     private String action; // Action Taken
-    private ActionState actionState = ActionState.unknown; // The state of the aucited Action
+    private ActionState actionState = ActionState.unknown; // The state of the audited Action
     private Instant timestamp; // Timestamp of the Action
     private String resource; // Resource Accessed
     private Map<String, Object> details = new HashMap<>();// Additional Details
