@@ -8,18 +8,19 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
-import io.redlink.more.studymanager.core.properties.model.StringListValue;
 import io.redlink.more.studymanager.core.properties.model.BooleanValue;
 import io.redlink.more.studymanager.core.properties.model.IntegerValue;
+import io.redlink.more.studymanager.core.properties.model.StringValue;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
-public class HKStepsObservationFactory<C extends Observation<P>, P extends ObservationProperties>
+public class HKHRObservationFactory <C extends Observation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
+    
 
-    private static List<Value> properties = List.of(
+             private static List<Value> properties = List.of(
         new IntegerValue("daysback").setDefaultValue(1).setDescription("Data collection days back from current date")
-        
+      
             
     );
 
@@ -29,12 +30,12 @@ public class HKStepsObservationFactory<C extends Observation<P>, P extends Obser
 
     @Override
     public String getId(){
-        return "healthkit-mobile-observation:Steps_observation";
+        return "healthkit-mobile-observation:HR_observation";
     }
 
     @Override
     public String getTitle(){
-        return "Healthkit steps observation";
+        return "Healthkit HR observation";
     }
 
      @Override
@@ -54,4 +55,5 @@ public class HKStepsObservationFactory<C extends Observation<P>, P extends Obser
     public MeasurementSet getMeasurementSet() {
         return GenericMeasurementSets.NOT_SPECIFIED;
     }
+
 }
