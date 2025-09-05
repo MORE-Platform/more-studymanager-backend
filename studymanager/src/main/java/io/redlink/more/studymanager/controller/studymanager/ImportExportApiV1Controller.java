@@ -139,4 +139,10 @@ public class ImportExportApiV1Controller implements ImportExportApi {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @Override
+    public ResponseEntity<Resource> exportAuditLog(Long studyId) {
+        // TODO: implement later
+        return ResponseEntity.noContent().build();
+    }
 }

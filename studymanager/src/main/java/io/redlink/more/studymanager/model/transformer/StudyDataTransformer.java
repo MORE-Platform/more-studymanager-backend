@@ -8,14 +8,12 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.IdTitleDTO;
-import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDTO;
-import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDataDTO;
-import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDataRowDTO;
-import io.redlink.more.studymanager.api.v1.model.ParticipationDataDTO;
+import io.redlink.more.studymanager.api.v1.model.*;
 import io.redlink.more.studymanager.core.ui.DataView;
 import io.redlink.more.studymanager.core.ui.DataViewInfo;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
+import io.redlink.more.studymanager.model.Auditlog;
+import io.redlink.more.studymanager.model.data.AuditlogData;
 import io.redlink.more.studymanager.model.data.ParticipationData;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,6 +38,42 @@ public final class StudyDataTransformer {
                 .id(idTitle.id())
                 .title(idTitle.title());
     }
+
+    public static AuditlogData toAuditlogData(Auditlog auditlog) {
+        return new AuditlogData(
+                auditlog.getStudyId(),
+                auditlog.getAuditlogId(),
+                auditlog.getUserId(),
+                auditlog.getUserRoles(),
+                auditlog.getUserName(),
+                auditlog.getTimestamp(),
+                auditlog.getAction(),
+                auditlog.getState(),
+                auditlog.getDetails()
+        );
+    }
+
+    public static AuditlogDataDTO toAuditlogDataDTO_V1(AuditlogData auditlogData) {
+        return new AuditlogDataDTO()
+                .studyId(auditlogData.studyId())
+                .auditlogId(auditlogData.auditlogId())
+                .userId(auditlogData.userId())
+                .userRoles(auditlogData.userRoles())
+                .userName(auditlogData.userName())
+                .timestamp(auditlogData.timestamp())
+                .action(auditlogData.action())
+                .state(auditlogData.state())
+                .details(auditlogData.details());
+    }
+    public static List<AuditlogDataDTO> toAuditlogDataDTO_V1(List<AuditlogData> auditlogData){
+        if (auditlogData == null || auditlogData.isEmpty()) {
+            return List.of();
+        }
+        return auditlogData.stream()
+                .map(StudyDataTransformer::toAuditlogDataDTO_V1)
+                .toList();
+    }
+
 
     public static ObservationDataViewDataDTO toObservationDataViewDataDTO(DataView dataView){
         var observationDataViewDataDTO = new ObservationDataViewDataDTO()
