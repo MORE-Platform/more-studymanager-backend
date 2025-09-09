@@ -1209,25 +1209,6 @@ paths:
         '400':
           description: bad request
 
-  /studies/{studyId}/export/auditlog:
-    parameters:
-      - $ref: '#/components/parameters/StudyId'
-    get:
-      tags:
-        - importExport
-      description: Export Auditlog
-      operationId: exportAuditLog
-      responses:
-        '200':
-          description: Operation successful
-          content:
-            text/csv:
-              schema:
-                type: string
-                format: binary
-        '400':
-          description: bad request
-
   /studies/{studyId}/data:
     parameters:
       - $ref: '#/components/parameters/StudyId'
@@ -1345,15 +1326,83 @@ paths:
                   $ref: '#/components/schemas/DataPoint'
         '404':
           description: not found
-
-  /studies/{studyId}/auditlog:
+          
+  /auditlog/study/{studyId}/export:
     parameters:
       - $ref: '#/components/parameters/StudyId'
     get:
       tags:
-        - data
-      description: Get current AuditLog 
-      operationId: getAuditlog
+        - auditlog
+      description: Export Auditlog
+      operationId: exportAuditlog
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditlogData'
+        '400':
+          description: bad request
+        '404':
+          description: not found
+
+  /auditlog/study/{studyId}/export/last:
+    parameters:
+      - $ref: '#/components/parameters/StudyId'
+    get:
+      tags:
+        - auditlog
+      description: Export Auditlog
+      operationId: exportLastAuditlog
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditlogData'
+        '400':
+          description: bad request
+        '404':
+          description: not found
+
+  /auditlog/study/{studyId}:
+    parameters:
+      - $ref: '#/components/parameters/StudyId'
+      - in: query
+        name: format
+        required: false
+        schema:
+          type: string
+          enum: [ csv, json, xml ]
+        description: |
+          Optional export format (default: json)
+    get:
+      tags:
+        - auditlog
+      description: Get current length of auditlogs with export format
+      operationId: getAuditlogMetadata
+      responses:
+        '200':
+          description: Operation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditlogMetadata'
+        '404':
+          description: not found
+
+  /auditlog/study/{studyId}/list:
+    parameters:
+      - $ref: '#/components/parameters/StudyId'
+    get:
+      tags:
+        - auditlog
+      description: Get current AuditLog
+      operationId: listAuditlogs
       responses:
         '200':
           description: Operation successful
@@ -2234,6 +2283,24 @@ components:
         - state
         - action
         - timestamp
+
+    AuditlogMetadata:
+      description: |
+        Gives back current length of audit log entries with an integer and export format
+      type: object
+      properties:
+        studyId:
+          $ref: '#/components/schemas/StudyId'
+        length:
+          type: integer
+          format: int32
+        format:
+          description: The export format of the audit log
+          type: string
+          enum:
+            - csv
+            - json
+            - xml
 
     FrontendConfiguration:
       description: |

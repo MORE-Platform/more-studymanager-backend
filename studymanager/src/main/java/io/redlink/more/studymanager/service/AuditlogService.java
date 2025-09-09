@@ -8,11 +8,20 @@
  */
 package io.redlink.more.studymanager.service;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.redlink.more.studymanager.api.v1.model.AuditlogDataDTO;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Auditlog;
+import io.redlink.more.studymanager.model.transformer.AuditlogTransformer;
 import io.redlink.more.studymanager.repository.AuditlogRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +29,8 @@ import java.util.Optional;
 @Service
 public class AuditlogService {
     private final AuditlogRepository auditlogRepository;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuditlogService.class);
+
 
     public AuditlogService(
             AuditlogRepository auditlogRepository) {
@@ -43,6 +54,14 @@ public class AuditlogService {
             return result != null ? result : Collections.emptyList();
     }
 
+    public Optional<Auditlog> getLastAuditlog(Long studyId) {
+        List<Auditlog> auditlogs = listAuditlogsByStudyId(studyId);
+        if (auditlogs.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(auditlogs.get(auditlogs.size() - 1));
+    }
+
     public void deleteAuditlogById(long studyId, long auditlogId) {
         auditlogRepository.deleteAuditlogById(studyId, auditlogId);
     }
@@ -50,4 +69,23 @@ public class AuditlogService {
     public void deleteAuditlogsByStudyId(long studyId) {
         auditlogRepository.deleteAuditlogsByStudyId(studyId);
     }
+
+    // streaming helper function
+    public void exportAuditlogs(OutputStream outputStream, Long studyId) {
+        List<Auditlog> auditlogs = auditlogRepository.listAuditlogsByStudyId(studyId);
+
+        ObjectMapper mapper = new ObjectMapper();
+        try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+            generator.writeStartArray();
+            for (Auditlog auditlog : auditlogs) {
+                AuditlogDataDTO dto = AuditlogTransformer.toAuditlogDataDTO_V1(
+                        AuditlogTransformer.toAuditlogData(auditlog));
+                mapper.writeValue(generator, dto);
+            }
+            generator.writeEndArray();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Error exporting auditlogs for study " + studyId, e);
+        }
+    }
+
 }

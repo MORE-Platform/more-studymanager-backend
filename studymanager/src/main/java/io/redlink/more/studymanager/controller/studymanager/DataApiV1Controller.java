@@ -13,7 +13,6 @@ import io.redlink.more.studymanager.api.v1.webservices.DataApi;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyDataTransformer;
-import io.redlink.more.studymanager.service.AuditlogService;
 import io.redlink.more.studymanager.service.DataProcessingService;
 import java.time.Instant;
 import java.util.Arrays;
@@ -28,10 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class DataApiV1Controller implements DataApi {
 
     private final DataProcessingService dataProcessingService;
-    private final AuditlogService auditlogService;
 
-    public DataApiV1Controller(DataProcessingService dataProcessingService, AuditlogService auditlogService){ this.dataProcessingService = dataProcessingService;
-        this.auditlogService = auditlogService;
+    public DataApiV1Controller(DataProcessingService dataProcessingService){ this.dataProcessingService = dataProcessingService;
     }
 
     @Override
@@ -70,26 +67,6 @@ public class DataApiV1Controller implements DataApi {
         return ResponseEntity.ok().body(
                 Arrays.stream(dataProcessingService.listDataViews(studyId, observationId))
                         .map(StudyDataTransformer::toObservationDataViewDTO)
-                        .toList()
-        );
-    }
-
-    @RequiresStudyRole({StudyRole.STUDY_ADMIN})
-    public ResponseEntity<List<AuditlogDataDTO>> getAuditLogData(Long studyId) {
-        return ResponseEntity.ok().body(
-                auditlogService.listAuditlogsByStudyId(studyId).stream()
-                        .map(StudyDataTransformer::toAuditlogData)
-                        .map(StudyDataTransformer::toAuditlogDataDTO_V1)
-                        .toList()
-        );
-    }
-
-    @RequiresStudyRole({StudyRole.STUDY_ADMIN})
-    public ResponseEntity<List<AuditlogDataDTO>> getAuditlog(Long studyId) {
-        return ResponseEntity.ok(
-                auditlogService.listAuditlogsByStudyId(studyId).stream()
-                        .map(StudyDataTransformer::toAuditlogData)
-                        .map(StudyDataTransformer::toAuditlogDataDTO_V1)
                         .toList()
         );
     }

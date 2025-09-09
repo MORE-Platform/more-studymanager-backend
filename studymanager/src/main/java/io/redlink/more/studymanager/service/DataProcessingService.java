@@ -12,7 +12,6 @@ import io.redlink.more.studymanager.api.v1.model.DataPointDTO;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.core.ui.DataView;
 import io.redlink.more.studymanager.core.ui.DataViewInfo;
-import io.redlink.more.studymanager.model.Auditlog;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.StudyGroup;
@@ -35,14 +34,12 @@ public class DataProcessingService {
     private final ParticipantService participantService;
     private final StudyGroupService studyGroupService;
     private final ElasticService elasticService;
-    private final AuditlogService auditlogService;
 
-    public DataProcessingService(ObservationService observationService, ParticipantService participantService, ElasticService elasticService, StudyGroupService studyGroupService, AuditlogService auditlogService) {
+    public DataProcessingService(ObservationService observationService, ParticipantService participantService, ElasticService elasticService, StudyGroupService studyGroupService) {
         this.observationService = observationService;
         this.participantService = participantService;
         this.studyGroupService = studyGroupService;
         this.elasticService = elasticService;
-        this.auditlogService = auditlogService;
     }
 
     public List<ParticipationData> getParticipationData(Long studyId){
@@ -153,12 +150,6 @@ public class DataProcessingService {
 
     private String toIsoString(Instant date) {
         return date != null ? DateTimeFormatter.ISO_INSTANT.format(date) : null;
-    }
-
-    @Cacheable("auditlogs")
-    public List<Auditlog> listAuditlogData(long studyId) {
-        return Optional.ofNullable(auditlogService.listAuditlogsByStudyId(studyId))
-                .orElse(List.of());
     }
 
     @Cacheable("participants")
