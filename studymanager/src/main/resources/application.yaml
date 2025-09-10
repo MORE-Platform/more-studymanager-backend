@@ -113,3 +113,11 @@ more:
       server: "${MORE_FE_KC_SERVER:https://auth.more.redlink.io/}"
       realm: "${MORE_FE_KC_REALM:Auth-Client-Test}"
       client-id: "${MORE_FE_KC_CLIENT_ID:oauth2-pkce-client}"
+
+  audit:
+    # the study.status to audit (fallback if not set: all)
+    study-states:
+      - active
+      - paused
+      - closed
+    details-byte-limit: 1000

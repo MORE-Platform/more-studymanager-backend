@@ -14,6 +14,8 @@ import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.utils.MapperUtils;
+
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -201,14 +203,14 @@ public class StudyRepository {
         return template.query(LIST_STUDIES_BY_STATUS, getStudyRowMapper(), status.getValue());
     }
 
-    public boolean hasState(long studyId, Set<Study.Status> allowedStates){
+    public boolean hasState(long studyId, Collection<Study.Status> allowedStates){
         if(allowedStates.isEmpty())
             return false;
         try(
                 var stream = namedTemplate.queryForStream(STUDY_HAS_STATE,
                         new MapSqlParameterSource()
                                 .addValue("study_id", studyId)
-                                .addValue("study_status", allowedStates.stream().map(Study.Status::getValue).toList()),
+                                .addValue("study_status", allowedStates.stream().map(Study.Status::getValue).distinct().toList()),
                         (rs, rowNum) -> rs.getLong("study_id")
                 )) {
             return stream.findFirst().isPresent();
