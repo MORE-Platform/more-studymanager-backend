@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
 
@@ -91,7 +92,7 @@ public class AuditlogAPIV1Controller implements AuditlogApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN})
-    public ResponseEntity<List<AuditlogDataDTO>> exportAuditlog(Long studyId) {
+    public ResponseEntity<StreamingResponseBody> exportAuditlog(Long studyId) {
         List<AuditlogDataDTO> dtos = service.listAuditlogsByStudyId(studyId).stream()
                 .map(AuditlogTransformer::toAuditlogData)
                 .map(AuditlogTransformer::toAuditlogDataDTO_V1)

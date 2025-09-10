@@ -1341,9 +1341,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AuditlogData'
+                $ref: '#/components/schemas/Auditlog'
         '400':
           description: bad request
         '404':
@@ -2222,6 +2220,13 @@ components:
       externalDocs:
         url: https://more-platform.atlassian.net/browse/MORE-213
 
+    Auditlog:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditlogData'
     AuditlogData:
       description: |
         An Auditlog Entry saves Metadata to a specific recorded activity made by a user. The Auditlog is only accessible to Study Administrators.
