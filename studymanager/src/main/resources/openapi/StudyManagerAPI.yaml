@@ -1346,38 +1346,10 @@ paths:
           description: bad request
         '404':
           description: not found
-
-  /auditlog/study/{studyId}/export/last:
+  
+  /auditlog/study/{studyId}/info:
     parameters:
       - $ref: '#/components/parameters/StudyId'
-    get:
-      tags:
-        - auditlog
-      description: Export Auditlog
-      operationId: exportLastAuditlog
-      responses:
-        '200':
-          description: Operation successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuditlogData'
-        '400':
-          description: bad request
-        '404':
-          description: not found
-
-  /auditlog/study/{studyId}:
-    parameters:
-      - $ref: '#/components/parameters/StudyId'
-      - in: query
-        name: format
-        required: false
-        schema:
-          type: string
-          enum: [ csv, json, xml ]
-        description: |
-          Optional export format (default: json)
     get:
       tags:
         - auditlog
@@ -1393,14 +1365,14 @@ paths:
         '404':
           description: not found
 
-  /auditlog/study/{studyId}/list:
+  /auditlog/study/{studyId}:
     parameters:
       - $ref: '#/components/parameters/StudyId'
     get:
       tags:
         - auditlog
       description: Get current AuditLog
-      operationId: listAuditlogs
+      operationId: listAuditlog
       responses:
         '200':
           description: Operation successful
@@ -1409,7 +1381,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/AuditlogData'
+                  $ref: '#/components/schemas/AuditLogEntry'
         '404':
           description: not found
 
@@ -2221,27 +2193,56 @@ components:
         url: https://more-platform.atlassian.net/browse/MORE-213
 
     Auditlog:
-      type: object
-      properties:
-        entries:
-          type: array
-          items:
-            $ref: '#/components/schemas/AuditlogData'
-    AuditlogData:
+      description: |
+        The auditlog object of one study that includes all Auditlog Entries of said study.
+      type: array
+      items:
+        $ref: '#/components/schemas/AuditLogEntry'
+
+    AuditLogEntry:
       description: |
         An Auditlog Entry saves Metadata to a specific recorded activity made by a user. The Auditlog is only accessible to Study Administrators.
       type: object
       properties:
-        studyId:
-          $ref: '#/components/schemas/StudyId'
-        auditlogId:
-          type: string
-          format: uuid
+        id:
+          type: integer
+          format: int64
           readOnly: true
           description: Unique identifier of the auditlog data entry
+        created:
+          description: |
+            Timestamp of when the entry was stored in the database (not the created value of the data).
+          type: string
+          format: date-time
         userId:
           description: |
             The userId of the person to the specific recoreded activity.
+          type: string
+          readOnly: true
+        studyId:
+          $ref: '#/components/schemas/StudyId'
+        action:
+          description: |
+            The method of the corresponding action, saved by the database.
+          type: string
+        actionState:
+          description: |
+            The state of the specific action taken (e.g. successful, redirect, error)
+          type: string
+          enum:
+            - success
+            - redirect
+            - error
+            - unknown
+          default: unknown
+        timestamp:
+          description: |
+            Timestamp of when the entry was stored in the database (not the created value of the data).
+          type: string
+          format: date-time
+        userName:
+          description: |
+            The user's name. It is optional, if database can't provide the name.
           type: string
           readOnly: true
         userRoles:
@@ -2249,33 +2250,11 @@ components:
             An array of the user's study roles at the moment of the recorded activity.
           type: array
           items:
-            $ref: '#/components/schemas/StudyRole'
-        userName:
+            type: string
+        resource:
           description: |
-            The user's name. It is optional, if database can't provide the name.
+            The ressource accessed by the user
           type: string
-          readOnly: true
-        timestamp:
-          description: |
-            Timestamp of when the entry was stored in the database (not the created value of the data).
-          type: string
-          format: date-time
-        action:
-          description: |
-            The method of the corresponding action, saved by the database.
-          allOf:
-            - $ref: '#/components/schemas/Action'
-        state:
-          description: |
-            The state of the specific action taken (e.g. successful, redirect, error)
-          type: string
-          enum:
-            - successful
-            - redirect
-            - error
-            - pending
-            - undefined
-          default: undefined
         details:
           description: |
             Any other metadata alreaddy stored by the database. "Details" is already stored as JSON String in the database and 

@@ -9,48 +9,36 @@
 package io.redlink.more.studymanager.model.transformer;
 
 import io.redlink.more.studymanager.api.v1.model.*;
-import io.redlink.more.studymanager.model.Auditlog;
-import io.redlink.more.studymanager.model.data.AuditlogData;
+import io.redlink.more.studymanager.model.audit.AuditLog;
 import io.redlink.more.studymanager.model.data.AuditlogMetadata;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 public final class AuditlogTransformer {
 
     private AuditlogTransformer(){}
 
-    public static AuditlogData toAuditlogData(Auditlog auditlog) {
-        return new AuditlogData(
-                auditlog.getStudyId(),
-                auditlog.getAuditlogId(),
-                auditlog.getUserId(),
-                auditlog.getUserRoles(),
-                auditlog.getUserName(),
-                auditlog.getTimestamp(),
-                auditlog.getAction(),
-                auditlog.getState(),
-                auditlog.getDetails()
-        );
+    public static AuditLogEntryDTO toAuditlogEntryDTO_V1(AuditLog auditLog) {
+        return new AuditLogEntryDTO()
+                .id(auditLog.getId())
+                .studyId(auditLog.getStudyId())
+                .userId(auditLog.getUserId())
+                .userRoles(Optional.ofNullable(auditLog.getDetails().get("user_roles")).filter(it -> it instanceof List).map(List.class::cast).map(it -> it.stream().map(Objects::toString).toList()).orElse(null))
+                //.userName(auditLog.getUserName()) ToDo getUserName From somewhere
+                .timestamp(auditLog.getTimestamp())
+                .action(auditLog.getAction())
+                .actionState(AuditLogEntryDTO.ActionStateEnum.valueOf(auditLog.getActionState().name()))
+                .details(auditLog.getDetails());
     }
 
-    public static AuditlogDataDTO toAuditlogDataDTO_V1(AuditlogData auditlogData) {
-        return new AuditlogDataDTO()
-                .studyId(auditlogData.studyId())
-                .auditlogId(auditlogData.auditlogId())
-                .userId(auditlogData.userId())
-                .userRoles(auditlogData.userRoles())
-                .userName(auditlogData.userName())
-                .timestamp(auditlogData.timestamp())
-                .action(auditlogData.action())
-                .state(auditlogData.state())
-                .details(auditlogData.details());
-    }
-    public static List<AuditlogDataDTO> toAuditlogDataDTO_V1(List<AuditlogData> auditlogData){
-        if (auditlogData == null || auditlogData.isEmpty()) {
+    public static List<AuditLogEntryDTO> toAuditlogEntriesDTO_V1(List<AuditLog> auditLogEntries){
+        if (auditLogEntries == null || auditLogEntries.isEmpty()) {
             return List.of();
         }
-        return auditlogData.stream()
-                .map(AuditlogTransformer::toAuditlogDataDTO_V1)
+        return auditLogEntries.stream()
+                .map(AuditlogTransformer::toAuditlogEntryDTO_V1)
                 .toList();
     }
 

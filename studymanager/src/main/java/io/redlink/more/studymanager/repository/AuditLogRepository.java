@@ -11,6 +11,7 @@ import io.redlink.more.studymanager.utils.MapperUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -20,9 +21,8 @@ import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.ZoneOffset;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
+import java.util.stream.Stream;
 
 @Component
 public class AuditLogRepository {
@@ -40,10 +40,24 @@ public class AuditLogRepository {
 
     private static final String INSERT_AUDIT_LOG =
             "INSERT INTO audit_logs (user_id, study_id, action, state, timestamp, resource, details) " +
-            "VALUES (:user_id, :study_id, :action, CAST(:state AS audit_action_state), :timestamp, :resource, :details ) " +
+            "VALUES (:user_id, :study_id, :action, CAST(:state AS audit_action_state), :timestamp, :resource, :details) " +
             "RETURNING *";
 
     private static final String CLEAR_AUDIT_LOG = "DELETE FROM audit_logs";
+
+    private static final String LIST_AUDITLOG =
+            "SELECT * FROM audit_logs WHERE study_id = :study_id";
+
+    private static final String GET_AUDITLOG_ENTRY =
+            "SELECT * FROM audit_logs WHERE study_id = ? AND auditlog_id = ?";
+
+    private static final String GET_AUDITLOG_COUNT =
+            "SELECT COUNT(*) FROM audit_logs WHERE study_id = ?";
+
+
+    private static final String DELETE_BY_ID = "DELETE FROM audio_logs WHERE study_id = ? AND audiolog_id = ?";
+
+    private static final String DELETE_ALL_BY_ID = "DELETE FROM audit_logs WHERE study_id = ?";
 
 
     private final JdbcTemplate template;
@@ -61,6 +75,39 @@ public class AuditLogRepository {
             throw new BadRequestException("Study " + auditLog.getStudyId() + " does not exist");
         }
     }
+
+    public AuditLog getAuditlogEntry(long studyId, long auditLogId) {
+        try {
+            return template.queryForObject(GET_AUDITLOG_ENTRY, getAuditLogRowMapper(), studyId, auditLogId);
+        } catch(EmptyResultDataAccessException e) {
+            throw new BadRequestException("Auditlog " + auditLogId + " does not exist on study " + studyId);
+        }
+    }
+
+    public Stream<AuditLog> listAuditlog(long studyId) {
+        return namedTemplate.queryForStream(
+                LIST_AUDITLOG,
+                new MapSqlParameterSource("study_id", studyId),
+                getAuditLogRowMapper()
+        ) ;
+    }
+
+    public void deleteAuditlogById(long studyId, long auditlogId) {
+        template.update(DELETE_ALL_BY_ID, studyId, auditlogId);
+    }
+
+    public void deleteAuditlogsByStudyId(long studyId) {
+        template.update(DELETE_BY_ID, studyId);
+    }
+
+    public int getAuditlogCount(long studyId) {
+        try {
+            return template.queryForObject(GET_AUDITLOG_COUNT, int.class, studyId);
+        } catch(EmptyResultDataAccessException | NullPointerException e) {
+            return 0;
+        }
+    }
+
 
 
     private MapSqlParameterSource toParams(AuditLog auditLog) {
