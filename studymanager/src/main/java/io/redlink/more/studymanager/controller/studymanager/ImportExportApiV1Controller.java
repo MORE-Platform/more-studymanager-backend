@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.api.v1.model.GenerateDownloadToken200Respons
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyImportExportDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ImportExportApi;
+import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.DownloadToken;
 import io.redlink.more.studymanager.model.StudyRole;
@@ -61,6 +62,7 @@ public class ImportExportApiV1Controller implements ImportExportApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<Resource> exportParticipants(Long studyId) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
@@ -70,6 +72,7 @@ public class ImportExportApiV1Controller implements ImportExportApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<Void> importParticipants(Long studyId, MultipartFile file) {
         try {
             service.importParticipants(studyId, file.getInputStream());
@@ -82,6 +85,7 @@ public class ImportExportApiV1Controller implements ImportExportApi {
 
     @Override
     @RequiresStudyRole(StudyRole.STUDY_ADMIN)
+    @Audited
     public ResponseEntity<StudyImportExportDTO> exportStudy(Long studyId) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
@@ -93,6 +97,8 @@ public class ImportExportApiV1Controller implements ImportExportApi {
     }
 
     @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<StreamingResponseBody> exportStudyData(Long studyId, String token, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
         Optional<DownloadToken> dt = tokenRepository.getToken(token).filter(t -> t.getStudyId().equals(studyId));
 
@@ -118,6 +124,7 @@ public class ImportExportApiV1Controller implements ImportExportApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<GenerateDownloadToken200ResponseDTO> generateDownloadToken(Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
         var token = tokenRepository.createToken(studyId).getToken();
         var uri = ServletUriComponentsBuilder.fromCurrentRequest().pathSegment(token).build(true).toUri();
@@ -126,6 +133,7 @@ public class ImportExportApiV1Controller implements ImportExportApi {
     }
 
     @Override
+    @Audited
     public ResponseEntity<StudyDTO> importStudy(MultipartFile file) {
         try {
             final var currentUser = authService.getCurrentUser();
