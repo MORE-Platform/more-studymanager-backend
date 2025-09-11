@@ -1,16 +1,11 @@
 package io.redlink.more.studymanager.service;
 
-import com.fasterxml.jackson.core.JsonEncoding;
 import io.redlink.more.studymanager.model.audit.AuditLog;
 import io.redlink.more.studymanager.properties.AuditProperties;
 import io.redlink.more.studymanager.repository.AuditLogRepository;
-import io.redlink.more.studymanager.utils.MapperUtils;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -33,30 +28,8 @@ public class AuditService {
         this.studystateService = studystateService;
     }
 
-    /**
-     * Prepare the auditlog for streaming it to the export
-     * @param outputStream outputStream for exported auditlog entries
-     * @param studyId corresponding studyId of the auditlogs
-     */
-    public void exportAuditlog(OutputStream outputStream, Long studyId) {
-        Stream<AuditLog> auditlogEntries = auditLogRepository.listAuditlog(studyId);
-
-        try {
-            var generator = MapperUtils.MAPPER.getFactory().createGenerator(outputStream, JsonEncoding.UTF8);
-            generator.writeStartArray();
-            // stream rausposten
-            auditlogEntries.forEach(auditlogEntry -> {
-                try {
-                    MapperUtils.MAPPER.writeValue(generator, auditlogEntry);
-                } catch(IOException e) {
-                    throw new UncheckedIOException("Error exporting auditlogs for study " + studyId, e);
-                }
-            });
-            generator.writeEndArray();
-            generator.close();
-        } catch(IOException e) {
-            throw new UncheckedIOException("Error exporting auditlogs for study " + studyId, e);
-        }
+    public Stream<AuditLog> getAuditlogs(Long studyId) {
+        return auditLogRepository.listAuditlog(studyId);
     }
 
     public long countAuditlogEntries(long studyId) {

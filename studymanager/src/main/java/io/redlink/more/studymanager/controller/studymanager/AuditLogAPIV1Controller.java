@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
+import com.fasterxml.jackson.core.JsonEncoding;
 import io.redlink.more.studymanager.api.v1.model.AuditLogMetadataDTO;
 import io.redlink.more.studymanager.api.v1.webservices.AuditlogApi;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
@@ -17,6 +18,7 @@ import io.redlink.more.studymanager.model.data.AuditlogMetadata;
 import io.redlink.more.studymanager.model.transformer.AuditlogTransformer;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.AuditService;
+import io.redlink.more.studymanager.utils.MapperUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -27,7 +29,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -76,11 +82,40 @@ public class AuditLogAPIV1Controller implements AuditlogApi {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(outputStream -> {
                         try {
-                            service.exportAuditlog(outputStream, studyId);
+                            exportAuditlog(outputStream, studyId);
                         } catch (Exception e) {
                             LOGGER.warn("Error exporting study data for study_{}: {}", studyId, e.getMessage(), e);
                         }
                     });
         }
     }
+
+    /**
+     * Prepare the auditlog for streaming it to the export
+     * @param outputStream outputStream for exported auditlog entries
+     * @param studyId corresponding studyId of the auditlogs
+     */
+    private void exportAuditlog(OutputStream outputStream, Long studyId) {
+        Stream<AuditLog> auditlogEntries = service.getAuditlogs(
+                studyId
+        );
+
+        try {
+            var generator = MapperUtils.MAPPER.getFactory().createGenerator(outputStream, JsonEncoding.UTF8);
+            generator.writeStartArray();
+            // stream rausposten
+            auditlogEntries.forEach(auditlogEntry -> {
+                try {
+                    MapperUtils.MAPPER.writeValue(generator, AuditlogTransformer.toAuditlogEntryDTO_V1(auditlogEntry));
+                } catch(IOException e) {
+                    throw new UncheckedIOException("Error exporting auditlogs for study " + studyId, e);
+                }
+            });
+            generator.writeEndArray();
+            generator.close();
+        } catch(IOException e) {
+            throw new UncheckedIOException("Error exporting auditlogs for study " + studyId, e);
+        }
+    }
 }
+

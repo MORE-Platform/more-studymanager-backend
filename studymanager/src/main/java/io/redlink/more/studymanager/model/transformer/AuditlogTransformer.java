@@ -8,9 +8,6 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.redlink.more.studymanager.api.v1.model.*;
 import io.redlink.more.studymanager.model.audit.AuditLog;
 import io.redlink.more.studymanager.model.data.AuditlogMetadata;
@@ -29,8 +26,7 @@ public final class AuditlogTransformer {
                 .map(List.class::cast)
                 .map(it -> it.stream().map(Objects::toString).toList()
             ).orElse(null);
-        return new AuditLogEntryDTOExtended()
-                .setDetails(details) //NOTE: Details with user_roles removed
+        var auditLogEntry = new AuditLogEntryDTO()
                 .id(auditLog.getId())
                 .studyId(auditLog.getStudyId())
                 .userId(auditLog.getUserId())
@@ -38,16 +34,11 @@ public final class AuditlogTransformer {
                 //.userName(auditLog.getUserName()) TODO: getUserName From somewhere
                 .timestamp(auditLog.getTimestamp())
                 .action(auditLog.getAction())
-                .actionState(AuditLogEntryDTO.ActionStateEnum.valueOf(auditLog.getActionState().name()));
-    }
+                .actionState(AuditLogEntryDTO.ActionStateEnum.valueOf(auditLog.getActionState().name().toUpperCase()));
 
-    public static List<AuditLogEntryDTO> toAuditlogEntriesDTO_V1(List<AuditLog> auditLogEntries){
-        if (auditLogEntries == null || auditLogEntries.isEmpty()) {
-            return List.of();
-        }
-        return auditLogEntries.stream()
-                .map(AuditlogTransformer::toAuditlogEntryDTO_V1)
-                .toList();
+        details.forEach((s, o) -> auditLogEntry.putAdditionalProperty(s,o));
+
+        return auditLogEntry;
     }
 
     public static AuditLogMetadataDTO toAuditlogMetadataDTO_V1(
@@ -56,27 +47,4 @@ public final class AuditlogTransformer {
                 .studyId(auditLogMetadata.studyId())
                 .length(auditLogMetadata.length());
     }
-
-    public static class AuditLogEntryDTOExtended extends AuditLogEntryDTO {
-        Map<String, Object> details = new HashMap<>();
-
-        @JsonIgnore
-        public AuditLogEntryDTOExtended setDetails(Map<String, Object> details) {
-            this.details = details == null ? new HashMap<>() : details;
-            return this;
-        }
-
-        @JsonAnyGetter
-        public Map<String, Object> getDetails() {
-            return details;
-        }
-
-        @JsonAnySetter
-        public AuditLogEntryDTOExtended setDetails(String key, Object value) {
-            details.put(key, value);
-            return this;
-        }
-
-    }
-
 }
