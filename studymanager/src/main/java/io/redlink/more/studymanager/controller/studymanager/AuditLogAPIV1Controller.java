@@ -52,7 +52,7 @@ public class AuditLogAPIV1Controller implements AuditlogApi {
     @RequiresStudyRole({StudyRole.STUDY_ADMIN})
     public ResponseEntity<AuditLogMetadataDTO> getAuditlogMetadata(
             Long studyId) {
-        long count = service.countAuditlogEntries(studyId);
+        long count = service.countAuditLogEntries(studyId);
 
         AuditlogMetadata metadata = new AuditlogMetadata(
                 studyId,
@@ -67,7 +67,7 @@ public class AuditLogAPIV1Controller implements AuditlogApi {
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN})
     public ResponseEntity<StreamingResponseBody> exportAuditlog(Long studyId) {
-        List<AuditLog> dtos = service.listAuditlog(studyId);
+        List<AuditLog> dtos = service.listAuditLog(studyId);
 
         if (dtos.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -82,7 +82,7 @@ public class AuditLogAPIV1Controller implements AuditlogApi {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(outputStream -> {
                         try {
-                            exportAuditlog(outputStream, studyId);
+                            prepareExportAuditlog(outputStream, studyId);
                         } catch (Exception e) {
                             LOGGER.warn("Error exporting study data for study_{}: {}", studyId, e.getMessage(), e);
                         }
@@ -95,8 +95,8 @@ public class AuditLogAPIV1Controller implements AuditlogApi {
      * @param outputStream outputStream for exported auditlog entries
      * @param studyId corresponding studyId of the auditlogs
      */
-    private void exportAuditlog(OutputStream outputStream, Long studyId) {
-        Stream<AuditLog> auditlogEntries = service.getAuditlogs(
+    private void prepareExportAuditlog(OutputStream outputStream, Long studyId) {
+        Stream<AuditLog> auditlogEntries = service.getAuditLogs(
                 studyId
         );
 

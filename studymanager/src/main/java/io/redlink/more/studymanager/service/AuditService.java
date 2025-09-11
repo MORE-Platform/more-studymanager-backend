@@ -28,15 +28,15 @@ public class AuditService {
         this.studystateService = studystateService;
     }
 
-    public Stream<AuditLog> getAuditlogs(Long studyId) {
+    public Stream<AuditLog> getAuditLogs(Long studyId) {
         return auditLogRepository.listAuditlog(studyId);
     }
 
-    public long countAuditlogEntries(long studyId) {
+    public long countAuditLogEntries(long studyId) {
         return auditLogRepository.countAuditlogEntries(studyId);
     }
 
-    public List<AuditLog> listAuditlog(long studyId) {
+    public List<AuditLog> listAuditLog(long studyId) {
         try (Stream<AuditLog> result = auditLogRepository.listAuditlog(studyId)) {
             return result != null
                     ? result.toList()

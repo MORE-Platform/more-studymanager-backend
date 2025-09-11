@@ -100,6 +100,11 @@ public class AuditLogRepository {
         template.update(DELETE_BY_ID, studyId);
     }
 
+    // for testing
+    public void deleteAllAuditlogs() {
+        template.update(DELETE_ALL_BY_ID);
+    }
+
     public Long countAuditlogEntries(long studyId) {
         try {
             return template.queryForObject(GET_AUDITLOG_COUNT, Long.class, studyId);

@@ -22,6 +22,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -99,5 +100,54 @@ class AuditLogRepositoryTest {
         //NOTE: Date/Time and Instant values are written as UTC date/time strings
         assertThat(detailsBean.get("created")).isEqualTo(detailsAction.getCreated().toString());
         assertThat(detailsBean.get("modified")).isEqualTo(detailsAction.getModified().toString());
+    }
+
+    @Test
+    @DisplayName("List AuditLogs and get Metadata")
+    void testListAndCountAuditLogs() {
+        Long studyId = 1L;
+
+        Action detailsAction = new Action()
+                .setType("test")
+                .setProperties(new ActionProperties(Map.of("test","dummy")))
+                .setCreated(Instant.now().minusSeconds(60))
+                .setModified(Instant.now());
+
+        Map<String,Object> details = Map.of(
+                "detail_state", Boolean.TRUE,
+                "detail_integer", 42,
+                "detail_number", 3.1415,
+                "detail_text", "This is an important test",
+                "detail_bean", detailsAction,
+                "details_timestamp", Instant.now().minusSeconds(70));
+
+        AuditLog auditLog = new AuditLog(
+                "test-user",
+                studyId,
+                "test-action",
+                Instant.now().minusSeconds(50).truncatedTo(ChronoUnit.SECONDS))
+                .setDetails(details)
+                .setActionState(AuditLog.ActionState.success);
+
+        AuditLog auditLog2 = new AuditLog(
+                "test-user",
+                studyId,
+                "test-action",
+                Instant.now().minusSeconds(10).truncatedTo(ChronoUnit.SECONDS))
+                .setDetails(details)
+                .setActionState(AuditLog.ActionState.success);
+
+
+        auditLogRepository.insert(auditLog);
+        AuditLog auditLogResonse = auditLogRepository.insert(auditLog2);
+
+        Stream<AuditLog> auditLogs = auditLogRepository.listAuditlog(studyId);
+
+        assertThat(auditLogResonse).isNotNull();
+        assertThat(auditLogs).isNotNull();
+        assertThat(auditLogs).hasSize(2);
+        
+        Long count = auditLogRepository.countAuditlogEntries(studyId);
+        assertThat(count).isEqualTo(2);
     }
 }
