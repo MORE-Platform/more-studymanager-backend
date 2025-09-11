@@ -1,7 +1,6 @@
 package io.redlink.more.studymanager.service;
 
 import com.fasterxml.jackson.core.JsonEncoding;
-import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.audit.AuditLog;
 import io.redlink.more.studymanager.properties.AuditProperties;
 import io.redlink.more.studymanager.repository.AuditLogRepository;
@@ -35,55 +34,11 @@ public class AuditService {
     }
 
     /**
-     * Get one auditlog of a study by it's id
-     * @param studyId the id of the study
-     * @param auditLogId the id of the auditlog
-     * @return
-     */
-    public Optional<AuditLog> getAuditLogEntry(long studyId, long auditLogId) {
-        try {
-            return Optional.ofNullable(auditLogRepository.getAuditlogEntry(studyId, auditLogId));
-        } catch (BadRequestException e) {
-            return Optional.empty();
-        }
-    }
-
-    /**
-     * Delete a specific auditlog from a study
-     * @param studyId the id of the study
-     * @param auditLogId the id of the auditlog
-     */
-    public void deleteAuditLogById(long studyId, long auditLogId) {
-        auditLogRepository.deleteAuditlogById(studyId, auditLogId);
-    }
-
-    /**
-     * Delete the complete auditlog from a study.
-     * @param studyId
-     */
-    public void deleteStudyAuditLog(long studyId) {
-
-        auditLogRepository.deleteAuditlogsByStudyId(studyId);
-    }
-
-    public int getAuditLogCount(Long studyId) {
-        return auditLogRepository.getAuditlogCount(studyId);
-    }
-
-    public List<AuditLog> listAuditlog(long studyId) {
-        try (Stream<AuditLog> result = auditLogRepository.listAuditlog(studyId)) {
-            return result != null
-                    ? result.toList()            // ab Java 16
-                    : Collections.emptyList();
-        }
-    }
-
-    /**
      * Prepare the auditlog for streaming it to the export
-     * @param outputStream
-     * @param studyId
+     * @param outputStream outputStream for exported auditlog entries
+     * @param studyId corresponding studyId of the auditlogs
      */
-    public void prepareExportAuditlog(OutputStream outputStream, Long studyId) {
+    public void exportAuditlog(OutputStream outputStream, Long studyId) {
         Stream<AuditLog> auditlogEntries = auditLogRepository.listAuditlog(studyId);
 
         try {
@@ -104,7 +59,17 @@ public class AuditService {
         }
     }
 
+    public long countAuditlogEntries(long studyId) {
+        return auditLogRepository.countAuditlogEntries(studyId);
+    }
 
+    public List<AuditLog> listAuditlog(long studyId) {
+        try (Stream<AuditLog> result = auditLogRepository.listAuditlog(studyId)) {
+            return result != null
+                    ? result.toList()
+                    : Collections.emptyList();
+        }
+    }
 
     /**
      * Records the parsed auditLog if the referenced study is in a state that requires audits. Otherwise

@@ -1341,13 +1341,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Auditlog'
+                $ref: '#/components/schemas/AuditLog'
         '400':
           description: bad request
         '404':
           description: not found
-  
-  /auditlog/study/{studyId}/info:
+
+  /auditlog/study/{studyId}:
     parameters:
       - $ref: '#/components/parameters/StudyId'
     get:
@@ -1361,27 +1361,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuditlogMetadata'
-        '404':
-          description: not found
-
-  /auditlog/study/{studyId}:
-    parameters:
-      - $ref: '#/components/parameters/StudyId'
-    get:
-      tags:
-        - auditlog
-      description: Get current AuditLog
-      operationId: listAuditlog
-      responses:
-        '200':
-          description: Operation successful
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AuditLogEntry'
+                $ref: '#/components/schemas/AuditLogMetadata'
         '404':
           description: not found
 
@@ -2192,7 +2172,7 @@ components:
       externalDocs:
         url: https://more-platform.atlassian.net/browse/MORE-213
 
-    Auditlog:
+    AuditLog:
       description: |
         The auditlog object of one study that includes all Auditlog Entries of said study.
       type: array
@@ -2223,7 +2203,7 @@ components:
           $ref: '#/components/schemas/StudyId'
         action:
           description: |
-            The method of the corresponding action, saved by the database.
+            The performed action. The full Method signature.
           type: string
         actionState:
           description: |
@@ -2255,12 +2235,7 @@ components:
           description: |
             The ressource accessed by the user
           type: string
-        details:
-          description: |
-            Any other metadata alreaddy stored by the database. "Details" is already stored as JSON String in the database and 
-            mapped as Map<String,Object> to Java. Details can have any additional JSON properties!
-          type: object
-          additionalProperties: true
+      additionalProperties: true
       required:
         - uuid
         - userId
@@ -2268,7 +2243,7 @@ components:
         - action
         - timestamp
 
-    AuditlogMetadata:
+    AuditLogMetadata:
       description: |
         Gives back current length of audit log entries with an integer and export format
       type: object
@@ -2277,14 +2252,7 @@ components:
           $ref: '#/components/schemas/StudyId'
         length:
           type: integer
-          format: int32
-        format:
-          description: The export format of the audit log
-          type: string
-          enum:
-            - csv
-            - json
-            - xml
+          format: int64
 
     FrontendConfiguration:
       description: |

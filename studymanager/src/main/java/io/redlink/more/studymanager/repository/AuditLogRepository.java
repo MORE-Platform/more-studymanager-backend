@@ -100,11 +100,11 @@ public class AuditLogRepository {
         template.update(DELETE_BY_ID, studyId);
     }
 
-    public int getAuditlogCount(long studyId) {
+    public Long countAuditlogEntries(long studyId) {
         try {
-            return template.queryForObject(GET_AUDITLOG_COUNT, int.class, studyId);
+            return template.queryForObject(GET_AUDITLOG_COUNT, Long.class, studyId);
         } catch(EmptyResultDataAccessException | NullPointerException e) {
-            return 0;
+            return 0L;
         }
     }
 

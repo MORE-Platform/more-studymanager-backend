@@ -267,7 +267,7 @@
                                 <schemaMapping>Instant=java.time.Instant</schemaMapping>
                                 <schemaMapping>LocalTime=java.time.LocalTime</schemaMapping>
                                 <schemaMapping>DataExport=org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody</schemaMapping>
-                                <schemaMapping>Auditlog=org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody</schemaMapping>
+                                <schemaMapping>AuditLog=org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody</schemaMapping>
                             </schemaMappings>
                             <importMappings>
                                 <importMapping>Instant=java.time.Instant</importMapping>

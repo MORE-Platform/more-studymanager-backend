@@ -8,14 +8,11 @@
  */
 package io.redlink.more.studymanager.model.data;
 
-import io.redlink.more.studymanager.api.v1.model.AuditlogMetadataDTO;
-
 import java.util.Comparator;
 
 public record AuditlogMetadata(
         Long studyId,
-        int length,
-        AuditlogMetadataDTO.FormatEnum format
+        Long length
 ) implements Comparable<AuditlogMetadata> {
 
     public static final Comparator<AuditlogMetadata> AUDITLOG_METADATA_COMPARATOR =
