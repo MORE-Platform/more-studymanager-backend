@@ -8,7 +8,6 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.model.audit.AuditLog;
@@ -28,10 +27,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -97,6 +93,8 @@ class AuditLogControllerTest {
                 .setModified(Instant.now());
 
         Map<String,Object> details = Map.of(
+                "user_roles", List.of("admin", "viewer"),
+                "user_role", 1,
                 "detail_state", Boolean.TRUE,
                 "detail_integer", 42,
                 "detail_number", 3.1415,
@@ -137,7 +135,10 @@ class AuditLogControllerTest {
                 .andExpect(jsonPath("$[0].action").value("test-action1"))
                 .andExpect(jsonPath("$[0].actionState").value("success"))
                 .andExpect(jsonPath("$[0].detail_state").value(Boolean.TRUE))
-                .andExpect(jsonPath("$[0].detail_text").value("This is an important test"));
+                .andExpect(jsonPath("$[0].detail_text").value("This is an important test"))
+                .andExpect(jsonPath("$[0].userRoles[0]").value("admin"))
+                .andExpect(jsonPath("$[0].userRoles[1]").value("viewer"))
+                .andExpect(jsonPath("$[0].user_role").value(1));
     }
 
 }
