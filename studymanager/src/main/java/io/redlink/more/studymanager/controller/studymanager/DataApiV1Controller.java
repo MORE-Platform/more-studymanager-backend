@@ -8,10 +8,7 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
-import io.redlink.more.studymanager.api.v1.model.DataPointDTO;
-import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDTO;
-import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDataDTO;
-import io.redlink.more.studymanager.api.v1.model.ParticipationDataDTO;
+import io.redlink.more.studymanager.api.v1.model.*;
 import io.redlink.more.studymanager.api.v1.webservices.DataApi;
 import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
@@ -32,7 +29,8 @@ public class DataApiV1Controller implements DataApi {
 
     private final DataProcessingService dataProcessingService;
 
-    public DataApiV1Controller(DataProcessingService dataProcessingService){ this.dataProcessingService = dataProcessingService; }
+    public DataApiV1Controller(DataProcessingService dataProcessingService){ this.dataProcessingService = dataProcessingService;
+    }
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_VIEWER})

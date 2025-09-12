@@ -35,12 +35,11 @@ public class DataProcessingService {
     private final StudyGroupService studyGroupService;
     private final ElasticService elasticService;
 
-    public DataProcessingService(ObservationService observationService, ParticipantService participantService, ElasticService elasticService, StudyGroupService studyGroupService){
+    public DataProcessingService(ObservationService observationService, ParticipantService participantService, ElasticService elasticService, StudyGroupService studyGroupService) {
         this.observationService = observationService;
         this.participantService = participantService;
         this.studyGroupService = studyGroupService;
         this.elasticService = elasticService;
-
     }
 
     public List<ParticipationData> getParticipationData(Long studyId){

@@ -8,11 +8,7 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.IdTitleDTO;
-import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDTO;
-import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDataDTO;
-import io.redlink.more.studymanager.api.v1.model.ObservationDataViewDataRowDTO;
-import io.redlink.more.studymanager.api.v1.model.ParticipationDataDTO;
+import io.redlink.more.studymanager.api.v1.model.*;
 import io.redlink.more.studymanager.core.ui.DataView;
 import io.redlink.more.studymanager.core.ui.DataViewInfo;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
@@ -40,6 +36,7 @@ public final class StudyDataTransformer {
                 .id(idTitle.id())
                 .title(idTitle.title());
     }
+
 
     public static ObservationDataViewDataDTO toObservationDataViewDataDTO(DataView dataView){
         var observationDataViewDataDTO = new ObservationDataViewDataDTO()

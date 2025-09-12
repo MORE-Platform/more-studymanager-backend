@@ -6,7 +6,10 @@ import io.redlink.more.studymanager.repository.AuditLogRepository;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 @EnableConfigurationProperties(AuditProperties.class)
@@ -23,6 +26,22 @@ public class AuditService {
         this.auditProperties = auditProperties;
         this.auditLogRepository = auditLogRepository;
         this.studystateService = studystateService;
+    }
+
+    public Stream<AuditLog> getAuditLogs(Long studyId) {
+        return auditLogRepository.listAuditLog(studyId);
+    }
+
+    public long countAuditLogEntries(long studyId) {
+        return auditLogRepository.countAuditLogEntries(studyId);
+    }
+
+    public List<AuditLog> listAuditLog(long studyId) {
+        try (Stream<AuditLog> result = auditLogRepository.listAuditLog(studyId)) {
+            return result != null
+                    ? result.toList()
+                    : Collections.emptyList();
+        }
     }
 
     /**
