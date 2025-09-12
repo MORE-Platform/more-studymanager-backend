@@ -29,15 +29,15 @@ public class AuditService {
     }
 
     public Stream<AuditLog> getAuditLogs(Long studyId) {
-        return auditLogRepository.listAuditlog(studyId);
+        return auditLogRepository.listAuditLog(studyId);
     }
 
     public long countAuditLogEntries(long studyId) {
-        return auditLogRepository.countAuditlogEntries(studyId);
+        return auditLogRepository.countAuditLogEntries(studyId);
     }
 
     public List<AuditLog> listAuditLog(long studyId) {
-        try (Stream<AuditLog> result = auditLogRepository.listAuditlog(studyId)) {
+        try (Stream<AuditLog> result = auditLogRepository.listAuditLog(studyId)) {
             return result != null
                     ? result.toList()
                     : Collections.emptyList();

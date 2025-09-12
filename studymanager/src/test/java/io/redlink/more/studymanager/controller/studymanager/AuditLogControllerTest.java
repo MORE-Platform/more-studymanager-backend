@@ -55,9 +55,6 @@ class AuditLogControllerTest {
     @MockitoBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
 
-    @Autowired
-    ObjectMapper mapper;
-
     @BeforeEach
     void setUp() {
         when(oAuth2AuthenticationService.getCurrentUser()).thenReturn(
@@ -67,7 +64,7 @@ class AuditLogControllerTest {
                         EnumSet.allOf(PlatformRole.class)
                 )
         );
-        auditLogRepository.deleteAllAuditlogs();
+        auditLogRepository.deleteAllAuditLogs();
     }
 
     @Autowired
@@ -78,7 +75,7 @@ class AuditLogControllerTest {
     void testGetAuditlogMetadata() throws Exception {
         Long studyId = 1L;
 
-        when(auditLogRepository.countAuditlogEntries(Mockito.any(Long.class))).thenReturn(2L);
+        when(auditLogRepository.countAuditLogEntries(Mockito.any(Long.class))).thenReturn(2L);
         when(auditService.countAuditLogEntries(Mockito.any(Long.class))).thenReturn(2L);
 
         mvc.perform(get("/api/v1/auditlog/study/{studyId}", studyId))
@@ -123,7 +120,7 @@ class AuditLogControllerTest {
                 .setDetails(details)
                 .setActionState(AuditLog.ActionState.success);
 
-        when(auditLogRepository.listAuditlog(anyLong()))
+        when(auditLogRepository.listAuditLog(anyLong()))
                 .thenAnswer(invocation -> Stream.of(auditLog1, auditLog2));
         when(auditService.getAuditLogs(anyLong()))
                 .thenAnswer(invocation -> Stream.of(auditLog1, auditLog2));

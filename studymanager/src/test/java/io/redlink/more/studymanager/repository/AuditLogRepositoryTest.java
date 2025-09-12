@@ -141,13 +141,13 @@ class AuditLogRepositoryTest {
         auditLogRepository.insert(auditLog);
         AuditLog auditLogResonse = auditLogRepository.insert(auditLog2);
 
-        Stream<AuditLog> auditLogs = auditLogRepository.listAuditlog(studyId);
+        Stream<AuditLog> auditLogs = auditLogRepository.listAuditLog(studyId);
 
         assertThat(auditLogResonse).isNotNull();
         assertThat(auditLogs).isNotNull();
         assertThat(auditLogs).hasSize(2);
-        
-        Long count = auditLogRepository.countAuditlogEntries(studyId);
+
+        Long count = auditLogRepository.countAuditLogEntries(studyId);
         assertThat(count).isEqualTo(2);
     }
 }

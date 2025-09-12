@@ -49,13 +49,13 @@ public class AuditLogRepository {
             "SELECT * FROM audit_logs WHERE study_id = :study_id";
 
     private static final String GET_AUDITLOG_ENTRY =
-            "SELECT * FROM audit_logs WHERE study_id = ? AND auditlog_id = ?";
+            "SELECT * FROM audit_logs WHERE study_id = ? AND id = ?";
 
     private static final String GET_AUDITLOG_COUNT =
             "SELECT COUNT(*) FROM audit_logs WHERE study_id = ?";
 
 
-    private static final String DELETE_BY_ID = "DELETE FROM audio_logs WHERE study_id = ? AND audiolog_id = ?";
+    private static final String DELETE_BY_ID = "DELETE FROM audio_logs WHERE study_id = ? AND id = ?";
 
     private static final String DELETE_ALL_BY_ID = "DELETE FROM audit_logs WHERE study_id = ?";
 
@@ -76,7 +76,7 @@ public class AuditLogRepository {
         }
     }
 
-    public AuditLog getAuditlogEntry(long studyId, long auditLogId) {
+    public AuditLog getAuditLogEntry(long studyId, long auditLogId) {
         try {
             return template.queryForObject(GET_AUDITLOG_ENTRY, getAuditLogRowMapper(), studyId, auditLogId);
         } catch(EmptyResultDataAccessException e) {
@@ -84,7 +84,7 @@ public class AuditLogRepository {
         }
     }
 
-    public Stream<AuditLog> listAuditlog(long studyId) {
+    public Stream<AuditLog> listAuditLog(long studyId) {
         return namedTemplate.queryForStream(
                 LIST_AUDITLOG,
                 new MapSqlParameterSource("study_id", studyId),
@@ -92,20 +92,20 @@ public class AuditLogRepository {
         ) ;
     }
 
-    public void deleteAuditlogById(long studyId, long auditlogId) {
-        template.update(DELETE_ALL_BY_ID, studyId, auditlogId);
+    public void deleteAuditLogById(long studyId, long auditLogId) {
+        template.update(DELETE_ALL_BY_ID, studyId, auditLogId);
     }
 
-    public void deleteAuditlogsByStudyId(long studyId) {
+    public void deleteAuditLogsByStudyId(long studyId) {
         template.update(DELETE_BY_ID, studyId);
     }
 
     // for testing
-    public void deleteAllAuditlogs() {
+    public void deleteAllAuditLogs() {
         template.update(DELETE_ALL_BY_ID);
     }
 
-    public Long countAuditlogEntries(long studyId) {
+    public Long countAuditLogEntries(long studyId) {
         try {
             return template.queryForObject(GET_AUDITLOG_COUNT, Long.class, studyId);
         } catch(EmptyResultDataAccessException | NullPointerException e) {

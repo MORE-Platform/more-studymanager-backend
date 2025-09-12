@@ -10,7 +10,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import io.redlink.more.studymanager.api.v1.model.AuditLogMetadataDTO;
-import io.redlink.more.studymanager.api.v1.webservices.AuditlogApi;
+import io.redlink.more.studymanager.api.v1.webservices.AuditLogApi;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.audit.AuditLog;
@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 @EnableConfigurationProperties(GatewayProperties.class)
-public class AuditLogAPIV1Controller implements AuditlogApi {
+public class AuditLogAPIV1Controller implements AuditLogApi {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuditLogAPIV1Controller.class);
 
     private final AuditService service;
@@ -50,7 +50,7 @@ public class AuditLogAPIV1Controller implements AuditlogApi {
     }
 
     @RequiresStudyRole({StudyRole.STUDY_ADMIN})
-    public ResponseEntity<AuditLogMetadataDTO> getAuditlogMetadata(
+    public ResponseEntity<AuditLogMetadataDTO> getAuditLogMetadata(
             Long studyId) {
         long count = service.countAuditLogEntries(studyId);
 
@@ -66,7 +66,7 @@ public class AuditLogAPIV1Controller implements AuditlogApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN})
-    public ResponseEntity<StreamingResponseBody> exportAuditlog(Long studyId) {
+    public ResponseEntity<StreamingResponseBody> exportAuditLog(Long studyId) {
         List<AuditLog> dtos = service.listAuditLog(studyId);
 
         if (dtos.isEmpty()) {
@@ -82,7 +82,7 @@ public class AuditLogAPIV1Controller implements AuditlogApi {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(outputStream -> {
                         try {
-                            prepareExportAuditlog(outputStream, studyId);
+                            prepareExportAuditLog(outputStream, studyId);
                         } catch (Exception e) {
                             LOGGER.warn("Error exporting study data for study_{}: {}", studyId, e.getMessage(), e);
                         }
@@ -95,7 +95,7 @@ public class AuditLogAPIV1Controller implements AuditlogApi {
      * @param outputStream outputStream for exported auditlog entries
      * @param studyId corresponding studyId of the auditlogs
      */
-    private void prepareExportAuditlog(OutputStream outputStream, Long studyId) {
+    private void prepareExportAuditLog(OutputStream outputStream, Long studyId) {
         Stream<AuditLog> auditlogEntries = service.getAuditLogs(
                 studyId
         );
