@@ -10,7 +10,7 @@ package io.redlink.more.studymanager.model.transformer;
 
 import io.redlink.more.studymanager.api.v1.model.*;
 import io.redlink.more.studymanager.model.audit.AuditLog;
-import io.redlink.more.studymanager.model.data.AuditlogMetadata;
+import io.redlink.more.studymanager.model.data.AuditLogMetadata;
 
 import java.util.*;
 
@@ -42,7 +42,7 @@ public final class AuditlogTransformer {
     }
 
     public static AuditLogMetadataDTO toAuditlogMetadataDTO_V1(
-            AuditlogMetadata auditLogMetadata) {
+            AuditLogMetadata auditLogMetadata) {
         return new AuditLogMetadataDTO()
                 .studyId(auditLogMetadata.studyId())
                 .length(auditLogMetadata.length());

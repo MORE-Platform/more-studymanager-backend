@@ -10,16 +10,16 @@ package io.redlink.more.studymanager.model.data;
 
 import java.util.Comparator;
 
-public record AuditlogMetadata(
+public record AuditLogMetadata(
         Long studyId,
         Long length
-) implements Comparable<AuditlogMetadata> {
+) implements Comparable<AuditLogMetadata> {
 
-    public static final Comparator<AuditlogMetadata> AUDITLOG_METADATA_COMPARATOR =
-            Comparator.comparing(AuditlogMetadata::studyId);
+    public static final Comparator<AuditLogMetadata> AUDITLOG_METADATA_COMPARATOR =
+            Comparator.comparing(AuditLogMetadata::studyId);
 
     @Override
-    public int compareTo(AuditlogMetadata compAuditlogMetadata) {
+    public int compareTo(AuditLogMetadata compAuditlogMetadata) {
         return AUDITLOG_METADATA_COMPARATOR.compare(this, compAuditlogMetadata);
     }
 }

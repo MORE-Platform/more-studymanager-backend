@@ -14,7 +14,7 @@ import io.redlink.more.studymanager.api.v1.webservices.AuditLogApi;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.audit.AuditLog;
-import io.redlink.more.studymanager.model.data.AuditlogMetadata;
+import io.redlink.more.studymanager.model.data.AuditLogMetadata;
 import io.redlink.more.studymanager.model.transformer.AuditlogTransformer;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.AuditService;
@@ -54,7 +54,7 @@ public class AuditLogAPIV1Controller implements AuditLogApi {
             Long studyId) {
         long count = service.countAuditLogEntries(studyId);
 
-        AuditlogMetadata metadata = new AuditlogMetadata(
+        AuditLogMetadata metadata = new AuditLogMetadata(
                 studyId,
                 count
         );

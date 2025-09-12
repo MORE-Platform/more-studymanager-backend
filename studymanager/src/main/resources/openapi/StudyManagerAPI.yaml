@@ -1333,7 +1333,7 @@ paths:
     get:
       tags:
         - auditLog
-      description: Export AuditLog
+      description: Export the complete audit log to a json file
       operationId: exportAuditLog
       responses:
         '200':
@@ -1353,7 +1353,7 @@ paths:
     get:
       tags:
         - auditLog
-      description: Get current length of AuditLogs with export format
+      description: Provides metadata of the audit logs for the requested study
       operationId: getAuditLogMetadata
       responses:
         '200':
@@ -2163,7 +2163,7 @@ components:
         We differentiate between the following roles within a study:
         * `STUDY_ADMIN` (_Study Administrator_): **All** rights to create and manage studies, configure components and assign participants, invite and manage operators and viewers and see study data.
         * `STUDY_OPERATOR` (_Study Operator_): Rights to manage studies, configure components and assign participants, **no rights to see data**.
-        * `STUDY_VIEWER` (_Study Viewer_): Rights to see study data only.
+        * `STUDY_VIEWER` (_Study Viewer_): Rights to see study daƒta only.
       type: string
       enum:
         - STUDY_ADMIN
