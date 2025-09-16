@@ -8,11 +8,18 @@
  */
 package io.redlink.more.studymanager.repository;
 
+import io.redlink.more.studymanager.model.OccurredObservation;
 import io.redlink.more.studymanager.model.Participant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Calendar;
+import java.util.TimeZone;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -20,11 +27,23 @@ import org.springframework.jdbc.core.RowMapper;
 public final class RepositoryUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryUtils.class);
+    public static final Calendar tzUTC = Calendar.getInstance(TimeZone.getTimeZone(ZoneOffset.UTC));
 
     private RepositoryUtils() {}
 
     public static Instant readInstant(ResultSet rs, String columnLabel) throws SQLException {
         var timestamp = rs.getTimestamp(columnLabel);
+        if (timestamp == null) {
+            return null;
+        }
+        return timestamp.toInstant();
+    }
+
+    /**
+     * Reads Timestamp with time zone data by returing the timestamp as UTC instant
+     */
+    public static Instant readInstantUTC(ResultSet rs, String columnLabel) throws SQLException {
+        var timestamp = rs.getTimestamp(columnLabel, tzUTC);
         if (timestamp == null) {
             return null;
         }

@@ -1,0 +1,240 @@
+/*
+ * Copyright LBI-DHP and/or licensed to LBI-DHP under one or more
+ * contributor license agreements (LBI-DHP: Ludwig Boltzmann Institute
+ * for Digital Health and Prevention -- A research institute of the
+ * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
+ * Förderung der wissenschaftlichen Forschung).
+ * Licensed under the Elastic License 2.0.
+ */
+package io.redlink.more.studymanager.repository;
+
+import io.redlink.more.studymanager.core.properties.ObservationProperties;
+import io.redlink.more.studymanager.core.properties.OccurredObservationProperties;
+import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.scheduler.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.testcontainers.shaded.org.apache.commons.lang3.tuple.Triple;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.EnumSet;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest
+@Testcontainers
+@ActiveProfiles("test-containers-flyway")
+class OccurredObservationRepositoryTest {
+
+    @Autowired
+    private OccurredObservationRepository occurredObservationRepository;
+
+    @Autowired
+    private StudyRepository studyRepository;
+
+    @Autowired
+    private ObservationRepository observationRepository;
+
+    @Autowired
+    private ParticipantRepository participantRepository;
+
+    @Autowired
+    private StudyGroupRepository studyGroupRepository;
+
+    @BeforeEach
+    void deleteAll() {
+        occurredObservationRepository.clear();
+    }
+
+    @Test
+    @DisplayName("ParticipantObservations are inserted, updated, listed and deleted from database")
+    public void testInsertListUpdateDelete() {
+        String type = "accelerometer";
+        Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
+        Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
+        Instant startTime = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+        Instant endTime = Instant.now().plus(2, ChronoUnit.HOURS);
+
+        Observation observation = observationRepository.insert(new Observation()
+                .setStudyId(studyId)
+                .setType(type)
+                .setTitle("Accelerometer Observation")
+                .setStudyGroupId(studyGroupId)
+                .setProperties(new ObservationProperties(Map.of("testProperty", "testValue")))
+                .setSchedule(new Event()
+                        .setDateStart(startTime)
+                        .setDateEnd(endTime)
+                        .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)))
+                .setHidden(false)
+                .setNoSchedule(false));
+
+        Participant participant = participantRepository.insert(new Participant()
+                .setAlias("participant x")
+                .setStudyGroupId(studyGroupId)
+                .setStudyId(studyId)
+                .setRegistrationToken("TEST123"));
+
+        var occurredObservation = new OccurredObservation(
+                studyId,
+                observation.getObservationId(),
+                participant.getParticipantId(),
+                startTime,
+                endTime);
+
+        var occurredObservationResponse = occurredObservationRepository.upsert(occurredObservation);
+
+        assertThat(occurredObservationResponse).isNotNull();
+        assertThat(occurredObservationResponse.studyId()).isEqualTo(studyId);
+        assertThat(occurredObservationResponse.observationId()).isEqualTo(observation.getObservationId());
+        assertThat(occurredObservationResponse.participantId()).isEqualTo(participant.getParticipantId());
+        assertThat(occurredObservationResponse.start()).isEqualTo(startTime);
+        assertThat(occurredObservationResponse.end()).isEqualTo(endTime);
+        assertThat(occurredObservationResponse.dataValid()).isTrue();
+        assertThat(occurredObservationResponse.dataState()).isEqualTo(OccurredObservation.DataState.MISSING);
+        assertThat(occurredObservationResponse.properties()).isNotNull();
+        assertThat(occurredObservationResponse.properties()).isEmpty();
+        assertThat(occurredObservationResponse.created()).isNotNull();
+        assertThat(occurredObservationResponse.modified()).isNotNull();
+        assertThat(occurredObservationResponse.created()).isAfter(startTime);
+        assertThat(occurredObservationResponse.modified()).isEqualTo(occurredObservationResponse.created());
+
+
+
+        var updatedOccurentObservation = new OccurredObservation(
+                occurredObservationResponse.studyId(),
+                occurredObservationResponse.observationId(),
+                occurredObservationResponse.participantId(),
+                occurredObservationResponse.start(),
+                occurredObservationResponse.end(),
+                false, //change data valid
+                OccurredObservation.DataState.INCOMPLETE,
+                new OccurredObservationProperties(Map.of("test", "dummy", "testInt", 69))
+        );
+
+        var updatedOccurentObservationResponse = occurredObservationRepository.update(updatedOccurentObservation);
+
+        assertThat(updatedOccurentObservationResponse).isNotNull();
+        assertThat(updatedOccurentObservationResponse.studyId()).isEqualTo(studyId);
+        assertThat(updatedOccurentObservationResponse.observationId()).isEqualTo(observation.getObservationId());
+        assertThat(updatedOccurentObservationResponse.participantId()).isEqualTo(participant.getParticipantId());
+        assertThat(updatedOccurentObservationResponse.start()).isEqualTo(startTime);
+        assertThat(updatedOccurentObservationResponse.end()).isEqualTo(endTime);
+        assertThat(updatedOccurentObservationResponse.dataValid()).isFalse(); //UPDATED
+        assertThat(updatedOccurentObservationResponse.dataState()).isEqualTo(OccurredObservation.DataState.INCOMPLETE);
+        assertThat(updatedOccurentObservationResponse.properties()).isNotNull();
+        assertThat(updatedOccurentObservationResponse.properties()).hasSize(2);
+        assertThat(updatedOccurentObservationResponse.properties().getString("test")).isEqualTo("dummy");
+        assertThat(updatedOccurentObservationResponse.properties().getInt("testInt")).isEqualTo(69);
+        assertThat(updatedOccurentObservationResponse.created()).isNotNull();
+        assertThat(updatedOccurentObservationResponse.modified()).isNotNull();
+        assertThat(updatedOccurentObservationResponse.created()).isEqualTo(occurredObservationResponse.created());
+        assertThat(updatedOccurentObservationResponse.modified()).isAfter(updatedOccurentObservationResponse.created());
+
+        //assert insertOrGet and validate that only the end is updated
+        var duplicateInsertResponse = occurredObservationRepository.upsert(new OccurredObservation(
+                updatedOccurentObservationResponse.studyId(),
+                updatedOccurentObservationResponse.observationId(),
+                updatedOccurentObservationResponse.participantId(),
+                updatedOccurentObservationResponse.start(),
+                updatedOccurentObservationResponse.end().plus(1, ChronoUnit.HOURS),
+                true, //change data valid
+                OccurredObservation.DataState.COMPLETE,
+                new OccurredObservationProperties(Map.of("test", "dummy-changed", "testInt", 42))
+        ));
+
+        assertThat(duplicateInsertResponse).isNotNull();
+        assertThat(duplicateInsertResponse.studyId()).isEqualTo(studyId);
+        assertThat(duplicateInsertResponse.observationId()).isEqualTo(observation.getObservationId());
+        assertThat(duplicateInsertResponse.participantId()).isEqualTo(participant.getParticipantId());
+        assertThat(duplicateInsertResponse.start()).isEqualTo(startTime);
+        assertThat(duplicateInsertResponse.end()).isEqualTo(endTime.plus(1, ChronoUnit.HOURS)); //UPDATED
+        //NOT UPDATED FIELDS!!
+        assertThat(duplicateInsertResponse.dataValid()).isFalse(); //NOT TRUE
+        assertThat(duplicateInsertResponse.dataState()).isEqualTo(OccurredObservation.DataState.INCOMPLETE); //NOT COMPLETE
+        assertThat(duplicateInsertResponse.properties()).isNotNull();
+        assertThat(duplicateInsertResponse.properties()).hasSize(2);
+        assertThat(duplicateInsertResponse.properties().getString("test")).isEqualTo("dummy"); //NOT dummy-changed
+        assertThat(duplicateInsertResponse.properties().getInt("testInt")).isEqualTo(69); // NOT 42
+        assertThat(duplicateInsertResponse.created()).isNotNull();
+        assertThat(duplicateInsertResponse.modified()).isNotNull();
+        assertThat(duplicateInsertResponse.created()).isEqualTo(occurredObservationResponse.created());
+        assertThat(duplicateInsertResponse.modified()).isAfter(updatedOccurentObservationResponse.created());
+
+        //for list we need some more variations
+        var startTime2 = startTime.minus(3, ChronoUnit.HOURS);
+        var endTime2 = endTime.minus(3, ChronoUnit.HOURS);
+
+        Observation observation2 = observationRepository.insert(new Observation()
+                .setStudyId(studyId)
+                .setType(type)
+                .setTitle("Accelerometer Observation 2")
+                .setStudyGroupId(studyGroupId)
+                .setProperties(new ObservationProperties(Map.of("testProperty", "testValue")))
+                .setSchedule(new Event()
+                        .setDateStart(startTime2)
+                        .setDateEnd(endTime2)
+                        .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(10)))
+                .setHidden(false)
+                .setNoSchedule(false));
+
+        Participant participant2 = participantRepository.insert(new Participant()
+                .setAlias("participant y")
+                .setStudyGroupId(studyGroupId)
+                .setStudyId(studyId)
+                .setRegistrationToken("TEST234"));
+        //Oservation 1, Participant 1, Today
+        var ooO1P1T = duplicateInsertResponse; //the existing one
+        //Oservation 1, Participant 1, Yesterday
+        var ooO1P1Y = occurredObservationRepository.upsert(new OccurredObservation(
+                studyId, observation.getObservationId(), participant.getParticipantId(), startTime.minus(1, ChronoUnit.DAYS), endTime.minus(1, ChronoUnit.DAYS),
+                true, OccurredObservation.DataState.COMPLETE, new OccurredObservationProperties()));
+        var ooO1P2T = occurredObservationRepository.upsert(new OccurredObservation(
+                studyId, observation.getObservationId(), participant2.getParticipantId(), startTime, endTime,
+                true, OccurredObservation.DataState.MISSING, new OccurredObservationProperties()));
+        var ooO1P2Y = occurredObservationRepository.upsert(new OccurredObservation(
+                studyId, observation.getObservationId(), participant2.getParticipantId(), startTime.minus(1, ChronoUnit.DAYS), endTime.minus(1, ChronoUnit.DAYS),
+                true, OccurredObservation.DataState.MISSING, new OccurredObservationProperties()));
+        var ooO2P1T = occurredObservationRepository.upsert(new OccurredObservation(
+                studyId, observation2.getObservationId(), participant.getParticipantId(), startTime2, endTime2,
+                true, OccurredObservation.DataState.INCOMPLETE, new OccurredObservationProperties()));
+        var ooO2P1Y = occurredObservationRepository.upsert(new OccurredObservation(
+                studyId, observation2.getObservationId(), participant.getParticipantId(), startTime2.minus(1, ChronoUnit.DAYS), endTime2.minus(1, ChronoUnit.DAYS),
+                true, OccurredObservation.DataState.COMPLETE, new OccurredObservationProperties()));
+        var ooO2P2T = occurredObservationRepository.upsert(new OccurredObservation(
+                studyId, observation2.getObservationId(), participant2.getParticipantId(), startTime2, endTime2,
+                true, OccurredObservation.DataState.PARTIAL, new OccurredObservationProperties()));
+        var ooO2P2Y = occurredObservationRepository.upsert(new OccurredObservation(
+                studyId, observation2.getObservationId(), participant2.getParticipantId(), startTime2.minus(1, ChronoUnit.DAYS), endTime2.minus(1, ChronoUnit.DAYS),
+                false, OccurredObservation.DataState.COMPLETE, new OccurredObservationProperties()));
+
+        //List OccurredObservations for Participant 1
+        var p1oos = occurredObservationRepository.listOccurredObservations(studyId, participant.getParticipantId(), null, null, null).toList();
+        assertThat(p1oos).isNotNull();
+        assertThat(p1oos).hasSize(4);
+        assertThat(p1oos).containsExactlyInAnyOrder(ooO1P1T, ooO1P1Y, ooO2P1T, ooO2P1Y);
+        //List OccurredObservations for Participant 2 and Observation 1
+        var o1p2oos = occurredObservationRepository.listOccurredObservations(studyId, participant2.getParticipantId(), observation.getObservationId(), null, null).toList();
+        assertThat(o1p2oos).isNotNull();
+        assertThat(o1p2oos).hasSize(2);
+        assertThat(o1p2oos).containsExactlyInAnyOrder(ooO1P2T, ooO1P2Y);
+        //List OccurredObservations in the State Incomplete or partial
+        var sIPoos = occurredObservationRepository.listOccurredObservations(studyId, null, null, null, EnumSet.of(OccurredObservation.DataState.INCOMPLETE, OccurredObservation.DataState.PARTIAL)).toList();
+        assertThat(sIPoos).isNotNull();
+        assertThat(sIPoos).hasSize(3);
+        assertThat(sIPoos).containsExactlyInAnyOrder(ooO1P1T, ooO2P1T, ooO2P2T);
+        //List OccurredObservations with invalid Data
+        var vIPoos = occurredObservationRepository.listOccurredObservations(studyId, null, null, false, null).toList();
+        assertThat(vIPoos).isNotNull();
+        assertThat(vIPoos).hasSize(2);
+        assertThat(vIPoos).containsExactlyInAnyOrder(ooO1P1T, ooO2P2Y);
+    }
+
+}
