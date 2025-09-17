@@ -59,7 +59,7 @@ class OccurredObservationRepositoryTest {
         Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
         Instant startTime = Instant.now().truncatedTo(ChronoUnit.MINUTES);
-        Instant endTime = Instant.now().plus(2, ChronoUnit.HOURS);
+        Instant endTime = startTime.plus(2, ChronoUnit.HOURS);
 
         Observation observation = observationRepository.insert(new Observation()
                 .setStudyId(studyId)
