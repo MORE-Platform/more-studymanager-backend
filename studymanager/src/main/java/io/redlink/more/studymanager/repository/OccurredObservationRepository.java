@@ -45,17 +45,28 @@ public class OccurredObservationRepository {
             """;
 
     private static final String GET_BY_PK = """
-            SELECT * FROM occurred_observation po
-                     WHERE po.study_id = :study_id AND po.participant_id = :participant_id AND po.observation_id = :observation_id AND po.start = :start
+            SELECT * FROM occurred_observation oo
+                     WHERE oo.study_id = :study_id AND oo.participant_id = :participant_id AND oo.observation_id = :observation_id AND oo.start = :start
             """;
     private static final String LIST_OCCURRED_OBSERVATION = """
-            SELECT * FROM occurred_observation po
-                    WHERE po.study_id = :study_id
-                        AND (:participant_id::INT IS NULL OR po.participant_id = :participant_id)
-                        AND (:observation_id::INT IS NULL OR po.observation_id = :observation_id)
-                        AND (:data_valid::BOOLEAN IS NULL OR po.data_valid = :data_valid)
-                        AND (:data_states::observation_data_state[] IS NULL OR po.data_state = ANY(:data_states::observation_data_state[]))
-    """;
+            SELECT * FROM occurred_observation oo
+                    WHERE oo.study_id = :study_id
+                        AND (:participant_id::INT IS NULL OR oo.participant_id = :participant_id)
+                        AND (:observation_id::INT IS NULL OR oo.observation_id = :observation_id)
+                        AND (:data_valid::BOOLEAN IS NULL OR oo.data_valid = :data_valid)
+                        AND (:data_states::observation_data_state[] IS NULL OR oo.data_state = ANY(:data_states::observation_data_state[]))
+            """;
+
+    private static final String FIND_LAST_START_TIME = """
+            SELECT start FROM occurred_observation oo
+                    WHERE oo.study_id = :study_id
+                        AND (:participant_id::INT IS NULL OR oo.participant_id = :participant_id)
+                        AND (:observation_id::INT IS NULL OR oo.observation_id = :observation_id)
+                        AND (:data_valid::BOOLEAN IS NULL OR oo.data_valid = :data_valid)
+                        AND (:data_states::observation_data_state[] IS NULL OR oo.data_state = ANY(:data_states::observation_data_state[]))
+                    ORDER BY oo.start DESC
+                    LIMIT 1
+            """;
 
     private static final String DELETE_ALL = "DELETE FROM occurred_observation";
     private final JdbcTemplate template;
@@ -123,6 +134,23 @@ public class OccurredObservationRepository {
                 getOccurredObservationRowMapper());
     }
 
+    public Instant getLatestStartTime(
+            Long studyId, Integer participantId, Integer observationId,
+            Boolean dataValid, Set<OccurredObservation.DataState> dataStates
+    ) {
+        try {
+            return namedTemplate.queryForObject(FIND_LAST_START_TIME,
+                    new MapSqlParameterSource("study_id", studyId)
+                            .addValue("participant_id", participantId)
+                            .addValue("observation_id", observationId)
+                            .addValue("data_valid", dataValid)
+                            .addValue("data_states", dataStates == null ? null : dataStates.stream().map(OccurredObservation.DataState::getValue).toArray(String[]::new)),
+                    getInstantRowMapper("start", true));
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
     public void clear() {
         template.update(DELETE_ALL);
     }
@@ -169,5 +197,9 @@ public class OccurredObservationRepository {
                 RepositoryUtils.readInstant(rs, "created"),
                 RepositoryUtils.readInstant(rs, "modified")
         );
+    }
+    private static RowMapper<Instant> getInstantRowMapper(String field, boolean withTimezone) {
+        return (rs, rowNum) -> withTimezone ? RepositoryUtils.readInstantUTC(rs, field) :
+                RepositoryUtils.readInstant(rs, field);
     }
 }

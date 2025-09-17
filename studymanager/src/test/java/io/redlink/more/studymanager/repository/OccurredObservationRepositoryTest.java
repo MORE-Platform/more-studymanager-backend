@@ -19,8 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.shaded.org.apache.commons.lang3.tuple.ImmutableTriple;
-import org.testcontainers.shaded.org.apache.commons.lang3.tuple.Triple;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -235,6 +233,17 @@ class OccurredObservationRepositoryTest {
         assertThat(vIPoos).isNotNull();
         assertThat(vIPoos).hasSize(2);
         assertThat(vIPoos).containsExactlyInAnyOrder(ooO1P1T, ooO2P2Y);
+
+        //Test Query for last Start Time
+        var lastStartTimeStudy = occurredObservationRepository.getLatestStartTime(studyId, null, null, null, null);
+        assertThat(lastStartTimeStudy).isNotNull();
+        assertThat(lastStartTimeStudy).isEqualTo(startTime);
+        var lastStartTimeStateP2StateComplete =  occurredObservationRepository.getLatestStartTime(studyId, participant2.getParticipantId(), null, null, EnumSet.of(OccurredObservation.DataState.COMPLETE));
+        assertThat(lastStartTimeStateP2StateComplete).isNotNull();
+        assertThat(lastStartTimeStateP2StateComplete).isEqualTo(startTime2.minus(1, ChronoUnit.DAYS));
+        //validate that searching for a combination with no entry returns null
+        var lastStartTimeNotFound = occurredObservationRepository.getLatestStartTime(studyId, -1, null, null, null);
+        assertThat(lastStartTimeNotFound).isNull();
     }
 
 }
