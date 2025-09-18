@@ -94,6 +94,7 @@ class AuditLogControllerTest {
 
         Map<String,Object> details = Map.of(
                 "user_roles", List.of("admin", "viewer"),
+                "study_roles", List.of("STUDY_VIEWER", "STUDY_OPERATOR"),
                 "detail_state", Boolean.TRUE,
                 "detail_integer", 42,
                 "detail_number", 3.1415,
@@ -145,6 +146,8 @@ class AuditLogControllerTest {
                 .andExpect(jsonPath("$[0].detail_text").value("This is an important test"))
                 .andExpect(jsonPath("$[0].userRoles[0]").value("admin"))
                 .andExpect(jsonPath("$[0].userRoles[1]").value("viewer"))
+                .andExpect(jsonPath("$[0].studyRoles[0]").value("STUDY_VIEWER"))
+                .andExpect(jsonPath("$[0].studyRoles[1]").value("STUDY_OPERATOR"))
                 .andExpect(jsonPath("$[0].created").exists());
     }
 

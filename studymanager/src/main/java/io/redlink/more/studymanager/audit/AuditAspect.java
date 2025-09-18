@@ -4,10 +4,13 @@ import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.audit.AuditLog;
 import io.redlink.more.studymanager.properties.AuditProperties;
+import io.redlink.more.studymanager.repository.AuditLogRepository;
 import io.redlink.more.studymanager.service.AuditService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
+import io.redlink.more.studymanager.service.StudyService;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -28,14 +32,17 @@ public class AuditAspect {
     private final AuditProperties auditProperties;
     private final AuditService auditService;
     private final OAuth2AuthenticationService authService;
+    private final StudyService studyService;
 
     public AuditAspect(
             AuditProperties auditProperties,
             AuditService auditService,
-            OAuth2AuthenticationService authService) {
+            OAuth2AuthenticationService authService,
+            StudyService studyService) {
         this.auditService = auditService;
         this.authService = authService;
         this.auditProperties = auditProperties;
+        this.studyService = studyService;
     }
         @AfterThrowing(pointcut = "@annotation(Audited)", throwing = "e")
         public void recordException(JoinPoint joinPoint, Throwable e){
@@ -82,6 +89,7 @@ public class AuditAspect {
         //finally set some additional information (if available)
         auditLog.getDetails().putAll(parameters);
         auditLog.getDetails().put("user_roles", user.roles().stream().map(PlatformRole::name).toList());
+        auditLog.getDetails().put("study_roles", studyService.getStudyRoles(studyId, user.id()).stream().map(StudyRole::name).toList());
         if(e != null){
             auditLog.getDetails().put("exception", e.getClass().getName());
         }

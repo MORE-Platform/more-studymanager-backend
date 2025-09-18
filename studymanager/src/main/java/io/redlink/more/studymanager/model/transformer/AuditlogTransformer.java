@@ -20,8 +20,15 @@ public final class AuditlogTransformer {
 
     public static AuditLogEntryDTO toAuditlogEntryDTO_V1(AuditLog auditLog) {
         Map<String,Object> details = new HashMap<>(auditLog.getDetails());
+        //Both user_roles and study_roles are stored in the details, but exposed as special attribute in the DTO
         List<String> userRoles = Optional.ofNullable(
                 details.remove("user_roles"))
+                .filter(it -> it instanceof List)
+                .map(List.class::cast)
+                .map(it -> it.stream().map(Objects::toString).toList()
+            ).orElse(null);
+        List<String> studyRoles = Optional.ofNullable(
+                        details.remove("study_roles"))
                 .filter(it -> it instanceof List)
                 .map(List.class::cast)
                 .map(it -> it.stream().map(Objects::toString).toList()
@@ -31,7 +38,8 @@ public final class AuditlogTransformer {
                 .created(auditLog.getCreated())
                 .studyId(auditLog.getStudyId())
                 .userId(auditLog.getUserId())
-                .userRoles(userRoles) //the user roles as parsed from the details
+                .userRoles(userRoles)
+                .studyRoles(studyRoles)
                 .userName(auditLog.getUserName())
                 .timestamp(auditLog.getTimestamp())
                 .action(auditLog.getAction())

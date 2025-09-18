@@ -8,6 +8,7 @@ import io.redlink.more.studymanager.model.audit.AuditLog;
 import io.redlink.more.studymanager.properties.AuditProperties;
 import io.redlink.more.studymanager.service.AuditService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
+import io.redlink.more.studymanager.service.StudyService;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.reflect.CodeSignature;
@@ -35,11 +36,13 @@ public class AuditAspectTest {
     AuditService auditService = Mockito.mock(AuditService.class);
     OAuth2AuthenticationService authService = Mockito.mock(OAuth2AuthenticationService.class);
     AuthenticatedUser authUser = Mockito.mock(AuthenticatedUser.class);
+    StudyService studyService = Mockito.mock(StudyService.class);
 
     AuditAspect auditAspect = new AuditAspect(
             new AuditProperties(EnumSet.of(Study.Status.ACTIVE, Study.Status.PAUSED, Study.Status.CLOSED), -1L),
             auditService,
-            authService);
+            authService,
+            studyService);
 
     @Before
     public void setup() {

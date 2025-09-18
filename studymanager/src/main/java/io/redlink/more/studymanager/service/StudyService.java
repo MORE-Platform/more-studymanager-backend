@@ -200,6 +200,10 @@ public class StudyService {
         );
     }
 
+    public Set<StudyRole> getStudyRoles(Long studyId, String userId){
+        return aclRepository.getRoles(studyId, userId);
+    }
+
     public Optional<Duration> getStudyDuration(Long studyId) {
         return studyRepository.getById(studyId)
                 .map(Study::getDuration);
