@@ -29,6 +29,10 @@ public class NotFoundException extends RuntimeException {
         return new NotFoundException("StudyGroup", studyId + "/" + studyGroupId);
     }
 
+    public static NotFoundException Participant(long studyId, int participantId) {
+        return new NotFoundException("Participant", studyId + "/" + participantId);
+    }
+
     public static NotFoundException ObservationFactory(String type) {
         return new NotFoundException("Observation Factory '" + type + "'");
     }

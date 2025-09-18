@@ -33,6 +33,10 @@ public class StudyGroupService {
         return this.repository.insert(studyGroup);
     }
 
+    public StudyGroup importStudyGroup(Long studyId, StudyGroup studyGroup) {
+        return this.repository.doImport(studyId, studyGroup);
+    }
+
     public List<StudyGroup> listStudyGroups(long studyId) {
         return this.repository.listStudyGroupsOrderedByStudyGroupIdAsc(studyId);
     }

@@ -84,7 +84,7 @@
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -108,6 +108,11 @@
         </dependency>
 
         <dependency>
+            <groupId>net.sf.biweekly</groupId>
+            <artifactId>biweekly</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
@@ -119,7 +124,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.13.0</version>
+            <version>2.19.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -154,7 +159,7 @@
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>7.4</version>
+            <version>8.1</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -222,7 +227,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>6.6.0</version>
+                <version>7.13.0</version>
                 <executions>
                     <execution>
                         <id>configurator-api</id>
@@ -230,71 +235,51 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <configOptions>
-                                <useTags>true</useTags>
-                            </configOptions>
+                            <generatorName>spring</generatorName>
+                            <library>spring-boot</library>
+
                             <inputSpec>${project.basedir}/src/main/resources/openapi/StudyManagerAPI.yaml</inputSpec>
                             <output>${project.build.directory}/generated-sources/study-manager</output>
+
+                            <packageName>io.redlink.more.studymanager.api.v1</packageName>
+                            <generateApis>true</generateApis>
                             <apiPackage>io.redlink.more.studymanager.api.v1.webservices</apiPackage>
+                            <generateModels>true</generateModels>
                             <modelPackage>io.redlink.more.studymanager.api.v1.model</modelPackage>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>app-api</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi/AppAPI.yaml</inputSpec>
-                            <output>${project.build.directory}/generated-sources/app</output>
-                            <apiPackage>io.redlink.more.mmb.api.v1.app.webservices</apiPackage>
-                            <modelPackage>io.redlink.more.mmb.api.v1.app.model</modelPackage>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>internal-api</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
+                            <modelNameSuffix>DTO</modelNameSuffix>
+
+                            <generateApiTests>false</generateApiTests>
+                            <generateApiDocumentation>true</generateApiDocumentation>
+                            <generateModelTests>false</generateModelTests>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+
+                            <typeMappings>
+                                <typeMapping>string+date-time=Instant</typeMapping>
+                                <typeMapping>string+time=LocalTime</typeMapping>
+                            </typeMappings>
+                            <schemaMappings>
+                                <schemaMapping>Instant=java.time.Instant</schemaMapping>
+                                <schemaMapping>LocalTime=java.time.LocalTime</schemaMapping>
+                                <schemaMapping>DataExport=org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody</schemaMapping>
+                            </schemaMappings>
+                            <importMappings>
+                                <importMapping>Instant=java.time.Instant</importMapping>
+                                <importMapping>LocalTime=java.time.LocalTime</importMapping>
+                            </importMappings>
+
                             <configOptions>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <sourceFolder>src</sourceFolder>
+                                <documentationProvider>source</documentationProvider>
+                                <interfaceOnly>true</interfaceOnly>
                                 <useTags>true</useTags>
+                                <openApiNullable>false</openApiNullable>
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <requestMappingMode>api_interface</requestMappingMode>
                             </configOptions>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi/ExternalAPI.yaml</inputSpec>
-                            <output>${project.build.directory}/generated-sources/external</output>
-                            <apiPackage>io.redlink.more.mmb.api.v1.external.webservices</apiPackage>
-                            <modelPackage>io.redlink.more.mmb.api.v1.external.model</modelPackage>
                         </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <generatorName>spring</generatorName>
-                    <library>spring-boot</library>
-
-                    <packageName>io.redlink.more.studymanager.api.v1</packageName>
-
-                    <generateApis>true</generateApis>
-                    <apiPackage>io.redlink.more.studymanager.api.v1.webservices</apiPackage>
-
-                    <generateModels>true</generateModels>
-                    <modelPackage>io.redlink.more.studymanager.api.v1.model</modelPackage>
-                    <modelNameSuffix>DTO</modelNameSuffix>
-
-                    <generateApiTests>false</generateApiTests>
-                    <generateApiDocumentation>true</generateApiDocumentation>
-                    <generateModelTests>false</generateModelTests>
-                    <generateSupportingFiles>false</generateSupportingFiles>
-
-                    <configOptions>
-                        <useSpringBoot3>true</useSpringBoot3>
-                        <sourceFolder>src</sourceFolder>
-                        <documentationProvider>source</documentationProvider>
-                        <interfaceOnly>true</interfaceOnly>
-                        <useTags>false</useTags>
-                        <openApiNullable>false</openApiNullable>
-                        <skipDefaultInterface>true</skipDefaultInterface>
-                    </configOptions>
-                </configuration>
             </plugin>
         </plugins>
     </build>

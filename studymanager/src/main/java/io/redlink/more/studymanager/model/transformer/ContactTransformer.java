@@ -11,7 +11,7 @@ package io.redlink.more.studymanager.model.transformer;
 import io.redlink.more.studymanager.api.v1.model.ContactDTO;
 import io.redlink.more.studymanager.model.Contact;
 
-public class ContactTransformer {
+public final class ContactTransformer {
 
     public static ContactDTO toContactDTO_V1(Contact contact) {
         return new ContactDTO()

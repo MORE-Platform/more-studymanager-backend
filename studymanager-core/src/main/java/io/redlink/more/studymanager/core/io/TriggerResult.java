@@ -22,7 +22,11 @@ public class TriggerResult {
 
     public static TriggerResult NOOP = new TriggerResult(null, false);
     public static TriggerResult withParams(Set<ActionParameter> actionParameterSet) {
-        return new TriggerResult(actionParameterSet, true);
+        if(actionParameterSet.isEmpty()) {
+            return TriggerResult.NOOP;
+        } else {
+            return new TriggerResult(actionParameterSet, true);
+        }
     }
 
     public Set<ActionParameter> getActionParameters() {

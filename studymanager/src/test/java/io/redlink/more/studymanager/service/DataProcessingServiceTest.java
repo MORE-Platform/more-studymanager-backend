@@ -10,7 +10,7 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
-import io.redlink.more.studymanager.model.ParticipationData;
+import io.redlink.more.studymanager.model.data.ParticipationData;
 import io.redlink.more.studymanager.model.StudyGroup;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;

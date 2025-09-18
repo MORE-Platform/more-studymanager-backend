@@ -16,14 +16,17 @@ import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
-import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.Trigger;
+import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.service.InterventionService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -32,30 +35,27 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest({InterventionsApiV1Controller.class})
 @AutoConfigureMockMvc(addFilters = false)
 class InterventionControllerTest {
 
-    @MockBean
+    @MockitoBean
     InterventionService interventionService;
 
-    @MockBean
+    @MockitoBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
 
     @Autowired
@@ -102,8 +102,8 @@ class InterventionControllerTest {
                 .purpose("some purpose")
                 .studyGroupId(1)
                 .schedule(new EventDTO()
-                        .dtstart(dateStart.atOffset(ZoneOffset.UTC))
-                        .dtend(dateEnd.atOffset(ZoneOffset.UTC)));
+                        .dtstart(dateStart)
+                        .dtend(dateEnd));
 
         mvc.perform(post("/api/v1/studies/1/interventions")
                         .content(mapper.writeValueAsString(interventionRequest))
@@ -142,8 +142,8 @@ class InterventionControllerTest {
                 .purpose("some purpose")
                 .title("a title")
                 .schedule(new EventDTO()
-                        .dtstart(dateStart.atOffset(ZoneOffset.UTC))
-                        .dtend(dateEnd.atOffset(ZoneOffset.UTC)));
+                        .dtstart(dateStart)
+                        .dtend(dateEnd));
 
         mvc.perform(put("/api/v1/studies/1/interventions/1")
                         .content(mapper.writeValueAsString(interventionRequest))

@@ -14,6 +14,8 @@ import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import org.apache.commons.lang3.NotImplementedException;
 
+import java.io.Serializable;
+import java.util.Optional;
 import java.util.Set;
 
 public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTriggerSDK {
@@ -23,6 +25,21 @@ public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTrigg
     public MoreTriggerSDKImpl(MoreSDK sdk, long studyId, Integer studyGroupId, int interventionId) {
         super(sdk, studyId, studyGroupId);
         this.interventionId = interventionId;
+    }
+
+    @Override
+    public <T extends Serializable> void setValue(String name, T value) {
+        sdk.nvpairs.setTriggerValue(studyId, interventionId, name, value);
+    }
+
+    @Override
+    public <T extends Serializable> Optional<T> getValue(String name, Class<T> tClass) {
+        return sdk.nvpairs.getTriggerValue(studyId, interventionId, name, tClass);
+    }
+
+    @Override
+    public void removeValue(String name) {
+        sdk.nvpairs.removeTriggerValue(studyId, interventionId, name);
     }
 
     @Override
@@ -49,8 +66,7 @@ public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTrigg
         throw new NotImplementedException();
     }
 
-    @Override
-    public String getIssuer() {
+    private String getIssuer() {
         return studyId + "-" + studyGroupId + '-' + interventionId + "-trigger";
     }
 }

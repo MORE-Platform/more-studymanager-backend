@@ -10,6 +10,7 @@ package io.redlink.more.studymanager.model.transformer;
 
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.model.Intervention;
+import java.time.Instant;
 
 public final class InterventionTransformer {
 
@@ -27,6 +28,8 @@ public final class InterventionTransformer {
     }
 
     public static InterventionDTO toInterventionDTO_V1(Intervention intervention) {
+        Instant instant = intervention.getModified();
+        Instant instant1 = intervention.getCreated();
         return new InterventionDTO()
                 .studyId(intervention.getStudyId())
                 .interventionId(intervention.getInterventionId())
@@ -34,8 +37,8 @@ public final class InterventionTransformer {
                 .purpose(intervention.getPurpose())
                 .studyGroupId(intervention.getStudyGroupId())
                 .schedule(EventTransformer.toObservationScheduleDTO_V1(intervention.getSchedule()))
-                .created(Transformers.toOffsetDateTime(intervention.getCreated()))
-                .modified(Transformers.toOffsetDateTime(intervention.getModified()));
+                .created(instant1)
+                .modified(instant);
     }
 
 }

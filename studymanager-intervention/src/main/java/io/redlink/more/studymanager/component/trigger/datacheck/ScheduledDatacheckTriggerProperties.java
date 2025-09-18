@@ -11,6 +11,7 @@ package io.redlink.more.studymanager.component.trigger.datacheck;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,7 +25,7 @@ public class ScheduledDatacheckTriggerProperties extends TriggerProperties {
         return Optional.ofNullable(this.getString("cronSchedule"));
     }
 
-    public Optional<Set<QueryObject>> getQueryObject() {return this.getObject("queryObject", new TypeReference<>() {});}
+    public Optional<List<QueryObject>> getQueryObject() {return this.getObject("queryObject", new TypeReference<>() {});}
 
     public Optional<Long> getWindow() {
         return Optional.ofNullable(this.getLong("window"));

@@ -44,6 +44,7 @@ public class QuestionObservationFactory<C extends Observation<P>, P extends Obse
                             "Yes"
                     ))
     );
+
     @Override
     public String getId() {
         return "question-observation";

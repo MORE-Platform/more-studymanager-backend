@@ -14,18 +14,23 @@ import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CloseIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
+import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Iterables;
 import io.redlink.more.studymanager.core.io.TimeRange;
-import io.redlink.more.studymanager.model.ParticipationData;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
+import io.redlink.more.studymanager.model.data.ParticipationData;
 import io.redlink.more.studymanager.model.data.SimpleDataPoint;
 import io.redlink.more.studymanager.properties.ElasticProperties;
 import io.redlink.more.studymanager.utils.MapperUtils;
@@ -38,10 +43,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -92,27 +96,71 @@ public class ElasticService {
         }
     }
 
-    private List<Query> getFilters(Long studyId, Integer studyGroupId, TimeRange timerange) {
+    static List<Query> getFilters(Long studyId, Integer studyGroupId, TimeRange timerange) {
         List<Query> queries = new ArrayList<>();
-        queries.add(Query.of(f -> f.
-                term(t -> t.
-                        field("study_id").
-                        value(getStudyIdString(studyId)))));
+        queries.add(getStudyFilter(studyId));
         if (studyGroupId != null) {
-            queries.add(Query.of(f -> f.term(t -> t.
-                    field("study_group_id").
-                    value(getStudyGroupIdString(studyGroupId)))));
+            queries.add(getStudyGroupFilter(studyGroupId));
         }
 
         if (timerange != null && timerange.getFromString() != null && timerange.getToString() != null) {
-            queries.add(Query.of(f -> f.
-                    range(r -> r.
-                            field("effective_time_frame").
-                            from(timerange.getFromString()).
-                            to(timerange.getToString())
-                    )));
+            queries.add(getTimeRangeFilter(timerange));
         }
         return queries;
+    }
+
+    static List<Query> getFilters(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
+        List<Query> filters = new ArrayList<>();
+        filters.add(getStudyFilter(studyId));
+        filters.add(getObservationFilter(observationId));
+
+        if (participantId != null) {
+            filters.add(getParticipantFilter(participantId));
+        } else if(studyGroupId != null) {
+            filters.add(getStudyGroupFilter(studyGroupId));
+        }
+
+        if (timerange != null && timerange.getFromString() != null && timerange.getToString() != null) {
+            filters.add(getTimeRangeFilter(timerange));
+        }
+        return filters;
+    }
+
+    static Query getStudyFilter(Long studyId) {
+        return Query.of(f -> f.
+                term(t -> t.
+                        field("study_id.keyword").
+                        value(getStudyIdString(studyId))));
+    }
+
+    static Query getObservationFilter(Integer observationId) {
+        return Query.of(f -> f.
+                term(t -> t.
+                        field("observation_id.keyword").
+                        value(observationId)));
+    }
+
+    static Query getStudyGroupFilter(Integer studyGroupId) {
+        return Query.of(f -> f.
+                term(t -> t.
+                        field("study_group_id.keyword").
+                        value(getStudyGroupIdString(studyGroupId))));
+    }
+
+    static Query getParticipantFilter(Integer participantId) {
+        return Query.of(f -> f.
+                term(t -> t.
+                        field("participant_id.keyword").
+                        value(getParticipantIdString(participantId))));
+    }
+
+    static Query getTimeRangeFilter(TimeRange timerange) {
+        return Query.of(f -> f.
+                range(r -> r.
+                        field("effective_time_frame").
+                        from(timerange.getFromString()).
+                        to(timerange.getToString())
+                ));
     }
 
     public boolean indexExists(long studyId) {
@@ -158,6 +206,7 @@ public class ElasticService {
     }
 
     public void removeDataForParticipant(Long studyId, Integer participantId) {
+        if (!indexExists(studyId)) { return; }
         try {
             DeleteByQueryRequest deleteByQueryRequest = new DeleteByQueryRequest.Builder()
                     .index(getStudyIdString(studyId))
@@ -170,8 +219,10 @@ public class ElasticService {
                     .build();
             client.deleteByQuery(deleteByQueryRequest);
         } catch (IOException | ElasticsearchException e) {
-            LOG.warn("Error when deleting participant from elastic index. Error message: ", e);
-            throw new RuntimeException(e);
+            handleIndexNotFoundException(e, t -> {
+                LOG.warn("Error when deleting participant from elastic index. Error message: ", e);
+                return new RuntimeException(t);
+            });
         }
     }
 
@@ -179,12 +230,16 @@ public class ElasticService {
         return getStudyIdString(study.getStudyId());
     }
 
-    private String getStudyGroupIdString(Integer studyGroupId) {
+    static String getStudyGroupIdString(Integer studyGroupId) {
         return "study_group_" + studyGroupId;
     }
 
     static String getStudyIdString(Long id) {
         return "study_" + id;
+    }
+
+    static String getParticipantIdString(Integer participantId) {
+        return "participant_" + participantId;
     }
 
     public void setDataPoint(Long studyId, ElasticDataPoint elasticActionDataPoint) {
@@ -265,28 +320,31 @@ public class ElasticService {
             }
             return participationDataList;
         }catch (IOException | ElasticsearchException e) {
-            LOG.error("Elastic Query failed", e);
+            if (isElasticIndexNotFound(e)) {
+                return List.of();
+            }
+            LOG.warn("Elastic Query failed", e);
             return new ArrayList<>();
         }
     }
 
-    public void exportData(Long studyId, OutputStream outputStream) throws IOException {
+    public void exportData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) throws IOException {
         String index = getStudyIdString(studyId);
 
         if(!client.indices().exists(e -> e.index(index)).value()) {
             return;
         }
 
-        SearchRequest request = getQuery(index, null);
+        SearchRequest request = getQuery(index, studyGroupId, participantId, observationId, from, to, null);
         SearchResponse<JsonNode> rsp = client.search(request, JsonNode.class);
 
         while (rsp.hits().hits().size() > 0) {
             writeHits(rsp.hits().hits(), outputStream);
             outputStream.flush();
             List<FieldValue> searchAfterSort = Iterables.getLast(rsp.hits().hits()).sort();
-            request = getQuery(index, searchAfterSort);
+            request = getQuery(index, studyGroupId, participantId, observationId, from, to, searchAfterSort);
             rsp = client.search(request, JsonNode.class);
-            if(rsp.hits().hits().size() > 0) {
+            if (rsp.hits().hits().size() > 0) {
                 outputStream.write(",".getBytes(StandardCharsets.UTF_8));
             }
         }
@@ -300,20 +358,45 @@ public class ElasticService {
         outputStream.write(datapoints.getBytes(StandardCharsets.UTF_8));
     }
 
-    private SearchRequest getQuery(String index, List<FieldValue> searchAfterSort) {
+    private SearchRequest getQuery(String index, List<Integer> studyGroupIds, List<Integer> participantIds, List<Integer> observationIds, Instant from, Instant to, List<FieldValue> searchAfterSort) {
         SearchRequest.Builder builder = new SearchRequest.Builder();
+        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
+
+        if (studyGroupIds != null && !studyGroupIds.isEmpty()) {
+            List<String> studyGroupIdsStrings = studyGroupIds.stream()
+                    .map(ElasticService::getStudyGroupIdString)
+                    .toList();
+            boolQueryBuilder.filter(f -> f.terms(t -> t.field("study_group_id").terms(TermsQueryField.of(tf -> tf.value(studyGroupIdsStrings.stream().map(FieldValue::of).collect(Collectors.toList()))))));
+        }
+
+        if (participantIds != null && !participantIds.isEmpty()) {
+            List<String> participantIdStrings = participantIds.stream()
+                    .map(ElasticService::getParticipantIdString)
+                    .toList();
+            boolQueryBuilder.filter(f -> f.terms(t -> t.field("participant_id").terms(TermsQueryField.of(tf -> tf.value(participantIdStrings.stream().map(FieldValue::of).collect(Collectors.toList()))))));
+        }
+
+        if (observationIds != null && !observationIds.isEmpty()) {
+            boolQueryBuilder.filter(f -> f.terms(t -> t.field("observation_id").terms(v -> v.value(observationIds.stream().map(FieldValue::of).collect(Collectors.toList())))));
+        }
+
+        if (from != null && to != null) {
+            boolQueryBuilder.filter(f -> f.range(r -> r.field("effective_time_frame").gte(JsonData.of(from)).lte(JsonData.of(to))));
+        }
+
         builder.index(index)
-                .query(q -> q.matchAll(m -> m))
-                //.pit(p -> p.id(pitId).keepAlive(k -> k.time("1m")))
+                .query(q -> q.bool(boolQueryBuilder.build()))
                 .sort(s -> s.field(f -> f.field("effective_time_frame").order(SortOrder.Asc)))
+                .sort(s -> s.field(f -> f.field("datapoint_id.keyword").order(SortOrder.Asc)))
                 .size(BATCH_SIZE_FOR_EXPORT_REQUESTS);
 
-        if(searchAfterSort != null) {
+        if (searchAfterSort != null) {
             builder.searchAfter(searchAfterSort);
         }
 
         return builder.build();
     }
+
 
     public List<SimpleDataPoint> listDataPoints(
             Long studyId, Integer participantId, Integer observationId, String isoDate, int size) throws IOException {
@@ -361,5 +444,33 @@ public class ElasticService {
                 .filter(k -> !k.equals("data_type"))
                 .forEach(k -> result.put(k.substring(5), source.get(k)));
         return result;
+    }
+
+    static <R, T extends Exception> R handleIndexNotFoundException(T e, Supplier<R> supplier) throws T {
+        return ElasticService.handleIndexNotFoundException(e, supplier, Function.identity());
+    }
+
+    static <R, E extends Exception, T extends Exception> R handleIndexNotFoundException(E e, Supplier<R> supplier, Function<E, T> exceptionTFunction) throws T {
+        if (isElasticIndexNotFound(e)) return supplier.get();
+        throw exceptionTFunction.apply(e);
+    }
+
+    static boolean isElasticIndexNotFound(Exception e) {
+        if (e instanceof ElasticsearchException ee) {
+            if (Objects.equals(ee.error().type(), "index_not_found_exception")) {
+                LOG.debug("Swallowing Index-Not-Found from Elastic");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static <E extends Exception> void handleIndexNotFoundException(E e) throws E {
+        handleIndexNotFoundException(e, Function.identity());
+    }
+
+    static <E extends Exception, T extends Exception> void handleIndexNotFoundException(E e, Function<E, T> exceptionWrapper) throws T {
+        if (!isElasticIndexNotFound(e))
+            throw exceptionWrapper.apply(e);
     }
 }

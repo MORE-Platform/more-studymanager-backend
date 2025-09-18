@@ -11,23 +11,25 @@ package io.redlink.more.studymanager.controller.studymanager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ContactDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
-import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
+import io.redlink.more.studymanager.model.PlatformRole;
+import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyService;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -41,10 +43,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class StudyControllerTest {
 
-    @MockBean
+    @MockitoBean
     StudyService studyService;
 
-    @MockBean
+    @MockitoBean
     OAuth2AuthenticationService authService;
 
     @Autowired

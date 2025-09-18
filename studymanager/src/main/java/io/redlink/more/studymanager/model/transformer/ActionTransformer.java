@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.api.v1.model.ActionDTO;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.model.Action;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.time.Instant;
 
 public final class ActionTransformer {
 
@@ -26,12 +27,14 @@ public final class ActionTransformer {
     }
 
     public static ActionDTO toActionDTO_V1(Action action) {
+        Instant instant = action.getModified();
+        Instant instant1 = action.getCreated();
         return new ActionDTO()
                 .actionId(action.getActionId())
                 .type(action.getType())
                 .properties(action.getProperties())
-                .created(Transformers.toOffsetDateTime(action.getCreated()))
-                .modified(Transformers.toOffsetDateTime(action.getModified()));
+                .created(instant1)
+                .modified(instant);
     }
 
 }

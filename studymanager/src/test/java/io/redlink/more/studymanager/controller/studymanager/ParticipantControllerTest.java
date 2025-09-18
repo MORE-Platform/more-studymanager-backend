@@ -13,44 +13,67 @@ import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.PlatformRole;
+import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ParticipantService;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.Random;
+import java.util.UUID;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.Instant;
-import java.util.EnumSet;
-import java.util.UUID;
-
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
 @WebMvcTest({ParticipantsApiV1Controller.class})
 @AutoConfigureMockMvc(addFilters = false)
 class ParticipantControllerTest {
+    public static final String SIGNUP_URL = "https://example.com";
 
-    @MockBean
+    @MockitoBean
     ParticipantService participantService;
-    @MockBean
+    @MockitoBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
+
+    @Autowired
+    private GatewayProperties gatewayProperties;
 
     @Autowired
     ObjectMapper mapper;
 
     @Autowired
     private MockMvc mvc;
+
+    @TestConfiguration
+    static class GatewayPropertiesConfigurationTest {
+
+        @Bean
+        GatewayProperties gatewayProperties() {
+            return new GatewayProperties(SIGNUP_URL);
+        }
+    }
 
     @BeforeEach
     void setUp() {
@@ -138,7 +161,8 @@ class ParticipantControllerTest {
                         .setStatus(Participant.Status.NEW)
                         .setAlias("person x")
                         .setCreated(Instant.ofEpochMilli(0))
-                        .setModified(Instant.ofEpochMilli(0)));
+                        .setModified(Instant.ofEpochMilli(0))
+                        .setRegistrationToken("TEST123"));
 
         ParticipantDTO participantRequest = new ParticipantDTO()
                 .studyId(1L)
@@ -157,5 +181,74 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$.alias").value(participantRequest.getAlias()))
                 .andExpect(jsonPath("$.modified").exists())
                 .andExpect(jsonPath("$.created").exists());
+    }
+
+    @Test
+    @DisplayName("The created signup URI of an participant with a token is correct")
+    void testRegistrationUri() throws Exception {
+        final Random rnd = new Random();
+        final long studyId = rnd.nextLong();
+        final int participantId = rnd.nextInt();
+        final int studyGroupId = rnd.nextInt();
+        final String token = RandomStringUtils.randomAlphanumeric(3)
+                + "&" + RandomStringUtils.randomAlphanumeric(3)
+                + "?" + RandomStringUtils.randomAlphanumeric(3);
+
+        when(participantService.getParticipant(anyLong(), anyInt())).thenAnswer(invocationOnMock ->
+                new Participant()
+                        .setStudyId(invocationOnMock.getArgument(0, Long.class))
+                        .setParticipantId(invocationOnMock.getArgument(1, Integer.class))
+                        .setStudyGroupId(studyGroupId)
+                        .setStatus(Participant.Status.NEW)
+                        .setAlias("person x")
+                        .setCreated(Instant.ofEpochMilli(0))
+                        .setModified(Instant.ofEpochMilli(0))
+                        .setRegistrationToken(token));
+
+        mvc.perform(get("/api/v1/studies/{study}/participants/{participant}", studyId, participantId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.studyId").value(studyId))
+                .andExpect(jsonPath("$.participantId").value(participantId))
+                .andExpect(jsonPath("$.studyGroupId").value(studyGroupId))
+                .andExpect(jsonPath("$.modified").exists())
+                .andExpect(jsonPath("$.created").exists())
+                .andExpect(jsonPath("$.registrationToken").value(token))
+                .andExpect(jsonPath("$.registrationUrl")
+                        .value(SIGNUP_URL + "/api/v1/signup?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8)));
+
+    }
+
+
+    @Test
+    @DisplayName("The created signup URI of an participant without a token is null")
+    void testNoRegistrationUri() throws Exception {
+        final Random rnd = new Random();
+        final long studyId = rnd.nextLong();
+        final int participantId = rnd.nextInt();
+        final int studyGroupId = rnd.nextInt();
+
+
+        when(participantService.getParticipant(any(), anyInt())).thenAnswer(invocationOnMock ->
+                new Participant()
+                        .setStudyId(invocationOnMock.getArgument(0, Long.class))
+                        .setParticipantId(invocationOnMock.getArgument(1, Integer.class))
+                        .setStudyGroupId(studyGroupId)
+                        .setStatus(Participant.Status.NEW)
+                        .setAlias("person x")
+                        .setCreated(Instant.ofEpochMilli(0))
+                        .setModified(Instant.ofEpochMilli(0))
+                        .setRegistrationToken(null));
+
+        mvc.perform(get("/api/v1/studies/{study}/participants/{participant}", studyId, participantId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.studyId").value(studyId))
+                .andExpect(jsonPath("$.participantId").value(participantId))
+                .andExpect(jsonPath("$.studyGroupId").value(studyGroupId))
+                .andExpect(jsonPath("$.modified").exists())
+                .andExpect(jsonPath("$.created").exists())
+                .andExpect(jsonPath("$.registrationToken").isEmpty())
+                .andExpect(jsonPath("$.registrationUrl").isEmpty());
     }
 }

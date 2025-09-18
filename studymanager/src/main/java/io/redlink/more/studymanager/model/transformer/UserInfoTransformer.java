@@ -1,5 +1,10 @@
 /*
- * Copyright (c) 2022 Redlink GmbH.
+ * Copyright LBI-DHP and/or licensed to LBI-DHP under one or more
+ * contributor license agreements (LBI-DHP: Ludwig Boltzmann Institute
+ * for Digital Health and Prevention -- A research institute of the
+ * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
+ * Förderung der wissenschaftlichen Forschung).
+ * Licensed under the Elastic License 2.0.
  */
 package io.redlink.more.studymanager.model.transformer;
 
@@ -76,7 +81,7 @@ public final class UserInfoTransformer {
         return new CollaboratorRoleDetailsDTO()
                 .role(RoleTransformer.toStudyRoleDTO(role.role()))
                 .assignedBy(toUserInfoDTO(role.creator()))
-                .assignedAt(Transformers.toOffsetDateTime(role.created()))
+                .assignedAt(role.created())
                 ;
     }
 

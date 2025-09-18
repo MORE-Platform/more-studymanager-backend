@@ -42,4 +42,12 @@ public class ActionParameter extends Parameters {
     public int hashCode() {
         return Objects.hash(super.hashCode(), studyId, participantId);
     }
+
+    @Override
+    public String toString() {
+        return "ActionParameter{" +
+                "studyId=" + studyId +
+                ", participantId=" + participantId +
+                '}';
+    }
 }

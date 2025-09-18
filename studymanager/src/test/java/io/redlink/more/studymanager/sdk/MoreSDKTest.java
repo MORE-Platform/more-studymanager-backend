@@ -24,11 +24,10 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.quartz.JobExecutionException;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,26 +44,26 @@ import static org.mockito.Mockito.when;
 @Testcontainers
 @ActiveProfiles("test-containers-flyway")
 class MoreSDKTest {
-    @SpyBean
+    @MockitoSpyBean
     MoreSDK moreSDK;
 
-    @MockBean(name = "test-trigger")
+    @MockitoBean(name = "test-trigger")
     TriggerFactory triggerFactory;
 
-    @MockBean
+    @MockitoBean
     InterventionService interventionService;
 
-    @MockBean
+    @MockitoBean
     ActionService actionService;
 
-    @MockBean
+    @MockitoBean
     ParticipantService participantService;
 
-    @MockBean
+    @MockitoBean
     ElasticService elasticService;
 
     @Test
-    void testTriggerScheduling() throws InterruptedException, JobExecutionException {
+    void testTriggerScheduling() throws InterruptedException {
         Trigger triggerModel = spy(Trigger.class);
         io.redlink.more.studymanager.core.component.Trigger trigger =
                 mock( io.redlink.more.studymanager.core.component.Trigger.class);

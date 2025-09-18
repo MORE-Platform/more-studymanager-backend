@@ -13,35 +13,54 @@ import io.redlink.more.studymanager.core.exception.ValueCastException;
 import io.redlink.more.studymanager.core.exception.ValueNonNullException;
 import io.redlink.more.studymanager.core.properties.ComponentProperties;
 import io.redlink.more.studymanager.core.validation.ValidationIssue;
-
 import java.util.function.Function;
 
 public abstract class Value<T> {
-    private String id;
+    private final String id;
     private String name;
     private String description;
     private T defaultValue;
     private boolean required = false;
     private boolean immutable = false;
-    protected Function<T, ValidationIssue> validationFunction = (T t) -> null;
+    private Function<T, ValidationIssue> validationFunction = (T t) -> ValidationIssue.NONE;
 
     public Value(String id) {
         this.id = id;
     }
 
-    public ValidationIssue validate(T t) {
-        return validationFunction != null ? validationFunction.apply(t) : ValidationIssue.NONE;
+    public final ValidationIssue validate(T t) {
+        if (required) {
+            if (t == null) {
+                return ValidationIssue.requiredMissing(this);
+            }
+        }
+
+        final ValidationIssue subResult = doValidate(t);
+        if (subResult != null && subResult.getType() != ValidationIssue.Type.None) {
+            return subResult;
+        }
+
+        final ValidationIssue result = validationFunction.apply(t);
+        if (result == null) {
+            return ValidationIssue.NONE;
+        } else {
+            return result;
+        }
+    }
+
+    protected ValidationIssue doValidate(T t) {
+        return ValidationIssue.NONE;
     }
 
     public T getValue(ComponentProperties properties) {
-        if(properties.containsKey(id)) {
+        if (properties.containsKey(id)) {
             try {
                 return getValueType().cast(properties.get(id));
             } catch (ClassCastException e) {
                 throw new ValueCastException(this, getValueType());
             }
         } else {
-            if(required && defaultValue == null) {
+            if (required && defaultValue == null) {
                 throw new ValueNonNullException(this);
             } else {
                 return defaultValue;
@@ -57,6 +76,7 @@ public abstract class Value<T> {
     public String getId() {
         return id;
     }
+
     public String getName() {
         return name;
     }

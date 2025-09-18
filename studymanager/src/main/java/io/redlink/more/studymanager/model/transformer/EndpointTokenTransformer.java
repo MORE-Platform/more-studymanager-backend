@@ -10,20 +10,21 @@ package io.redlink.more.studymanager.model.transformer;
 
 import io.redlink.more.studymanager.api.v1.model.EndpointTokenDTO;
 import io.redlink.more.studymanager.model.EndpointToken;
-
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-public class EndpointTokenTransformer {
+public final class EndpointTokenTransformer {
 
     private EndpointTokenTransformer() {}
 
     public static EndpointToken fromEndpointTokenDTO(EndpointTokenDTO dto) {
+        Instant offsetDateTime = dto.getCreated();
         return new EndpointToken(
                 dto.getTokenId(),
                 dto.getTokenLabel(),
-                Transformers.toInstant(dto.getCreated()),
+                offsetDateTime,
                 dto.getToken()
         );
     }
@@ -42,7 +43,7 @@ public class EndpointTokenTransformer {
         return new EndpointTokenDTO()
                 .tokenId(token.tokenId())
                 .tokenLabel(token.tokenLabel())
-                .created(Transformers.toOffsetDateTime(token.created()))
+                .created(token.created())
                 .token(token.token());
     }
 

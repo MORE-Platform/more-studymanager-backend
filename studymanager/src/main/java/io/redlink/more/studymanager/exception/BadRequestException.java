@@ -14,8 +14,13 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.BAD_REQUEST)
 public class BadRequestException extends RuntimeException {
+
     public BadRequestException(String cause) {
         super(cause);
+    }
+
+    public BadRequestException(String cause, Throwable throwable) {
+        super(String.format("%s: %s", cause, throwable.getMessage()), throwable);
     }
 
     public BadRequestException(Throwable cause) {

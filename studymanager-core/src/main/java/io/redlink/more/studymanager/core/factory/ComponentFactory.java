@@ -77,6 +77,8 @@ public abstract class ComponentFactory<C extends Component, P extends ComponentP
         }
     }
 
+    public P preImport(P values) { return values; }
+
     public WebComponent getWebComponent() {
         return null;
     }

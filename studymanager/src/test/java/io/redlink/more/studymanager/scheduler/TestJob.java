@@ -8,7 +8,7 @@
  */
 package io.redlink.more.studymanager.scheduler;
 
-import io.redlink.more.studymanager.sdk.MoreSDK;
+import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -21,13 +21,13 @@ public class TestJob  implements Job {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestJob.class);
 
     @Autowired
-    MoreSDK moreSDK;
+    MoreTriggerSDK moreSDK;
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         String issuer = jobExecutionContext.getJobDetail().getJobDataMap().getString("issuer");
-        int count = moreSDK.getValue(issuer, "i", Integer.class).orElse(0);
+        int count = moreSDK.getValue(issuer, Integer.class).orElse(0);
         LOGGER.debug("scheduled {}: count {}", issuer, count);
-        moreSDK.setValue("i", "c", count+1);
+        moreSDK.setValue(issuer, count+1);
     }
 }

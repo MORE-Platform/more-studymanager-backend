@@ -20,24 +20,26 @@ import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.properties.model.StringValue;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
-
 import java.util.List;
 import java.util.Optional;
 
 public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
 
-    private static List<Value> properties = List.of(
+    public static final Value<String> limeSurveyId = new StringValue("limeSurveyId")
+            .setName("observation.factory.limeSurvey.configProps.idName")
+            .setDescription("observation.factory.limeSurvey.configProps.idDesc")
+            .setRequired(true)
+            .setImmutable(true);
+
+    private static final List<Value> properties = List.of(
             /* TODO enable Autocomplete in FE
             new AutocompleteValue("limeSurveyId", "surveys")
                     .setName("Survey")
                     .setDescription("An existing survey")
                     .setRequired(true)
              */
-            new StringValue("limeSurveyId")
-                    .setName("observation.factory.limeSurvey.configProps.idName")
-                    .setDescription("observation.factory.limeSurvey.configProps.idDesc")
-                    .setRequired(true)
+            limeSurveyId
     );
 
     private LimeSurveyRequestService limeSurveyRequestService;
@@ -79,6 +81,12 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
     @Override
     public LimeSurveyObservation<ObservationProperties> create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
         return new LimeSurveyObservation(sdk, validate((P)properties), limeSurveyRequestService);
+    }
+
+    @Override
+    public ObservationProperties preImport(ObservationProperties properties) {
+        properties.remove(LimeSurveyObservation.LIME_SURVEY_ID);
+        return properties;
     }
 
     @Override

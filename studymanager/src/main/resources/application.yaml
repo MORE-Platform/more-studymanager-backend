@@ -50,6 +50,9 @@ spring:
   flyway:
     out-of-order: true
 
+  mvc:
+    async:
+      request-timeout: -1
 server:
   forward-headers-strategy: framework
   error:

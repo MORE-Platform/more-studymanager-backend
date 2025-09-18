@@ -10,27 +10,29 @@ package io.redlink.more.studymanager.component.observation.lime;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.redlink.more.studymanager.component.observation.lime.LimeSurveyObservationFactory;
-import io.redlink.more.studymanager.component.observation.lime.LimeSurveyRequestService;
 import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import io.redlink.more.studymanager.core.model.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ContextConfiguration(classes = LimeSurveyObservationFactory.class)
-public class LimeSurveyObservationFactoryTest {
+class LimeSurveyObservationFactoryTest {
 
 
-    @MockBean
+    @MockitoBean
     LimeSurveyRequestService service;
-    @MockBean
+    @MockitoBean
     ComponentFactoryProperties properties;
     ObjectMapper mapper = new ObjectMapper();
 
@@ -45,16 +47,16 @@ public class LimeSurveyObservationFactoryTest {
     }
 
     @Test
-    void testSurveyIsNotCalled() throws Exception {
+    void testSurveyIsNotCalled() {
         LimeSurveyObservationFactory factory = new LimeSurveyObservationFactory(properties, service);
         String slug = "something-else";
         Exception exception = Assertions.assertThrows(ApiCallException.class,
                 () -> factory.handleAPICall(slug, null, mapper.readTree("{}")));
-        Assertions.assertEquals(exception.getMessage(), "Not found");
+        Assertions.assertEquals("Not found", exception.getMessage());
     }
 
     @Test
-    void testListSurveysHasError() throws Exception {
+    void testListSurveysHasError() {
         LimeSurveyObservationFactory factory = new LimeSurveyObservationFactory(properties, service);
         when(service.listSurveysByUser(anyString(), anyString(), anyInt(), anyInt()))
                 .thenThrow(new RuntimeException("some error"));

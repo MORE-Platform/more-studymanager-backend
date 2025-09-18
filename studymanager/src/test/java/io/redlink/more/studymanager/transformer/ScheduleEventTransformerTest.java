@@ -1,18 +1,17 @@
 package io.redlink.more.studymanager.transformer;
 
-import co.elastic.clients.elasticsearch.watcher.Day;
 import io.redlink.more.studymanager.api.v1.model.EventDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationScheduleDTO;
 import io.redlink.more.studymanager.api.v1.model.RelativeEventDTO;
 import io.redlink.more.studymanager.model.scheduler.*;
 import io.redlink.more.studymanager.model.transformer.EventTransformer;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.time.LocalTime;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 
 public class ScheduleEventTransformerTest {
 
@@ -71,13 +70,13 @@ public class ScheduleEventTransformerTest {
                 """;
 
         ScheduleEvent event = MapperUtils.readValue(jsonEvent, ScheduleEvent.class);
-        Assertions.assertTrue(event instanceof Event);
+        Assertions.assertInstanceOf(Event.class, event);
 
         ScheduleEvent eventRelative1 = MapperUtils.readValue(jsonRelativeEvent1, ScheduleEvent.class);
-        Assertions.assertTrue(eventRelative1 instanceof RelativeEvent);
+        Assertions.assertInstanceOf(RelativeEvent.class, eventRelative1);
 
         ScheduleEvent eventRelative2 = MapperUtils.readValue(jsonRelativeEvent2, ScheduleEvent.class);
-        Assertions.assertTrue(eventRelative2 instanceof RelativeEvent);
+        Assertions.assertInstanceOf(RelativeEvent.class, eventRelative2);
     }
 
     @Test
@@ -88,10 +87,10 @@ public class ScheduleEventTransformerTest {
 
         RelativeEvent relativeEvent = new RelativeEvent()
                 .setDtstart(new RelativeDate()
-                        .setTime("12:00:00")
+                        .setTime(LocalTime.parse("12:00:00"))
                         .setOffset(new Duration().setUnit(Duration.Unit.DAY).setValue(3)))
                 .setDtend(new RelativeDate()
-                        .setTime("12:00:00")
+                        .setTime(LocalTime.parse("12:00:00"))
                         .setOffset(new Duration().setUnit(Duration.Unit.DAY).setValue(4)))
                 .setRrrule(new RelativeRecurrenceRule()
                         .setFrequency(new Duration().setUnit(Duration.Unit.DAY).setValue(1))
@@ -100,8 +99,8 @@ public class ScheduleEventTransformerTest {
         ObservationScheduleDTO eventDTO = EventTransformer.toObservationScheduleDTO_V1(event);
         ObservationScheduleDTO relativeEventDTO = EventTransformer.toObservationScheduleDTO_V1(relativeEvent);
 
-        Assertions.assertTrue(eventDTO instanceof EventDTO);
-        Assertions.assertTrue(relativeEventDTO instanceof RelativeEventDTO);
+        Assertions.assertInstanceOf(EventDTO.class, eventDTO);
+        Assertions.assertInstanceOf(RelativeEventDTO.class, relativeEventDTO);
 
     }
 }

@@ -47,7 +47,7 @@ public class DataPointQuery {
         if("=".equals(operator) || "==".equals(operator)) {
             return "data_" + observationProperty + ":" + getSanitizedPropertyValue();
         } else if("!=".equals(operator)) {
-            return "!(data_" + observationProperty + ":" + getSanitizedPropertyValue() + ")";
+            return "NOT data_" + observationProperty + ":" + getSanitizedPropertyValue();
         } else if("<".equals(operator) || ">".equals(operator) || "<=".equals(operator) || ">=".equals(operator)) {
             return "data_" + observationProperty + ":" + operator + propertyValue;
         } else {

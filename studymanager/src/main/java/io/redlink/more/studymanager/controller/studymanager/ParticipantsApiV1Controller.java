@@ -15,22 +15,30 @@ import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
+import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.ParticipantService;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ParticipantsApiV1Controller implements ParticipantsApi {
     private final ParticipantService service;
+    private final GatewayProperties gatewayProperties;
 
 
-    public ParticipantsApiV1Controller(ParticipantService service) {
+    public ParticipantsApiV1Controller(ParticipantService service, GatewayProperties gatewayProperties) {
         this.service = service;
+        this.gatewayProperties = gatewayProperties;
+    }
+
+    private ParticipantDTO toParticipantDTO(Participant p) {
+        return ParticipantTransformer.toParticipantDTO_V1(p, gatewayProperties);
     }
 
     @Override
@@ -43,7 +51,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
                 .toList();
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 participants.stream()
-                        .map(ParticipantTransformer::toParticipantDTO_V1)
+                        .map(this::toParticipantDTO)
                         .toList()
         );
     }
@@ -61,7 +69,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
                 .toList();
         return ResponseEntity.ok(
                 participants.stream()
-                        .map(ParticipantTransformer::toParticipantDTO_V1)
+                        .map(this::toParticipantDTO)
                         .toList()
         );
     }
@@ -74,12 +82,11 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     }
 
 
-
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     public ResponseEntity<ParticipantDTO> getParticipant(Long studyId, Integer participantId) {
         return ResponseEntity.ok(
-                ParticipantTransformer.toParticipantDTO_V1(service.getParticipant(studyId, participantId))
+                toParticipantDTO(service.getParticipant(studyId, participantId))
         );
     }
 
@@ -88,7 +95,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     public ResponseEntity<List<ParticipantDTO>> listParticipants(Long studyId) {
         return ResponseEntity.ok(
                 service.listParticipants(studyId).stream()
-                        .map(ParticipantTransformer::toParticipantDTO_V1)
+                        .map(this::toParticipantDTO)
                         .toList()
         );
     }
@@ -100,7 +107,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
                 ParticipantTransformer.fromParticipantDTO_V1((participantDTO.studyId(studyId)).participantId(participantId))
         );
         return ResponseEntity.status(HttpStatus.OK).body(
-                ParticipantTransformer.toParticipantDTO_V1(participant)
+                toParticipantDTO(participant)
         );
     }
 }

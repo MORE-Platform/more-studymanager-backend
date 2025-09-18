@@ -9,33 +9,42 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.redlink.more.studymanager.api.v1.model.EventDTO;
+import io.redlink.more.studymanager.api.v1.model.EndpointTokenDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationScheduleDTO;
-import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
+import io.redlink.more.studymanager.model.EndpointToken;
+import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.service.IntegrationService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ObservationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.Instant;
-import java.util.*;
-
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,13 +53,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class ObservationControllerTest {
 
-    @MockBean
+    @MockitoBean
     IntegrationService integrationService;
 
-    @MockBean
+    @MockitoBean
     ObservationService observationService;
 
-    @MockBean
+    @MockitoBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
 
     @Autowired
@@ -164,26 +173,26 @@ class ObservationControllerTest {
     @Test
     @DisplayName("Add token should create and return token with id, label, timestamp and secret set, only if label is valid")
     void testAddToken() throws Exception{
-        EndpointToken token = new EndpointToken(
+        EndpointTokenDTO token = new EndpointTokenDTO(
                 1,
                 "testLabel",
                 Instant.now(),
                 "test");
         when(integrationService.addToken(anyLong(), anyInt(), anyString()))
                 .thenAnswer(invocationOnMock -> Optional.of(new EndpointToken(
-                        token.tokenId(),
+                        token.getTokenId(),
                         invocationOnMock.getArgument(2),
-                        token.created(),
-                        token.token()
+                        Instant.now(),
+                        token.getToken()
                 )));
         mvc.perform(post("/api/v1/studies/1/observations/1/tokens")
-                        .content(token.tokenLabel())
+                        .content(mapper.writeValueAsString(token))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.tokenId").value(token.tokenId()))
-                .andExpect(jsonPath("$.tokenLabel").value(token.tokenLabel()))
-                .andExpect(jsonPath("$.token").value(token.token()))
+                .andExpect(jsonPath("$.tokenId").value(token.getTokenId()))
+                .andExpect(jsonPath("$.tokenLabel").value(token.getTokenLabel()))
+                .andExpect(jsonPath("$.token").value(token.getToken()))
                 .andExpect(jsonPath("$.created").exists());
 
         mvc.perform(post("/api/v1/studies/1/observations/1/tokens")

@@ -8,12 +8,15 @@
  */
 package io.redlink.more.studymanager.sdk;
 
+import io.redlink.more.studymanager.core.io.SimpleParticipant;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
+import io.redlink.more.studymanager.core.ui.DataViewData;
+import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.data.ElasticActionDataPoint;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
@@ -25,30 +28,37 @@ import io.redlink.more.studymanager.scheduling.TriggerJob;
 import io.redlink.more.studymanager.sdk.scoped.MoreActionSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreObservationSDKImpl;
 import io.redlink.more.studymanager.sdk.scoped.MoreTriggerSDKImpl;
+import io.redlink.more.studymanager.service.ElasticDataService;
 import io.redlink.more.studymanager.service.ElasticService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import io.redlink.more.studymanager.service.PushNotificationService;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 public class MoreSDK {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MoreSDK.class);
 
-    private final NameValuePairRepository nvpairs;
+    public final NameValuePairRepository nvpairs;
 
     private final SchedulingService schedulingService;
 
     private final ParticipantService participantService;
 
     private final ElasticService elasticService;
+
+    private final ElasticDataService elasticDataService;
 
     private final PushNotificationService pushNotificationService;
 
@@ -58,26 +68,15 @@ public class MoreSDK {
             NameValuePairRepository nvpairs,
             SchedulingService schedulingService,
             ParticipantService participantService,
-            ElasticService elasticService,
+            ElasticService elasticService, ElasticDataService elasticDataService,
             PushNotificationService pushNotificationService, ObservationRepository observationRepository) {
         this.nvpairs = nvpairs;
         this.schedulingService = schedulingService;
         this.participantService = participantService;
         this.elasticService = elasticService;
+        this.elasticDataService = elasticDataService;
         this.pushNotificationService = pushNotificationService;
         this.observationRepository = observationRepository;
-    }
-
-    public <T extends Serializable> void setValue(String issuer, String name, T value) {
-        nvpairs.setValue(issuer, name, value);
-    }
-
-    public <T extends Serializable> Optional<T> getValue(String issuer, String name, Class<T> tClass) {
-        return nvpairs.getValue(issuer, name, tClass);
-    }
-
-    public void removeValue(String issuer, String name) {
-        nvpairs.removeValue(issuer, name);
     }
 
     public MoreActionSDK scopedActionSDK(Long studyId, Integer studyGroupId, int interventionId, int actionId, String actionType, int participantId) {
@@ -110,16 +109,17 @@ public class MoreSDK {
         schedulingService.unscheduleJob(issuer, id, TriggerJob.class);
     }
 
-    public Set<Integer> listParticipants(long studyId, Integer studyGroupId, Set<Participant.Status> status) {
+    public Set<SimpleParticipant> listParticipants(long studyId, Integer studyGroupId, Set<Participant.Status> status) {
         return participantService.listParticipants(studyId).stream()
                 .filter(p -> studyGroupId == null || studyGroupId.equals(p.getStudyGroupId()))
                 .filter(p -> status == null || status.contains(p.getStatus()))
-                .map(Participant::getParticipantId)
+                .map(p -> new SimpleParticipant(p.getParticipantId(), p.getStart()))
                 .collect(Collectors.toSet());
     }
 
     public Set<Integer> listActiveParticipantsByQuery(long studyId, Integer studyGroupId, String query, TimeRange timerange) {
-        Set<Integer> participants = listParticipants(studyId, studyGroupId, Set.of(Participant.Status.ACTIVE));
+        Set<Integer> participants = listParticipants(studyId, studyGroupId, Set.of(Participant.Status.ACTIVE))
+                .stream().map(SimpleParticipant::getId).collect(Collectors.toSet());
         Set<Integer> allThatMatchQuery = new HashSet<>(elasticService.participantsThatMapQuery(studyId, studyGroupId, query, timerange));
         participants.retainAll(allThatMatchQuery);
         return participants;
@@ -178,5 +178,14 @@ public class MoreSDK {
 
     public void removePropertiesForParticipant(long studyId, Integer participantId, int observationId) {
         observationRepository.removeParticipantProperties(studyId, participantId, observationId);
+    }
+
+    public DataViewData queryData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) {
+        try {
+            return elasticDataService.queryObservationViewData(viewConfig, studyId, studyGroupId, observationId, participantId, timerange);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to query observation data for view config {}", viewConfig, e);
+            return null;
+        }
     }
 }

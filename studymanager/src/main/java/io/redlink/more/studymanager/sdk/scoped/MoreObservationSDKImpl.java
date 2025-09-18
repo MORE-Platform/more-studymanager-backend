@@ -8,12 +8,18 @@
  */
 package io.redlink.more.studymanager.sdk.scoped;
 
+import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
+import io.redlink.more.studymanager.core.ui.DataViewData;
+import io.redlink.more.studymanager.core.ui.DataViewRow;
+import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.data.ElasticDataPoint;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 
+import java.io.Serializable;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,8 +33,18 @@ public class MoreObservationSDKImpl extends MorePlatformSDKImpl implements MoreO
     }
 
     @Override
-    public String getIssuer() {
-        return studyId + "-" + studyGroupId + '-' + observationId + "-observation";
+    public <T extends Serializable> void setValue(String name, T value) {
+        sdk.nvpairs.setObservationValue(studyId, observationId, name, value);
+    }
+
+    @Override
+    public <T extends Serializable> Optional<T> getValue(String name, Class<T> tClass) {
+        return sdk.nvpairs.getObservationValue(studyId, observationId, name, tClass);
+    }
+
+    @Override
+    public void removeValue(String name) {
+        sdk.nvpairs.removeObservationValue(studyId, observationId, name);
     }
 
     @Override
@@ -67,5 +83,10 @@ public class MoreObservationSDKImpl extends MorePlatformSDKImpl implements MoreO
     @Override
     public void storeDataPoint(Integer participantId, String observationType, Map data) {
         sdk.storeDatapoint(ElasticDataPoint.Type.observation, studyId, studyGroupId, participantId, observationId, observationType, Instant.now(), data);
+    }
+
+    @Override
+    public DataViewData queryData(ViewConfig viewConfig, Integer studyGroupId, Integer participantId, TimeRange timerange) {
+        return sdk.queryData(viewConfig, studyId, studyGroupId, observationId, participantId, timerange);
     }
 }

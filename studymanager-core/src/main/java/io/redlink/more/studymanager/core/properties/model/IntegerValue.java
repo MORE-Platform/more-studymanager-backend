@@ -30,11 +30,11 @@ public class IntegerValue extends Value<Integer> {
     }
 
     @Override
-    public ValidationIssue validate(Integer integer) {
-        if(integer != null && (integer < getMin() || integer > getMax())) {
+    public ValidationIssue doValidate(Integer integer) {
+        if (integer != null && (integer < getMin() || integer > getMax())) {
             return ValidationIssue.error(this, "Value must between " + getMin() + " and " + getMax());
         }
-        return validationFunction != null ? validationFunction.apply(integer) : ValidationIssue.NONE;
+        return ValidationIssue.NONE;
     }
 
     public int getMin() {

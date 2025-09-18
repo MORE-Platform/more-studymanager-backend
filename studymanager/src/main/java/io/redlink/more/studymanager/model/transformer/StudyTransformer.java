@@ -8,14 +8,16 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.*;
+import io.redlink.more.studymanager.api.v1.model.ContactDTO;
+import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
+import io.redlink.more.studymanager.api.v1.model.StudyDTO;
+import io.redlink.more.studymanager.api.v1.model.StudyStatusDTO;
 import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.scheduler.Duration;
+import java.time.Instant;
 
-import java.util.Optional;
-
-public class StudyTransformer {
+public final class StudyTransformer {
 
     private StudyTransformer() {}
 
@@ -40,6 +42,8 @@ public class StudyTransformer {
     public static StudyDTO toStudyDTO_V1(Study study) {
         if(study.getContact() == null)
             study.setContact(new Contact());
+        Instant instant = study.getModified();
+        Instant instant1 = study.getCreated();
         return new StudyDTO()
                 .studyId(study.getStudyId())
                 .title(study.getTitle())
@@ -53,13 +57,13 @@ public class StudyTransformer {
                 .end(study.getEndDate())
                 .plannedStart(study.getPlannedStartDate())
                 .plannedEnd(study.getPlannedEndDate())
-                .created(Transformers.toOffsetDateTime(study.getCreated()))
-                .modified(Transformers.toOffsetDateTime(study.getModified()))
+                .created(instant1)
+                .modified(instant)
                 .userRoles(RoleTransformer.toStudyRolesDTO(study.getUserRoles()))
                 .contact(ContactTransformer.toContactDTO_V1(study.getContact()));
     }
 
     public static Study.Status fromStatusChangeDTO_V1(StatusChangeDTO statusChangeDTO) {
-        return Study.Status.valueOf(statusChangeDTO.getStatus().getValue().toUpperCase());
+        return Study.Status.fromValue(statusChangeDTO.getStatus().getValue());
     }
 }
