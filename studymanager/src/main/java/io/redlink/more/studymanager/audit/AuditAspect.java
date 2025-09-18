@@ -77,7 +77,8 @@ public class AuditAspect {
         }
 
         AuditLog auditLog = new AuditLog(user.id(), studyId, action, timestamp)
-                .setActionState(getActionState(returnValue, e));
+                .setActionState(getActionState(returnValue, e))
+                .setUserName(user.fullName());
         //finally set some additional information (if available)
         auditLog.getDetails().putAll(parameters);
         auditLog.getDetails().put("user_roles", user.roles().stream().map(PlatformRole::name).toList());

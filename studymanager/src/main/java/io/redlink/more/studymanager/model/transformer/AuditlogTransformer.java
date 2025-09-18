@@ -28,10 +28,11 @@ public final class AuditlogTransformer {
             ).orElse(null);
         var auditLogEntry = new AuditLogEntryDTO()
                 .id(auditLog.getId())
+                .created(auditLog.getCreated())
                 .studyId(auditLog.getStudyId())
                 .userId(auditLog.getUserId())
                 .userRoles(userRoles) //the user roles as parsed from the details
-                //.userName(auditLog.getUserName()) TODO: getUserName From somewhere
+                .userName(auditLog.getUserName())
                 .timestamp(auditLog.getTimestamp())
                 .action(auditLog.getAction())
                 .actionState(AuditLogEntryDTO.ActionStateEnum.valueOf(auditLog.getActionState().name().toUpperCase()));

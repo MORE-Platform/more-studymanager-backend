@@ -13,7 +13,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.Collection;
 
-@ConfigurationProperties(prefix = "audit")
+@ConfigurationProperties(prefix = "more.audit")
 public record AuditProperties(
     Collection<Study.Status> studyStates,
     long detailsByteLimit

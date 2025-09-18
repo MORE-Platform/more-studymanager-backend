@@ -42,6 +42,7 @@ class AuditLogRepositoryTest {
     @DisplayName("Create AuditLog")
     void testInsert() {
         String userId = "test-user";
+        String userName = "Test User";
         Long studyId = 1L;
         String actionId = "test-action";
         Instant timestamp = Instant.now().minusSeconds(10).truncatedTo(ChronoUnit.SECONDS);
@@ -66,7 +67,8 @@ class AuditLogRepositoryTest {
                 actionId,
                 timestamp)
                 .setDetails(details)
-                .setActionState(AuditLog.ActionState.success);
+                .setActionState(AuditLog.ActionState.success)
+                .setUserName(userName);
 
         AuditLog auditLogResonse = auditLogRepository.insert(auditLog);
 
@@ -77,6 +79,7 @@ class AuditLogRepositoryTest {
         assertThat(auditLogResonse.getCreated()).isBetween(timestamp, Instant.now().plusMillis(1));
         //assert the values of the AuditLog
         assertThat(auditLogResonse.getUserId()).isEqualTo(userId);
+        assertThat(auditLogResonse.getUserName()).isEqualTo(userName);
         assertThat(auditLogResonse.getStudyId()).isEqualTo(studyId);
         assertThat(auditLogResonse.getAction()).isEqualTo(actionId);
         assertThat(auditLogResonse.getTimestamp()).isEqualTo(timestamp);
