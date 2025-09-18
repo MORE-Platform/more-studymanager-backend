@@ -94,7 +94,6 @@ class AuditLogControllerTest {
 
         Map<String,Object> details = Map.of(
                 "user_roles", List.of("admin", "viewer"),
-                "user_role", 1,
                 "detail_state", Boolean.TRUE,
                 "detail_integer", 42,
                 "detail_number", 3.1415,
@@ -103,20 +102,26 @@ class AuditLogControllerTest {
                 "details_timestamp", Instant.now().minusSeconds(70));
 
         AuditLog auditLog1 = new AuditLog(
+                42L,
+                Instant.now().truncatedTo(ChronoUnit.SECONDS),
                 "test-user1",
                 studyId,
                 "test-action1",
                 Instant.now().minusSeconds(10).truncatedTo(ChronoUnit.SECONDS))
                 .setDetails(details)
-                .setActionState(AuditLog.ActionState.success);
+                .setActionState(AuditLog.ActionState.success)
+                .setUserName("Test User1");
 
         AuditLog auditLog2 = new AuditLog(
+                69L,
+                Instant.now().truncatedTo(ChronoUnit.SECONDS),
                 "test-user2",
                 studyId,
                 "test-action2",
                 Instant.now().minusSeconds(50).truncatedTo(ChronoUnit.SECONDS))
                 .setDetails(details)
-                .setActionState(AuditLog.ActionState.success);
+                .setActionState(AuditLog.ActionState.success)
+                .setUserName("Test User2");
 
         when(auditLogRepository.listAuditLog(anyLong()))
                 .thenAnswer(invocation -> Stream.of(auditLog1, auditLog2));
@@ -130,15 +135,17 @@ class AuditLogControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(42))
                 .andExpect(jsonPath("$[0].studyId").value(studyId))
                 .andExpect(jsonPath("$[0].userId").value("test-user1"))
+                .andExpect(jsonPath("$[0].userName").value("Test User1"))
                 .andExpect(jsonPath("$[0].action").value("test-action1"))
                 .andExpect(jsonPath("$[0].actionState").value("success"))
                 .andExpect(jsonPath("$[0].detail_state").value(Boolean.TRUE))
                 .andExpect(jsonPath("$[0].detail_text").value("This is an important test"))
                 .andExpect(jsonPath("$[0].userRoles[0]").value("admin"))
                 .andExpect(jsonPath("$[0].userRoles[1]").value("viewer"))
-                .andExpect(jsonPath("$[0].user_role").value(1));
+                .andExpect(jsonPath("$[0].created").exists());
     }
 
 }

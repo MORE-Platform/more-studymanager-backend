@@ -39,8 +39,8 @@ public class AuditLogRepository {
             .constructMapType(Map.class, String.class, Object.class);
 
     private static final String INSERT_AUDIT_LOG =
-            "INSERT INTO audit_logs (user_id, study_id, action, state, timestamp, resource, details) " +
-            "VALUES (:user_id, :study_id, :action, CAST(:state AS audit_action_state), :timestamp, :resource, :details) " +
+            "INSERT INTO audit_logs (user_id, study_id, action, state, timestamp, resource, details, user_name) " +
+            "VALUES (:user_id, :study_id, :action, CAST(:state AS audit_action_state), :timestamp, :resource, :details, :user_name) " +
             "RETURNING *";
 
     private static final String CLEAR_AUDIT_LOG = "DELETE FROM audit_logs";
@@ -123,8 +123,8 @@ public class AuditLogRepository {
                 .addValue("state", auditLog.getActionState().name())
                 .addValue("timestamp", Timestamp.from(auditLog.getTimestamp()))
                 .addValue("study_id", auditLog.getStudyId())
-                .addValue("resource", auditLog.getResource());
-
+                .addValue("resource", auditLog.getResource())
+                .addValue("user_name", auditLog.getUserName());
         try {
             params.addValue("details", auditLog.getDetails().isEmpty() ? null :
                             MAPPER.writeValueAsString(auditLog.getDetails()));
@@ -145,7 +145,8 @@ public class AuditLogRepository {
                     RepositoryUtils.readInstant(rs,"timestamp")
             )
                     .setResource(rs.getString("resource"))
-                    .setActionState(AuditLog.ActionState.valueOf(rs.getString("state")));
+                    .setActionState(AuditLog.ActionState.valueOf(rs.getString("state")))
+                    .setUserName(rs.getString("user_name"));
             String detailsStr = rs.getString("details");
             if (detailsStr != null) {
                 try {
