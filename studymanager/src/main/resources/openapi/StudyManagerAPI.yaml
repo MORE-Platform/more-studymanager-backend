@@ -2232,6 +2232,12 @@ components:
           readOnly: true
         userRoles:
           description: |
+            An array of the user's roles on the MORE server at the moment of the recorded activity.
+          type: array
+          items:
+            type: string
+        studyRoles:
+          description: |
             An array of the user's study roles at the moment of the recorded activity.
           type: array
           items:

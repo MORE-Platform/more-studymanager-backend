@@ -54,6 +54,7 @@ class AuditLogRepositoryTest {
 
         Instant detailsTimestamp = timestamp.minusSeconds(10);
         Map<String,Object> details = Map.of(
+                "user_roles", Arrays.asList("test-role1", "test-role2"),
                 "detail_state", Boolean.TRUE,
                 "detail_integer", 42,
                 "detail_number", 3.1415,
@@ -87,6 +88,7 @@ class AuditLogRepositoryTest {
         //assert Details
         assertThat(auditLogResonse.getDetails()).isNotNull();
         assertThat(auditLogResonse.getDetails().keySet()).isEqualTo(details.keySet());
+        assertThat(auditLogResonse.getDetails().get("user_roles")).isEqualTo(Arrays.asList("test-role1", "test-role2"));
         assertThat(auditLogResonse.getDetails().get("detail_state")).isEqualTo(Boolean.TRUE);
         assertThat(auditLogResonse.getDetails().get("detail_integer")).isEqualTo(42);
         assertThat(auditLogResonse.getDetails().get("detail_number")).isEqualTo(3.1415);
