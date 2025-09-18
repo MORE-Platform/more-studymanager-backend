@@ -30,6 +30,7 @@ public class AuditLog {
     private Long id;
     private Instant created;
     private String userId; // User Identifier
+    private String userName; //the username at the time of the performed action
     private Long studyId;
     private String action; // Action Taken
     private ActionState actionState = ActionState.unknown; // The state of the audited Action
@@ -122,6 +123,12 @@ public class AuditLog {
         return this;
     }
 
+    public AuditLog setUserName(String userName) {
+        this.userName = userName;
+        return this;
+    }
 
-
+    public String getUserName() {
+        return userName;
+    }
 }
