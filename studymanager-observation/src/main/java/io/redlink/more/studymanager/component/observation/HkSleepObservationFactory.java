@@ -20,7 +20,10 @@ public class HkSleepObservationFactory<C extends Observation<P>, P extends Obser
     
 
         private static List<Value> properties = List.of(
-        new IntegerValue("daysback").setDefaultValue(1).setDescription("Data collection days back from current date")
+        new IntegerValue("daysback").setDefaultValue(1).setDescription("Data collection days back from current date"),
+        new BooleanValue("sendRawData").setDefaultValue(false).setDescription(
+                "Fetching fully raw data from devices with not cleaning"
+            )
       
             
     ); 
