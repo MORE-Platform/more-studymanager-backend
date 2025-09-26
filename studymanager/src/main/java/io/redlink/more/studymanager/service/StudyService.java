@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -220,4 +222,15 @@ public class StudyService {
                 // ... of fallback to the study-duration if not set.
                 .or(() -> getStudyDuration(studyId));
     }
+
+    /**
+     * Provides a stream over all studies with the parsed states
+     * @param states the states
+     * @return the studies with the parsed states. An empty Stream is <code>null</code> was
+     * parsed or no Studies with the requested states are present
+     */
+    public Stream<Study> getStudiesByStates(Iterable<Study.Status> states) {
+        return states == null ? Stream.empty() : studyRepository.listStudiesByStates(states);
+    }
+
 }

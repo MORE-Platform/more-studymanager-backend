@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -178,6 +179,32 @@ class StudyRepositoryTest {
         assertTrue(studyRepository.hasState(study.getStudyId(), statusSet1));
         assertFalse(studyRepository.hasState(study.getStudyId(), statusSet2));
         assertFalse(studyRepository.hasState(study.getStudyId(), statusSet3));
+    }
+
+    @Test
+    @DisplayName("List Studies by States")
+    void testListStudiesByStates(){
+        Set<Study.Status> statusSet1 = Set.of(Study.Status.ACTIVE, Study.Status.DRAFT);
+        Set<Study.Status> statusSet2 = Set.of(Study.Status.CLOSED);
+        Set<Study.Status> statusSet3 = Collections.emptySet();
+
+        Study ativeStudy = studyRepository.insert(new Study().setTitle("Active Study").setContact(new Contact().setPerson("test").setEmail("test")));
+        studyRepository.setStateById(ativeStudy.getStudyId(), Study.Status.ACTIVE);
+        Study previewStudy = studyRepository.insert(new Study().setTitle("Preview Study").setContact(new Contact().setPerson("test").setEmail("test")));
+        studyRepository.setStateById(previewStudy.getStudyId(), Study.Status.PREVIEW);
+        Study pausedStudy = studyRepository.insert(new Study().setTitle("Paused Study").setContact(new Contact().setPerson("test").setEmail("test")));
+        studyRepository.setStateById(pausedStudy.getStudyId(), Study.Status.PAUSED);
+        Study closedStudy = studyRepository.insert(new Study().setTitle("Closed Study").setContact(new Contact().setPerson("test").setEmail("test")));
+        studyRepository.setStateById(closedStudy.getStudyId(), Study.Status.CLOSED);
+        Study draftStudy = studyRepository.insert(new Study().setTitle("Draft Study").setContact(new Contact().setPerson("test").setEmail("test")));
+        Study activeStudy2 = studyRepository.insert(new Study().setTitle("Active Study2").setContact(new Contact().setPerson("test").setEmail("test")));
+        studyRepository.setStateById(activeStudy2.getStudyId(), Study.Status.ACTIVE);
+
+        assertThat(studyRepository.listStudiesByStatus(Study.Status.CLOSED).stream().map(Study::getStudyId).toList()).containsExactlyInAnyOrder(closedStudy.getStudyId());
+        assertThat(studyRepository.listStudiesByStatus(Study.Status.ACTIVE).stream().map(Study::getStudyId).toList()).containsExactlyInAnyOrder(ativeStudy.getStudyId(), activeStudy2.getStudyId());
+
+        assertThat(studyRepository.listStudiesByStates(Study.Status.ACTIVE_STATES).map(Study::getStudyId).toList()).containsExactlyInAnyOrder(ativeStudy.getStudyId(), activeStudy2.getStudyId(), previewStudy.getStudyId());
+        assertThat(studyRepository.listStudiesByStates(EnumSet.of(Study.Status.PAUSED, Study.Status.DRAFT)).map(Study::getStudyId).toList()).containsExactlyInAnyOrder(pausedStudy.getStudyId(), draftStudy.getStudyId());
     }
 
 

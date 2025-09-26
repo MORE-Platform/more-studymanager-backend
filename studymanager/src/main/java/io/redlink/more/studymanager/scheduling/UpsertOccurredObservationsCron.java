@@ -8,66 +8,64 @@
  */
 package io.redlink.more.studymanager.scheduling;
 
-import io.redlink.more.studymanager.action.ActionService;
-import io.redlink.more.studymanager.core.exception.SchedulingException;
-import io.redlink.more.studymanager.core.factory.TriggerFactory;
-import io.redlink.more.studymanager.core.io.Parameters;
-import io.redlink.more.studymanager.core.io.TriggerResult;
-import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
-import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.service.*;
 import io.redlink.more.studymanager.utils.LoggingUtils;
-import org.quartz.Job;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
-public class UpsertOccurredObservationsJob implements Job {
+@Component
+public class UpsertOccurredObservationsCron {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UpsertOccurredObservationsJob.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UpsertOccurredObservationsCron.class);
 
-    @Autowired
-    private StudyService studyService;
-    @Autowired
-    private ParticipantService participantService;
-    @Autowired
-    private OccurredObservationService occurredObservationService;
-    @Autowired
-    private CalendarService calendarService;
+    private final StudyService studyService;
+    private final ParticipantService participantService;
+    private final OccurredObservationService occurredObservationService;
+    private final CalendarService calendarService;
 
-    @Override
-    public void execute(JobExecutionContext context) throws JobExecutionException {
+
+    UpsertOccurredObservationsCron(
+            StudyService studyService,
+            ParticipantService participantService,
+            OccurredObservationService occurredObservationService,
+            CalendarService calendarService
+    ) {
+        this.studyService = studyService;
+        this.participantService = participantService;
+        this.occurredObservationService = occurredObservationService;
+        this.calendarService = calendarService;
+    }
+
+    @Scheduled(cron="0 */5 * * * ?") //every 5min
+    protected void upsertOccurredObservations(){
+        //list all active studies
+        studyService.getStudiesByStates(Study.Status.ACTIVE_STATES)
+                .forEach(this::upsertOccurredObservations);
+    }
+
+    private void upsertOccurredObservations(Study study) {
         try (var ctx = LoggingUtils.createContext()) {
-            Study study = studyService.getStudy(
-                    context.getJobDetail().getJobDataMap().getLong("studyId"),
-                    null
-            ).orElse(null);
-            if(study == null) {
+            if(study == null || !Study.Status.ACTIVE_STATES.contains(study.getStudyState())) {
                 return; //nothing to do
             }
             ctx.putStudy(study);
             List<Participant> participants = participantService.listParticipants(study.getStudyId());
             Instant lastOccurredObservation = occurredObservationService.getLatestStartTime(study.getStudyId());
-            //NOTE: use now + 2min for current because:
-            //  1. we truncatedTo(ChronoUnit.MINUTES) all Instants
+            //NOTE: use now + 1min for current because:
+            //  1. we truncatedTo(ChronoUnit.MINUTES) all Instants and
             //  2. we check with start.isBefore(current)
             // doing so will include all Observations that start in the current minute
-            Instant current = Instant.now().plus(2, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MINUTES);
+            Instant current = Instant.now().plus(1, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MINUTES);
+            LOGGER.debug("Upsert Occurred Observations for Study(id: {}) and timeperiode(start:{}, end:{})", study.getStudyId(), lastOccurredObservation, current);
 
             for(Participant participant : participants) {
                 ctx.putParticipant(participant);
@@ -76,7 +74,7 @@ public class UpsertOccurredObservationsJob implements Job {
                 for(ObservationTimelineEvent event : timeline.observationTimelineEvents()){
                     var start = event.start().truncatedTo(ChronoUnit.MINUTES);
                     if((lastOccurredObservation == null || start.isAfter(lastOccurredObservation)) && start.isBefore(current)){
-                        LOGGER.debug("upsert occurred observation for study: {}, observation: {}, participant: {}, start: {}, end: {}",
+                        LOGGER.trace("upsert occurred observation for study: {}, observation: {}, participant: {}, start: {}, end: {}",
                                 study.getStudyId(), event.observationId(), participant.getParticipantId(), event.start(), event.end());
                         occurredObservationService.upsert(study.getStudyId(), event.observationId(), participant.getParticipantId(), event.start(), event.end());
                     } //else outside of time range ... ignore

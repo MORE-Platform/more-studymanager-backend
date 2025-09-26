@@ -10,7 +10,6 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.OccurredObservation;
 import io.redlink.more.studymanager.repository.OccurredObservationRepository;
-import io.redlink.more.studymanager.sdk.MoreSDK;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -22,15 +21,11 @@ public class OccurredObservationService {
 
     private final OccurredObservationRepository repository;
 
-    private final MoreSDK sdk;
-
     private static final EnumSet<OccurredObservation.DataState> COMPLETED_DATA_STATES = EnumSet.of(OccurredObservation.DataState.COMPLETE);
     private static final EnumSet<OccurredObservation.DataState> ACTIVE_DATA_STATES = EnumSet.complementOf(COMPLETED_DATA_STATES);
 
-    public OccurredObservationService(OccurredObservationRepository repository,
-                                      MoreSDK sdk) {
+    public OccurredObservationService(OccurredObservationRepository repository) {
         this.repository = repository;
-        this.sdk = sdk;
     }
 
     public OccurredObservation upsert(long studyId, int observationId, int participantId, Instant start, Instant end){
