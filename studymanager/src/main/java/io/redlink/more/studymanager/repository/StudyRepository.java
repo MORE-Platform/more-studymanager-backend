@@ -19,6 +19,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -44,6 +47,7 @@ public class StudyRepository {
                     "WHERE study_id = ?";
     private static final String LIST_STUDIES_ORDER_BY_MODIFIED_DESC = "SELECT * FROM studies ORDER BY modified DESC";
     private static final String LIST_STUDIES_BY_STATUS = "SELECT * FROM studies WHERE status = ?::study_state";
+    private static final String LIST_STUDIES_BY_STATES = "SELECT * FROM studies WHERE status = ANY(?::study_state[])";
     private static final String LIST_STUDY_BY_ACL =
             "SELECT studies.*, acl.user_roles " +
             "FROM studies " +
@@ -201,6 +205,14 @@ public class StudyRepository {
 
     public List<Study> listStudiesByStatus(Study.Status status) {
         return template.query(LIST_STUDIES_BY_STATUS, getStudyRowMapper(), status.getValue());
+    }
+    public Stream<Study> listStudiesByStates(Iterable<Study.Status> states) {
+        return template.queryForStream(
+                LIST_STUDIES_BY_STATES,
+                getStudyRowMapper(),
+                //cast to object as this is no vararg but a single parameter that happens to be an array
+                (Object) StreamSupport.stream(states.spliterator(),false)
+                        .map(Study.Status::getValue).toArray(String[]::new));
     }
 
     public boolean hasState(long studyId, Collection<Study.Status> allowedStates){

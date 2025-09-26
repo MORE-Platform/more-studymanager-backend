@@ -51,11 +51,6 @@ public class CalendarService {
     public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, Instant referenceDate, LocalDate from, LocalDate to) {
         final Study study = studyService.getStudy(studyId, null)
                 .orElseThrow(() -> NotFoundException.Study(studyId));
-        final Range<LocalDate> studyRange = Range.of(
-                Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
-                Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate()),
-                LocalDate::compareTo
-        );
         final Participant participant;
         if (participantId != null) {
             participant = Optional.ofNullable(participantService.getParticipant(studyId, participantId))
@@ -63,6 +58,15 @@ public class CalendarService {
         } else {
             participant = null;
         }
+        return getTimeline(study, participant, studyGroupId, referenceDate, from, to);
+    }
+
+    public StudyTimeline getTimeline(Study study, Participant participant, Integer studyGroupId, Instant referenceDate, LocalDate from, LocalDate to) {
+        final Range<LocalDate> studyRange = Range.of(
+                Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
+                Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate()),
+                LocalDate::compareTo
+        );
 
         /* Priority of Parameters:
          * participantStart:
@@ -96,16 +100,16 @@ public class CalendarService {
             effectiveGroup = studyGroupId;
         }
 
-        final List<Observation> observations = observationService.listObservationsForGroup(studyId, effectiveGroup);
-        final List<Intervention> interventions = interventionService.listInterventionsForGroup(studyId, effectiveGroup);
+        final List<Observation> observations = observationService.listObservationsForGroup(study.getStudyId(), effectiveGroup);
+        final List<Intervention> interventions = interventionService.listInterventionsForGroup(study.getStudyId(), effectiveGroup);
 
         // Shift the effective study-start if the participant would miss a relative observation
         final LocalDate firstDayInStudy = SchedulerUtils.alignStartDateToSignupInstant(participantStart, observations);
 
         // now how long does the study run?
         final Duration studyDuration = Optional.ofNullable(effectiveGroup)
-                .flatMap(eg -> studyService.getStudyDuration(studyId, eg))
-                .or(() -> studyService.getStudyDuration(studyId))
+                .flatMap(eg -> studyService.getStudyDuration(study.getStudyId(), eg))
+                .or(() -> Optional.of(study.getDuration()))
                 .or(() -> Optional.of(new Duration()
                         .setValue(
                                 (int) ChronoUnit.DAYS.between(
@@ -114,7 +118,7 @@ public class CalendarService {
                                 ) + 1)
                         .setUnit(Duration.Unit.DAY)
                 ))
-                .orElseThrow(() -> NotFoundException.Study(studyId));
+                .orElseThrow(() -> NotFoundException.Study(study.getStudyId()));
 
         final LocalDate lastDayInStudy = firstDayInStudy
                 .plus(
@@ -143,13 +147,13 @@ public class CalendarService {
                                 )
                                 .stream()
                                 // Disabled client-side filter for now...
-                                // .filter(filterWindow::isOverlappedBy)
+                                //Ï .filter(filterWindow::isOverlappedBy)
                                 .map(e -> ObservationTimelineEvent.fromObservation(o, e.getMinimum(), e.getMaximum()))
                         )
                         .toList(),
                 interventions.stream()
                         .map(intervention -> {
-                            Trigger trigger = interventionService.getTriggerByIds(studyId, intervention.getInterventionId());
+                            Trigger trigger = interventionService.getTriggerByIds(study.getStudyId(), intervention.getInterventionId());
                             return SchedulerUtils.parseToInterventionSchedules(
                                             trigger,
                                             effectiveRange.getMinimum(),

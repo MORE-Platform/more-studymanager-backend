@@ -12,6 +12,8 @@ import io.redlink.more.studymanager.model.scheduler.Duration;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Set;
 
 public class Study {
@@ -61,6 +63,7 @@ public class Study {
                     "No enum constant " + Status.class.getCanonicalName() + " with value " + value
             );
         }
+        public static Set<Status> ACTIVE_STATES = Collections.unmodifiableSet(EnumSet.of(Status.PREVIEW, Status.ACTIVE));
     }
 
     public Long getStudyId() {

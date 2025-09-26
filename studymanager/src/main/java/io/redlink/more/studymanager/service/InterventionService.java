@@ -156,7 +156,7 @@ public class InterventionService {
     }
 
     public void alignInterventionsWithStudyState(Study study) {
-        if (EnumSet.of(Study.Status.ACTIVE, Study.Status.PREVIEW).contains(study.getStudyState())) {
+        if (Study.Status.ACTIVE_STATES.contains(study.getStudyState())) {
             activateInterventionsFor(study);
         } else {
             deactivateInterventionsFor(study);
