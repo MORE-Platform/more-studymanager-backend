@@ -59,14 +59,24 @@ public class StudyService {
     private final StudyStateService studyStateService;
     private final IntegrationService integrationService;
     private final ElasticService elasticService;
+    private final OccurredObservationService occurredObservationService;
 
     private final PushNotificationService pushNotificationService;
     private final StudyGroupRepository studyGroupRepository;
 
 
-    public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
-                        StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService,
-                        ParticipantService participantService, IntegrationService integrationService, ElasticService elasticService, PushNotificationService pushNotificationService, StudyGroupRepository studyGroupRepository) {
+    public StudyService(StudyRepository studyRepository,
+                        StudyAclRepository aclRepository,
+                        UserRepository userRepo,
+                        StudyStateService studyStateService,
+                        InterventionService interventionService,
+                        ObservationService observationService,
+                        ParticipantService participantService,
+                        IntegrationService integrationService,
+                        ElasticService elasticService,
+                        OccurredObservationService occurredObservationService,
+                        PushNotificationService pushNotificationService,
+                        StudyGroupRepository studyGroupRepository) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
@@ -76,6 +86,7 @@ public class StudyService {
         this.participantService = participantService;
         this.integrationService = integrationService;
         this.elasticService = elasticService;
+        this.occurredObservationService = occurredObservationService;
         this.pushNotificationService = pushNotificationService;
         this.studyGroupRepository = studyGroupRepository;
     }
@@ -135,6 +146,7 @@ public class StudyService {
                                 pushNotificationService.sendStudyStateUpdate(participant, oldState, s.getStudyState())
                         );
                         participantService.alignParticipantsWithStudyState(s);
+                        occurredObservationService.alignParticipantsWithStudyState(s);
                         if (s.getStudyState() == Study.Status.DRAFT) {
                             log.info("Study {} transitioned back to {}, dropping collected observation data", study.getStudyId(), s.getStudyState());
                             elasticService.deleteIndex(s.getStudyId());

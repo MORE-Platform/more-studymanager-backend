@@ -244,6 +244,56 @@ class OccurredObservationRepositoryTest {
         //validate that searching for a combination with no entry returns null
         var lastStartTimeNotFound = occurredObservationRepository.getLatestStartTime(studyId, -1, null, null, null);
         assertThat(lastStartTimeNotFound).isNull();
+
+        //Test cleanup by StudyId
+
+        Long study2Id = studyRepository.insert(new Study().setContact(new Contact().setPerson("test2").setEmail("test2"))).getStudyId();
+        Integer study2GroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(study2Id)).getStudyGroupId();
+        Instant study2StartTime = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.DAYS);
+        Instant study2EndTime = study2StartTime.plus(2, ChronoUnit.HOURS);
+
+        Observation study2Observation = observationRepository.insert(new Observation()
+                .setStudyId(study2Id)
+                .setType(type)
+                .setTitle("Accelerometer Observation")
+                .setStudyGroupId(study2GroupId)
+                .setProperties(new ObservationProperties(Map.of("testProperty", "testValue")))
+                .setSchedule(new Event()
+                        .setDateStart(startTime)
+                        .setDateEnd(endTime)
+                        .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)))
+                .setHidden(false)
+                .setNoSchedule(false));
+
+        Participant study2Participant = participantRepository.insert(new Participant()
+                .setAlias("participant x")
+                .setStudyGroupId(study2GroupId)
+                .setStudyId(study2Id)
+                .setRegistrationToken("TEST456"));
+
+        var study2OccurredObservation = occurredObservationRepository.upsert(new OccurredObservation(
+                study2Id,
+                study2Observation.getObservationId(),
+                study2Participant.getParticipantId(),
+                study2StartTime,
+                study2EndTime));
+
+        //validate that their exists now an occurred observation for the 2nd study
+        assertThat(occurredObservationRepository.listOccurredObservations(
+                study2Id, null, null, null, null).count()).isEqualTo(1);
+
+        //not clean all occurred observations for the first study
+        occurredObservationRepository.cleanup(studyId);
+
+        //assert that all accurred observations are deleted
+        assertThat(occurredObservationRepository.listOccurredObservations(
+                studyId, null, null, null, null).count()).isEqualTo(0);
+
+        //assert that the occurred observations for study2 are still present
+        assertThat(occurredObservationRepository.listOccurredObservations(
+                study2Id, null, null, null, null).count()).isEqualTo(1);
+
+
     }
 
 }

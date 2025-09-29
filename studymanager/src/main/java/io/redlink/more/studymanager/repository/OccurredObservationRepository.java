@@ -69,6 +69,7 @@ public class OccurredObservationRepository {
             """;
 
     private static final String DELETE_ALL = "DELETE FROM occurred_observation";
+    private static final String CLEANUP_BY_STUDY_ID ="DELETE FROM occurred_observation WHERE study_id = :study_id" ;
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
@@ -201,5 +202,14 @@ public class OccurredObservationRepository {
     private static RowMapper<Instant> getInstantRowMapper(String field, boolean withTimezone) {
         return (rs, rowNum) -> withTimezone ? RepositoryUtils.readInstantUTC(rs, field) :
                 RepositoryUtils.readInstant(rs, field);
+    }
+
+    /**
+     * Cleans all OccurredOccurrencies for the parsed StudyId
+     * @param studyId
+     */
+    public void cleanup(Long studyId) {
+        final var params = toParams(studyId);
+        namedTemplate.update(CLEANUP_BY_STUDY_ID, params);
     }
 }

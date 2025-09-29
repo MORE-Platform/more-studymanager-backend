@@ -9,8 +9,11 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.OccurredObservation;
+import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.OccurredObservationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
@@ -87,6 +90,20 @@ public class OccurredObservationService {
                 studyId, participantId, null,
                 includeInvalid ? null : true,
                 ACTIVE_DATA_STATES);
+    }
+
+    /**
+     * Aligns OccurredObservations with the study status
+     * @param study
+     */
+    @Transactional
+    public void alignParticipantsWithStudyState(Study study) {
+        //NOTE: for CLOSE this should be a NO-OP, as participants and observations are also deleted and
+        //  OccurredObservations use delete cascade on those FK
+        if (EnumSet.of(Study.Status.DRAFT, Study.Status.CLOSED).contains(study.getStudyState())) {
+            repository.cleanup(study.getStudyId());
+        }
+
     }
 
 }
