@@ -9,9 +9,11 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.component.observation.*;
+import io.redlink.more.studymanager.component.observation.garmin.GarminObservationFactory;
 import io.redlink.more.studymanager.component.observation.lime.LimeSurveyObservationFactory;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
+import io.redlink.more.studymanager.core.io.Visibility;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
@@ -94,12 +96,16 @@ class ObservationServiceTest {
                 .setType("question-observation")
                 .setHidden(true);
 
+        Observation garmin = new Observation()
+                .setType("garmin-observation");
+
         AccMobileObservationFactory accFactory = new AccMobileObservationFactory();
         PolarVerityObservationFactory polFactory = new PolarVerityObservationFactory();
         GpsMobileObservationFactory gpsFactory = new GpsMobileObservationFactory();
         LimeSurveyObservationFactory limFactory = new LimeSurveyObservationFactory();
         QuestionObservationFactory qstFactory = new QuestionObservationFactory();
         ExternalObservationFactory extFactory = new ExternalObservationFactory();
+        GarminObservationFactory garminFactory = new GarminObservationFactory();
 
         assertThat(accFactory.getHidden()).isTrue();
         assertThat(polFactory.getHidden()).isTrue();
@@ -107,6 +113,6 @@ class ObservationServiceTest {
         assertThat(limFactory.getHidden()).isTrue();
         assertThat(qstFactory.getHidden()).isTrue();
         assertThat(extFactory.getHidden()).isFalse();
-
+        assertThat(garminFactory.getVisibility().isHiddenByDefault()).isTrue();
     }
 }
