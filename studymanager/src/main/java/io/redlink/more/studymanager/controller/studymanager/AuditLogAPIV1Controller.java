@@ -96,11 +96,7 @@ public class AuditLogAPIV1Controller implements AuditLogApi {
      * @param studyId corresponding studyId of the auditlogs
      */
     private void prepareExportAuditLog(OutputStream outputStream, Long studyId) {
-        Stream<AuditLog> auditlogEntries = service.getAuditLogs(
-                studyId
-        );
-
-        try {
+        try(Stream<AuditLog> auditlogEntries = service.getAuditLogs(studyId)) {
             var generator = MapperUtils.MAPPER.getFactory().createGenerator(outputStream, JsonEncoding.UTF8);
             generator.writeStartArray();
             // stream rausposten
