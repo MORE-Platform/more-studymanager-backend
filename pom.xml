@@ -9,10 +9,11 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>studymanager</module>
         <module>studymanager-core</module>
         <module>studymanager-observation</module>
         <module>studymanager-intervention</module>
+        <module>studymanager-services</module>
+        <module>studymanager</module>
     </modules>
 
     <name>MORE Study Manager</name>
@@ -456,6 +457,17 @@
                 <artifactId>biweekly</artifactId>
                 <version>0.6.8</version>
             </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.19.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.reflections</groupId>
+                <artifactId>reflections</artifactId>
+                <version>0.10.2</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

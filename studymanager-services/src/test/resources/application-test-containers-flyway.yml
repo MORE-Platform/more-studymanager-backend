@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DBNAME:more}
+    username: ${POSTGRES_USER:more}
+    password: ${POSTGRES_PASSWORD:more}
+    name: ${POSTGRES_DBNAME:more}
+    hikari:
+      maximum-pool-size: 100
+  session:
+    # Disable session-store during tests
+    store-type: none
+  hikari:
+    minimum-idle: 5
