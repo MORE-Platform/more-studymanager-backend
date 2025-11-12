@@ -1,2 +1,0 @@
-ALTER TABLE studies
-     ADD COLUMN finish_text VARCHAR DEFAULT NULL
