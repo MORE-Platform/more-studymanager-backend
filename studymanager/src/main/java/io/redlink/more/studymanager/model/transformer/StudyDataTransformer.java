@@ -13,6 +13,8 @@ import io.redlink.more.studymanager.core.ui.DataView;
 import io.redlink.more.studymanager.core.ui.DataViewInfo;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.model.data.ParticipationData;
+import io.redlink.more.studymanager.model.data.SimpleDataPoint;
+
 import java.util.List;
 import java.util.stream.Collectors;
 

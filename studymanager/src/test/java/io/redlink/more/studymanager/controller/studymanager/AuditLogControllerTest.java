@@ -9,7 +9,9 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.core.properties.ActionProperties;
-import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
+import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.audit.AuditLog;
 import io.redlink.more.studymanager.repository.AuditLogRepository;
 import io.redlink.more.studymanager.service.AuditService;

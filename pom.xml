@@ -9,10 +9,11 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>studymanager</module>
         <module>studymanager-core</module>
         <module>studymanager-observation</module>
         <module>studymanager-intervention</module>
+        <module>studymanager-services</module>
+        <module>studymanager</module>
     </modules>
 
     <name>MORE Study Manager</name>
@@ -34,6 +35,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+        <repository.owner>MORE-Platform</repository.owner>
+        <repository.name>more-platform</repository.name>
+
         <java.version>17</java.version>
         <spring-boot.version>3.5.5</spring-boot.version>
         <testcontainers.version>1.21.3</testcontainers.version>
@@ -51,6 +55,14 @@
         <url>https://github.com/MORE-Platform/more-studymanager-backend</url>
         <tag>HEAD</tag>
     </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/${repository.owner}/${repository.name}</url>
+        </repository>
+    </distributionManagement>
 
     <build>
         <plugins>
@@ -109,9 +121,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>3.1.4</version>
-                    <configuration>
-                        <skip>true</skip>
-                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
@@ -456,6 +465,17 @@
                 <artifactId>biweekly</artifactId>
                 <version>0.6.8</version>
             </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.19.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.reflections</groupId>
+                <artifactId>reflections</artifactId>
+                <version>0.10.2</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
