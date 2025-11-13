@@ -54,8 +54,8 @@ jobs:
           java-version: 17
           cache: maven
           server-id: github
-          server-username: ${{ github.actor }}
-          server-password: ${{ secrets.GITHUB_TOKEN }}
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
       - name: Generate additional Docker-Tags
         run: |
           TAGS=${BRANCH}
@@ -86,6 +86,8 @@ jobs:
             -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }}
         env:
           DOCKER_NAMESPACE: ghcr.io/${{ github.repository_owner }}
+          MAVEN_USERNAME: ${{ github.actor }}
+          MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
   event_file:
     name: "Event File"
