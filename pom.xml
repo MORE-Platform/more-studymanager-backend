@@ -35,6 +35,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+        <repository.owner>MORE-Platform</repository.owner>
+        <repository.name>more-platform</repository.name>
+
         <java.version>17</java.version>
         <spring-boot.version>3.5.5</spring-boot.version>
         <testcontainers.version>1.21.3</testcontainers.version>
@@ -52,6 +55,14 @@
         <url>https://github.com/MORE-Platform/more-studymanager-backend</url>
         <tag>HEAD</tag>
     </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/${repository.owner}/${repository.name}</url>
+        </repository>
+    </distributionManagement>
 
     <build>
         <plugins>
@@ -110,9 +121,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>3.1.4</version>
-                    <configuration>
-                        <skip>true</skip>
-                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
