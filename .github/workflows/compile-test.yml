@@ -84,6 +84,7 @@ jobs:
             -Djib.to.tags=${TAGS}
             -Djib.to.auth.username=${{ github.actor }}
             -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }}
+            -Djib.httpTimeout=300000 #5min
         env:
           DOCKER_NAMESPACE: ghcr.io/${{ github.repository_owner }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} #Required for publishing to GitHub Packages
