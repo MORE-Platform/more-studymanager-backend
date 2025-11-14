@@ -36,7 +36,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <repository.owner>MORE-Platform</repository.owner>
-        <repository.name>more-platform</repository.name>
+        <repository.name>more-studymanager-backend</repository.name>
 
         <java.version>17</java.version>
         <spring-boot.version>3.5.5</spring-boot.version>
