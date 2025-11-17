@@ -10,7 +10,7 @@ package io.redlink.more.studymanager.model.transformer;
 
 import io.redlink.more.studymanager.api.v1.model.StudyGroupDTO;
 import io.redlink.more.studymanager.model.StudyGroup;
-import io.redlink.more.studymanager.model.scheduler.Duration;
+
 import java.time.Instant;
 
 public final class StudyGroupTransformer {
@@ -24,7 +24,7 @@ public final class StudyGroupTransformer {
                 .setStudyGroupId(studyGroupDTO.getStudyGroupId())
                 .setTitle(studyGroupDTO.getTitle())
                 .setPurpose(studyGroupDTO.getPurpose())
-                .setDuration(Duration.fromStudyDurationDTO(studyGroupDTO.getDuration()));
+                .setDuration(StudyDurationTransformer.fromStudyDurationDTO(studyGroupDTO.getDuration()));
     }
 
     public static StudyGroupDTO toStudyGroupDTO_V1(StudyGroup studyGroup) {
@@ -35,8 +35,11 @@ public final class StudyGroupTransformer {
                 .studyGroupId(studyGroup.getStudyGroupId())
                 .title(studyGroup.getTitle())
                 .purpose(studyGroup.getPurpose())
-                .duration(Duration.toStudyDurationDTO(studyGroup.getDuration()))
+                .duration(StudyDurationTransformer.toStudyDurationDTO(studyGroup.getDuration()))
                 .created(instant1)
                 .modified(instant);
     }
+
+
+
 }

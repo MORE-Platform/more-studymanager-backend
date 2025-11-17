@@ -18,6 +18,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
+          cache: maven
       - name: Compile and test project
         run: ./mvnw -B -U
           --no-transfer-progress
@@ -41,9 +42,12 @@ jobs:
   Build-and-Deploy:
     name: "Build and Push Docker Image"
     runs-on: ubuntu-latest
-    if: contains(fromJSON('["main", "develop", "redlink", "staging"]'), github.ref_name) || github.event.inputs.dockerTag != ''
+    if: contains(fromJSON('["main", "forkmain", "develop", "redlink", "staging"]'), github.ref_name) || github.event.inputs.dockerTag != ''
     needs:
       - Compile-and-Test
+    permissions:
+      contents: read
+      packages: write  # Required for publishing to GitHub Packages
     steps:
       - uses: actions/checkout@v5
       - name: Set up JDK 17
@@ -51,6 +55,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
+          cache: maven
       - name: Generate additional Docker-Tags
         run: |
           TAGS=${BRANCH}
@@ -79,8 +84,10 @@ jobs:
             -Djib.to.tags=${TAGS}
             -Djib.to.auth.username=${{ github.actor }}
             -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }}
+            -Djib.httpTimeout=300000 #5min
         env:
           DOCKER_NAMESPACE: ghcr.io/${{ github.repository_owner }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} #Required for publishing to GitHub Packages
 
   event_file:
     name: "Event File"

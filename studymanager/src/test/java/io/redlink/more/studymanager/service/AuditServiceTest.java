@@ -8,18 +8,17 @@
  */
 package io.redlink.more.studymanager.service;
 
-import io.redlink.more.studymanager.exception.BadRequestException;
-import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
+import io.redlink.more.studymanager.model.PlatformRole;
+import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.audit.AuditLog;
 import io.redlink.more.studymanager.properties.AuditProperties;
 import io.redlink.more.studymanager.repository.AuditLogRepository;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;

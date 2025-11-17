@@ -7,7 +7,6 @@ import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.audit.AuditLog;
 import io.redlink.more.studymanager.properties.AuditProperties;
-import io.redlink.more.studymanager.repository.AuditLogRepository;
 import io.redlink.more.studymanager.service.AuditService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyService;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -44,11 +42,11 @@ public class AuditAspect {
         this.auditProperties = auditProperties;
         this.studyService = studyService;
     }
-        @AfterThrowing(pointcut = "@annotation(Audited)", throwing = "e")
+        @AfterThrowing(pointcut = "@annotation(io.redlink.more.studymanager.audit.Audited)", throwing = "e")
         public void recordException(JoinPoint joinPoint, Throwable e){
             auditService.record(toAuditLog(authService.getCurrentUser(), joinPoint, null, e));
         }
-        @AfterReturning(pointcut = "@annotation(Audited)", returning = "returnValue")
+        @AfterReturning(pointcut = "@annotation(io.redlink.more.studymanager.audit.Audited)", returning = "returnValue")
         public void recordActivity(JoinPoint joinPoint, Object returnValue) throws Throwable {
             auditService.record(toAuditLog(authService.getCurrentUser(), joinPoint, returnValue, null));
         }
