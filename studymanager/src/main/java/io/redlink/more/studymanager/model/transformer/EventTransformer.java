@@ -8,15 +8,7 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
-import io.redlink.more.studymanager.api.v1.model.DurationDTO;
-import io.redlink.more.studymanager.api.v1.model.EventDTO;
-import io.redlink.more.studymanager.api.v1.model.FrequencyDTO;
-import io.redlink.more.studymanager.api.v1.model.ObservationScheduleDTO;
-import io.redlink.more.studymanager.api.v1.model.RecurrenceRuleDTO;
-import io.redlink.more.studymanager.api.v1.model.RelativeDateDTO;
-import io.redlink.more.studymanager.api.v1.model.RelativeEventDTO;
-import io.redlink.more.studymanager.api.v1.model.RelativeRecurrenceRuleDTO;
-import io.redlink.more.studymanager.api.v1.model.WeekdayDTO;
+import io.redlink.more.studymanager.api.v1.model.*;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.scheduler.RecurrenceRule;
@@ -139,7 +131,7 @@ public final class EventTransformer {
         if (dto != null)
             return new Duration()
                     .setValue(dto.getValue())
-                    .setUnit(dto.getUnit() != null ? Duration.Unit.fromDurationDTOUnit(dto.getUnit()) : null);
+                    .setUnit(dto.getUnit() != null ? StudyDurationTransformer.fromDurationDTOUnit(dto.getUnit()) : null);
         else return null;
     }
 
@@ -147,7 +139,9 @@ public final class EventTransformer {
         if (duration != null)
             return new DurationDTO()
                     .value(duration.getValue())
-                    .unit(duration.getUnit() != null ? Duration.Unit.toDurationDTOUnit(duration.getUnit()) : null);
+                    .unit(duration.getUnit() != null ? StudyDurationTransformer.toDurationDTOUnit(duration.getUnit()) : null);
         else return null;
     }
+
+
 }

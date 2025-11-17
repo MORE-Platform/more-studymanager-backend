@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
+import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.component.observation.lime.LimeSurveyObservationFactory;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.service.ObservationService;
@@ -34,7 +35,7 @@ public class LimeSurveySidecarController {
     }
 
     /**
-     * This is a temporary solution that should actually run as a sidecard and use an client credentials flow to access the limesurvey component api
+     * This is a temporary solution that should actually run as a sidecard and use a client credentials flow to access the limesurvey component api
      * @return a html response
      */
     @RequestMapping(
@@ -42,6 +43,7 @@ public class LimeSurveySidecarController {
             value = "/components/observation/lime-survey-observation/end.html",
             produces = { "text/html" }
     )
+    @Audited
     public ResponseEntity<String> getLimeSurveyEndPageAndWriteResult(
             @RequestParam("studyId") Long studyId,
             @RequestParam("observationId") Integer observationId,

@@ -11,6 +11,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 import io.redlink.more.studymanager.api.v1.model.EndpointTokenDTO;
 import io.redlink.more.studymanager.api.v1.model.ObservationDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ObservationsApi;
+import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.EndpointToken;
@@ -44,6 +45,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<ObservationDTO> addObservation(Long studyId, ObservationDTO observationDTO) {
         Observation observation = service.addObservation(
                 ObservationTransformer.fromObservationDTO_V1(observationDTO.studyId(studyId))
@@ -55,6 +57,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<Void> deleteObservation(Long studyId, Integer observationId) {
         service.deleteObservation(studyId, observationId);
         return ResponseEntity.noContent().build();
@@ -62,6 +65,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<List<ObservationDTO>> listObservations(Long studyId) {
         return ResponseEntity.ok().body(
                 service.listObservations(studyId).stream()
@@ -72,6 +76,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<ObservationDTO> updateObservation(Long studyId, Integer observationId, ObservationDTO observationDTO) {
         Observation observation = service.updateObservation(
                 ObservationTransformer.fromObservationDTO_V1(observationDTO.studyId(studyId).observationId(observationId))
@@ -83,6 +88,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<EndpointTokenDTO> createToken(Long studyId, Integer observationId, EndpointTokenDTO token) {
         if(token.getTokenLabel().isBlank()) { return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); }
 
@@ -100,6 +106,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<EndpointTokenDTO> updateTokenLabel(Long studyId, Integer observationId, Integer tokenId, EndpointTokenDTO endpointToken) {
         Optional<EndpointToken> token = integrationService.updateToken(studyId, observationId, tokenId, endpointToken.getTokenLabel());
 
@@ -110,6 +117,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<EndpointTokenDTO> getToken(Long studyId, Integer observationId, Integer tokenId) {
 
         Optional<EndpointToken> token = integrationService.getToken(studyId, observationId, tokenId);
@@ -125,6 +133,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<List<EndpointTokenDTO>> getTokens(Long studyId, Integer observationId) {
         return ResponseEntity.ok().body(
                 EndpointTokenTransformer.toEndpointTokensDTO(
@@ -135,6 +144,7 @@ public class ObservationsApiV1Controller implements ObservationsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<Void> deleteToken(Long studyId, Integer observationId, Integer tokenId) {
         integrationService.deleteToken(studyId, observationId, tokenId);
         return ResponseEntity.noContent().build();

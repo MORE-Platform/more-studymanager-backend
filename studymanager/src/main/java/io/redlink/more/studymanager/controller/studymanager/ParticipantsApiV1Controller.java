@@ -10,6 +10,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ParticipantsApi;
+import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Participant;
@@ -43,6 +44,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<List<ParticipantDTO>> createParticipants(Long studyId, List<ParticipantDTO> participantDTO) {
         List<Participant> participants = participantDTO.stream()
                 .map(p -> p.studyId(studyId))
@@ -58,6 +60,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<List<ParticipantDTO>> updateParticipantList(Long studyId, List<ParticipantDTO> participantDTO) {
         if (participantDTO.stream().anyMatch(p -> p.getParticipantId() == null)) {
             throw new NotFoundException("Participant without id");
@@ -76,6 +79,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<Void> deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
         service.deleteParticipant(studyId, participantId, includeData);
         return ResponseEntity.noContent().build();
@@ -84,6 +88,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<ParticipantDTO> getParticipant(Long studyId, Integer participantId) {
         return ResponseEntity.ok(
                 toParticipantDTO(service.getParticipant(studyId, participantId))
@@ -92,6 +97,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<List<ParticipantDTO>> listParticipants(Long studyId) {
         return ResponseEntity.ok(
                 service.listParticipants(studyId).stream()
@@ -102,6 +108,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<ParticipantDTO> updateParticipant(Long studyId, Integer participantId, ParticipantDTO participantDTO) {
         Participant participant = service.updateParticipant(
                 ParticipantTransformer.fromParticipantDTO_V1((participantDTO.studyId(studyId)).participantId(participantId))

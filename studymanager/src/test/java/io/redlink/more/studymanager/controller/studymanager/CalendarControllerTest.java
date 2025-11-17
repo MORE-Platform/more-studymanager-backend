@@ -64,7 +64,7 @@ class CalendarControllerTest {
         LocalDate from = LocalDate.of(2024, 2, 1);
         LocalDate to = LocalDate.of(2024, 5, 1);
 
-        when(service.getTimeline(any(), any(), any(), any(Instant.class), any(LocalDate.class), any(LocalDate.class)))
+        when(service.getTimeline(any(Long.class), any(Integer.class), any(), any(Instant.class), any(LocalDate.class), any(LocalDate.class)))
                 .thenAnswer(invocationOnMock -> {
                     return new StudyTimeline(
                             referenceDate,
