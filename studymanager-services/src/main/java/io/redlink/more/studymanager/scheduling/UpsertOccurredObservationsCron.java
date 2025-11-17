@@ -50,9 +50,9 @@ public class UpsertOccurredObservationsCron {
 
     @Scheduled(cron="0 */5 * * * ?") //every 5min
     protected void upsertOccurredObservations(){
-        //list all active studies
-        studyService.getStudiesByStates(Study.Status.ACTIVE_STATES)
-                .forEach(this::upsertOccurredObservations);
+        try (var stream = studyService.getStudiesByStates(Study.Status.ACTIVE_STATES)) {
+            stream.forEach(this::upsertOccurredObservations);
+        }
     }
 
     private void upsertOccurredObservations(Study study) {
