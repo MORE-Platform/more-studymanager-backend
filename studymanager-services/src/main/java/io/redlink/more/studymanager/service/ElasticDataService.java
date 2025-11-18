@@ -62,8 +62,12 @@ public class ElasticDataService {
         this.studyGroupService = studyGroupService;
     }
 
-    public DataViewData queryObservationViewData(ViewConfig viewConfig, long studyId, Integer studyGroupId, int observationId, Integer participantId, TimeRange timerange) throws IOException {
-        final List<Query> filters = getFilters(studyId, observationId, studyGroupId, participantId, timerange);
+    public DataViewData queryObservationViewData(ViewConfig viewConfig, Long studyId, Integer studyGroupId, Integer observationId, Integer participantId, TimeRange timerange) throws IOException {
+        return queryObservationViewData(viewConfig, studyId, studyGroupId, observationId, participantId, null, timerange);
+    }
+
+    public DataViewData queryObservationViewData(ViewConfig viewConfig, Long studyId, Integer studyGroupId, Integer observationId, Integer participantId, String dataType, TimeRange timerange) throws IOException {
+        final List<Query> filters = getFilters(studyId, observationId, studyGroupId, participantId, dataType, timerange);
 
         final SearchRequest.Builder builder = buildDataPreviewRequest(viewConfig, filters, studyId);
         final SearchRequest request = builder.build();
