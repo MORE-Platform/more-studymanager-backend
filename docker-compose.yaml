@@ -12,10 +12,15 @@ services:
       POSTGRES_DB: more
       POSTGRES_USER: more
       POSTGRES_PASSWORD: more
+      BLENDEDCARE_DB_USER: blendedcare
+      BLENDEDCARE_DB_PASSWORD: blendedcare
+      BLENDEDCARE_DB_NAME: blendedcare
     volumes:
       - type: volume
         source: postgres-data
         target: /var/lib/postgresql/data
+      # The init script
+      - ./docker/postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
 
   redis:
     image: redis:7-alpine
