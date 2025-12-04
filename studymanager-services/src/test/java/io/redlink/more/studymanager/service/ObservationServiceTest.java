@@ -106,7 +106,8 @@ class ObservationServiceTest {
         assertThat(gpsFactory.getHidden()).isTrue();
         assertThat(limFactory.getHidden()).isTrue();
         assertThat(qstFactory.getHidden()).isTrue();
-        assertThat(extFactory.getHidden()).isFalse();
-        assertThat(garminFactory.getVisibility().isHiddenByDefault()).isTrue();
+
+        assertThat(extFactory.getVisibility().isChangeable()).isFalse();
+        assertThat(garminFactory.getVisibility().isHiddenByDefault()).isFalse();
     }
 }

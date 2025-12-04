@@ -10,7 +10,7 @@ import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
 public class GarminObservationFactory<C extends Observation<P>, P extends ObservationProperties> extends ObservationFactory<C, P> {
 
-    private static final Visibility visibility = new Visibility(false, true);
+    private static final Visibility visibility = new Visibility(true, false);
 
     @Override
     public GarminObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
