@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,12 +101,14 @@ class ParticipantControllerTest {
                 .setStatus(Participant.Status.NEW)
                 .setCreated(Instant.ofEpochMilli(System.currentTimeMillis()))
                 .setModified(Instant.ofEpochMilli(System.currentTimeMillis()))
-                .setRegistrationToken("TEST123"));
+                .setRegistrationToken("TEST123")
+                .setObservationGroupIds(Set.of(1, 2)));
 
         ParticipantDTO participantRequest = new ParticipantDTO()
                 .studyId(studyId)
                 .alias("participant x")
-                .studyGroupId(1);
+                .studyGroupId(1)
+                .observationGroupIds(Set.of(1,2));
 
         ParticipantDTO[] participantDTOS = new ParticipantDTO[]{participantRequest};
 
@@ -118,7 +121,10 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$[0].participantId").value(1))
                 .andExpect(jsonPath("$[0].status").value("new"))
                 .andExpect(jsonPath("$[0].studyGroupId").value(participantRequest.getStudyGroupId()))
-                .andExpect(jsonPath("$[0].registrationToken").exists());
+                .andExpect(jsonPath("$[0].registrationToken").exists())
+                .andExpect(jsonPath("$[0].observationGroupIds").isArray())
+                .andExpect(jsonPath("$[0].observationGroupIds[0]").value(1))
+                .andExpect(jsonPath("$[0].observationGroupIds[1]").value(2));
     }
 
     @Test

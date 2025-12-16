@@ -27,6 +27,7 @@ public class Observation {
     private Instant modified;
     private Boolean hidden;
     private Boolean noSchedule = false;
+    private Integer observationGroupId;
 
     public Long getStudyId() {
         return studyId;
@@ -88,6 +89,15 @@ public class Observation {
 
     public Observation setStudyGroupId(Integer studyGroupId) {
         this.studyGroupId = studyGroupId;
+        return this;
+    }
+
+    public Integer getObservationGroupId() {
+        return observationGroupId;
+    }
+
+    public Observation setObservationGroupId(Integer observationGroupId) {
+        this.observationGroupId = observationGroupId;
         return this;
     }
 

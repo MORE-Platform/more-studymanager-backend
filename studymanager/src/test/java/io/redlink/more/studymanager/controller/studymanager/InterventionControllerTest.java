@@ -92,6 +92,7 @@ class InterventionControllerTest {
                         .setSchedule(new Event()
                                 .setDateStart(dateStart)
                                 .setDateEnd(dateEnd))
+                        .setObservationGroupId(((Intervention)invocationOnMock.getArgument(0)).getObservationGroupId())
                         .setCreated(Instant.now())
                         .setModified(Instant.now()));
 
@@ -103,7 +104,8 @@ class InterventionControllerTest {
                 .studyGroupId(1)
                 .schedule(new EventDTO()
                         .dtstart(dateStart)
-                        .dtend(dateEnd));
+                        .dtend(dateEnd))
+                .observationGroupId(1);
 
         mvc.perform(post("/api/v1/studies/1/interventions")
                         .content(mapper.writeValueAsString(interventionRequest))
@@ -112,7 +114,8 @@ class InterventionControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value(interventionRequest.getTitle()))
                 .andExpect(jsonPath("$.interventionId").value(interventionRequest.getInterventionId()))
-                .andExpect(jsonPath("$.schedule").exists());
+                .andExpect(jsonPath("$.schedule").exists())
+                .andExpect(jsonPath("$.observationGroupId").value(interventionRequest.getObservationGroupId()));
     }
 
     @Test
