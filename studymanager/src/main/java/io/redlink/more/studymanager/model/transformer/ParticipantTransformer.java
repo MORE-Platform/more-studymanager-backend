@@ -25,7 +25,8 @@ public final class ParticipantTransformer {
                 .setStudyId(participantDTO.getStudyId())
                 .setParticipantId(participantDTO.getParticipantId())
                 .setAlias(participantDTO.getAlias())
-                .setStudyGroupId(participantDTO.getStudyGroupId());
+                .setStudyGroupId(participantDTO.getStudyGroupId())
+                .setObservationGroupIds(participantDTO.getObservationGroupIds());
     }
 
     public static ParticipantDTO toParticipantDTO_V1(Participant participant, GatewayProperties gatewayProps) {
@@ -42,6 +43,7 @@ public final class ParticipantTransformer {
                 .registrationToken(participant.getRegistrationToken())
                 .registrationUrl(registrationUri)
                 .status(ParticipantStatusDTO.fromValue(participant.getStatus().getValue()))
+                .observationGroupIds(participant.getObservationGroupIds())
                 .start(instant2)
                 .modified(instant1)
                 .created(instant);

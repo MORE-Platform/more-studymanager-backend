@@ -25,10 +25,8 @@ import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.utils.LoggingUtils;
 import java.text.ParseException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+
 import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,8 +91,8 @@ public class InterventionService {
         return repository.listInterventions(studyId);
     }
 
-    public List<Intervention> listInterventionsForGroup(Long studyId, Integer groupId) {
-        return repository.listInterventionsForGroup(studyId, groupId);
+    public List<Intervention> listInterventionsForGroup(Long studyId, Integer studyGroupId, Collection<Integer> observationGroupIds) {
+        return repository.listInterventionsForGroup(studyId, studyGroupId, observationGroupIds);
     }
 
     public Intervention getIntervention(Long studyId, Integer interventionId) {

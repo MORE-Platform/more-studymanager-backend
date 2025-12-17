@@ -46,11 +46,13 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
 
     public LimeSurveyObservationFactory() {}
 
-    public LimeSurveyObservationFactory(
+    //FIXME: Try to get rid of constructors only used by UnitTests to Mock the LimeSurveyRequestService
+    LimeSurveyObservationFactory(
             ComponentFactoryProperties properties, LimeSurveyRequestService limeSurveyRequestService) {
         this.componentProperties = properties;
         this.limeSurveyRequestService = limeSurveyRequestService;
     }
+
     @Override
     public LimeSurveyObservationFactory<C, P> init(ComponentFactoryProperties componentProperties){
         this.componentProperties = componentProperties;

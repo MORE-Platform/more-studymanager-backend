@@ -94,7 +94,8 @@ class ObservationControllerTest {
                         .setStudyGroupId(((Observation)invocationOnMock.getArgument(0)).getStudyGroupId())
                         .setCreated(Instant.ofEpochMilli(System.currentTimeMillis()))
                         .setModified(Instant.ofEpochMilli(System.currentTimeMillis()))
-                        .setHidden(((Observation) invocationOnMock.getArgument(0)).getHidden()));
+                        .setHidden(((Observation) invocationOnMock.getArgument(0)).getHidden())
+                        .setObservationGroupId(((Observation) invocationOnMock.getArgument(0)).getObservationGroupId()));
 
         ObservationDTO observationRequest = new ObservationDTO()
                 .title("observation 1")
@@ -105,7 +106,8 @@ class ObservationControllerTest {
                 .type("accelerometer")
                 .properties(Map.of("name", "value"))
                 .studyGroupId(1)
-                .hidden(null);
+                .hidden(null)
+                .observationGroupId(1);
 
         mvc.perform(post("/api/v1/studies/1/observations")
                         .content(mapper.writeValueAsString(observationRequest))
@@ -116,7 +118,8 @@ class ObservationControllerTest {
                 .andExpect(jsonPath("$.observationId").value(observationRequest.getObservationId()))
                 .andExpect(jsonPath("$.type").value(observationRequest.getType()))
                 .andExpect(jsonPath("$.properties.name").value("value"))
-                .andExpect(jsonPath("$.hidden").value(observationRequest.getHidden()));
+                .andExpect(jsonPath("$.hidden").value(observationRequest.getHidden()))
+                .andExpect(jsonPath("$.observationGroupId").value(observationRequest.getObservationGroupId()));
     }
 
     @Test

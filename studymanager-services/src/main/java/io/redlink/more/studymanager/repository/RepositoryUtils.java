@@ -9,13 +9,18 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.Participant;
+
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.Calendar;
-import java.util.TimeZone;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +31,8 @@ public final class RepositoryUtils {
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryUtils.class);
     public static final Calendar tzUTC = Calendar.getInstance(TimeZone.getTimeZone(ZoneOffset.UTC));
 
-    private RepositoryUtils() {}
+    private RepositoryUtils() {
+    }
 
     public static Instant readInstant(ResultSet rs, String columnLabel) throws SQLException {
         var timestamp = rs.getTimestamp(columnLabel);
@@ -47,9 +53,9 @@ public final class RepositoryUtils {
         return timestamp.toInstant();
     }
 
-    public static LocalDate readLocalDate(ResultSet rs, String columnLabel) throws SQLException{
+    public static LocalDate readLocalDate(ResultSet rs, String columnLabel) throws SQLException {
         var date = rs.getDate(columnLabel);
-        if(date == null) {
+        if (date == null) {
             return null;
         }
         return date.toLocalDate();
@@ -98,4 +104,28 @@ public final class RepositoryUtils {
             return anInt;
         };
     }
+
+    public static <T> void consumeArray(ResultSet rs, String columnLabel, Class<T> type, Consumer<T> collector) throws SQLException {
+        Array sqlArray = rs.getArray(columnLabel);
+        if (sqlArray != null) {
+            Stream.of((Object[]) sqlArray.getArray())
+                    .filter(Objects::nonNull) //instead of an empty Array SQL adds a NULL element at idx:0 ...
+                    .filter(e -> type.isAssignableFrom(e.getClass()))
+                    .map(type::cast)
+                    .forEach(collector::accept);
+        }
+    }
+
+    public static <T> Set<T> readSet(ResultSet rs, String columnLabel, Class<T> type) throws SQLException {
+        Set<T> set = new HashSet<>();
+        consumeArray(rs, columnLabel, type, set::add);
+        return set;
+    }
+
+    public static <T> List<T> readList(ResultSet rs, String columnLabel, Class<T> type) throws SQLException {
+        List<T> list = new ArrayList<>();
+        consumeArray(rs, columnLabel, type, list::add);
+        return list;
+    }
+
 }

@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {
-        ObservationRepository.class, StudyRepository.class, ParticipantRepository.class,
+        ObservationRepository.class, StudyRepository.class, ParticipantRepository.class, ObservationGroupRepository.class,
         StudyGroupRepository.class, JPAConfiguration.class
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -56,6 +57,9 @@ class ObservationRepositoryTest {
     @Autowired
     private StudyGroupRepository studyGroupRepository;
 
+    @Autowired
+    private ObservationGroupRepository observationGroupRepository;
+
     @BeforeEach
     void deleteAll() {
         observationRepository.clear();
@@ -70,6 +74,9 @@ class ObservationRepositoryTest {
         Instant startTime = Instant.now();
         Instant endTime = Instant.now().plus(2, ChronoUnit.HOURS);
 
+        Integer observationGroupId1 = observationGroupRepository.insert(new ObservationGroup().setStudyId(studyId).setTitle("Observation Group 1").setPurpose("test")).getObservationGroupId();
+        Integer observationGroupId2 = observationGroupRepository.insert(new ObservationGroup().setStudyId(studyId).setTitle("Observation Group 2").setPurpose("test")).getObservationGroupId();
+
         Observation observation = new Observation()
                 .setStudyId(studyId)
                 .setType(type)
@@ -81,7 +88,8 @@ class ObservationRepositoryTest {
                         .setDateEnd(endTime)
                         .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)))
                 .setHidden(true)
-                .setNoSchedule(false);
+                .setNoSchedule(false)
+                .setObservationGroupId(observationGroupId1);
 
         Observation observationResponse = observationRepository.insert(observation);
 
@@ -90,12 +98,14 @@ class ObservationRepositoryTest {
         assertThat(observationResponse.getProperties()).isEqualTo(observation.getProperties());
         assertThat(MapperUtils.writeValueAsString(observationResponse.getSchedule()))
                 .isEqualTo(MapperUtils.writeValueAsString(observation.getSchedule()));
+        assertThat(observationResponse.getObservationGroupId()).isEqualTo(observationGroupId1);
 
         Integer oldId = observationResponse.getObservationId();
 
         observationResponse.setType("new type")
                 .setTitle("some new title")
-                .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)));
+                .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)))
+                .setObservationGroupId(null);
 
         Observation compareObservationResponse = observationRepository.updateObservation(observationResponse);
 
@@ -103,6 +113,7 @@ class ObservationRepositoryTest {
         assertThat(compareObservationResponse.getType()).isEqualTo(type);
         assertThat(compareObservationResponse.getObservationId()).isEqualTo(oldId);
         assertThat(compareObservationResponse.getSchedule()).isNotEqualTo(observation.getSchedule());
+        assertThat(observationResponse.getObservationGroupId()).isNull();
 
         Observation observationResponse2 = observationRepository.insert(new Observation()
                 .setStudyId(studyId)
@@ -111,39 +122,89 @@ class ObservationRepositoryTest {
                 .setHidden(true)
                 .setNoSchedule(true)
         );
+        Observation observationResponse3a = observationRepository.insert(new Observation()
+                .setStudyId(studyId)
+                .setType("gps")
+                .setType("new Title - obs-group 1")
+                .setHidden(true)
+                .setNoSchedule(true)
+                .setObservationGroupId(observationGroupId1)
+        );
+        Observation observationResponse3b = observationRepository.insert(new Observation()
+                .setStudyId(studyId)
+                .setType("gps")
+                .setType("new Title 2")
+                .setHidden(true)
+                .setNoSchedule(true)
+                .setObservationGroupId(observationGroupId2)
+        );
 
-        assertThat((observationRepository.listObservations(studyId)))
+        assertThat(observationRepository.listObservations(studyId))
                 .as("List all Observations")
-                .hasSize(2);
-        assertThat((observationRepository.listObservationsForGroup(studyId, studyGroupId)))
-                .as("Include group-specific observations and globals")
-                .hasSize(2);
-        assertThat((observationRepository.listObservationsForGroup(studyId, -1)))
+                .hasSize(4);
+
+        assertThat(observationRepository.listObservationsForGroup(studyId, studyGroupId))
+                .as("Include group-specific observations and globals") //NOTE: and in no observation group
+                .hasSize(2)
+                .extracting(Observation::getObservationId)
+                .containsOnly(observationResponse.getObservationId(), observationResponse2.getObservationId());
+
+        assertThat(observationRepository.listObservationsForGroup(studyId, -1))
                 .as("Non-existing Group should only retrieve 'global' observations")
-                .hasSize(1);
-        assertThat((observationRepository.listObservationsForGroup(studyId, null)))
+                .hasSize(1)
+                .extracting(Observation::getObservationId)
+                .containsExactly(observationResponse2.getObservationId());
+
+        assertThat(observationRepository.listObservationsForGroup(studyId, null))
                 .as("<null>-Group should only retrieve 'global' observations")
                 .hasSize(1)
                 .as("Check for the global observation")
                 .extracting(Observation::getObservationId)
-                .contains(observationResponse2.getObservationId());
-        // Delete the group specific observations
-        observationRepository.deleteObservation(studyId, observationResponse.getObservationId());
-        assertThat((observationRepository.listObservations(studyId)))
-                .hasSize(1);
-        assertThat((observationRepository.listObservationsForGroup(studyId, studyGroupId)))
-                .hasSize(1);
-        observationRepository.deleteObservation(studyId, observationResponse2.getObservationId());
-        assertThat((observationRepository.listObservations(studyId)))
-                .hasSize(0);
+                .containsExactly(observationResponse2.getObservationId());
 
+        //list Observations for any study-group and no observation-group of observation-group 'observationGroupId1' ->
+        //this is true for obs2 (no group at all) and obs3 (in the correct observation group)
+        assertThat(observationRepository.listObservationsForGroup(studyId, null, Set.of(observationGroupId1)))
+                .as("Obseration-Group should only retrieve observation in that observation group")
+                .hasSize(2)
+                .extracting(Observation::getObservationId)
+                .containsExactly(observationResponse2.getObservationId(), observationResponse3a.getObservationId());
+
+
+        //list Observations for study-group '-1' and no observation-group of observation-group 'observationGroupId1' ->
+        // This is true for all expect 'obs1'
+        assertThat(observationRepository.listObservationsForGroup(studyId, -1, Set.of(observationGroupId1, observationGroupId2)))
+                .as("Obseration-Group should only retrieve observation in that observation group")
+                .hasSize(3)
+                .extracting(Observation::getObservationId)
+                .containsExactly(observationResponse2.getObservationId(), observationResponse3a.getObservationId(), observationResponse3b.getObservationId());
+
+        //test relative events
         observation.setSchedule(new RelativeEvent()
                 .setDtstart(new RelativeDate().setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY)).setTime(LocalTime.parse("12:00:00")))
                 .setDtend(new RelativeDate().setOffset(new Duration().setValue(2).setUnit(Duration.Unit.DAY)).setTime(LocalTime.parse("13:00:00"))));
-
-        Observation observationResponse3 = observationRepository.insert(observation);
-        assertThat(observationResponse3.getSchedule())
+        Observation observationResponse4 = observationRepository.insert(observation);
+        assertThat(observationResponse4.getSchedule())
                 .isInstanceOf(RelativeEvent.class);
+
+        //assert delete Observation Group sets property of Observation to null
+        observationGroupRepository.deleteById(studyId, observationGroupId1);
+        assertThat((observationRepository.getById(studyId, observationResponse3a.getObservationId()).getObservationGroupId()))
+                .isNull();
+
+        // Delete the group specific observations
+        observationRepository.deleteObservation(studyId, observationResponse4.getObservationId());
+        observationRepository.deleteObservation(studyId, observationResponse.getObservationId());
+        assertThat((observationRepository.listObservations(studyId)))
+                .hasSize(3);
+        assertThat((observationRepository.listObservationsForGroup(studyId, studyGroupId)))
+                .hasSize(2) //now that we deleted observationGroupId1 -> observationResponse3a is also in no group
+                .extracting(Observation::getObservationId)
+                .containsExactly(observationResponse2.getObservationId(), observationResponse3a.getObservationId());
+        observationRepository.deleteObservation(studyId, observationResponse2.getObservationId());
+        assertThat((observationRepository.listObservations(studyId)))
+                .hasSize(2);
+
     }
 
     @Test

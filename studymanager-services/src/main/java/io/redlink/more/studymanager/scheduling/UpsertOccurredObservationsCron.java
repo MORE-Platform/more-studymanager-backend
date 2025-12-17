@@ -73,7 +73,7 @@ public class UpsertOccurredObservationsCron {
             for(Participant participant : participants) {
                 ctx.putParticipant(participant);
                 //NOTE: from, to are currently not supported
-                var timeline = calendarService.getTimeline(study, participant, null, null, null, null);
+                var timeline = calendarService.getTimeline(study, participant, null, null, null, null, null);
                 for(ObservationTimelineEvent event : timeline.observationTimelineEvents()){
                     var start = event.start().truncatedTo(ChronoUnit.MINUTES);
                     if((lastOccurredObservation == null || start.isAfter(lastOccurredObservation)) && start.isBefore(current)){

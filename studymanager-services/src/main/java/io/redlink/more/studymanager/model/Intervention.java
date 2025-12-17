@@ -21,6 +21,7 @@ public class Intervention {
     private ScheduleEvent schedule;
     private Instant created;
     private Instant modified;
+    private Integer observationGroupId;
 
     public Long getStudyId() {
         return studyId;
@@ -64,6 +65,15 @@ public class Intervention {
 
     public Intervention setStudyGroupId(Integer studyGroupId) {
         this.studyGroupId = studyGroupId;
+        return this;
+    }
+
+    public Integer getObservationGroupId() {
+        return observationGroupId;
+    }
+
+    public Intervention setObservationGroupId(Integer observationGroupId) {
+        this.observationGroupId = observationGroupId;
         return this;
     }
 

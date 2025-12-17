@@ -10,11 +10,13 @@ package io.redlink.more.studymanager.model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class StudyImportExport {
 
     private Study study;
     private List<StudyGroup> studyGroups;
+    private List<ObservationGroup> observationGroups;
     private List<Observation> observations;
     private List<Intervention> interventions;
     private List<ParticipantInfo> participants;
@@ -37,6 +39,15 @@ public class StudyImportExport {
 
     public StudyImportExport setStudyGroups(List<StudyGroup> studyGroups) {
         this.studyGroups = studyGroups;
+        return this;
+    }
+
+    public List<ObservationGroup> getObservationGroups() {
+        return observationGroups;
+    }
+
+    public StudyImportExport setObservationGroups(List<ObservationGroup> observationGroups) {
+        this.observationGroups = observationGroups;
         return this;
     }
 
@@ -95,6 +106,7 @@ public class StudyImportExport {
     }
 
     public record ParticipantInfo(
-            Integer groupId
+            Integer groupId,
+            Set<Integer> observationGroupIds
     ) {}
 }

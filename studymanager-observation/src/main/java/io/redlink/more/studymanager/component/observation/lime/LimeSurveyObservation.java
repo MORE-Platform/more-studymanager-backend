@@ -37,12 +37,14 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     public void activate(){
         String surveyId = checkAndGetSurveyId();
 
+        //FIXME: This creates a LIME survey user for every participant, regardless if the Observation is relevant to the participant
         Set<Integer> participantIds = sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL);
+        //FIXME: Check for the expected keys (token and limeUrl) and not just if any properties are present!
         participantIds.removeIf(id -> sdk.getPropertiesForParticipant(id).isPresent());
         limeSurveyRequestService.activateParticipants(participantIds, surveyId)
                 .forEach(data ->
                     sdk.setPropertiesForParticipant(
-                            Integer.parseInt(data.firstname()),
+                            Integer.parseInt(data.firstname()), //NOTE: both the firstname and lastname are set to the participantId
                             new ObservationProperties(
                                     Map.of("token", data.token(),
                                             "limeUrl", limeSurveyRequestService.getBaseUrl())

@@ -14,9 +14,13 @@ import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
 import io.redlink.more.studymanager.utils.MapperUtils;
+
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,13 +34,15 @@ import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNu
 @Component
 public class ObservationRepository {
 
-    private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule) RETURNING *";
-    private static final String IMPORT_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,:observation_id,:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule) RETURNING *";
+    private final static Logger LOG = LoggerFactory.getLogger(ObservationRepository.class);
+
+    private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule,observation_group_id) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule,:observation_group_id) RETURNING *";
+    private static final String IMPORT_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule,observation_group_id) VALUES (:study_id,:observation_id,:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule,:observation_group_id) RETURNING *";
     private static final String GET_OBSERVATION_BY_IDS = "SELECT * FROM observations WHERE study_id = ? AND observation_id = ?";
     private static final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
     private static final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = :study_id";
-    private static final String LIST_OBSERVATIONS_FOR_GROUP = "SELECT * FROM observations WHERE study_id = :study_id AND (study_group_id IS NULL OR study_group_id = :study_group_id)";
-    private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now(), hidden=:hidden, no_schedule=:no_schedule WHERE study_id=:study_id AND observation_id=:observation_id";
+    private static final String LIST_OBSERVATIONS_FOR_GROUP = "SELECT * FROM observations WHERE study_id = :study_id AND (study_group_id IS NULL OR study_group_id = :study_group_id) AND (observation_group_id IS NULL OR observation_group_id = ANY(:observation_group_ids::INT[]))";
+    private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, observation_group_id=:observation_group_id, modified=now(), hidden=:hidden, no_schedule=:no_schedule WHERE study_id=:study_id AND observation_id=:observation_id";
     private static final String DELETE_ALL = "DELETE FROM observations";
     private static final String SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "INSERT INTO participant_observation_properties(study_id,participant_id,observation_id,properties) VALUES (:study_id,:participant_id,:observation_id,:properties::jsonb) ON CONFLICT (study_id, participant_id, observation_id) DO UPDATE SET properties = EXCLUDED.properties";
     private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT properties FROM participant_observation_properties WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
@@ -53,8 +59,25 @@ public class ObservationRepository {
     public Observation insert(Observation observation) {
         try {
             return namedTemplate.queryForObject(INSERT_NEW_OBSERVATION, toParams(observation), getObservationRowMapper());
-        } catch (DataIntegrityViolationException | JsonProcessingException e) {
-            throw new BadRequestException("Study group " + observation.getStudyGroupId() + " does not exist on study " + observation.getStudyId());
+        } catch (DataIntegrityViolationException e) {
+            String message;
+            if(observation.getStudyGroupId() != null && observation.getObservationGroupId() != null) {
+                message = String.format("Study group %s and/or observation group %s do not exist on study %s",
+                        observation.getStudyGroupId(), observation.getObservationGroupId(), observation.getStudyId());
+            } else if(observation.getStudyGroupId() != null) {
+                message = String.format("Study group %s does not exist on study %s",
+                        observation.getStudyGroupId(), observation.getStudyId());
+            } else if (observation.getObservationGroupId() != null) {
+                message = String.format("Observation group %s does not exist on study %s",
+                        observation.getObservationGroupId(), observation.getStudyId());
+            } else {
+                message = String.format("Encountered %s while inserting observation", e.getClass().getSimpleName());
+                LOG.warn("Unable to insert {}", observation, e);
+            }
+            throw new BadRequestException(message);
+        } catch (JsonProcessingException e){
+            LOG.warn("Unable to insert {}", observation, e);
+            throw new BadRequestException("Unable to insert observation (" + e.getClass().getSimpleName() + ": " + e.getMessage() +")");
         }
     }
 
@@ -97,11 +120,29 @@ public class ObservationRepository {
         );
     }
 
+    /**
+     * Lists all Observation based for the parsed study, study group and as per default no assigned observation group
+     * @param studyId the study
+     * @param studyGroupId the study group or NULL of none
+     * @return the Observations
+     */
     public List<Observation> listObservationsForGroup(Long studyId, Integer studyGroupId) {
+        return  listObservationsForGroup(studyId, studyGroupId, List.of());
+    }
+
+    /**
+     * Lists all Observation based for the parsed study, study group and observation groups
+     * @param studyId the study
+     * @param studyGroupId the study group or NULL of none
+     * @param observationGroupIds the observation groups or an empty collection if none
+     * @return the Observations
+     */
+    public List<Observation> listObservationsForGroup(Long studyId, Integer studyGroupId, Collection<Integer> observationGroupIds) {
         return namedTemplate.query(
                 LIST_OBSERVATIONS_FOR_GROUP,
                 new MapSqlParameterSource("study_id", studyId)
-                        .addValue("study_group_id", studyGroupId),
+                        .addValue("study_group_id", studyGroupId)
+                        .addValue("observation_group_ids", observationGroupIds == null ? new Integer[0] : observationGroupIds.toArray(new Integer[0])),
                 getObservationRowMapper()
         );
     }
@@ -158,7 +199,8 @@ public class ObservationRepository {
                 .addValue("properties", MapperUtils.writeValueAsString(observation.getProperties()))
                 .addValue("schedule", MapperUtils.writeValueAsString(observation.getSchedule()))
                 .addValue("hidden", observation.getHidden())
-                .addValue("no_schedule", observation.getNoSchedule());
+                .addValue("no_schedule", observation.getNoSchedule())
+                .addValue("observation_group_id", observation.getObservationGroupId());
     }
 
     private static RowMapper<ObservationProperties> getParticipantObservationPropertiesRowMapper() {
@@ -179,6 +221,7 @@ public class ObservationRepository {
                 .setCreated(RepositoryUtils.readInstant(rs, "created"))
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setHidden(rs.getBoolean("hidden"))
-                .setNoSchedule(rs.getBoolean("no_schedule"));
+                .setNoSchedule(rs.getBoolean("no_schedule"))
+                .setObservationGroupId(RepositoryUtils.getValidNullableIntegerValue(rs,"observation_group_id"));
     }
 }

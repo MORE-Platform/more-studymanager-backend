@@ -64,42 +64,40 @@ class CalendarControllerTest {
         LocalDate from = LocalDate.of(2024, 2, 1);
         LocalDate to = LocalDate.of(2024, 5, 1);
 
-        when(service.getTimeline(any(Long.class), any(Integer.class), any(), any(Instant.class), any(LocalDate.class), any(LocalDate.class)))
-                .thenAnswer(invocationOnMock -> {
-                    return new StudyTimeline(
-                            referenceDate,
-                            Range.of(from, to, LocalDate::compareTo),
-                            List.of(
-                                    ObservationTimelineEvent.fromObservation(
-                                            new Observation()
-                                                    .setObservationId(1)
-                                                    .setStudyId(invocationOnMock.getArgument(0))
-                                                    .setStudyGroupId(studyGroup1)
-                                                    .setTitle("title 1")
-                                                    .setPurpose("purpose 1")
-                                                    .setType("type 1")
-                                                    .setHidden(Boolean.FALSE)
-                                                    .setSchedule(new Event()),
-                                            ((LocalDate)invocationOnMock.getArgument(4)).atStartOfDay(ZoneId.systemDefault()).toInstant(),
-                                            ((LocalDate)invocationOnMock.getArgument(5)).atStartOfDay(ZoneId.systemDefault()).toInstant()
-                                    ),
-                                    ObservationTimelineEvent.fromObservation(
-                                            new Observation()
-                                                    .setObservationId(2)
-                                                    .setStudyId(invocationOnMock.getArgument(0))
-                                                    .setStudyGroupId(studyGroup2)
-                                                    .setTitle("title 2")
-                                                    .setPurpose("purpose 2")
-                                                    .setType("type 2")
-                                                    .setHidden(Boolean.TRUE)
-                                                    .setSchedule(new RelativeEvent()),
-                                            ((LocalDate)invocationOnMock.getArgument(4)).atStartOfDay(ZoneId.systemDefault()).toInstant(),
-                                            ((LocalDate)invocationOnMock.getArgument(5)).atStartOfDay(ZoneId.systemDefault()).toInstant()
-                                    )
-                            ),
-                            List.of()
-                    );
-                });
+        when(service.getTimeline(any(Long.class), any(Integer.class), any(), any(), any(Instant.class), any(LocalDate.class), any(LocalDate.class)))
+                .thenAnswer(invocationOnMock -> new StudyTimeline(
+                        referenceDate,
+                        Range.of(from, to, LocalDate::compareTo),
+                        List.of(
+                                ObservationTimelineEvent.fromObservation(
+                                        new Observation()
+                                                .setObservationId(1)
+                                                .setStudyId(invocationOnMock.getArgument(0))
+                                                .setStudyGroupId(studyGroup1)
+                                                .setTitle("title 1")
+                                                .setPurpose("purpose 1")
+                                                .setType("type 1")
+                                                .setHidden(Boolean.FALSE)
+                                                .setSchedule(new Event()),
+                                        ((LocalDate)invocationOnMock.getArgument(5)).atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                                        ((LocalDate)invocationOnMock.getArgument(6)).atStartOfDay(ZoneId.systemDefault()).toInstant()
+                                ),
+                                ObservationTimelineEvent.fromObservation(
+                                        new Observation()
+                                                .setObservationId(2)
+                                                .setStudyId(invocationOnMock.getArgument(0))
+                                                .setStudyGroupId(studyGroup2)
+                                                .setTitle("title 2")
+                                                .setPurpose("purpose 2")
+                                                .setType("type 2")
+                                                .setHidden(Boolean.TRUE)
+                                                .setSchedule(new RelativeEvent()),
+                                        ((LocalDate)invocationOnMock.getArgument(5)).atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                                        ((LocalDate)invocationOnMock.getArgument(6)).atStartOfDay(ZoneId.systemDefault()).toInstant()
+                                )
+                        ),
+                        List.of()
+                ));
 
         mvc.perform(get("/api/v1/studies/3/timeline")
                         .param("participant", String.valueOf(2))
