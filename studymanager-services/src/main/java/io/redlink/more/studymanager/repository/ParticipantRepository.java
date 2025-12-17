@@ -86,7 +86,8 @@ public class ParticipantRepository {
             "  AND p.status = 'active' " +
             "  AND  p.start IS NOT NULL " +
             "  AND COALESCE(sg.duration, s.duration) IS NOT NULL " +
-            "  AND (p.start + ((COALESCE(sg.duration, s.duration)->>'value')::int || ' ' || (COALESCE(sg.duration, s.duration)->>'unit'))::interval) < NOW()";
+            "  AND (p.start + ((COALESCE(sg.duration, s.duration)->>'value')::int || ' ' || (COALESCE(sg.duration, s.duration)->>'unit'))::interval) < NOW()" +
+            "GROUP BY p.study_id, p.participant_id";
 
     /*
      * SQL Statements for managing participant_observation_groups mapping for participants
