@@ -25,6 +25,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNullableIntegerValue;
