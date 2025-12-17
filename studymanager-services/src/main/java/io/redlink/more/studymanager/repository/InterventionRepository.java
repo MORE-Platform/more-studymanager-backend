@@ -88,7 +88,7 @@ public class InterventionRepository {
     }
 
     public List<Intervention> listInterventionsForGroup(Long studyId, Integer groupId){
-        return listInterventionsForGroup(studyId, groupId, List.of());
+        return listInterventionsForGroup(studyId, groupId, Collections.emptyList());
     }
     public List<Intervention> listInterventionsForGroup(Long studyId, Integer groupId, Collection<Integer> observationGroupIds) {
         return namedTemplate.query(LIST_INTERVENTIONS_FOR_GROUP,

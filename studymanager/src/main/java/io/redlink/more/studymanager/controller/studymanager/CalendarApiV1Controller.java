@@ -56,7 +56,7 @@ public class CalendarApiV1Controller implements CalendarApi {
                 TimelineTransformer.toStudyTimelineDTO(
                         service.getTimeline(
                                 studyId, participant, studyGroup,
-                                observationGroup == null ? Set.of() : Set.of(observationGroup),
+                                observationGroup == null ? Collections.emptySet() : Set.of(observationGroup),
                                 referenceDate, from, to)
                 )
         );

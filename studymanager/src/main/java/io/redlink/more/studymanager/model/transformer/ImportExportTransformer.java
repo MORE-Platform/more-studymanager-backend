@@ -81,7 +81,7 @@ public final class ImportExportTransformer {
     private static StudyImportExport.ParticipantInfo fromParticipantDTO_V1(ParticipantInfoDTO participant) {
         return new StudyImportExport.ParticipantInfo(
                 participant.getStudyGroup(),
-                participant.getObservationGroups() == null ? Set.of() : participant.getObservationGroups());
+                participant.getObservationGroups() == null ? Collections.emptySet() : participant.getObservationGroups());
     }
 
     private static <S, T> List<T> transform(List<S> list, Function<S, T> transformer) {
