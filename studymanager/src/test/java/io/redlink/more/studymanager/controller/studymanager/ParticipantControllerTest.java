@@ -123,8 +123,9 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$[0].studyGroupId").value(participantRequest.getStudyGroupId()))
                 .andExpect(jsonPath("$[0].registrationToken").exists())
                 .andExpect(jsonPath("$[0].observationGroupIds").isArray())
-                .andExpect(jsonPath("$[0].observationGroupIds[0]").value(1))
-                .andExpect(jsonPath("$[0].observationGroupIds[1]").value(2));
+                //NOTE: use Json path to do some kind of contains in any order ...
+                .andExpect(jsonPath("$[0].observationGroupIds[?(@ == 1)]").exists())
+                .andExpect(jsonPath("$[0].observationGroupIds[?(@ == 2)]").exists());
     }
 
     @Test

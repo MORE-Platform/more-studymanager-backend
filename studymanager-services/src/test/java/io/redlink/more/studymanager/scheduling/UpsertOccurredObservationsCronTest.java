@@ -97,7 +97,7 @@ public class UpsertOccurredObservationsCronTest {
         when(participantService.listParticipants(study2.getStudyId()))
                 .thenReturn(List.of(study2Par1, study2Par2));
 
-        when(calendarService.getTimeline(any(Study.class), any(Participant.class), any(), any(), any(), any()))
+        when(calendarService.getTimeline(any(Study.class), any(Participant.class), any(), any(), any(), any(), any()))
                 .thenAnswer(invocationOnMock -> {
                     Long studyId = invocationOnMock.getArgument(0, Study.class).getStudyId();
                     Integer participantId = invocationOnMock.getArgument(1, Participant.class).getParticipantId();

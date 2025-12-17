@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Set;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -50,10 +51,13 @@ public class CalendarApiV1Controller implements CalendarApi {
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     @Audited
-    public ResponseEntity<StudyTimelineDTO> getStudyTimeline(Long studyId, Integer participant, Integer studyGroup, Instant referenceDate, LocalDate from, LocalDate to) {
+    public ResponseEntity<StudyTimelineDTO> getStudyTimeline(Long studyId, Integer participant, Integer studyGroup, Integer observationGroup, Instant referenceDate, LocalDate from, LocalDate to) {
         return ResponseEntity.ok(
                 TimelineTransformer.toStudyTimelineDTO(
-                        service.getTimeline(studyId, participant, studyGroup, referenceDate, from, to)
+                        service.getTimeline(
+                                studyId, participant, studyGroup,
+                                observationGroup == null ? Set.of() : Set.of(observationGroup),
+                                referenceDate, from, to)
                 )
         );
     }

@@ -350,6 +350,10 @@ paths:
           in: query
           schema:
             $ref: '#/components/schemas/Id'
+        - name: observationGroup
+          in: query
+          schema:
+            $ref: '#/components/schemas/Id'
         - name: referenceDate
           in: query
           description: reference date used to calculate relative schedules
@@ -2118,6 +2122,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StudyGroup'
+        observationGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObservationGroup'
         observations:
           type: array
           items:
@@ -2140,6 +2148,11 @@ components:
       properties:
         studyGroup:
           type: integer
+        observationGroups:
+          type: array
+          items:
+            type: integer
+          uniqueItems: true
 
     IntegrationInfo:
       type: object

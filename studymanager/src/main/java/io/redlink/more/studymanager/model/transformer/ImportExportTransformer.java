@@ -14,7 +14,10 @@ import io.redlink.more.studymanager.api.v1.model.ParticipantInfoDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyImportExportDTO;
 import io.redlink.more.studymanager.model.IntegrationInfo;
 import io.redlink.more.studymanager.model.StudyImportExport;
+
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -71,11 +74,14 @@ public final class ImportExportTransformer {
 
     private static ParticipantInfoDTO toParticipantDTO_V1(StudyImportExport.ParticipantInfo participant) {
         return new ParticipantInfoDTO()
-                .studyGroup(participant.groupId());
+                .studyGroup(participant.groupId())
+                .observationGroups(participant.observationGroupIds());
     }
 
     private static StudyImportExport.ParticipantInfo fromParticipantDTO_V1(ParticipantInfoDTO participant) {
-        return new StudyImportExport.ParticipantInfo(participant.getStudyGroup());
+        return new StudyImportExport.ParticipantInfo(
+                participant.getStudyGroup(),
+                participant.getObservationGroups() == null ? Set.of() : participant.getObservationGroups());
     }
 
     private static <S, T> List<T> transform(List<S> list, Function<S, T> transformer) {

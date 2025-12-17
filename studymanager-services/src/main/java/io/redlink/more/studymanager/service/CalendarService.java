@@ -24,9 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.Range;
 import org.springframework.stereotype.Service;
@@ -48,7 +46,7 @@ public class CalendarService {
         this.participantService = participantService;
     }
 
-    public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, Instant referenceDate, LocalDate from, LocalDate to) {
+    public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, Collection<Integer> observationGroupIds, Instant referenceDate, LocalDate from, LocalDate to) {
         final Study study = studyService.getStudy(studyId, null)
                 .orElseThrow(() -> NotFoundException.Study(studyId));
         final Participant participant;
@@ -58,10 +56,10 @@ public class CalendarService {
         } else {
             participant = null;
         }
-        return getTimeline(study, participant, studyGroupId, referenceDate, from, to);
+        return getTimeline(study, participant, studyGroupId, observationGroupIds, referenceDate, from, to);
     }
 
-    public StudyTimeline getTimeline(Study study, Participant participant, Integer studyGroupId, Instant referenceDate, LocalDate from, LocalDate to) {
+    public StudyTimeline getTimeline(Study study, Participant participant, Integer studyGroupId, Collection<Integer> observationGroupIds, Instant referenceDate, LocalDate from, LocalDate to) {
         final Range<LocalDate> studyRange = Range.of(
                 Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
                 Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate()),
@@ -88,26 +86,32 @@ public class CalendarService {
         }
 
         /*
-         * effectiveGroup:
+         * effectiveStudyGroups:
          * (1) participant.group (if participant is provided)
          * (2) studyGroupId (if provided by user and participant is NOT provided)
          * (3) <unset> otherwise
          */
-        final Integer effectiveGroup;
+        final Integer effectiveStudyGroups;
         if (participant != null) {
-            effectiveGroup = participant.getStudyGroupId();
+            effectiveStudyGroups = participant.getStudyGroupId();
         } else {
-            effectiveGroup = studyGroupId;
+            effectiveStudyGroups = studyGroupId;
+        }
+        final Collection<Integer> effectiveObservationGroups;
+        if (participant != null) {
+            effectiveObservationGroups = participant.getObservationGroupIds();
+        } else {
+            effectiveObservationGroups = observationGroupIds == null ? Collections.emptyList() : observationGroupIds;
         }
 
-        final List<Observation> observations = observationService.listObservationsForGroup(study.getStudyId(), effectiveGroup);
-        final List<Intervention> interventions = interventionService.listInterventionsForGroup(study.getStudyId(), effectiveGroup);
+        final List<Observation> observations = observationService.listObservationsForGroup(study.getStudyId(), effectiveStudyGroups, effectiveObservationGroups);
+        final List<Intervention> interventions = interventionService.listInterventionsForGroup(study.getStudyId(), effectiveStudyGroups, effectiveObservationGroups);
 
         // Shift the effective study-start if the participant would miss a relative observation
         final LocalDate firstDayInStudy = SchedulerUtils.alignStartDateToSignupInstant(participantStart, observations);
 
         // now how long does the study run?
-        final Duration studyDuration = Optional.ofNullable(effectiveGroup)
+        final Duration studyDuration = Optional.ofNullable(effectiveStudyGroups)
                 .flatMap(eg -> studyService.getStudyDuration(study.getStudyId(), eg))
                 .or(() -> Optional.of(study.getDuration()))
                 .or(() -> Optional.of(new Duration()
