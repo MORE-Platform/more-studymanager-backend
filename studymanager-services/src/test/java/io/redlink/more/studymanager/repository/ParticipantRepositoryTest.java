@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.scheduling.config.TaskExecutionOutcome;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -24,6 +25,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Instant;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -187,6 +189,18 @@ class ParticipantRepositoryTest {
         Participant participant = participantRepository
                 .insert(new Participant().setStudyId(studyId).setRegistrationToken("abc"));
         assertThat(participant.getStudyGroupId()).isNull();
+    }
+
+    @Test
+    @DisplayName("Participants for closing")
+    void testClosing() {
+        Study study = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test")));
+        studyRepository.setStateById(study.getStudyId(), Study.Status.ACTIVE);
+        Participant participant = participantRepository
+                .insert(new Participant().setStudyId(study.getStudyId()).setRegistrationToken("abc").setStart(Instant.now()));
+        participantRepository.setStatusByIds(study.getStudyId(), participant.getParticipantId(), Participant.Status.ACTIVE);
+
+        var participants = participantRepository.listParticipantsForClosing();
     }
 
 }
