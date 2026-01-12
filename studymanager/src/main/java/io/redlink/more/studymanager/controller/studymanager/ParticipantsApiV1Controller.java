@@ -12,11 +12,14 @@ import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ParticipantsApi;
 import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;
 import io.redlink.more.studymanager.exception.NotFoundException;
+import io.redlink.more.studymanager.model.OccurredObservation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.properties.GatewayProperties;
+import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,23 +27,38 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ParticipantsApiV1Controller implements ParticipantsApi {
     private final ParticipantService service;
+    private final OccurredObservationService occurredObservationService;
     private final GatewayProperties gatewayProperties;
 
 
-    public ParticipantsApiV1Controller(ParticipantService service, GatewayProperties gatewayProperties) {
+    public ParticipantsApiV1Controller(ParticipantService service, OccurredObservationService occurredObservationService, GatewayProperties gatewayProperties) {
         this.service = service;
+        this.occurredObservationService = occurredObservationService;
         this.gatewayProperties = gatewayProperties;
     }
 
     private ParticipantDTO toParticipantDTO(Participant p) {
         return ParticipantTransformer.toParticipantDTO_V1(p, gatewayProperties);
     }
+    private ParticipantDTO.DataHealthIndicatorEnum getDataHealthIndicator(long studyId, int participantId) {
+        var now = Instant.now();
+        try (Stream<OccurredObservation> ooStream = occurredObservationService.streamActiveOccurredObservationsForParticipant(studyId, participantId, true)){
+            if(ooStream.anyMatch(it -> it.dataValid() == Boolean.FALSE ||
+                    (now.isAfter(it.end()) && it.dataState() != ObservationDataState.COMPLETE))){
+                return ParticipantDTO.DataHealthIndicatorEnum.ORANGE;
+            } else {
+                return ParticipantDTO.DataHealthIndicatorEnum.GREEN;
+            }
+        }
+   }
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
@@ -92,6 +110,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     public ResponseEntity<ParticipantDTO> getParticipant(Long studyId, Integer participantId) {
         return ResponseEntity.ok(
                 toParticipantDTO(service.getParticipant(studyId, participantId))
+                        .dataHealthIndicator(getDataHealthIndicator(studyId, participantId))
         );
     }
 

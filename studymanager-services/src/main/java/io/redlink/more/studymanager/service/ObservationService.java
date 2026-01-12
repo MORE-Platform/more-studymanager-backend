@@ -144,6 +144,10 @@ public class ObservationService {
         ).getView(viewName, studyGroupId, participantId, timerange);
     }
 
+    public Optional<ObservationFactory> getObservationFactory(Observation observation) {
+        return Optional.ofNullable(factory(observation));
+    }
+
     private ObservationFactory factory(Observation observation) {
         return observationFactories.get(observation.getType());
     }
