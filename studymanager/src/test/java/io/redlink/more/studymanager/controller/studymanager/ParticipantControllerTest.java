@@ -15,6 +15,7 @@ import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
+import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +23,8 @@ import java.time.Instant;
 import java.util.EnumSet;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -57,6 +60,9 @@ class ParticipantControllerTest {
     @MockitoBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
 
+    @MockitoBean
+    OccurredObservationService occurredObservationService;
+
     @Autowired
     private GatewayProperties gatewayProperties;
 
@@ -84,6 +90,7 @@ class ParticipantControllerTest {
                         EnumSet.allOf(PlatformRole.class)
                 )
         );
+        when(occurredObservationService.streamOccurredObservations(anyLong(),any(),any(),any(), any())).thenReturn(Stream.of());
     }
 
     @Test
