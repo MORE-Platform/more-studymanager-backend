@@ -187,7 +187,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
             return new ObservationValidationResult(false, ObservationDataState.MISSING);
         }
         if(observationDataSummary.numDocs() < 0) { //no data
-            return new ObservationValidationResult( false, ObservationDataState.MISSING);
+            return new ObservationValidationResult(false, ObservationDataState.MISSING);
         } else if(observationDataSummary.numDocs() > 1) {
             //only a single answer is allowed
             return new ObservationValidationResult(true, ObservationDataState.COMPLETE);
