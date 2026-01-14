@@ -126,7 +126,6 @@ class ElasticDataServiceTest {
 
     }
 
-
     public static SearchResponse<Void> deserializeJsonToSearchResponse(InputStream json) throws IOException {
         var jsonFactory = new JsonFactory();
         var jacksonParser = jsonFactory.createParser(json);

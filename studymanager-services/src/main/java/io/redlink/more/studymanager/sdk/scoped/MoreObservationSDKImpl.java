@@ -88,5 +88,4 @@ public class MoreObservationSDKImpl extends MorePlatformSDKImpl implements MoreO
         return sdk.queryData(viewConfig, studyId, studyGroupId, observationId, participantId, timerange);
     }
 
-
 }

@@ -72,7 +72,7 @@ public abstract class Observation<C extends ObservationProperties> extends Compo
      */
     public ObservationValidationResult validateData(Instant start, Instant end , ObservationDataSummary observationDataSummary) {
         if(observationDataSummary == null) { //null indicates some problem. This will cause the check to be repeated
-            return new ObservationValidationResult( false, ObservationDataState.MISSING);
+            return new ObservationValidationResult(false, ObservationDataState.MISSING);
         }
         if(observationDataSummary.numDocs() < 0) { //no data
             return new ObservationValidationResult( false, ObservationDataState.MISSING);
