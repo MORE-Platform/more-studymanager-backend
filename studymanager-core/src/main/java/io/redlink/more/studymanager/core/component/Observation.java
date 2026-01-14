@@ -70,7 +70,7 @@ public abstract class Observation<C extends ObservationProperties> extends Compo
      * @param observationDataSummary the summary over available observation data in the time series index for this observation and a specific participant
      * @return the validation result
      */
-    public ObservationValidationResult validateData(Instant start, Instant end , ObservationDataSummary observationDataSummary) {
+    public ObservationValidationResult validateData(Instant start, Instant end, ObservationDataSummary observationDataSummary) {
         if(observationDataSummary == null) { //null indicates some problem. This will cause the check to be repeated
             return new ObservationValidationResult(false, ObservationDataState.MISSING);
         }
