@@ -190,7 +190,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
             return new ObservationValidationResult( false, ObservationDataState.MISSING);
         } else if(observationDataSummary.numDocs() > 1) {
             //only a single answer is allowed
-            return new ObservationValidationResult( true, ObservationDataState.COMPLETE);
+            return new ObservationValidationResult(true, ObservationDataState.COMPLETE);
         } else {
             MeasurementSummary answerMeasurementSummary = observationDataSummary.measurements().stream()
                     .filter(it -> QuestionObservationFactory.FIELD_ANSWER.equals(it.getMeasurement().getId()))
@@ -198,7 +198,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
                     .orElse(null);
             boolean hasAnswers = answerMeasurementSummary != null &&
                     answerMeasurementSummary.getStringResult().values().stream().noneMatch(it -> it.value() != null);
-            return new ObservationValidationResult( !hasAnswers, ObservationDataState.COMPLETE);
+            return new ObservationValidationResult(!hasAnswers, ObservationDataState.COMPLETE);
         }
     }
 }
