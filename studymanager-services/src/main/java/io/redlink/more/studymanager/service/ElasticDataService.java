@@ -23,12 +23,14 @@ import io.redlink.more.studymanager.core.ui.DataViewData;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.StudyGroup;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -83,7 +85,7 @@ public class ElasticDataService {
                 .index(getStudyIdString(studyId))
                 .query(q -> q.bool(b -> b.filter(filters)))
                 .size(0);
-        if(measurementSet != null) {
+        if (measurementSet != null) {
             buildMeasurementSetAggregations(requestBuilder, measurementSet);
         } //else no data fields to validate ... just check if any documents are present
         final SearchRequest request = requestBuilder.build();
@@ -134,6 +136,7 @@ public class ElasticDataService {
         builder.aggregations("total_docs", Aggregation.of(a -> a.valueCount(v -> v.field("study_id.keyword"))));
         return builder;
     }
+
     private ObservationDataSummary parseValidationResults(MeasurementSet measurementSet, SearchResponse<Void> searchResponse, long studyId) {
         long numDocs;
         DateMeasurementSummary effectiveTime = null;
@@ -144,7 +147,7 @@ public class ElasticDataService {
             numDocs = searchResponse.hits().total().value();
         } else {
             ValueCountAggregate totalAgg = searchResponse.aggregations().get("total_docs").valueCount();
-            numDocs = (long)totalAgg.value();
+            numDocs = (long) totalAgg.value();
 
             // Parse effective_time_frame
             MinAggregate minEffAgg = searchResponse.aggregations().get("min_effective_time_frame").min();
@@ -169,7 +172,7 @@ public class ElasticDataService {
                 }
                 String field = "data_" + id;
                 Measurement.Type type = measurement.getType();
-                MeasurementSummary mv = new MeasurementSummary(measurement);
+                MeasurementSummary ms = new MeasurementSummary(measurement);
 
                 switch (type) {
                     case STRING:
@@ -182,7 +185,7 @@ public class ElasticDataService {
                             String value = "missing".equals(key) ? null : key;
                             stringValues.add(new StringFieldValue(value, count));
                         }
-                        mv.setStringResult(new StringMeasurementSummary(stringValues));
+                        ms.setStringResult(new StringMeasurementSummary(stringValues));
                         break;
                     case BOOLEAN:
                         String boolTermsName = field + "_counts";
@@ -203,7 +206,7 @@ public class ElasticDataService {
                             }
                             boolValues.add(new BooleanFieldValue(value, count));
                         }
-                        mv.setBooleanResult(new BooleanMeasurementSummary(boolValues));
+                        ms.setBooleanResult(new BooleanMeasurementSummary(boolValues));
                         break;
                     case INTEGER:
                     case DOUBLE:
@@ -216,7 +219,7 @@ public class ElasticDataService {
                         double avg = numericStats.avg();
                         double sum = numericStats.sum();
                         long missing = numericMiss.docCount();
-                        mv.setNumericResult(new NumericMeasurementSummary(min, max, avg, sum, missing));
+                        ms.setNumericResult(new NumericMeasurementSummary(min, max, avg, sum, missing));
                         break;
                     case DATE:
                         String dateStatsName = field + "_stats";
@@ -228,18 +231,19 @@ public class ElasticDataService {
                         double dateMaxVal = dateStats.max();
                         Instant dateMaxInst = (dateMaxVal == Double.NEGATIVE_INFINITY) ? null : Instant.ofEpochMilli((long) dateMaxVal);
                         long dateMissing = dateMiss.docCount();
-                        mv.setDateResult(new DateMeasurementSummary(dateMinInst, dateMaxInst, dateMissing));
+                        ms.setDateResult(new DateMeasurementSummary(dateMinInst, dateMaxInst, dateMissing));
                         break;
                     case OBJECT:
                         // do nothing
                         break;
                 }
-                measurements.add(mv);
+                measurements.add(ms);
             }
         }
 
         return new ObservationDataSummary(numDocs, effectiveTime, measurements);
     }
+
     private SearchRequest.Builder buildDataPreviewRequest(ViewConfig viewConfig, List<Query> filters, long studyId) {
         final var rows = viewConfig.rowAggregation();
         final var series = viewConfig.seriesAggregation();
@@ -288,23 +292,22 @@ public class ElasticDataService {
             return Function.identity();
         }
 
-        final Map<String, String> mapping =  switch (aggregation) {
-            case PARTICIPANT ->
-                participantService.listParticipants(studyId)
-                        .stream()
-                        .collect(Collectors.toMap(
-                                p -> ElasticService.getParticipantIdString(p.getParticipantId()),
-                                p -> String.format("%s (%d)", p.getAlias(), p.getParticipantId())
-                        ));
+        final Map<String, String> mapping = switch (aggregation) {
+            case PARTICIPANT -> participantService.listParticipants(studyId)
+                    .stream()
+                    .collect(Collectors.toMap(
+                            p -> ElasticService.getParticipantIdString(p.getParticipantId()),
+                            p -> String.format("%s (%d)", p.getAlias(), p.getParticipantId())
+                    ));
 
             case STUDY_GROUP -> {
                 final Map<String, String> m = new HashMap<>(
                         studyGroupService.listStudyGroups(studyId)
-                        .stream()
-                        .collect(Collectors.toMap(
-                                g -> ElasticService.getStudyGroupIdString(g.getStudyGroupId()),
-                                StudyGroup::getTitle
-                        ))
+                                .stream()
+                                .collect(Collectors.toMap(
+                                        g -> ElasticService.getStudyGroupIdString(g.getStudyGroupId()),
+                                        StudyGroup::getTitle
+                                ))
                 );
                 m.put(NO_GROUP_KEY, "i18n.global.placeholder.noGroup");
                 yield m;
