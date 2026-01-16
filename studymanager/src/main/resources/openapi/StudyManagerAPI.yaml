@@ -615,6 +615,48 @@ paths:
         '500':
           description: Error
 
+  /studies/{studyId}/occuredObserrvations:
+    get:
+      tags:
+        - occuredObserrvations
+      description: List of occurred observations of one specific participant
+      operationId: listOccurredObservations
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - name: participant
+          in: query
+          schema:
+            type: integer
+            format: int32
+        - name: observation
+          in: query
+          schema:
+            type: integer
+            format: int32
+        - name: from
+          in: query
+          description: default is entire time
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: default is now
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: operation successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OccurredObservation'
+        '404':
+          description: Not found
+
   /studies/{studyId}/observations:
     post:
       tags:
@@ -1326,7 +1368,7 @@ paths:
                   $ref: '#/components/schemas/DataPoint'
         '404':
           description: not found
-          
+
   /auditlog/study/{studyId}/export:
     parameters:
       - $ref: '#/components/parameters/StudyId'
@@ -1647,6 +1689,12 @@ components:
           readOnly: true
         status:
           $ref: '#/components/schemas/ParticipantStatus'
+        dataHealthIndicator:
+          type: string
+          enum:
+            - 'green'
+            - 'orange'
+            - 'red'
         start:
           type: string
           format: date-time
@@ -1715,6 +1763,33 @@ components:
           type: boolean
           default: false
 
+    OccurredObservation:
+      type: object
+      properties:
+        studyId:
+          $ref: '#/components/schemas/StudyId'
+        participant:
+          $ref: '#/components/schemas/Participant'
+        observation:
+          $ref: '#/components/schemas/Observation'
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        state:
+          type: string
+          enum:
+            - missing
+            - completed
+            - incomplete
+            - ongoing
+      required:
+        - studyId
+        - start
+        - end
+        - state
 
     StudyTimeline:
       type: object

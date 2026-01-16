@@ -9,12 +9,17 @@
 package io.redlink.more.studymanager.component.observation;
 
 import io.redlink.more.studymanager.core.component.Observation;
+import io.redlink.more.studymanager.core.datavalidity.MeasurementSummary;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataSummary;
+import io.redlink.more.studymanager.core.datavalidity.ObservationValidationResult;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.ui.*;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,7 +39,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
                         List.of(),
                         null,
                         ViewConfig.Aggregation.TERM_FIELD,
-                        new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
+                        new ViewConfig.Operation(ViewConfig.Operator.COUNT, QuestionObservationFactory.FIELD_ANSWER)
                 )
         ),
         answers_by_group("responseDistributionStudyGroup",
@@ -43,7 +48,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
                         List.of(),
                         ViewConfig.Aggregation.TERM_FIELD,
                         ViewConfig.Aggregation.STUDY_GROUP,
-                        new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
+                        new ViewConfig.Operation(ViewConfig.Operator.COUNT, QuestionObservationFactory.FIELD_ANSWER)
                 )
         ),
         group_by_answers("responseDistributionResponse",
@@ -52,7 +57,7 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
                         List.of(),
                         ViewConfig.Aggregation.STUDY_GROUP,
                         ViewConfig.Aggregation.TERM_FIELD,
-                        new ViewConfig.Operation(ViewConfig.Operator.COUNT, "answer")
+                        new ViewConfig.Operation(ViewConfig.Operator.COUNT, QuestionObservationFactory.FIELD_ANSWER)
                 )
         ),
         ;
@@ -174,5 +179,26 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
         }
 
         return new DataViewData(labels, rows);
+    }
+
+    @Override
+    public ObservationValidationResult validateData(Instant start, Instant end, ObservationDataSummary observationDataSummary) {
+        if(observationDataSummary == null) { //null indicates some problem. This will cause the check to be repeated
+            return new ObservationValidationResult(false, ObservationDataState.MISSING);
+        }
+        if(observationDataSummary.numDocs() < 0) { //no data
+            return new ObservationValidationResult(false, ObservationDataState.MISSING);
+        } else if(observationDataSummary.numDocs() > 1) {
+            //only a single answer is allowed
+            return new ObservationValidationResult(true, ObservationDataState.COMPLETE);
+        } else {
+            MeasurementSummary answerMeasurementSummary = observationDataSummary.measurements().stream()
+                    .filter(it -> QuestionObservationFactory.FIELD_ANSWER.equals(it.getMeasurement().getId()))
+                    .findFirst()
+                    .orElse(null);
+            boolean hasAnswers = answerMeasurementSummary != null &&
+                    answerMeasurementSummary.getStringResult().values().stream().noneMatch(it -> it.value() != null);
+            return new ObservationValidationResult(!hasAnswers, ObservationDataState.COMPLETE);
+        }
     }
 }

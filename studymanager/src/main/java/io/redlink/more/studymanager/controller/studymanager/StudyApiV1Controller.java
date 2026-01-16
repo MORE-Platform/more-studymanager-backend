@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
+import io.redlink.more.studymanager.api.v1.model.OccurredObservationDTO;
 import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.api.v1.webservices.StudiesApi;
@@ -18,6 +19,8 @@ import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyTransformer;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyService;
+
+import java.time.Instant;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,4 +108,5 @@ public class StudyApiV1Controller implements StudiesApi {
                         .map(StudyTransformer::toStudyDTO_V1)
         );
     }
+
 }
