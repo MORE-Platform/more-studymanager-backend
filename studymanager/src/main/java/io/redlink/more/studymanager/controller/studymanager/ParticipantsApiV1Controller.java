@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -50,9 +51,12 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     }
     private ParticipantDTO.DataHealthIndicatorEnum getDataHealthIndicator(long studyId, int participantId) {
         var now = Instant.now();
-        try (Stream<OccurredObservation> ooStream = occurredObservationService.streamActiveOccurredObservationsForParticipant(studyId, participantId, true)){
+        try (Stream<OccurredObservation> ooStream = occurredObservationService.streamOccurredObservations(
+                studyId, participantId, null,
+                true, EnumSet.complementOf(EnumSet.of(ObservationDataState.COMPLETE)))){
             if(ooStream.anyMatch(it -> it.dataValid() == Boolean.FALSE ||
-                    (now.isAfter(it.end()) && it.dataState() != ObservationDataState.COMPLETE))){
+                    now.isAfter(it.end()) ||
+                    (now.isAfter(it.start()) && it.dataState() != ObservationDataState.INCOMPLETE))){
                 return ParticipantDTO.DataHealthIndicatorEnum.ORANGE;
             } else {
                 return ParticipantDTO.DataHealthIndicatorEnum.GREEN;
@@ -121,6 +125,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
         return ResponseEntity.ok(
                 service.listParticipants(studyId).stream()
                         .map(this::toParticipantDTO)
+                        .map(it -> it.dataHealthIndicator(getDataHealthIndicator(studyId, it.getParticipantId())))
                         .toList()
         );
     }
@@ -134,6 +139,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
         );
         return ResponseEntity.status(HttpStatus.OK).body(
                 toParticipantDTO(participant)
+                        .dataHealthIndicator(getDataHealthIndicator(studyId, participant.getParticipantId()))
         );
     }
 }
