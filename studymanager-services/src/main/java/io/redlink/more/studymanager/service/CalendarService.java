@@ -109,8 +109,8 @@ public class CalendarService {
         // now how long does the study run?
         final Duration studyDuration = Optional.ofNullable(effectiveGroup)
                 .flatMap(eg -> studyService.getStudyDuration(study.getStudyId(), eg))
-                .or(() -> Optional.of(study.getDuration()))
-                .or(() -> Optional.of(new Duration()
+                .or(() -> Optional.ofNullable(study.getDuration()))
+                .or(() -> Optional.ofNullable(new Duration()
                         .setValue(
                                 (int) ChronoUnit.DAYS.between(
                                         Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
