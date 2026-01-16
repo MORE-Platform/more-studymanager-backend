@@ -132,10 +132,10 @@ public class CalendarService {
                 firstDayInStudy.atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
                 lastDayInStudy.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
         );
-        final Range<Instant> filterWindow = Range.of(
-                from.atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
-                to.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
-        );
+        //final Range<Instant> filterWindow = Range.of(
+        //        from == null ? Instant.MIN : from.atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
+        //        to == null ? Instant.MAX : to.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
+        //);
 
         return new StudyTimeline(
                 participantStart,
