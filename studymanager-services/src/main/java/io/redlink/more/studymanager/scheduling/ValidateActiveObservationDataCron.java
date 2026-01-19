@@ -16,8 +16,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 public class ValidateActiveObservationDataCron {
@@ -48,6 +53,14 @@ public class ValidateActiveObservationDataCron {
 
     @Scheduled(cron="30 */5 * * * ?") //every 5min, 30sec after updating active observation data
     public void validateActiveObservationData(){
+        final Instant now = Instant.now();
+        final LocalTime currentTime = LocalTime.ofInstant(now, ZoneId.systemDefault());
+        //once a day validate all occurrencies
+        final boolean validateAll = currentTime.getHour() < 1 && currentTime.getMinute() < 5;
+        log.info("validate Observation Data (mode: {})", validateAll ? "full" : "partial");
+        final Set<ObservationDataState> validateStates = validateAll
+                ? EnumSet.allOf(ObservationDataState.class)
+                : EnumSet.complementOf(EnumSet.of(ObservationDataState.COMPLETE));
         Map<String, ObservationFactory>  observationFactories = new HashMap<>();
         studyService.getStudiesByStates(Study.Status.ACTIVE_STATES).forEach(study -> {
             //NOTE: OccurredObservations will refer the same observations and participants several times, A single lookup
@@ -55,15 +68,16 @@ public class ValidateActiveObservationDataCron {
             Map<Integer, Observation> observationCache = new HashMap<>();
             Map<Integer, Participant> participantCache = new HashMap<>();
             Map<Integer, io.redlink.more.studymanager.core.component.Observation> observationComponentCache = new HashMap<>();
-            try (var ooStrem = occurredObservationService.streamActiveOccurredObservations(study.getStudyId(), false)) {
-                ooStrem.forEach(occuredObservation ->
-                    validateOccurrence(
-                            study,
-                            occuredObservation,
-                            observationCache,
-                            observationFactories,
-                            observationComponentCache,
-                            participantCache));
+            try (var ooStrem = occurredObservationService.streamOccurredObservations(study.getStudyId(), null, null, validateAll, validateStates)) {
+                ooStrem
+                    .filter(oo -> validateAll || oo.end().plus(1, ChronoUnit.DAYS).isAfter(now))
+                    .forEach(occurredObservation -> validateOccurrence(
+                        study,
+                        occurredObservation,
+                        observationCache,
+                        observationFactories,
+                        observationComponentCache,
+                        participantCache));
             }
         });
     }
@@ -110,6 +124,7 @@ public class ValidateActiveObservationDataCron {
         final OccurredObservation updatedOccurredObservation;
         if(validationResults != null) {
             var validationResult = ctx.observationComponent.validateData(ctx.occurrence.start(), ctx.occurrence.end(), validationResults);
+            log.debug("validated {}: results: {}, state: {}", ctx.occurrence, validationResults, validationResult);
             updatedOccurredObservation = new OccurredObservation(
                     ctx.occurrence.studyId(),
                     ctx.occurrence.observationId(),
@@ -121,6 +136,7 @@ public class ValidateActiveObservationDataCron {
                     ctx.occurrence.properties()
             );
         } else { //validation failed
+            log.debug("validation of {} failed. Set OccurredObservation to state MISSING", ctx.occurrence);
             updatedOccurredObservation = new OccurredObservation(
                     ctx.occurrence.studyId(),
                     ctx.occurrence.observationId(),

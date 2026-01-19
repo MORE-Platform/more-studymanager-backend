@@ -9,7 +9,7 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.OccurredObservationDTO;
-import io.redlink.more.studymanager.api.v1.webservices.OccuredObserrvationsApi;
+import io.redlink.more.studymanager.api.v1.webservices.OccuredObservationsApi;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.model.transformer.OccurredObservationTransformer;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
-public class OccurredObservationsApiV1Controller implements OccuredObserrvationsApi {
+public class OccurredObservationsApiV1Controller implements OccuredObservationsApi {
 
     private final OccurredObservationService ooService;
     private final ParticipantService participantService;
