@@ -21,6 +21,8 @@ import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +37,7 @@ import java.util.stream.Stream;
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ParticipantsApiV1Controller implements ParticipantsApi {
+    private static final Logger log = LoggerFactory.getLogger(ParticipantsApiV1Controller.class);
     private final ParticipantService service;
     private final OccurredObservationService occurredObservationService;
     private final GatewayProperties gatewayProperties;
@@ -54,9 +57,11 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
         try (Stream<OccurredObservation> ooStream = occurredObservationService.streamOccurredObservations(
                 studyId, participantId, null,
                 true, EnumSet.complementOf(EnumSet.of(ObservationDataState.COMPLETE)))){
-            if(ooStream.anyMatch(it -> it.dataValid() == Boolean.FALSE ||
-                    now.isAfter(it.end()) ||
-                    (now.isAfter(it.start()) && it.dataState() != ObservationDataState.INCOMPLETE))){
+            var oos = ooStream.toList();
+            log.debug("data health for participant {} of study {}: {}", participantId, studyId, oos);
+            if(oos.stream().anyMatch(it -> it.dataValid() == Boolean.FALSE ||
+                    (it.dataState() != ObservationDataState.COMPLETE && now.isAfter(it.end())) ||
+                    (it.dataState() != ObservationDataState.INCOMPLETE && now.isAfter(it.start())))){
                 return ParticipantDTO.DataHealthIndicatorEnum.ORANGE;
             } else {
                 return ParticipantDTO.DataHealthIndicatorEnum.GREEN;
