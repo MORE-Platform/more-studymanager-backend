@@ -22,13 +22,13 @@ public class OccurredObservationTransformer {
                         toStateEnum(ood.occurredObservation().dataState()));
     }
 
-
     private static OccurredObservationDTO.StateEnum toStateEnum(ObservationDataState state) {
-        try {
-            return OccurredObservationDTO.StateEnum.valueOf(state.name());
-        } catch (IllegalArgumentException e) {
-            log.error("Unable to convert ObservationDataState {} to OccurredObservationDTO.StateEnum! Use MISSING as fallback.", state.name(), e);
-            return OccurredObservationDTO.StateEnum.MISSING;
+        switch (state) {
+            case COMPLETE: return  OccurredObservationDTO.StateEnum.COMPLETED;
+            case MISSING: return  OccurredObservationDTO.StateEnum.MISSING;
+            case INCOMPLETE: return  OccurredObservationDTO.StateEnum.INCOMPLETE;
+            case PARTIAL: return OccurredObservationDTO.StateEnum.ONGOING;
+            default: throw new IllegalStateException("Unexpected OccurredObservation state " + state);
         }
     }
 }
