@@ -56,7 +56,9 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
         var now = Instant.now();
         try (Stream<OccurredObservation> ooStream = occurredObservationService.streamOccurredObservations(
                 studyId, participantId, null,
-                true, EnumSet.complementOf(EnumSet.of(ObservationDataState.COMPLETE)))){
+                true,
+                null //EnumSet.complementOf(EnumSet.of(ObservationDataState.COMPLETE))
+                )){
             var oos = ooStream.toList();
             log.debug("data health for participant {} of study {}: {}", participantId, studyId, oos);
             if(oos.stream().anyMatch(it -> it.dataValid() == Boolean.FALSE ||
