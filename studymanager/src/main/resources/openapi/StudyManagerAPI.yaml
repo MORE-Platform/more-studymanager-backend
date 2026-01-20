@@ -1,4 +1,4 @@
-openapi: 3.0.2
+openapi: 3.0.3
 info:
   version: 1.0.0
   title: StudyManager API
@@ -1832,11 +1832,6 @@ components:
             - $ref: './RelativeEvent.yaml/#/components/schemas/RelativeEvent'
           discriminator:
             propertyName: type
-            # mapping:
-            #   event:
-            #     $ref: './Event.yaml/#/components/schemas/Event'
-            #   relativeEvent:
-            #     $ref: './RelativeEvent.yaml/#/components/schemas/RelativeEvent'
         created:
           type: string
           format: date-time
