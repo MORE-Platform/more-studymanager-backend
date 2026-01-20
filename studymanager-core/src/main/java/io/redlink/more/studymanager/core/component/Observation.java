@@ -74,7 +74,7 @@ public abstract class Observation<C extends ObservationProperties> extends Compo
         if(observationDataSummary == null) { //null indicates some problem. This will cause the check to be repeated
             return new ObservationValidationResult(false, ObservationDataState.MISSING);
         }
-        if(observationDataSummary.numDocs() < 0) { //no data
+        if(observationDataSummary.numDocs() <= 0) { //no data
             return new ObservationValidationResult(false, ObservationDataState.MISSING);
         }
         //the default implementation assumes an observation to be complete if any data are availale

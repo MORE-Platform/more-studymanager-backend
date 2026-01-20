@@ -186,12 +186,12 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
         if(observationDataSummary == null) { //null indicates some problem. This will cause the check to be repeated
             return new ObservationValidationResult(false, ObservationDataState.MISSING);
         }
-        if(observationDataSummary.numDocs() < 0) { //no data
+        if(observationDataSummary.numDocs() <= 0) { //no data
             return new ObservationValidationResult(false, ObservationDataState.MISSING);
         } else if(observationDataSummary.numDocs() > 1) {
             //only a single answer is allowed
             return new ObservationValidationResult(true, ObservationDataState.COMPLETE);
-        } else {
+        } else { //exactly one result
             MeasurementSummary answerMeasurementSummary = observationDataSummary.measurements().stream()
                     .filter(it -> QuestionObservationFactory.FIELD_ANSWER.equals(it.getMeasurement().getId()))
                     .findFirst()
