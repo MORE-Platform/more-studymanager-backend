@@ -11,10 +11,8 @@ package io.redlink.more.studymanager.repository;
 import com.google.common.base.Supplier;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Participant;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
+import io.redlink.more.studymanager.utils.MapperUtils;
+import jakarta.annotation.PostConstruct;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -25,6 +23,11 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNullableIntegerValue;
 import static io.redlink.more.studymanager.repository.RepositoryUtils.intReader;
@@ -41,53 +44,53 @@ public class ParticipantRepository {
             """;
     private static final String GET_PARTICIPANT_BY_IDS =
             "SELECT " +
-            "    p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, " +
-            "    p.modified, p.start, ARRAY_AGG(pog.observation_group_id) FILTER (WHERE pog.observation_group_id IS NOT NULL) AS observation_group_ids " +
-            "FROM participants p " +
-            "    LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id " +
-            "    LEFT JOIN participant_observation_groups pog ON p.study_id = pog.study_id AND p.participant_id = pog.participant_id " +
-            "WHERE p.study_id = ? AND p.participant_id = ? " +
-            "GROUP BY p.study_id, p.participant_id, r.token";
+                    "    p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, " +
+                    "    p.modified, p.start, ARRAY_AGG(pog.observation_group_id) FILTER (WHERE pog.observation_group_id IS NOT NULL) AS observation_group_ids " +
+                    "FROM participants p " +
+                    "    LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id " +
+                    "    LEFT JOIN participant_observation_groups pog ON p.study_id = pog.study_id AND p.participant_id = pog.participant_id " +
+                    "WHERE p.study_id = ? AND p.participant_id = ? " +
+                    "GROUP BY p.study_id, p.participant_id, r.token";
     private static final String LIST_PARTICIPANTS_BY_STUDY =
             "SELECT " +
-            "    p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, " +
-            "    p.modified, p.start, ARRAY_AGG(pog.observation_group_id) FILTER (WHERE pog.observation_group_id IS NOT NULL) AS observation_group_ids " +
-            "FROM participants p " +
-            "    LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id " +
-            "    LEFT JOIN participant_observation_groups pog ON p.study_id = pog.study_id AND p.participant_id = pog.participant_id " +
-            "WHERE p.study_id = ? " +
-            "GROUP BY p.study_id, p.participant_id, r.token";
+                    "    p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, " +
+                    "    p.modified, p.start, ARRAY_AGG(pog.observation_group_id) FILTER (WHERE pog.observation_group_id IS NOT NULL) AS observation_group_ids " +
+                    "FROM participants p " +
+                    "    LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id " +
+                    "    LEFT JOIN participant_observation_groups pog ON p.study_id = pog.study_id AND p.participant_id = pog.participant_id " +
+                    "WHERE p.study_id = ? " +
+                    "GROUP BY p.study_id, p.participant_id, r.token";
     private static final String DELETE_PARTICIPANT =
             "DELETE FROM participants " +
-            "WHERE study_id=? AND participant_id=?";
+                    "WHERE study_id=? AND participant_id=?";
     private static final String UPDATE_PARTICIPANT =
             "UPDATE participants " +
-            "SET alias = :alias, study_group_id = :study_group_id, modified = now() " +
-            "WHERE study_id = :study_id AND participant_id = :participant_id";
+                    "SET alias = :alias, study_group_id = :study_group_id, modified = now() " +
+                    "WHERE study_id = :study_id AND participant_id = :participant_id";
     private static final String SET_STATUS =
             "UPDATE participants p SET status = :status::participant_status, modified = now() " +
-            "WHERE study_id = :study_id AND participant_id = :participant_id " +
-            "RETURNING *, " +
-            "    (SELECT token FROM registration_tokens t WHERE t.study_id = p.study_id AND t.participant_id = p.participant_id ) as token, " +
-            "    (SELECT ARRAY_AGG(observation_group_id) FROM participant_observation_groups pog WHERE pog.study_id = p.study_id AND pog.participant_id = p.participant_id ) as observation_group_ids";
+                    "WHERE study_id = :study_id AND participant_id = :participant_id " +
+                    "RETURNING *, " +
+                    "    (SELECT token FROM registration_tokens t WHERE t.study_id = p.study_id AND t.participant_id = p.participant_id ) as token, " +
+                    "    (SELECT ARRAY_AGG(observation_group_id) FROM participant_observation_groups pog WHERE pog.study_id = p.study_id AND pog.participant_id = p.participant_id ) as observation_group_ids";
     private static final String SET_STATUS_IF =
             "UPDATE participants p SET status= :new_status::participant_status, modified = now() " +
-            "WHERE study_id = :study_id AND participant_id = :participant_id " +
-            "   AND status = :current_status::participant_status " +
-            "RETURNING *, (SELECT token FROM registration_tokens t WHERE t.study_id = p.study_id AND t.participant_id = p.participant_id ) as token";
+                    "WHERE study_id = :study_id AND participant_id = :participant_id " +
+                    "   AND status = :current_status::participant_status " +
+                    "RETURNING *, (SELECT token FROM registration_tokens t WHERE t.study_id = p.study_id AND t.participant_id = p.participant_id ) as token";
 
     private static final String LIST_PARTICIPANTS_FOR_CLOSING =
             "SELECT DISTINCT p.*, 't' as token, ARRAY_AGG(pog.observation_group_id) AS observation_group_ids " +
-            "FROM studies s " +
-            "    JOIN participants p ON s.study_id = p.study_id " +
-            "    LEFT JOIN study_groups sg ON p.study_group_id = sg.study_group_id AND p.study_id = sg.study_id " +
-            "    LEFT JOIN participant_observation_groups pog ON p.study_id = pog.study_id AND p.participant_id = pog.participant_id " +
-            "WHERE s.status = 'active' " +
-            "  AND p.status = 'active' " +
-            "  AND  p.start IS NOT NULL " +
-            "  AND COALESCE(sg.duration, s.duration) IS NOT NULL " +
-            "  AND (p.start + ((COALESCE(sg.duration, s.duration)->>'value')::int || ' ' || (COALESCE(sg.duration, s.duration)->>'unit'))::interval) < NOW()" +
-            "GROUP BY p.study_id, p.participant_id";
+                    "FROM studies s " +
+                    "    JOIN participants p ON s.study_id = p.study_id " +
+                    "    LEFT JOIN study_groups sg ON p.study_group_id = sg.study_group_id AND p.study_id = sg.study_id " +
+                    "    LEFT JOIN participant_observation_groups pog ON p.study_id = pog.study_id AND p.participant_id = pog.participant_id " +
+                    "WHERE s.status = 'active' " +
+                    "  AND p.status = 'active' " +
+                    "  AND  p.start IS NOT NULL " +
+                    "  AND COALESCE(sg.duration, s.duration) IS NOT NULL " +
+                    "  AND (p.start + ((COALESCE(sg.duration, s.duration)->>'value')::int || ' ' || (COALESCE(sg.duration, s.duration)->>'unit'))::interval) < NOW()" +
+                    "GROUP BY p.study_id, p.participant_id";
 
     /*
      * SQL Statements for managing participant_observation_groups mapping for participants
@@ -100,13 +103,22 @@ public class ParticipantRepository {
             "INSERT INTO participant_observation_groups (study_id, participant_id, observation_group_id) " +
                     "SELECT :study_id, :participant_id, unnest(:observation_group_ids::int[]);";
 
+    private static final String GET_PARTICIPANT_OBSERVATION_PROPERTIES = "SELECT properties FROM participant_observation_properties WHERE participant_id = :participant_id AND study_id = :study_id AND observation_id = :observation_id";
+
     private static final String DELETE_ALL = "DELETE FROM participants";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
+    private static ParticipantRepository instance;
+
     public ParticipantRepository(JdbcTemplate template) {
         this.template = template;
         this.namedTemplate = new NamedParameterJdbcTemplate(template);
+    }
+
+    @PostConstruct
+    public void setInstance() {
+        instance = this;
     }
 
     @Transactional
@@ -145,6 +157,7 @@ public class ParticipantRepository {
 
     /**
      * Updates the participant and the {@link Participant#getObservationGroupIds()}
+     *
      * @param participant
      * @return the updated participant as stored in the database
      */
@@ -162,6 +175,23 @@ public class ParticipantRepository {
                         .addValue("status", RepositoryUtils.toParam(status)),
                 getParticipantRowMapper()
         ).stream().findFirst();
+    }
+
+    @Transactional
+    public Optional<Map<String, Object>> getParticipantWithObservationProperties(Long studyId, Integer participantId, Integer observationId) {
+        try {
+            return namedTemplate.query(
+                    GET_PARTICIPANT_OBSERVATION_PROPERTIES,
+                    new MapSqlParameterSource()
+                            .addValue("study_id", studyId)
+                            .addValue("participant_id", participantId)
+                            .addValue("observation_id", observationId),
+                    (rs, rowNum) ->
+                            (Map<String, Object>) MapperUtils.readValue(rs.getObject("properties"), Map.class)
+            ).stream().findFirst();
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
     @Transactional
@@ -238,10 +268,13 @@ public class ParticipantRepository {
     private void setParticipantObservationGroupIds(Long studyId, Integer participantId, Set<Integer> observationGroupIds) {
         final var params = toParams(studyId, participantId);
         namedTemplate.update(DELETE_PARTICIPANT_OBSERVATION_GROUP_IDS, params);
-        if(observationGroupIds != null && !observationGroupIds.isEmpty()) {
+        if (observationGroupIds != null && !observationGroupIds.isEmpty()) {
             params.addValue("observation_group_ids", observationGroupIds.toArray(new Integer[0]));
             namedTemplate.update(SET_PARTICIPANT_OBSERVATION_GROUP_IDS, params);
         }
     }
 
+    public static ParticipantRepository getInstance() {
+        return instance;
+    }
 }

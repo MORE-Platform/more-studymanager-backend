@@ -19,15 +19,20 @@ import io.redlink.more.studymanager.model.timeline.InterventionTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
 import io.redlink.more.studymanager.utils.SchedulerUtils;
+import org.apache.commons.lang3.Range;
+import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.Range;
-import org.springframework.stereotype.Service;
 
 
 @Service
@@ -147,7 +152,7 @@ public class CalendarService {
                 observations.stream()
                         .flatMap(o -> SchedulerUtils
                                 .parseToObservationSchedules(
-                                        o.getSchedule(), effectiveRange.getMinimum(), effectiveRange.getMaximum()
+                                        o.getSchedule(), effectiveRange.getMinimum(), effectiveRange.getMaximum(), study.getStudyId(), participant.getParticipantId(), o.getObservationId()
                                 )
                                 .stream()
                                 // Disabled client-side filter for now...

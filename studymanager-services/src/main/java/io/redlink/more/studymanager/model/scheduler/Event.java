@@ -9,6 +9,9 @@
 package io.redlink.more.studymanager.model.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
+
 import java.time.Instant;
 
 public class Event implements ScheduleEvent {
@@ -20,7 +23,7 @@ public class Event implements ScheduleEvent {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant dateEnd;
     private RecurrenceRule recurrenceRule;
-    private Randomization randomization;
+    private Randomization randomization = Randomization.none;
 
     @Override
     public String getType() {
@@ -58,6 +61,7 @@ public class Event implements ScheduleEvent {
         return randomization;
     }
 
+    @JsonSetter(value = "randomization", nulls = Nulls.SKIP)
     public Event setRandomization(Randomization randomization) {
         this.randomization = randomization;
         return this;

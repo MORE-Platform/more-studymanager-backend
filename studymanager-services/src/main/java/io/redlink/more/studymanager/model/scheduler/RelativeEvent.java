@@ -9,6 +9,8 @@
 package io.redlink.more.studymanager.model.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RelativeEvent implements ScheduleEvent {
@@ -21,7 +23,7 @@ public class RelativeEvent implements ScheduleEvent {
 
     private RelativeRecurrenceRule rrrule;
 
-    private Randomization randomization;
+    private Randomization randomization = Randomization.none;
 
     public RelativeEvent() {
     }
@@ -62,6 +64,7 @@ public class RelativeEvent implements ScheduleEvent {
         return randomization;
     }
 
+    @JsonSetter(value = "randomization", nulls = Nulls.SKIP)
     public RelativeEvent setRandomization(Randomization randomization) {
         this.randomization = randomization;
         return this;
