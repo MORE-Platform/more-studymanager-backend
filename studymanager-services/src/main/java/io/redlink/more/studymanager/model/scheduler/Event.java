@@ -20,6 +20,7 @@ public class Event implements ScheduleEvent {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant dateEnd;
     private RecurrenceRule recurrenceRule;
+    private Randomization randomization;
 
     @Override
     public String getType() {
@@ -53,5 +54,12 @@ public class Event implements ScheduleEvent {
         return this;
     }
 
+    public Randomization getRandomization() {
+        return randomization;
+    }
 
+    public Event setRandomization(Randomization randomization) {
+        this.randomization = randomization;
+        return this;
+    }
 }
