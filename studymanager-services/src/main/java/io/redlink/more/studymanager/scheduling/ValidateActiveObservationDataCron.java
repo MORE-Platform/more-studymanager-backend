@@ -124,7 +124,7 @@ public class ValidateActiveObservationDataCron {
         final OccurredObservation updatedOccurredObservation;
         if(validationResults != null) {
             var validationResult = ctx.observationComponent.validateData(ctx.occurrence.start(), ctx.occurrence.end(), validationResults);
-            log.trace("validated {}: results: {}, state: {}", ctx.occurrence, validationResults, validationResult);
+            log.debug("validated {}: results: {}, state: {}", ctx.occurrence, validationResults, validationResult);
             updatedOccurredObservation = new OccurredObservation(
                     ctx.occurrence.studyId(),
                     ctx.occurrence.observationId(),
