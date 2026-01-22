@@ -9,12 +9,13 @@
 package io.redlink.more.studymanager.core.component;
 
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.factory.ComponentFactory;
 import io.redlink.more.studymanager.core.properties.ComponentProperties;
 
-public abstract class Component<C extends ComponentProperties> {
-    protected final C properties;
+public abstract class Component<P extends ComponentProperties> {
+    protected final P properties;
 
-    Component(C properties) throws ConfigurationValidationException {
+    Component(P properties) throws ConfigurationValidationException {
         this.properties = properties;
     }
 

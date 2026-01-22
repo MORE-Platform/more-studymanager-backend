@@ -113,8 +113,8 @@ public class CalendarService {
         // now how long does the study run?
         final Duration studyDuration = Optional.ofNullable(effectiveStudyGroups)
                 .flatMap(eg -> studyService.getStudyDuration(study.getStudyId(), eg))
-                .or(() -> Optional.of(study.getDuration()))
-                .or(() -> Optional.of(new Duration()
+                .or(() -> Optional.ofNullable(study.getDuration()))
+                .or(() -> Optional.ofNullable(new Duration()
                         .setValue(
                                 (int) ChronoUnit.DAYS.between(
                                         Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
@@ -136,10 +136,10 @@ public class CalendarService {
                 firstDayInStudy.atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
                 lastDayInStudy.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
         );
-        final Range<Instant> filterWindow = Range.of(
-                from.atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
-                to.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
-        );
+        //final Range<Instant> filterWindow = Range.of(
+        //        from == null ? Instant.MIN : from.atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
+        //        to == null ? Instant.MAX : to.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
+        //);
 
         return new StudyTimeline(
                 participantStart,
