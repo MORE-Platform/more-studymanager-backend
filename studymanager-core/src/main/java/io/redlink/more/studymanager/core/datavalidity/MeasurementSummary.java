@@ -2,6 +2,8 @@ package io.redlink.more.studymanager.core.datavalidity;
 
 import io.redlink.more.studymanager.core.measurement.Measurement;
 
+import java.util.Objects;
+
 public class MeasurementSummary {
     private final Measurement measurement;
     private NumericMeasurementSummary numericResult;
@@ -73,4 +75,27 @@ public class MeasurementSummary {
         return dateResult;
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        MeasurementSummary that = (MeasurementSummary) o;
+        return Objects.equals(measurement, that.measurement) && Objects.equals(numericResult, that.numericResult) && Objects.equals(stringResult, that.stringResult) && Objects.equals(booleanResult, that.booleanResult) && Objects.equals(dateResult, that.dateResult);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(measurement, numericResult, stringResult, booleanResult, dateResult);
+    }
+
+    @Override
+    public String toString() {
+        return "MeasurementSummary{" +
+                "measurement=" + measurement +
+                ", numericResult=" + numericResult +
+                ", stringResult=" + stringResult +
+                ", booleanResult=" + booleanResult +
+                ", dateResult=" + dateResult +
+                '}';
+    }
 }
