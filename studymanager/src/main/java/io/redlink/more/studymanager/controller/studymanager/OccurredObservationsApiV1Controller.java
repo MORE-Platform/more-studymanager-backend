@@ -17,6 +17,8 @@ import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.ObservationService;
 import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +36,7 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 public class OccurredObservationsApiV1Controller implements OccurredObservationsApi {
 
+    private static final Logger log = LoggerFactory.getLogger(OccurredObservationsApiV1Controller.class);
     private final OccurredObservationService ooService;
     private final ParticipantService participantService;
     private final ObservationService observationService;
@@ -67,7 +70,8 @@ public class OccurredObservationsApiV1Controller implements OccurredObservations
                     .sorted(Comparator.comparing(OccurredObservation::start).reversed().thenComparing(OccurredObservation::end))
                     .toList();
         }
-
+        log.debug("Occurred observations for Study {}, participant: {}, observation {} timespan:[{},{}]: {}",
+                studyId, participant, observation, from, to, occurredObservations);
         //retrieve all participants and observations referenced by OccurredObservations
         var referencedParticipants = occurredObservations.stream()
                 .map(OccurredObservation::participantId)

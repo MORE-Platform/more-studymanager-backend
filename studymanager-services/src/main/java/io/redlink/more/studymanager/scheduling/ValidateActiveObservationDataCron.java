@@ -50,13 +50,13 @@ public class ValidateActiveObservationDataCron {
     }
 
 
-
+    //TODO: Make schedules configureable
     @Scheduled(cron="30 */5 * * * ?") //every 5min, 30sec after updating active observation data
     public void validateActiveObservationData(){
         final Instant now = Instant.now();
         final LocalTime currentTime = LocalTime.ofInstant(now, ZoneId.systemDefault());
-        //once a day validate all occurrencies
-        final boolean validateAll = currentTime.getHour() < 1 && currentTime.getMinute() < 5;
+        //once every hour validate all occurred observations
+        final boolean validateAll = currentTime.getMinute() < 5; //&& currentTime.getHour() < 1
         log.info("validate Observation Data (mode: {})", validateAll ? "full" : "partial");
         final Set<ObservationDataState> validateStates = validateAll
                 ? EnumSet.allOf(ObservationDataState.class)
