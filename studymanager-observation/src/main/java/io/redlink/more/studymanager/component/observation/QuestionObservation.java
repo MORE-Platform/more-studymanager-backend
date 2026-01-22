@@ -197,8 +197,8 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
                     .findFirst()
                     .orElse(null);
             boolean hasAnswers = answerMeasurementSummary != null &&
-                    answerMeasurementSummary.getStringResult().values().stream().noneMatch(it -> it.value() != null);
-            return new ObservationValidationResult(!hasAnswers, ObservationDataState.COMPLETE);
+                    answerMeasurementSummary.getStringResult().values().stream().noneMatch(it -> it.value() == null);
+            return new ObservationValidationResult(!hasAnswers, hasAnswers ? ObservationDataState.COMPLETE : ObservationDataState.MISSING);
         }
     }
 }
