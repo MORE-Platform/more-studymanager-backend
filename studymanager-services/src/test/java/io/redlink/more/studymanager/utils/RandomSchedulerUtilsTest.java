@@ -428,19 +428,19 @@ class RandomSchedulerUtilsTest {
                 Range.of(Instant.parse("2024-01-01T00:00:00Z"), Instant.parse("2024-01-01T01:00:00Z"))
         );
 
-        List<Range<Instant>> result = RandomSchedulerUtils.parseScheduleWithSeed(null, ranges, 600);
+        List<Range<Instant>> result = RandomSchedulerUtils.parseScheduleWithSeed(null, ranges, 600L);
         assertEquals(Collections.emptyList(), result);
     }
 
     @Test
     void testParseScheduleWithSeed_NullRanges_ReturnsEmpty() {
-        List<Range<Instant>> result = RandomSchedulerUtils.parseScheduleWithSeed(123L, null, 600);
+        List<Range<Instant>> result = RandomSchedulerUtils.parseScheduleWithSeed(123L, null, 600L);
         assertEquals(Collections.emptyList(), result);
     }
 
     @Test
     void testParseScheduleWithSeed_EmptyRanges_ReturnsEmpty() {
-        List<Range<Instant>> result = RandomSchedulerUtils.parseScheduleWithSeed(123L, Collections.emptyList(), 600);
+        List<Range<Instant>> result = RandomSchedulerUtils.parseScheduleWithSeed(123L, Collections.emptyList(), 600L);
         assertEquals(Collections.emptyList(), result);
     }
 
@@ -479,7 +479,7 @@ class RandomSchedulerUtilsTest {
     void testParseScheduleWithSeed_DurationDoesNotFit_FiltersOutRange() {
         // Window is only 5 minutes, duration is 10 minutes -> should be filtered out
         Range<Instant> smallWindow = Range.of(Instant.parse("2024-01-01T00:00:00Z"), Instant.parse("2024-01-01T00:05:00Z"));
-        List<Range<Instant>> result = RandomSchedulerUtils.parseScheduleWithSeed(999L, List.of(smallWindow), 10 * 60);
+        List<Range<Instant>> result = RandomSchedulerUtils.parseScheduleWithSeed(999L, List.of(smallWindow), 10 * 60L);
         assertEquals(Collections.emptyList(), result);
     }
 
