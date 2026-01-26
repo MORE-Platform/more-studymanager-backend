@@ -11,8 +11,6 @@ package io.redlink.more.studymanager.repository;
 import com.google.common.base.Supplier;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Participant;
-import io.redlink.more.studymanager.utils.MapperUtils;
-import jakarta.annotation.PostConstruct;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -25,7 +23,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -103,22 +100,13 @@ public class ParticipantRepository {
             "INSERT INTO participant_observation_groups (study_id, participant_id, observation_group_id) " +
                     "SELECT :study_id, :participant_id, unnest(:observation_group_ids::int[]);";
 
-    private static final String GET_PARTICIPANT_OBSERVATION_PROPERTIES = "SELECT properties FROM participant_observation_properties WHERE participant_id = :participant_id AND study_id = :study_id AND observation_id = :observation_id";
-
     private static final String DELETE_ALL = "DELETE FROM participants";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
 
-    private static ParticipantRepository instance;
-
     public ParticipantRepository(JdbcTemplate template) {
         this.template = template;
         this.namedTemplate = new NamedParameterJdbcTemplate(template);
-    }
-
-    @PostConstruct
-    public void setInstance() {
-        instance = this;
     }
 
     @Transactional
@@ -175,23 +163,6 @@ public class ParticipantRepository {
                         .addValue("status", RepositoryUtils.toParam(status)),
                 getParticipantRowMapper()
         ).stream().findFirst();
-    }
-
-    @Transactional
-    public Optional<Map<String, Object>> getParticipantWithObservationProperties(Long studyId, Integer participantId, Integer observationId) {
-        try {
-            return namedTemplate.query(
-                    GET_PARTICIPANT_OBSERVATION_PROPERTIES,
-                    new MapSqlParameterSource()
-                            .addValue("study_id", studyId)
-                            .addValue("participant_id", participantId)
-                            .addValue("observation_id", observationId),
-                    (rs, rowNum) ->
-                            (Map<String, Object>) MapperUtils.readValue(rs.getObject("properties"), Map.class)
-            ).stream().findFirst();
-        } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
-        }
     }
 
     @Transactional
@@ -272,9 +243,5 @@ public class ParticipantRepository {
             params.addValue("observation_group_ids", observationGroupIds.toArray(new Integer[0]));
             namedTemplate.update(SET_PARTICIPANT_OBSERVATION_GROUP_IDS, params);
         }
-    }
-
-    public static ParticipantRepository getInstance() {
-        return instance;
     }
 }

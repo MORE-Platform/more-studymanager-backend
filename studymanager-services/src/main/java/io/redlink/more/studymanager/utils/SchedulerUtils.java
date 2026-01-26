@@ -14,6 +14,7 @@ import biweekly.util.Frequency;
 import biweekly.util.Recurrence;
 import biweekly.util.com.google.ical.compat.javautil.DateIterator;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.ParticipantObservationSeed;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.scheduler.Event;
@@ -22,7 +23,6 @@ import io.redlink.more.studymanager.model.scheduler.RelativeDate;
 import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
 import io.redlink.more.studymanager.model.scheduler.RelativeRecurrenceRule;
 import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
-import io.redlink.more.studymanager.repository.ParticipantRepository;
 import org.apache.commons.lang3.Range;
 import org.quartz.CronExpression;
 
@@ -37,14 +37,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
 import java.util.stream.Stream;
 
 public final class SchedulerUtils {
-    private static final String OBSERVATION_SCHEDULE_SEED_KEY = "observation_schedule_seed";
-
     public static List<Range<Instant>> parseToObservationSchedulesForRelativeEvent(
             RelativeEvent event, Instant start, Instant maxEnd) {
 
@@ -101,7 +98,7 @@ public final class SchedulerUtils {
         return List.copyOf(observationSchedules);
     }
 
-    public static List<Range<Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, Instant start, Instant end, Long studyId, Integer participantId, Integer observationId) {
+    public static List<Range<Instant>> parseToObservationSchedules(ParticipantObservationSeed seed, ScheduleEvent scheduleEvent, Instant start, Instant end) {
         if (scheduleEvent == null) return Collections.emptyList();
         List<Range<Instant>> ranges = Collections.emptyList();
         if (scheduleEvent instanceof Event event) {
@@ -109,7 +106,7 @@ public final class SchedulerUtils {
         } else if (scheduleEvent instanceof RelativeEvent relativeEvent) {
             ranges = parseToObservationSchedulesForRelativeEvent(relativeEvent, start, end);
         }
-        return randomSchedule(scheduleEvent, ranges, studyId, participantId, observationId);
+        return randomSchedule(seed, scheduleEvent, ranges);
     }
 
     public static LocalDate alignStartDateToSignupInstant(final Instant signup, List<Observation> observations) {
@@ -258,20 +255,14 @@ public final class SchedulerUtils {
         if (byMonthDay != null) builder.byMonthDay(byMonthDay);
     }
 
-    private static List<Range<Instant>> randomSchedule(ScheduleEvent event, List<Range<Instant>> ranges, Long studyId, Integer participantId, Integer observationId) {
-        if (event.getRandomization() == null || !event.getRandomization().state() || event.getRandomization().duration() <= 0) {
+    private static List<Range<Instant>> randomSchedule(ParticipantObservationSeed seed, ScheduleEvent event, List<Range<Instant>> ranges) {
+        if (seed == null || seed.seed() == null || event.getRandomization() == null || !event.getRandomization().state() || event.getRandomization().duration() <= 0) {
             return ranges;
         }
         if (ranges == null || ranges.isEmpty()) {
             return Collections.emptyList();
         }
-        var repository = ParticipantRepository.getInstance();
-        boolean validDetails = studyId != null && participantId != null && observationId != null;
-        var properties = validDetails ? repository.getParticipantWithObservationProperties(studyId, participantId, observationId).orElse(Map.of()) : Map.of();
-        Long seed = (Long) properties.get(OBSERVATION_SCHEDULE_SEED_KEY);
-        if (seed == null) {
-            return Collections.emptyList();
-        }
-        return RandomSchedulerUtils.parseScheduleWithSeed(seed, ranges, event.getRandomization().duration());
+        Long durationInSeconds = event.getRandomization().duration() * 60L;
+        return RandomSchedulerUtils.parseScheduleWithSeed(seed.seed(), ranges, durationInSeconds);
     }
 }

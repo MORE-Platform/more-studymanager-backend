@@ -12,13 +12,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.ParticipantWithObservationProperties;
 import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
 import io.redlink.more.studymanager.utils.MapperUtils;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -28,6 +24,12 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNullableIntegerValue;
 
@@ -46,6 +48,7 @@ public class ObservationRepository {
     private static final String DELETE_ALL = "DELETE FROM observations";
     private static final String SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "INSERT INTO participant_observation_properties(study_id,participant_id,observation_id,properties) VALUES (:study_id,:participant_id,:observation_id,:properties::jsonb) ON CONFLICT (study_id, participant_id, observation_id) DO UPDATE SET properties = EXCLUDED.properties";
     private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT properties FROM participant_observation_properties WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
+    private static final String GET_ALL_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT * FROM participant_observation_properties WHERE  study_id = ?";
     private static final String DELETE_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "DELETE FROM participant_observation_properties WHERE study_id = ? AND participant_id = ? AND observation_id = ?";
 
     private final JdbcTemplate template;
@@ -61,10 +64,10 @@ public class ObservationRepository {
             return namedTemplate.queryForObject(INSERT_NEW_OBSERVATION, toParams(observation), getObservationRowMapper());
         } catch (DataIntegrityViolationException e) {
             String message;
-            if(observation.getStudyGroupId() != null && observation.getObservationGroupId() != null) {
+            if (observation.getStudyGroupId() != null && observation.getObservationGroupId() != null) {
                 message = String.format("Study group %s and/or observation group %s do not exist on study %s",
                         observation.getStudyGroupId(), observation.getObservationGroupId(), observation.getStudyId());
-            } else if(observation.getStudyGroupId() != null) {
+            } else if (observation.getStudyGroupId() != null) {
                 message = String.format("Study group %s does not exist on study %s",
                         observation.getStudyGroupId(), observation.getStudyId());
             } else if (observation.getObservationGroupId() != null) {
@@ -75,9 +78,9 @@ public class ObservationRepository {
                 LOG.warn("Unable to insert {}", observation, e);
             }
             throw new BadRequestException(message);
-        } catch (JsonProcessingException e){
+        } catch (JsonProcessingException e) {
             LOG.warn("Unable to insert {}", observation, e);
-            throw new BadRequestException("Unable to insert observation (" + e.getClass().getSimpleName() + ": " + e.getMessage() +")");
+            throw new BadRequestException("Unable to insert observation (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ")");
         }
     }
 
@@ -122,18 +125,20 @@ public class ObservationRepository {
 
     /**
      * Lists all Observation based for the parsed study, study group and as per default no assigned observation group
-     * @param studyId the study
+     *
+     * @param studyId      the study
      * @param studyGroupId the study group or NULL of none
      * @return the Observations
      */
     public List<Observation> listObservationsForGroup(Long studyId, Integer studyGroupId) {
-        return  listObservationsForGroup(studyId, studyGroupId, List.of());
+        return listObservationsForGroup(studyId, studyGroupId, List.of());
     }
 
     /**
      * Lists all Observation based for the parsed study, study group and observation groups
-     * @param studyId the study
-     * @param studyGroupId the study group or NULL of none
+     *
+     * @param studyId             the study
+     * @param studyGroupId        the study group or NULL of none
      * @param observationGroupIds the observation groups or an empty collection if none
      * @return the Observations
      */
@@ -184,6 +189,40 @@ public class ObservationRepository {
         }
     }
 
+    public void mergeParticipantProperties(Long studyId, Integer participantId, Integer observationId, ObservationProperties properties) {
+        var oldProps = getParticipantProperties(studyId, participantId, observationId).orElse(new ObservationProperties());
+        MapSqlParameterSource data = new MapSqlParameterSource()
+                .addValue("study_id", studyId)
+                .addValue("participant_id", participantId)
+                .addValue("observation_id", observationId)
+                .addValue("properties", MapperUtils.writeValueAsString(
+                        MapperUtils.mergeObjects(oldProps, properties))
+                );
+
+        namedTemplate.update(SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT, data);
+    }
+
+
+    public List<ParticipantWithObservationProperties> getParticipantObservationProperties(Long studyId) {
+        try {
+            return template.query(
+                    GET_ALL_OBSERVATION_PROPERTIES_FOR_PARTICIPANT,
+                    getParticipantWithObservationPropertiesRowMapper(),
+                    studyId);
+        } catch (EmptyResultDataAccessException e) {
+            return Collections.emptyList();
+        }
+    }
+
+    private static RowMapper<ParticipantWithObservationProperties> getParticipantWithObservationPropertiesRowMapper() {
+        return (rs, rowNum) -> new ParticipantWithObservationProperties(
+                rs.getInt("participant_id"),
+                rs.getLong("study_id"),
+                rs.getInt("observation_id"),
+                (Map<String, Object>) MapperUtils.readValue(rs.getString("properties"), Map.class)
+        );
+    }
+
     public void removeParticipantProperties(Long studyId, Integer participantId, Integer observationId) {
         template.update(DELETE_OBSERVATION_PROPERTIES_FOR_PARTICIPANT, studyId, participantId, observationId);
     }
@@ -222,6 +261,6 @@ public class ObservationRepository {
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setHidden(rs.getBoolean("hidden"))
                 .setNoSchedule(rs.getBoolean("no_schedule"))
-                .setObservationGroupId(RepositoryUtils.getValidNullableIntegerValue(rs,"observation_group_id"));
+                .setObservationGroupId(RepositoryUtils.getValidNullableIntegerValue(rs, "observation_group_id"));
     }
 }

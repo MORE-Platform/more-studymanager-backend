@@ -8,7 +8,6 @@
  */
 package io.redlink.more.studymanager.utils;
 
-
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.scheduler.Randomization;
@@ -26,15 +25,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RandomSchedulerUtilsTest {
 
     @Test
     void testGenerateSeedFromSchedule_NullSchedule() {
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(null);
-        assertEquals(0, seed, "Seed should be 0 for null schedule");
+        Long seed = RandomSchedulerUtils.generateSeedFromSchedule(null);
+        assertNull(seed, "Seed should be null");
     }
 
     @Test
@@ -44,8 +42,8 @@ class RandomSchedulerUtilsTest {
                 .setDateEnd(Instant.parse("2024-01-01T12:00:00Z"))
                 .setRandomization(null);
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
-        assertEquals(0, seed, "Seed should be 0 when randomization is null");
+        Long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        assertNull(seed, "Seed should null");
     }
 
     @Test
@@ -55,8 +53,8 @@ class RandomSchedulerUtilsTest {
                 .setDateEnd(Instant.parse("2024-01-01T12:00:00Z"))
                 .setRandomization(new Randomization(false, 60));
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
-        assertEquals(0, seed, "Seed should be 0 when randomization state is false");
+        Long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        assertNull(seed, "Seed should be null when randomization state is false");
     }
 
     @Test
@@ -418,8 +416,8 @@ class RandomSchedulerUtilsTest {
             }
         };
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(unknownSchedule);
-        assertEquals(0, seed, "Seed should be 0 for unknown schedule type");
+        Long seed = RandomSchedulerUtils.generateSeedFromSchedule(unknownSchedule);
+        assertNull(seed, "Seed should be null for unknown schedule type");
     }
 
     // Tests for parseScheduleWithSeed function

@@ -14,6 +14,13 @@ import io.redlink.more.studymanager.model.scheduler.RelativeDate;
 import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
 import io.redlink.more.studymanager.model.scheduler.RelativeRecurrenceRule;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
+import io.redlink.more.studymanager.repository.ObservationRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,12 +29,6 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -49,6 +50,9 @@ class CalendarServiceTest {
     @Mock
     ParticipantService participantService;
 
+    @Mock
+    ObservationRepository repository;
+
     @InjectMocks
     CalendarService calendarService;
 
@@ -68,7 +72,7 @@ class CalendarServiceTest {
                                 .setPlannedStartDate(LocalDate.now())
                                 .setPlannedEndDate(LocalDate.now().plusDays(3))
                 ));
-        assertThrows(NotFoundException.class, () -> calendarService.getTimeline(1L, 1,1, Set.of(), Instant.now(), LocalDate.now(), LocalDate.now()));
+        assertThrows(NotFoundException.class, () -> calendarService.getTimeline(1L, 1, 1, Set.of(), Instant.now(), LocalDate.now(), LocalDate.now()));
     }
 
     @Test
@@ -80,7 +84,7 @@ class CalendarServiceTest {
                 .setPlannedEndDate(LocalDate.of(2024, 5, 14))
                 .setDuration(new Duration().setUnit(Duration.Unit.DAY).setValue(5));
 
-        Participant participant = new Participant().setStudyGroupId(2).setObservationGroupIds(Set.of(1,2));
+        Participant participant = new Participant().setStudyGroupId(2).setObservationGroupIds(Set.of(1, 2));
 
         Observation observationAbsolute = new Observation()
                 .setObservationId(1)
@@ -167,25 +171,26 @@ class CalendarServiceTest {
         when(participantService.getParticipant(any(), any())).thenReturn(participant);
         when(studyService.getStudyDuration(any(), any()))
                 .thenReturn(Optional.of(new Duration().setValue(5).setUnit(Duration.Unit.DAY)));
-        when(observationService.listObservationsForGroup(any(), eq(participant.getStudyGroupId()),eq(participant.getObservationGroupIds()))).thenReturn(
+        when(observationService.listObservationsForGroup(any(), eq(participant.getStudyGroupId()), eq(participant.getObservationGroupIds()))).thenReturn(
                 List.of(observationAbsolute, observationAbsoluteRecurrent, observationRelative, observationRelativeRecurrent));
 
         when(interventionService.listInterventionsForGroup(any(), eq(participant.getStudyGroupId()), eq(participant.getObservationGroupIds()))).thenReturn(
                 List.of(scheduledIntervention, relativeIntervention));
         when(interventionService.getTriggerByIds(any(), eq(1))).thenReturn(relativeTrigger);
         when(interventionService.getTriggerByIds(any(), eq(2))).thenReturn(scheduledTrigger);
+        when(repository.getParticipantObservationProperties(any())).thenReturn(List.of());
 
         StudyTimeline timeline = calendarService.getTimeline(
                 1L,
                 1,
                 -2, //ignored ... taken from participant
-                Set.of(-1,-2), //ignored ... taken from participant
+                Set.of(-1, -2), //ignored ... taken from participant
                 LocalDateTime.of(
                         LocalDate.of(2024, 5, 11),
-                        LocalTime.of(10,10,10)
+                        LocalTime.of(10, 10, 10)
                 ).atZone(ZoneId.systemDefault()).toInstant(),
                 LocalDate.of(2024, 5, 9),
-                LocalDate.of(2024,5,17)
+                LocalDate.of(2024, 5, 17)
         );
 
         assertEquals(7, timeline.observationTimelineEvents().size());

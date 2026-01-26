@@ -51,8 +51,8 @@ public class MoreObservationSDKImpl extends MorePlatformSDKImpl implements MoreO
     }
 
     @Override
-    public void setPropertiesForParticipant(Integer participantId, ObservationProperties properties) {
-        sdk.setPropertiesForParticipant(
+    public void mergePropertiesForParticipant(Integer participantId, ObservationProperties properties) {
+        sdk.mergeParticipantProperties(
                 this.studyId,
                 participantId,
                 this.observationId,
