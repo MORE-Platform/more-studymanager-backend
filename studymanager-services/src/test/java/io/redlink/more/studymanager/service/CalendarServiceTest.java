@@ -14,7 +14,6 @@ import io.redlink.more.studymanager.model.scheduler.RelativeDate;
 import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
 import io.redlink.more.studymanager.model.scheduler.RelativeRecurrenceRule;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
-import io.redlink.more.studymanager.repository.ObservationRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -49,9 +48,6 @@ class CalendarServiceTest {
 
     @Mock
     ParticipantService participantService;
-
-    @Mock
-    ObservationRepository repository;
 
     @InjectMocks
     CalendarService calendarService;
@@ -178,7 +174,7 @@ class CalendarServiceTest {
                 List.of(scheduledIntervention, relativeIntervention));
         when(interventionService.getTriggerByIds(any(), eq(1))).thenReturn(relativeTrigger);
         when(interventionService.getTriggerByIds(any(), eq(2))).thenReturn(scheduledTrigger);
-        when(repository.getParticipantObservationProperties(any())).thenReturn(List.of());
+        when(observationService.getParticipantObservationProperties(any())).thenReturn(List.of());
 
         StudyTimeline timeline = calendarService.getTimeline(
                 1L,

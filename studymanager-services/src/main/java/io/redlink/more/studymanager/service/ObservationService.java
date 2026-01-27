@@ -19,13 +19,17 @@ import io.redlink.more.studymanager.core.validation.ValidationIssue;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.ParticipantWithObservationProperties;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
-
-import java.util.*;
-
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ObservationService {
@@ -87,15 +91,19 @@ public class ObservationService {
         return repository.updateObservation(validate(observation));
     }
 
-    public void alignObservationsWithStudyState(Study study){
+    public void alignObservationsWithStudyState(Study study) {
         if (Study.Status.ACTIVE_STATES.contains(study.getStudyState()))
             activateObservationsFor(study);
         else deactivateObservationsFor(study);
     }
 
-    private void activateObservationsFor(Study study){ listObservationsFor(study).forEach(Component::activate); }
+    private void activateObservationsFor(Study study) {
+        listObservationsFor(study).forEach(Component::activate);
+    }
 
-    private void deactivateObservationsFor(Study study){ listObservationsFor(study).forEach(Component::deactivate); }
+    private void deactivateObservationsFor(Study study) {
+        listObservationsFor(study).forEach(Component::deactivate);
+    }
 
     private void validateProperties(List<Observation> observations) {
         for (Observation observation : observations) {
@@ -111,7 +119,7 @@ public class ObservationService {
         }
     }
 
-    public List<io.redlink.more.studymanager.core.component.Observation> listObservationsFor(Study study){
+    public List<io.redlink.more.studymanager.core.component.Observation> listObservationsFor(Study study) {
         List<Observation> observations = listObservations(study.getStudyId());
         List<io.redlink.more.studymanager.core.component.Observation> result = new ArrayList<>();
 
@@ -144,12 +152,16 @@ public class ObservationService {
         ).getView(viewName, studyGroupId, participantId, timerange);
     }
 
+    public List<ParticipantWithObservationProperties> getParticipantObservationProperties(Long studyId) {
+        return repository.getParticipantObservationProperties(studyId);
+    }
+
     private ObservationFactory factory(Observation observation) {
         return observationFactories.get(observation.getType());
     }
 
     private Observation validate(Observation observation) {
-        if(!observationFactories.containsKey(observation.getType())) {
+        if (!observationFactories.containsKey(observation.getType())) {
             throw NotFoundException.ObservationFactory(observation.getType());
         }
         try {

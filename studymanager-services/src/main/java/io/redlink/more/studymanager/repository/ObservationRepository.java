@@ -24,6 +24,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -202,7 +203,7 @@ public class ObservationRepository {
         namedTemplate.update(SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT, data);
     }
 
-
+    @Transactional
     public List<ParticipantWithObservationProperties> getParticipantObservationProperties(Long studyId) {
         try {
             return template.query(

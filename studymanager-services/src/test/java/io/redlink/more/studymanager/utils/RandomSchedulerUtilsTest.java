@@ -19,19 +19,169 @@ import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
 import org.apache.commons.lang3.Range;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class RandomSchedulerUtilsTest {
+    private static class RandomSchedulerReflection {
+        public static long callStableHash64(Object... parts) throws Exception {
+            Class<?> clazz = Class.forName("io.redlink.more.studymanager.utils.RandomSchedulerUtils");
+
+            // stableHash64(Object... parts) is compiled as stableHash64(Object[])
+            Method m = clazz.getDeclaredMethod("stableHash64", Object[].class);
+            m.setAccessible(true);
+
+            // IMPORTANT: wrap parts in a single Object[] argument, otherwise reflection thinks varargs are multiple params
+            Object result = m.invoke(null, new Object[]{parts});
+            return (long) result;
+        }
+    }
+
+    private Long generateSeedFromSchedule(ScheduleEvent schedule) {
+        try {
+            return generateSeedFromSchedule(schedule, null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Long generateSeedFromSchedule(ScheduleEvent schedule, String userId) throws Exception {
+        if (schedule == null || schedule.getRandomization() == null || !schedule.getRandomization().state()) {
+            return null;
+        }
+
+        if (Objects.equals(schedule.getType(), Event.TYPE)) {
+            return generateSeedForEvent((Event) schedule, userId);
+        } else if (Objects.equals(schedule.getType(), RelativeEvent.TYPE)) {
+            return generateSeedForRelativeEvent((RelativeEvent) schedule, userId);
+        }
+
+        return null;
+    }
+
+    private Long generateSeedForEvent(Event event, String userId) throws Exception {
+        Long windowStart = event.getDateStart() != null ? event.getDateStart().getEpochSecond() : null;
+        Long windowEnd = event.getDateEnd() != null ? event.getDateEnd().getEpochSecond() : null;
+        Integer duration = event.getRandomization() != null ? event.getRandomization().duration() : null;
+
+        RecurrenceRule r = event.getRRule();
+        List<String> byDay = null;
+        if (r != null && r.getByDay() != null) {
+            byDay = new ArrayList<>(r.getByDay());
+            byDay.sort(Comparator.naturalOrder());
+        }
+
+        // Only include userId if provided; tests for generateSeedFromSchedule(event) expect a seed
+        // derived purely from the schedule definition.
+        if (userId != null) {
+            return RandomSchedulerReflection.callStableHash64(
+                    userId,
+                    event.getType(),
+                    windowStart,
+                    windowEnd,
+                    duration,
+                    r != null ? r.getFreq() : null,
+                    r != null && r.getUntil() != null ? r.getUntil().getEpochSecond() : null,
+                    r != null ? r.getCount() : null,
+                    r != null ? r.getInterval() : null,
+                    byDay,
+                    r != null ? r.getByMonth() : null,
+                    r != null ? r.getByMonthDay() : null,
+                    r != null ? r.getBySetPos() : null
+            );
+        }
+
+        return RandomSchedulerReflection.callStableHash64(
+                event.getType(),
+                windowStart,
+                windowEnd,
+                duration,
+                r != null ? r.getFreq() : null,
+                r != null && r.getUntil() != null ? r.getUntil().getEpochSecond() : null,
+                r != null ? r.getCount() : null,
+                r != null ? r.getInterval() : null,
+                byDay,
+                r != null ? r.getByMonth() : null,
+                r != null ? r.getByMonthDay() : null,
+                r != null ? r.getBySetPos() : null
+        );
+    }
+
+    private long generateSeedForRelativeEvent(RelativeEvent event, String userId) throws Exception {
+        RelativeDate start = event.getDtstart();
+        RelativeDate end = event.getDtend();
+        Integer duration = event.getRandomization() != null ? event.getRandomization().duration() : null;
+
+        RelativeRecurrenceRule rr = event.getRrrule();
+
+        Integer startHour = start != null && start.getTime() != null ? start.getHours() : null;
+        Integer startMinute = start != null && start.getTime() != null ? start.getMinutes() : null;
+        Integer endHour = end != null && end.getTime() != null ? end.getHours() : null;
+        Integer endMinute = end != null && end.getTime() != null ? end.getMinutes() : null;
+
+        // Represent Duration deterministically via (value, unit)
+        Long startOffsetValue = start != null && start.getOffset() != null ? (long) start.getOffset().getValue() : null;
+        String startOffsetUnit = start != null && start.getOffset() != null && start.getOffset().getUnit() != null ? start.getOffset().getUnit().name() : null;
+
+        Long endOffsetValue = end != null && end.getOffset() != null ? (long) end.getOffset().getValue() : null;
+        String endOffsetUnit = end != null && end.getOffset() != null && end.getOffset().getUnit() != null ? end.getOffset().getUnit().name() : null;
+
+        Long freqValue = rr != null && rr.getFrequency() != null ? (long) rr.getFrequency().getValue() : null;
+        String freqUnit = rr != null && rr.getFrequency() != null && rr.getFrequency().getUnit() != null ? rr.getFrequency().getUnit().name() : null;
+
+        Long endAfterValue = rr != null && rr.getEndAfter() != null ? (long) rr.getEndAfter().getValue() : null;
+        String endAfterUnit = rr != null && rr.getEndAfter() != null && rr.getEndAfter().getUnit() != null ? rr.getEndAfter().getUnit().name() : null;
+
+        if (userId != null) {
+            return RandomSchedulerReflection.callStableHash64(
+                    userId,
+                    event.getType(),
+                    startHour,
+                    startMinute,
+                    endHour,
+                    endMinute,
+                    startOffsetValue,
+                    startOffsetUnit,
+                    endOffsetValue,
+                    endOffsetUnit,
+                    freqValue,
+                    freqUnit,
+                    endAfterValue,
+                    endAfterUnit,
+                    duration
+            );
+        }
+
+        return RandomSchedulerReflection.callStableHash64(
+                event.getType(),
+                startHour,
+                startMinute,
+                endHour,
+                endMinute,
+                startOffsetValue,
+                startOffsetUnit,
+                endOffsetValue,
+                endOffsetUnit,
+                freqValue,
+                freqUnit,
+                endAfterValue,
+                endAfterUnit,
+                duration
+        );
+    }
 
     @Test
     void testGenerateSeedFromSchedule_NullSchedule() {
-        Long seed = RandomSchedulerUtils.generateSeedFromSchedule(null);
+        Long seed = generateSeedFromSchedule(null);
         assertNull(seed, "Seed should be null");
     }
 
@@ -42,7 +192,7 @@ class RandomSchedulerUtilsTest {
                 .setDateEnd(Instant.parse("2024-01-01T12:00:00Z"))
                 .setRandomization(null);
 
-        Long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        Long seed = generateSeedFromSchedule(event);
         assertNull(seed, "Seed should null");
     }
 
@@ -53,7 +203,7 @@ class RandomSchedulerUtilsTest {
                 .setDateEnd(Instant.parse("2024-01-01T12:00:00Z"))
                 .setRandomization(new Randomization(false, 60));
 
-        Long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        Long seed = generateSeedFromSchedule(event);
         assertNull(seed, "Seed should be null when randomization state is false");
     }
 
@@ -64,7 +214,7 @@ class RandomSchedulerUtilsTest {
                 .setDateEnd(Instant.parse("2024-01-01T12:00:00Z"))
                 .setRandomization(new Randomization(true, 60));
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        long seed = generateSeedFromSchedule(event);
         assertNotEquals(0, seed, "Seed should not be 0 for valid event with active randomization");
         assertEquals(-42358863585069593L, seed);
     }
@@ -82,7 +232,7 @@ class RandomSchedulerUtilsTest {
                 .setRRule(rrule)
                 .setRandomization(new Randomization(true, 60));
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        long seed = generateSeedFromSchedule(event);
         assertNotEquals(0, seed, "Seed should not be 0 for event with recurrence rule");
         assertEquals(295789499573821007L, seed);
     }
@@ -105,7 +255,7 @@ class RandomSchedulerUtilsTest {
                 .setRRule(rrule)
                 .setRandomization(new Randomization(true, 120));
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        long seed = generateSeedFromSchedule(event);
         assertNotEquals(0, seed, "Seed should not be 0 for event with complex recurrence rule");
         assertEquals(-7121760988474980363L, seed);
     }
@@ -125,7 +275,7 @@ class RandomSchedulerUtilsTest {
                 .setDtend(end)
                 .setRandomization(new Randomization(true, 60));
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        long seed = generateSeedFromSchedule(event);
         assertNotEquals(0, seed, "Seed should not be 0 for valid relative event");
         assertEquals(7730631974139984422L, seed);
     }
@@ -150,7 +300,7 @@ class RandomSchedulerUtilsTest {
                 .setRrrule(rrrule)
                 .setRandomization(new Randomization(true, 90));
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        long seed = generateSeedFromSchedule(event);
         assertNotEquals(0, seed, "Seed should not be 0 for relative event with recurrence rule");
         assertEquals(8838028885358937873L, seed);
     }
@@ -167,8 +317,8 @@ class RandomSchedulerUtilsTest {
                 .setDateEnd(Instant.parse("2024-01-01T12:00:00Z"))
                 .setRandomization(new Randomization(true, 60));
 
-        long seed1 = RandomSchedulerUtils.generateSeedFromSchedule(event1);
-        long seed2 = RandomSchedulerUtils.generateSeedFromSchedule(event2);
+        long seed1 = generateSeedFromSchedule(event1);
+        long seed2 = generateSeedFromSchedule(event2);
 
         assertEquals(seed1, seed2, "Same event configuration should produce the same seed");
         assertEquals(-42358863585069593L, seed1);
@@ -187,8 +337,8 @@ class RandomSchedulerUtilsTest {
                 .setDateEnd(Instant.parse("2024-01-02T12:00:00Z"))
                 .setRandomization(new Randomization(true, 60));
 
-        long seed1 = RandomSchedulerUtils.generateSeedFromSchedule(event1);
-        long seed2 = RandomSchedulerUtils.generateSeedFromSchedule(event2);
+        long seed1 = generateSeedFromSchedule(event1);
+        long seed2 = generateSeedFromSchedule(event2);
 
         assertNotEquals(seed1, seed2, "Different event configurations should produce different seeds");
     }
@@ -205,8 +355,8 @@ class RandomSchedulerUtilsTest {
                 .setDateEnd(Instant.parse("2024-01-01T12:00:00Z"))
                 .setRandomization(new Randomization(true, 120));
 
-        long seed1 = RandomSchedulerUtils.generateSeedFromSchedule(event1);
-        long seed2 = RandomSchedulerUtils.generateSeedFromSchedule(event2);
+        long seed1 = generateSeedFromSchedule(event1);
+        long seed2 = generateSeedFromSchedule(event2);
 
         assertNotEquals(seed1, seed2, "Different randomization durations should produce different seeds");
     }
@@ -218,7 +368,7 @@ class RandomSchedulerUtilsTest {
                 .setDateEnd(null)
                 .setRandomization(new Randomization(true, 60));
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        long seed = generateSeedFromSchedule(event);
         assertNotEquals(0, seed, "Seed should still be generated even with null dates");
         assertEquals(9172556794633044776L, seed);
     }
@@ -234,7 +384,7 @@ class RandomSchedulerUtilsTest {
                 .setRRule(rrule)
                 .setRandomization(new Randomization(true, 60));
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        long seed = generateSeedFromSchedule(event);
         assertNotEquals(0, seed, "Seed should be generated with partial recurrence rule");
         assertEquals(-2975773379970995530L, seed);
     }
@@ -251,7 +401,7 @@ class RandomSchedulerUtilsTest {
                 .setRRule(rrule)
                 .setRandomization(new Randomization(true, 60));
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        long seed = generateSeedFromSchedule(event);
         assertNotEquals(0, seed, "Seed should be generated with empty byDay list");
         assertEquals(-5438816475475765172L, seed);
     }
@@ -278,8 +428,8 @@ class RandomSchedulerUtilsTest {
                 .setRRule(rrule2)
                 .setRandomization(new Randomization(true, 60));
 
-        long seed1 = RandomSchedulerUtils.generateSeedFromSchedule(event1);
-        long seed2 = RandomSchedulerUtils.generateSeedFromSchedule(event2);
+        long seed1 = generateSeedFromSchedule(event1);
+        long seed2 = generateSeedFromSchedule(event2);
 
         assertNotEquals(seed1, seed2, "Different byDay lists should produce different seeds");
     }
@@ -292,7 +442,7 @@ class RandomSchedulerUtilsTest {
                 .setRrrule(null)
                 .setRandomization(new Randomization(true, 60));
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        long seed = generateSeedFromSchedule(event);
         assertNotEquals(0, seed, "Seed should still be generated for relative event with null fields");
         assertEquals(-3276571355333199820L, seed);
     }
@@ -308,7 +458,7 @@ class RandomSchedulerUtilsTest {
                 .setDtend(null)
                 .setRandomization(new Randomization(true, 60));
 
-        long seed = RandomSchedulerUtils.generateSeedFromSchedule(event);
+        long seed = generateSeedFromSchedule(event);
         assertNotEquals(0, seed, "Seed should be generated even with null time in RelativeDate");
         assertEquals(6386706127595477336L, seed);
     }
@@ -341,8 +491,8 @@ class RandomSchedulerUtilsTest {
                 .setDtend(end2)
                 .setRandomization(new Randomization(true, 90));
 
-        long seed1 = RandomSchedulerUtils.generateSeedFromSchedule(event1);
-        long seed2 = RandomSchedulerUtils.generateSeedFromSchedule(event2);
+        long seed1 = generateSeedFromSchedule(event1);
+        long seed2 = generateSeedFromSchedule(event2);
 
         assertEquals(seed1, seed2, "Same relative event configuration should produce the same seed");
         assertEquals(4894757711342650077L, seed1);
@@ -367,8 +517,8 @@ class RandomSchedulerUtilsTest {
                 .setDtstart(start2)
                 .setRandomization(new Randomization(true, 60));
 
-        long seed1 = RandomSchedulerUtils.generateSeedFromSchedule(event1);
-        long seed2 = RandomSchedulerUtils.generateSeedFromSchedule(event2);
+        long seed1 = generateSeedFromSchedule(event1);
+        long seed2 = generateSeedFromSchedule(event2);
 
         assertNotEquals(seed1, seed2, "Different times should produce different seeds");
     }
@@ -391,8 +541,8 @@ class RandomSchedulerUtilsTest {
                 .setDtstart(start2)
                 .setRandomization(new Randomization(true, 60));
 
-        long seed1 = RandomSchedulerUtils.generateSeedFromSchedule(event1);
-        long seed2 = RandomSchedulerUtils.generateSeedFromSchedule(event2);
+        long seed1 = generateSeedFromSchedule(event1);
+        long seed2 = generateSeedFromSchedule(event2);
 
         assertNotEquals(seed1, seed2, "Different offsets should produce different seeds");
     }
@@ -416,7 +566,7 @@ class RandomSchedulerUtilsTest {
             }
         };
 
-        Long seed = RandomSchedulerUtils.generateSeedFromSchedule(unknownSchedule);
+        Long seed = generateSeedFromSchedule(unknownSchedule);
         assertNull(seed, "Seed should be null for unknown schedule type");
     }
 

@@ -40,8 +40,7 @@ public class ParticipantRepository {
             ON CONFLICT (study_id, participant_id) DO UPDATE SET token = excluded.token
             """;
     private static final String GET_PARTICIPANT_BY_IDS =
-            "SELECT " +
-                    "    p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, " +
+            "SELECT p.participant_id, p.study_id, p.alias, p.study_group_id, r.token as token, p.status, p.created, " +
                     "    p.modified, p.start, ARRAY_AGG(pog.observation_group_id) FILTER (WHERE pog.observation_group_id IS NOT NULL) AS observation_group_ids " +
                     "FROM participants p " +
                     "    LEFT JOIN registration_tokens r ON p.study_id = r.study_id AND p.participant_id = r.participant_id " +

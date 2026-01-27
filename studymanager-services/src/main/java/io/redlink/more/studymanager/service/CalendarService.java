@@ -20,7 +20,6 @@ import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.timeline.InterventionTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
-import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.utils.RandomSchedulerUtils;
 import io.redlink.more.studymanager.utils.SchedulerUtils;
 import org.apache.commons.lang3.Range;
@@ -47,15 +46,13 @@ public class CalendarService {
     private final ObservationService observationService;
     private final InterventionService interventionService;
     private final ParticipantService participantService;
-    private final ObservationRepository repository;
 
     public CalendarService(StudyService studyService, ObservationService observationService, InterventionService interventionService,
-                           ParticipantService participantService, ObservationRepository repository) {
+                           ParticipantService participantService) {
         this.studyService = studyService;
         this.observationService = observationService;
         this.interventionService = interventionService;
         this.participantService = participantService;
-        this.repository = repository;
     }
 
     public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, Collection<Integer> observationGroupIds, Instant referenceDate, LocalDate from, LocalDate to) {
@@ -153,7 +150,7 @@ public class CalendarService {
                 to.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
         );
 
-        var properties = repository.getParticipantObservationProperties(study.getStudyId())
+        var properties = observationService.getParticipantObservationProperties(study.getStudyId())
                 .stream()
                 .filter(p -> participant == null || participant.getParticipantId() == null || p.participantId().equals(participant.getParticipantId()))
                 .map(CalendarService::toParticipantObservationSeed).toList();
