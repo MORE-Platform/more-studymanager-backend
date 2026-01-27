@@ -9,6 +9,7 @@
 package io.redlink.more.studymanager.model.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.Instant;
 
 public class Event implements ScheduleEvent {
