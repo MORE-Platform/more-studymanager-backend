@@ -23,6 +23,7 @@ import io.redlink.more.studymanager.model.ParticipantWithObservationProperties;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
+import io.redlink.more.studymanager.utils.RandomSchedulerUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -88,7 +89,9 @@ public class ObservationService {
 
     public Observation updateObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
-        return repository.updateObservation(validate(observation));
+        Observation updatedObservation = repository.updateObservation(validate(observation));
+        repository.removeParticipantsPropertyKey(observation.getStudyId(), observation.getObservationId(), RandomSchedulerUtils.OBSERVATION_SCHEDULE_SEED_KEY);
+        return updatedObservation;
     }
 
     public void alignObservationsWithStudyState(Study study) {

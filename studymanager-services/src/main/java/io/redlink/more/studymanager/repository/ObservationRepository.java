@@ -51,6 +51,7 @@ public class ObservationRepository {
     private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT properties FROM participant_observation_properties WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
     private static final String GET_ALL_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT * FROM participant_observation_properties WHERE  study_id = ?";
     private static final String DELETE_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "DELETE FROM participant_observation_properties WHERE study_id = ? AND participant_id = ? AND observation_id = ?";
+    private static final String REMOVE_PARTICIPANT_PROPERTY_KEY = "UPDATE participant_observation_properties SET properties = properties - :key WHERE study_id = :study_id AND observation_id = :observation_id";
 
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -201,6 +202,19 @@ public class ObservationRepository {
                 );
 
         namedTemplate.update(SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT, data);
+    }
+
+    public void removeParticipantsPropertyKey(Long studyId, Integer observationId, String keyToRemove) {
+        if (keyToRemove == null || keyToRemove.isBlank()) {
+            throw new BadRequestException("keyToRemove must not be null or blank");
+        }
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("study_id", studyId)
+                .addValue("observation_id", observationId)
+                .addValue("key", keyToRemove);
+
+        namedTemplate.update(REMOVE_PARTICIPANT_PROPERTY_KEY, params);
     }
 
     @Transactional
