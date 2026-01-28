@@ -11,7 +11,6 @@ package io.redlink.more.studymanager.core.sdk;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.ui.DataViewData;
-import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.core.ui.ViewConfig;
 
 import java.util.Map;
@@ -19,7 +18,8 @@ import java.util.Optional;
 
 public interface MoreObservationSDK extends MorePlatformSDK {
 
-    void setPropertiesForParticipant(Integer participantId, ObservationProperties properties);
+    void mergePropertiesForParticipant(Integer participantId, ObservationProperties properties);
+
     Optional<ObservationProperties> getPropertiesForParticipant(Integer participantId);
 
     void removePropertiesForParticipant(Integer participantId);

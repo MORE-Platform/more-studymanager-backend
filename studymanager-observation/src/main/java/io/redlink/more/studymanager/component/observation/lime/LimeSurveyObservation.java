@@ -34,7 +34,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     }
 
     @Override
-    public void activate(){
+    public void activate() {
         String surveyId = checkAndGetSurveyId();
 
         //FIXME: This creates a LIME survey user for every participant, regardless if the Observation is relevant to the participant
@@ -43,13 +43,13 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
         participantIds.removeIf(id -> sdk.getPropertiesForParticipant(id).isPresent());
         limeSurveyRequestService.activateParticipants(participantIds, surveyId)
                 .forEach(data ->
-                    sdk.setPropertiesForParticipant(
-                            Integer.parseInt(data.firstname()), //NOTE: both the firstname and lastname are set to the participantId
-                            new ObservationProperties(
-                                    Map.of("token", data.token(),
-                                            "limeUrl", limeSurveyRequestService.getBaseUrl())
-                            )
-                    )
+                        sdk.mergePropertiesForParticipant(
+                                Integer.parseInt(data.firstname()), //NOTE: both the firstname and lastname are set to the participantId
+                                new ObservationProperties(
+                                        Map.of("token", data.token(),
+                                                "limeUrl", limeSurveyRequestService.getBaseUrl())
+                                )
+                        )
                 );
         limeSurveyRequestService.setSurveyEndUrl(surveyId, sdk.getStudyId(), sdk.getObservationId());
         limeSurveyRequestService.activateSurvey(surveyId);
@@ -78,7 +78,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
         String newSurveyId = properties.getString(LIME_SURVEY_ID);
         String activeSurveyId = sdk.getValue(LIME_SURVEY_ID, String.class).orElse(null);
 
-        if(activeSurveyId == null || activeSurveyId.equals(newSurveyId)) {
+        if (activeSurveyId == null || activeSurveyId.equals(newSurveyId)) {
             sdk.setValue(LIME_SURVEY_ID, newSurveyId);
         }
     }

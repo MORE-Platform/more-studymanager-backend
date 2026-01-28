@@ -34,6 +34,10 @@ import io.redlink.more.studymanager.service.ElasticDataService;
 import io.redlink.more.studymanager.service.ElasticService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import io.redlink.more.studymanager.service.PushNotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.HashMap;
@@ -43,9 +47,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 @Component
 public class MoreSDK {
@@ -140,7 +141,7 @@ public class MoreSDK {
             int extendedComponentId,
             String componentType,
             Instant time,
-            Map<String,Object> data
+            Map<String, Object> data
     ) {
         switch (type) {
             case action -> elasticService.setDataPoint(studyId, new ElasticActionDataPoint(
@@ -170,8 +171,8 @@ public class MoreSDK {
         }
     }
 
-    public void setPropertiesForParticipant(long studyId, Integer participantId, int observationId, ObservationProperties properties) {
-        observationRepository.setParticipantProperties(studyId, participantId, observationId, properties);
+    public void mergeParticipantProperties(long studyId, Integer participantId, int observationId, ObservationProperties properties) {
+        observationRepository.mergeParticipantProperties(studyId, participantId, observationId, properties);
     }
 
     public Optional<ObservationProperties> getPropertiesForParticipant(long studyId, Integer participantId, int observationId) {

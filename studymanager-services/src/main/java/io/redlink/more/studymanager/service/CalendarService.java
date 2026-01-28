@@ -12,22 +12,31 @@ import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.ParticipantObservationSeed;
+import io.redlink.more.studymanager.model.ParticipantWithObservationProperties;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.timeline.InterventionTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
+import io.redlink.more.studymanager.utils.RandomSchedulerUtils;
 import io.redlink.more.studymanager.utils.SchedulerUtils;
+import org.apache.commons.lang3.Range;
+import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.Range;
-import org.springframework.stereotype.Service;
+import java.util.stream.Stream;
 
 
 @Service
@@ -141,19 +150,35 @@ public class CalendarService {
         //        to == null ? Instant.MAX : to.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
         //);
 
+        var properties = observationService.getParticipantObservationProperties(study.getStudyId())
+                .stream()
+                .filter(p -> participant == null || participant.getParticipantId() == null || p.participantId().equals(participant.getParticipantId()))
+                .map(CalendarService::toParticipantObservationSeed).toList();
+
+
         return new StudyTimeline(
                 participantStart,
                 Range.of(firstDayInStudy, lastDayInStudy, LocalDate::compareTo),
                 observations.stream()
-                        .flatMap(o -> SchedulerUtils
-                                .parseToObservationSchedules(
-                                        o.getSchedule(), effectiveRange.getMinimum(), effectiveRange.getMaximum()
-                                )
-                                .stream()
-                                // Disabled client-side filter for now...
-                                //Ï .filter(filterWindow::isOverlappedBy)
-                                .map(e -> ObservationTimelineEvent.fromObservation(o, e.getMinimum(), e.getMaximum()))
-                        )
+                        .flatMap(o -> {
+                            List<ParticipantObservationSeed> matchingSeeds = properties.stream()
+                                    .filter(p -> Objects.equals(o.getObservationId(), p.observationId()))
+                                    .toList();
+
+                            Stream<ParticipantObservationSeed> seedsToUse =
+                                    matchingSeeds.isEmpty() ? Stream.of((ParticipantObservationSeed) null) : matchingSeeds.stream();
+
+                            return seedsToUse.flatMap(seed ->
+                                    SchedulerUtils
+                                            .parseToObservationSchedules(
+                                                    seed, o.getSchedule(), effectiveRange.getMinimum(), effectiveRange.getMaximum()
+                                            )
+                                            .stream()
+                                            // Disabled client-side filter for now...
+                                            // .filter(filterWindow::isOverlappedBy)
+                                            .map(e -> ObservationTimelineEvent.fromObservation(o, e.getMinimum(), e.getMaximum()))
+                            );
+                        })
                         .toList(),
                 interventions.stream()
                         .map(intervention -> {
@@ -173,6 +198,14 @@ public class CalendarService {
                         .collect(Collectors.toList())
 
         );
+    }
+
+    public static ParticipantObservationSeed toParticipantObservationSeed(ParticipantWithObservationProperties participantWithObservationProperties) {
+        return new ParticipantObservationSeed(
+                participantWithObservationProperties.studyId(),
+                participantWithObservationProperties.participantId(),
+                participantWithObservationProperties.observationId(),
+                (Long) participantWithObservationProperties.properties().getOrDefault(RandomSchedulerUtils.OBSERVATION_SCHEDULE_SEED_KEY, null));
     }
 
 }
