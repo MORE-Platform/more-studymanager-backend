@@ -69,13 +69,17 @@ public class UpsertOccurredObservationsCronTest {
                 .setStudyState(Study.Status.ACTIVE);
         Participant study1Par1 = new Participant()
                 .setParticipantId(1)
-                .setAlias("Study 1 Participant 1");
+                .setAlias("Study 1 Participant 1")
+                .setStatus(Participant.Status.ACTIVE);
+
         Participant study1Par2 = new Participant()
                 .setParticipantId(2)
-                .setAlias("Study 1 Participant 2");
+                .setAlias("Study 1 Participant 2")
+                .setStatus(Participant.Status.ACTIVE);
         Participant study1Par3 = new Participant()
                 .setParticipantId(3)
-                .setAlias("Study 1 Participant 3");
+                .setAlias("Study 1 Participant 3")
+                .setStatus(Participant.Status.ACTIVE);
 
         Study study2 = new Study()
                 .setStudyId(2L)
@@ -83,10 +87,12 @@ public class UpsertOccurredObservationsCronTest {
                 .setStudyState(Study.Status.PREVIEW);
         Participant study2Par1 = new Participant()
                 .setParticipantId(1)
-                .setAlias("Study 2 Participant 1");
+                .setAlias("Study 2 Participant 1")
+                .setStatus(Participant.Status.ACTIVE);
         Participant study2Par2 = new Participant()
                 .setParticipantId(2)
-                .setAlias("Study 2 Participant 2");
+                .setAlias("Study 2 Participant 2")
+                .setStatus(Participant.Status.ACTIVE);
         //Mock the iteration over all active studies
         when(studyService.getStudiesByStates(anyIterable()))
                 .thenReturn(Stream.of(study1, study2));

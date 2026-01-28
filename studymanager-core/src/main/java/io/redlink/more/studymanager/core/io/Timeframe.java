@@ -20,6 +20,14 @@ public class Timeframe implements TimeRange {
         this.to = to;
     }
 
+    public final Instant getFrom() {
+        return from;
+    }
+
+    public final Instant getTo() {
+        return to;
+    }
+
     @Override
     public String getFromString() {
         return from != null ? from.toString() : null;

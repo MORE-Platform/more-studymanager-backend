@@ -10,6 +10,7 @@ package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.core.properties.OccurredObservationProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;
 import io.redlink.more.studymanager.model.OccurredObservation;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -123,20 +124,20 @@ public class OccurredObservationRepository {
     public Stream<OccurredObservation> listOccurredObservations(
             Long studyId, Integer participantId, Integer observationId,
             Boolean dataValid,
-            Set<OccurredObservation.DataState> dataStates
+            Set<ObservationDataState> dataStates
     ) {
         return namedTemplate.queryForStream(LIST_OCCURRED_OBSERVATION,
                 new MapSqlParameterSource("study_id", studyId)
                         .addValue("participant_id", participantId)
                         .addValue("observation_id", observationId)
                         .addValue("data_valid", dataValid)
-                        .addValue("data_states", dataStates == null ? null : dataStates.stream().map(OccurredObservation.DataState::getValue).toArray(String[]::new)),
+                        .addValue("data_states", dataStates == null ? null : dataStates.stream().map(ObservationDataState::getValue).toArray(String[]::new)),
                 getOccurredObservationRowMapper());
     }
 
     public Instant getLatestStartTime(
             Long studyId, Integer participantId, Integer observationId,
-            Boolean dataValid, Set<OccurredObservation.DataState> dataStates
+            Boolean dataValid, Set<ObservationDataState> dataStates
     ) {
         try {
             return namedTemplate.queryForObject(FIND_LAST_START_TIME,
@@ -144,7 +145,7 @@ public class OccurredObservationRepository {
                             .addValue("participant_id", participantId)
                             .addValue("observation_id", observationId)
                             .addValue("data_valid", dataValid)
-                            .addValue("data_states", dataStates == null ? null : dataStates.stream().map(OccurredObservation.DataState::getValue).toArray(String[]::new)),
+                            .addValue("data_states", dataStates == null ? null : dataStates.stream().map(ObservationDataState::getValue).toArray(String[]::new)),
                     getInstantRowMapper("start", true));
         } catch (EmptyResultDataAccessException e) {
             return null;
@@ -192,7 +193,7 @@ public class OccurredObservationRepository {
                 RepositoryUtils.readInstantUTC(rs, "start"),
                 RepositoryUtils.readInstantUTC(rs, "end"),
                 rs.getBoolean("data_valid"),
-                OccurredObservation.DataState.fromValue(rs.getString("data_state")),
+                ObservationDataState.fromValue(rs.getString("data_state")),
                 MapperUtils.readValue(rs.getString("properties"), OccurredObservationProperties.class),
                 RepositoryUtils.readInstant(rs, "created"),
                 RepositoryUtils.readInstant(rs, "modified")

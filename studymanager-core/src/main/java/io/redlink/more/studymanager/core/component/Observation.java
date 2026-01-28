@@ -8,12 +8,18 @@
  */
 package io.redlink.more.studymanager.core.component;
 
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataSummary;
+import io.redlink.more.studymanager.core.datavalidity.ObservationValidationResult;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.io.SimpleParticipant;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.ui.DataView;
 import io.redlink.more.studymanager.core.ui.DataViewInfo;
+
+import java.time.Instant;
 
 public abstract class Observation<C extends ObservationProperties> extends Component<C> {
 
@@ -55,4 +61,25 @@ public abstract class Observation<C extends ObservationProperties> extends Compo
     public void deactivate() {
         // no action
     }
+
+    /**
+     * Default implementation that checks if data are available. If any are present the validation is set to
+     * complete otherwise the state is set to missing
+     * @param start the start of the current observation. Important for repeating observation schedules.
+     * @param end the end of the observation. Important for repeating observation schedules.
+     * @param observationDataSummary the summary over available observation data in the time series index for this observation and a specific participant
+     * @return the validation result
+     */
+    public ObservationValidationResult validateData(Instant start, Instant end, ObservationDataSummary observationDataSummary) {
+        if(observationDataSummary == null) { //null indicates some problem. This will cause the check to be repeated
+            return new ObservationValidationResult(false, ObservationDataState.MISSING);
+        }
+        if(observationDataSummary.numDocs() <= 0) { //no data
+            return new ObservationValidationResult(false, ObservationDataState.MISSING);
+        }
+        //the default implementation assumes an observation to be complete if any data are availale
+        return new ObservationValidationResult(false, ObservationDataState.COMPLETE);
+    }
+
+
 }

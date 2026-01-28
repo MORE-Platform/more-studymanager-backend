@@ -133,7 +133,7 @@ public class ImportExportApiV1Controller implements ImportExportApi {
     }
 
     @Override
-    @Audited
+    //@Audited NOTE: when importing a study can not be audit logged as we do not have a study as context
     public ResponseEntity<StudyDTO> importStudy(MultipartFile file) {
         try {
             final var currentUser = authService.getCurrentUser();

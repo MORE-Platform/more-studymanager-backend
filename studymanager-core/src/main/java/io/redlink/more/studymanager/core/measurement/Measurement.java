@@ -8,6 +8,8 @@
  */
 package io.redlink.more.studymanager.core.measurement;
 
+import java.util.Objects;
+
 public class Measurement {
     public enum Type {
         INTEGER,DOUBLE,STRING,BOOLEAN,DATE,OBJECT
@@ -29,5 +31,25 @@ public class Measurement {
 
     public Type getType() {
         return type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Measurement that = (Measurement) o;
+        return Objects.equals(id, that.id) && type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, type);
+    }
+
+    @Override
+    public String toString() {
+        return "Measurement{" +
+                "id='" + id + '\'' +
+                ", type=" + type +
+                '}';
     }
 }

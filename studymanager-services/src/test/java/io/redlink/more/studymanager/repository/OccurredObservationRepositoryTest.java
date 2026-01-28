@@ -9,6 +9,7 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.configuration.JPAConfiguration;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.properties.OccurredObservationProperties;
 import io.redlink.more.studymanager.model.*;
@@ -23,8 +24,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
@@ -109,7 +108,7 @@ class OccurredObservationRepositoryTest {
         assertThat(occurredObservationResponse.start()).isEqualTo(startTime);
         assertThat(occurredObservationResponse.end()).isEqualTo(endTime);
         assertThat(occurredObservationResponse.dataValid()).isTrue();
-        assertThat(occurredObservationResponse.dataState()).isEqualTo(OccurredObservation.DataState.MISSING);
+        assertThat(occurredObservationResponse.dataState()).isEqualTo(ObservationDataState.MISSING);
         assertThat(occurredObservationResponse.properties()).isNotNull();
         assertThat(occurredObservationResponse.properties()).isEmpty();
         assertThat(occurredObservationResponse.created()).isNotNull();
@@ -126,7 +125,7 @@ class OccurredObservationRepositoryTest {
                 occurredObservationResponse.start(),
                 occurredObservationResponse.end(),
                 false, //change data valid
-                OccurredObservation.DataState.INCOMPLETE,
+                ObservationDataState.INCOMPLETE,
                 new OccurredObservationProperties(Map.of("test", "dummy", "testInt", 69))
         );
 
@@ -139,7 +138,7 @@ class OccurredObservationRepositoryTest {
         assertThat(updatedOccurentObservationResponse.start()).isEqualTo(startTime);
         assertThat(updatedOccurentObservationResponse.end()).isEqualTo(endTime);
         assertThat(updatedOccurentObservationResponse.dataValid()).isFalse(); //UPDATED
-        assertThat(updatedOccurentObservationResponse.dataState()).isEqualTo(OccurredObservation.DataState.INCOMPLETE);
+        assertThat(updatedOccurentObservationResponse.dataState()).isEqualTo(ObservationDataState.INCOMPLETE);
         assertThat(updatedOccurentObservationResponse.properties()).isNotNull();
         assertThat(updatedOccurentObservationResponse.properties()).hasSize(2);
         assertThat(updatedOccurentObservationResponse.properties().getString("test")).isEqualTo("dummy");
@@ -157,7 +156,7 @@ class OccurredObservationRepositoryTest {
                 updatedOccurentObservationResponse.start(),
                 updatedOccurentObservationResponse.end().plus(1, ChronoUnit.HOURS),
                 true, //change data valid
-                OccurredObservation.DataState.COMPLETE,
+                ObservationDataState.COMPLETE,
                 new OccurredObservationProperties(Map.of("test", "dummy-changed", "testInt", 42))
         ));
 
@@ -169,7 +168,7 @@ class OccurredObservationRepositoryTest {
         assertThat(duplicateInsertResponse.end()).isEqualTo(endTime.plus(1, ChronoUnit.HOURS)); //UPDATED
         //NOT UPDATED FIELDS!!
         assertThat(duplicateInsertResponse.dataValid()).isFalse(); //NOT TRUE
-        assertThat(duplicateInsertResponse.dataState()).isEqualTo(OccurredObservation.DataState.INCOMPLETE); //NOT COMPLETE
+        assertThat(duplicateInsertResponse.dataState()).isEqualTo(ObservationDataState.INCOMPLETE); //NOT COMPLETE
         assertThat(duplicateInsertResponse.properties()).isNotNull();
         assertThat(duplicateInsertResponse.properties()).hasSize(2);
         assertThat(duplicateInsertResponse.properties().getString("test")).isEqualTo("dummy"); //NOT dummy-changed
@@ -206,25 +205,25 @@ class OccurredObservationRepositoryTest {
         //Oservation 1, Participant 1, Yesterday
         var ooO1P1Y = occurredObservationRepository.upsert(new OccurredObservation(
                 studyId, observation.getObservationId(), participant.getParticipantId(), startTime.minus(1, ChronoUnit.DAYS), endTime.minus(1, ChronoUnit.DAYS),
-                true, OccurredObservation.DataState.COMPLETE, new OccurredObservationProperties()));
+                true, ObservationDataState.COMPLETE, new OccurredObservationProperties()));
         var ooO1P2T = occurredObservationRepository.upsert(new OccurredObservation(
                 studyId, observation.getObservationId(), participant2.getParticipantId(), startTime, endTime,
-                true, OccurredObservation.DataState.MISSING, new OccurredObservationProperties()));
+                true, ObservationDataState.MISSING, new OccurredObservationProperties()));
         var ooO1P2Y = occurredObservationRepository.upsert(new OccurredObservation(
                 studyId, observation.getObservationId(), participant2.getParticipantId(), startTime.minus(1, ChronoUnit.DAYS), endTime.minus(1, ChronoUnit.DAYS),
-                true, OccurredObservation.DataState.MISSING, new OccurredObservationProperties()));
+                true, ObservationDataState.MISSING, new OccurredObservationProperties()));
         var ooO2P1T = occurredObservationRepository.upsert(new OccurredObservation(
                 studyId, observation2.getObservationId(), participant.getParticipantId(), startTime2, endTime2,
-                true, OccurredObservation.DataState.INCOMPLETE, new OccurredObservationProperties()));
+                true, ObservationDataState.INCOMPLETE, new OccurredObservationProperties()));
         var ooO2P1Y = occurredObservationRepository.upsert(new OccurredObservation(
                 studyId, observation2.getObservationId(), participant.getParticipantId(), startTime2.minus(1, ChronoUnit.DAYS), endTime2.minus(1, ChronoUnit.DAYS),
-                true, OccurredObservation.DataState.COMPLETE, new OccurredObservationProperties()));
+                true, ObservationDataState.COMPLETE, new OccurredObservationProperties()));
         var ooO2P2T = occurredObservationRepository.upsert(new OccurredObservation(
                 studyId, observation2.getObservationId(), participant2.getParticipantId(), startTime2, endTime2,
-                true, OccurredObservation.DataState.PARTIAL, new OccurredObservationProperties()));
+                true, ObservationDataState.PARTIAL, new OccurredObservationProperties()));
         var ooO2P2Y = occurredObservationRepository.upsert(new OccurredObservation(
                 studyId, observation2.getObservationId(), participant2.getParticipantId(), startTime2.minus(1, ChronoUnit.DAYS), endTime2.minus(1, ChronoUnit.DAYS),
-                false, OccurredObservation.DataState.COMPLETE, new OccurredObservationProperties()));
+                false, ObservationDataState.COMPLETE, new OccurredObservationProperties()));
 
         //List OccurredObservations for Participant 1
         var p1oos = occurredObservationRepository.listOccurredObservations(studyId, participant.getParticipantId(), null, null, null).toList();
@@ -237,7 +236,7 @@ class OccurredObservationRepositoryTest {
         assertThat(o1p2oos).hasSize(2);
         assertThat(o1p2oos).containsExactlyInAnyOrder(ooO1P2T, ooO1P2Y);
         //List OccurredObservations in the State Incomplete or partial
-        var sIPoos = occurredObservationRepository.listOccurredObservations(studyId, null, null, null, EnumSet.of(OccurredObservation.DataState.INCOMPLETE, OccurredObservation.DataState.PARTIAL)).toList();
+        var sIPoos = occurredObservationRepository.listOccurredObservations(studyId, null, null, null, EnumSet.of(ObservationDataState.INCOMPLETE, ObservationDataState.PARTIAL)).toList();
         assertThat(sIPoos).isNotNull();
         assertThat(sIPoos).hasSize(3);
         assertThat(sIPoos).containsExactlyInAnyOrder(ooO1P1T, ooO2P1T, ooO2P2T);
@@ -251,7 +250,7 @@ class OccurredObservationRepositoryTest {
         var lastStartTimeStudy = occurredObservationRepository.getLatestStartTime(studyId, null, null, null, null);
         assertThat(lastStartTimeStudy).isNotNull();
         assertThat(lastStartTimeStudy).isEqualTo(startTime);
-        var lastStartTimeStateP2StateComplete =  occurredObservationRepository.getLatestStartTime(studyId, participant2.getParticipantId(), null, null, EnumSet.of(OccurredObservation.DataState.COMPLETE));
+        var lastStartTimeStateP2StateComplete =  occurredObservationRepository.getLatestStartTime(studyId, participant2.getParticipantId(), null, null, EnumSet.of(ObservationDataState.COMPLETE));
         assertThat(lastStartTimeStateP2StateComplete).isNotNull();
         assertThat(lastStartTimeStateP2StateComplete).isEqualTo(startTime2.minus(1, ChronoUnit.DAYS));
         //validate that searching for a combination with no entry returns null

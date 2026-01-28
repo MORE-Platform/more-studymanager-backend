@@ -8,8 +8,10 @@
  */
 package io.redlink.more.studymanager.sdk;
 
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataSummary;
 import io.redlink.more.studymanager.core.io.SimpleParticipant;
 import io.redlink.more.studymanager.core.io.TimeRange;
+import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreActionSDK;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
@@ -189,4 +191,14 @@ public class MoreSDK {
             return null;
         }
     }
+    public ObservationDataSummary validateData(long studyId, Integer studyGroupId, int observationId, int participantId, TimeRange timerange, MeasurementSet measurementSet) {
+        try {
+            return elasticDataService.validateObservationData(studyId, studyGroupId, observationId, participantId, timerange, measurementSet);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to query observation data to validate data for observation: {} of study: {} and participant: {} in time range {} and meassurements: {}",
+                    observationId, studyId, participantId, timerange, measurementSet, e);
+            return null;
+        }
+    }
+
 }

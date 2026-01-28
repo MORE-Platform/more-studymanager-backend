@@ -15,6 +15,7 @@ import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
+import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -23,6 +24,8 @@ import java.util.EnumSet;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -36,9 +39,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -57,6 +58,9 @@ class ParticipantControllerTest {
     ParticipantService participantService;
     @MockitoBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
+
+    @MockitoBean
+    OccurredObservationService occurredObservationService;
 
     @Autowired
     private GatewayProperties gatewayProperties;
@@ -85,6 +89,7 @@ class ParticipantControllerTest {
                         EnumSet.allOf(PlatformRole.class)
                 )
         );
+        when(occurredObservationService.streamOccurredObservations(anyLong(), any(), any(), anyBoolean(), any())).thenReturn(Stream.of());
     }
 
     @Test
