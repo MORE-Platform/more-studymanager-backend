@@ -165,19 +165,22 @@ public class CalendarService {
                                     .filter(p -> Objects.equals(o.getObservationId(), p.observationId()))
                                     .toList();
 
-                            Stream<ParticipantObservationSeed> seedsToUse =
-                                    matchingSeeds.isEmpty() ? Stream.of((ParticipantObservationSeed) null) : matchingSeeds.stream();
-
-                            return seedsToUse.flatMap(seed ->
-                                    SchedulerUtils
-                                            .parseToObservationSchedules(
-                                                    seed, o.getSchedule(), effectiveRange.getMinimum(), effectiveRange.getMaximum()
-                                            )
-                                            .stream()
-                                            // Disabled client-side filter for now...
-                                            // .filter(filterWindow::isOverlappedBy)
-                                            .map(e -> ObservationTimelineEvent.fromObservation(o, e.getMinimum(), e.getMaximum()))
-                            );
+                            try (Stream<ParticipantObservationSeed> seedStream =
+                                         matchingSeeds.isEmpty() ? Stream.of((ParticipantObservationSeed) null) : matchingSeeds.stream()) {
+                                List<ParticipantObservationSeed> seedsToUse = seedStream.toList();
+                                return seedsToUse
+                                        .stream()
+                                        .flatMap(seed ->
+                                                SchedulerUtils
+                                                        .parseToObservationSchedules(
+                                                                seed, o.getSchedule(), effectiveRange.getMinimum(), effectiveRange.getMaximum()
+                                                        )
+                                                        .stream()
+                                                        // Disabled client-side filter for now...
+                                                        // .filter(filterWindow::isOverlappedBy)
+                                                        .map(e -> ObservationTimelineEvent.fromObservation(o, e.getMinimum(), e.getMaximum()))
+                                        );
+                            }
                         })
                         .toList(),
                 interventions.stream()
