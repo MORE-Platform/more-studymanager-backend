@@ -17,7 +17,7 @@ import io.redlink.more.studymanager.component.observation.garmin.activity.Garmin
 import io.redlink.more.studymanager.component.observation.garmin.bloodpressure.GarminBloodPressureObservationFactory;
 import io.redlink.more.studymanager.component.observation.garmin.heartrate.GarminHeartRateObservationFactory;
 import io.redlink.more.studymanager.component.observation.garmin.sleep.GarminSleepObservationFactory;
-import io.redlink.more.studymanager.component.observation.garmin.steps.GarminStepsObservationFactory;
+import io.redlink.more.studymanager.component.observation.garmin.steps.daily.GarminDailyStepsObservationFactory;
 import io.redlink.more.studymanager.component.observation.lime.LimeSurveyObservationFactory;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
@@ -113,7 +113,7 @@ class ObservationServiceTest {
         GarminBloodPressureObservationFactory garminBloodPressureFactory = new GarminBloodPressureObservationFactory();
         GarminHeartRateObservationFactory garminHeartRateFactory = new GarminHeartRateObservationFactory();
         GarminSleepObservationFactory garminSleepFactory = new GarminSleepObservationFactory();
-        GarminStepsObservationFactory garminStepsFactory = new GarminStepsObservationFactory();
+        GarminDailyStepsObservationFactory garminStepsFactory = new GarminDailyStepsObservationFactory();
 
         assertThat(accFactory.getHidden()).isTrue();
         assertThat(polFactory.getHidden()).isTrue();

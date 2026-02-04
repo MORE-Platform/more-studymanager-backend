@@ -51,10 +51,15 @@ public class GarminMeasurementSets {
             new Measurement("sleepScores_deepPercentage_qualifierKey", Measurement.Type.STRING)
     ));
 
-    public static MeasurementSet STEPS = new MeasurementSet(
-            "STEPS", Set.of(
+    private static final Set<Measurement> STEP_MEASUREMENTS = Set.of(
             new Measurement("steps", Measurement.Type.INTEGER),
             new Measurement("stepsGoal", Measurement.Type.INTEGER),
             new Measurement("distanceInMeters", Measurement.Type.DOUBLE)
-    ));
+    );
+
+    public static MeasurementSet DAILY_STEPS = new MeasurementSet(
+            "DAILY_STEPS", STEP_MEASUREMENTS);
+
+    public static MeasurementSet EPOCH_STEPS = new MeasurementSet(
+            "EPOCH_STEPS", STEP_MEASUREMENTS);
 }
