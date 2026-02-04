@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.component.observation.garmin.bloodpressure;
 
+import io.redlink.more.studymanager.component.observation.measurement.GarminMeasurementSets;
 import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
@@ -19,7 +20,7 @@ public class GarminBloodPressureObservationFactory<C extends Observation<P>, P e
 
     @Override
     public MeasurementSet getMeasurementSet() {
-        return MeasurementSet.None;
+        return GarminMeasurementSets.BLOOD_PRESSURE;
     }
 
     @Override

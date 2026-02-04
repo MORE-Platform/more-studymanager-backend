@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.component.observation.garmin.sleep;
 
+import io.redlink.more.studymanager.component.observation.measurement.GarminMeasurementSets;
 import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
@@ -19,7 +20,7 @@ public class GarminSleepObservationFactory<C extends Observation<P>, P extends O
 
     @Override
     public MeasurementSet getMeasurementSet() {
-        return MeasurementSet.None;
+        return GarminMeasurementSets.SLEEP;
     }
 
     @Override
