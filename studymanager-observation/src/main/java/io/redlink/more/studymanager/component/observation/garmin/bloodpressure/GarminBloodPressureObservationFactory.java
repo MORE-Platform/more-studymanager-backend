@@ -1,4 +1,4 @@
-package io.redlink.more.studymanager.component.observation.garmin;
+package io.redlink.more.studymanager.component.observation.garmin.bloodpressure;
 
 import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
@@ -8,13 +8,13 @@ import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
-public class GarminObservationFactory<C extends Observation<P>, P extends ObservationProperties> extends ObservationFactory<C, P> {
+public class GarminBloodPressureObservationFactory<C extends Observation<P>, P extends ObservationProperties> extends ObservationFactory<C, P> {
 
     private static final Visibility visibility = new Visibility(true, false);
 
     @Override
-    public GarminObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new GarminObservation(sdk, validate((P) properties));
+    public GarminBloodPressureObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+        return new GarminBloodPressureObservation(sdk, validate((P) properties));
     }
 
     @Override
@@ -24,17 +24,17 @@ public class GarminObservationFactory<C extends Observation<P>, P extends Observ
 
     @Override
     public String getId() {
-        return "garmin-observation";
+        return "garmin-blood-pressure-observation";
     }
 
     @Override
     public String getTitle() {
-        return "observation.factory.garmin.title";
+        return "observation.factory.garmin.blood-pressure.title";
     }
 
     @Override
     public String getDescription() {
-        return "observation.factory.garmin.description";
+        return "observation.factory.garmin.blood-pressure.description";
     }
 
     @Override
