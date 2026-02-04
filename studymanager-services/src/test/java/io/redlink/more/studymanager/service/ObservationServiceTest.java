@@ -8,17 +8,23 @@
  */
 package io.redlink.more.studymanager.service;
 
-import io.redlink.more.studymanager.component.observation.*;
-import io.redlink.more.studymanager.component.observation.garmin.GarminObservationFactory;
+import io.redlink.more.studymanager.component.observation.AccMobileObservationFactory;
+import io.redlink.more.studymanager.component.observation.ExternalObservationFactory;
+import io.redlink.more.studymanager.component.observation.GpsMobileObservationFactory;
+import io.redlink.more.studymanager.component.observation.PolarVerityObservationFactory;
+import io.redlink.more.studymanager.component.observation.QuestionObservationFactory;
+import io.redlink.more.studymanager.component.observation.garmin.activity.GarminActivityObservationFactory;
+import io.redlink.more.studymanager.component.observation.garmin.bloodpressure.GarminBloodPressureObservationFactory;
+import io.redlink.more.studymanager.component.observation.garmin.heartrate.GarminHeartRateObservationFactory;
+import io.redlink.more.studymanager.component.observation.garmin.sleep.GarminSleepObservationFactory;
+import io.redlink.more.studymanager.component.observation.garmin.steps.daily.GarminDailyStepsObservationFactory;
 import io.redlink.more.studymanager.component.observation.lime.LimeSurveyObservationFactory;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
-import io.redlink.more.studymanager.core.io.Visibility;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
-import io.redlink.more.studymanager.repository.ObservationRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,8 +96,11 @@ class ObservationServiceTest {
                 .setType("question-observation")
                 .setHidden(true);
 
-        Observation garmin = new Observation()
-                .setType("garmin-observation");
+        Observation garminActivity = new Observation().setType("garmin-activity-observation");
+        Observation garminBloodPressure = new Observation().setType("garmin-blood-pressure-observation");
+        Observation garminHeartRate = new Observation().setType("garmin-heart-rate-observation");
+        Observation garminSleep = new Observation().setType("garmin-sleep-observation");
+        Observation garminSteps = new Observation().setType("garmin-steps-observation");
 
         AccMobileObservationFactory accFactory = new AccMobileObservationFactory();
         PolarVerityObservationFactory polFactory = new PolarVerityObservationFactory();
@@ -99,7 +108,12 @@ class ObservationServiceTest {
         LimeSurveyObservationFactory limFactory = new LimeSurveyObservationFactory();
         QuestionObservationFactory qstFactory = new QuestionObservationFactory();
         ExternalObservationFactory extFactory = new ExternalObservationFactory();
-        GarminObservationFactory garminFactory = new GarminObservationFactory();
+
+        GarminActivityObservationFactory garminActivityFactory = new GarminActivityObservationFactory();
+        GarminBloodPressureObservationFactory garminBloodPressureFactory = new GarminBloodPressureObservationFactory();
+        GarminHeartRateObservationFactory garminHeartRateFactory = new GarminHeartRateObservationFactory();
+        GarminSleepObservationFactory garminSleepFactory = new GarminSleepObservationFactory();
+        GarminDailyStepsObservationFactory garminStepsFactory = new GarminDailyStepsObservationFactory();
 
         assertThat(accFactory.getHidden()).isTrue();
         assertThat(polFactory.getHidden()).isTrue();
@@ -108,6 +122,11 @@ class ObservationServiceTest {
         assertThat(qstFactory.getHidden()).isTrue();
 
         assertThat(extFactory.getVisibility().isChangeable()).isFalse();
-        assertThat(garminFactory.getVisibility().isHiddenByDefault()).isFalse();
+
+        assertThat(garminActivityFactory.getVisibility().isHiddenByDefault()).isFalse();
+        assertThat(garminBloodPressureFactory.getVisibility().isHiddenByDefault()).isFalse();
+        assertThat(garminHeartRateFactory.getVisibility().isHiddenByDefault()).isFalse();
+        assertThat(garminSleepFactory.getVisibility().isHiddenByDefault()).isFalse();
+        assertThat(garminStepsFactory.getVisibility().isHiddenByDefault()).isFalse();
     }
 }

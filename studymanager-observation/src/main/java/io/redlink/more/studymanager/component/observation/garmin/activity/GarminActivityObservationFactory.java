@@ -1,5 +1,6 @@
-package io.redlink.more.studymanager.component.observation.garmin;
+package io.redlink.more.studymanager.component.observation.garmin.activity;
 
+import io.redlink.more.studymanager.component.observation.measurement.GarminMeasurementSets;
 import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
@@ -8,34 +9,33 @@ import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
-@Deprecated
-public class GarminObservationFactory<C extends Observation<P>, P extends ObservationProperties> extends ObservationFactory<C, P> {
+public class GarminActivityObservationFactory<C extends Observation<P>, P extends ObservationProperties> extends ObservationFactory<C, P> {
 
     private static final Visibility visibility = new Visibility(true, false);
 
     @Override
-    public GarminObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new GarminObservation(sdk, validate((P) properties));
+    public GarminActivityObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+        return new GarminActivityObservation(sdk, validate((P) properties));
     }
 
     @Override
     public MeasurementSet getMeasurementSet() {
-        return MeasurementSet.None;
+        return GarminMeasurementSets.ACTIVITY;
     }
 
     @Override
     public String getId() {
-        return "garmin-observation";
+        return "garmin-activity-observation";
     }
 
     @Override
     public String getTitle() {
-        return "observation.factory.garmin.title";
+        return "observation.factory.garmin.activity.title";
     }
 
     @Override
     public String getDescription() {
-        return "observation.factory.garmin.description";
+        return "observation.factory.garmin.activity.description";
     }
 
     @Override

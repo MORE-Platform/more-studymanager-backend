@@ -19,6 +19,11 @@ public record MeasurementSet(String id, Set<Measurement> values) {
             throw new IllegalArgumentException("Id and values must not be null");
         }
     }
+
+    public MeasurementSet(MeasurementSet other) {
+        this(other.id, other.values);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

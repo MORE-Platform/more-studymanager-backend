@@ -1,13 +1,12 @@
-package io.redlink.more.studymanager.component.observation.garmin;
+package io.redlink.more.studymanager.component.observation.garmin.steps.daily;
 
 import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
-@Deprecated
-public class GarminObservation<C extends ObservationProperties> extends Observation<C> {
-    protected GarminObservation(MoreObservationSDK sdk, C properties) throws ConfigurationValidationException {
+public class GarminDailyStepsObservation<C extends ObservationProperties> extends Observation<C> {
+    protected GarminDailyStepsObservation(MoreObservationSDK sdk, C properties) throws ConfigurationValidationException {
         super(sdk, properties);
     }
 }
