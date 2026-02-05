@@ -514,7 +514,7 @@ paths:
         - $ref: '#/components/parameters/StudyId'
       responses:
         '200':
-          description: Successfully listed all study groups
+          description: Successfully listed all observation groups
           content:
             application/json:
               schema:
@@ -1779,6 +1779,12 @@ components:
         numberOfParticipants:
           type: integer
           readOnly: true
+        numberOfObservations:
+          type: integer
+          readOnly: true
+        numberOfInterventions:
+          type: integer
+          readOnly: true
         created:
           type: string
           format: date-time
@@ -1787,6 +1793,8 @@ components:
           type: string
           format: date-time
           readOnly: true
+      required:
+        - title
     StudyDuration:
       type: object
       properties:
@@ -1893,8 +1901,12 @@ components:
         noSchedule:
           type: boolean
           default: false
-        observationGroupId:
-          $ref: '#/components/schemas/IdReference'
+        observationGroupIds:
+          type: array
+          description: The set of observation group Ids the observation is part of
+          items:
+            $ref: '#/components/schemas/IdReference'
+          uniqueItems: true
 
     OccurredObservation:
       type: object
@@ -2121,8 +2133,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Action'
-        observationGroupId:
-          $ref: '#/components/schemas/IdReference'
+        observationGroupIds:
+          type: array
+          description: The set of observation group Ids the intervention is part of
+          items:
+            $ref: '#/components/schemas/IdReference'
+          uniqueItems: true
         created:
           type: string
           format: date-time
