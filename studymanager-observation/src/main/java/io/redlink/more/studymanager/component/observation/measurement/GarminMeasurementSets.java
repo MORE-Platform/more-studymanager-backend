@@ -11,7 +11,7 @@ public class GarminMeasurementSets {
     }
 
     public static MeasurementSet ACTIVITY = new MeasurementSet(
-            "ACTIVITY", Set.of(
+            "ACTIVITY_END", Set.of(
             new Measurement("activityType", Measurement.Type.STRING),
             new Measurement("met", Measurement.Type.DOUBLE),
             new Measurement("intensity", Measurement.Type.STRING),
@@ -29,26 +29,27 @@ public class GarminMeasurementSets {
     ));
 
     public static MeasurementSet SLEEP = new MeasurementSet(
-            "SLEEP", Set.of(
-            new Measurement("calendarDate", Measurement.Type.STRING),
-            new Measurement("totalNapDurationInSeconds", Measurement.Type.LONG),
-            new Measurement("unmeasurableSleepInSeconds", Measurement.Type.LONG),
-            new Measurement("deepSleepDurationInSeconds", Measurement.Type.LONG),
-            new Measurement("lightSleepDurationInSeconds", Measurement.Type.LONG),
-            new Measurement("remSleepInSeconds", Measurement.Type.LONG),
-            new Measurement("awakeDurationInSeconds", Measurement.Type.LONG),
-            new Measurement("validation", Measurement.Type.STRING),
+            "SLEEP_END", Set.of(
+            new Measurement("data_calendarDate", Measurement.Type.OBJECT), // array in the sample payload
+            new Measurement("data_startTime", Measurement.Type.STRING),
 
-            new Measurement("overallSleepScoreValue", Measurement.Type.INTEGER),
-            new Measurement("overallSleepScoreQualifierKey", Measurement.Type.STRING),
+            new Measurement("data_sleepScores", Measurement.Type.OBJECT),
+            new Measurement("data_overallSleepScore", Measurement.Type.OBJECT),
 
-            new Measurement("sleepScores_totalDuration_qualifierKey", Measurement.Type.STRING),
-            new Measurement("sleepScores_stress_qualifierKey", Measurement.Type.STRING),
-            new Measurement("sleepScores_awakeCount_qualifierKey", Measurement.Type.STRING),
-            new Measurement("sleepScores_remPercentage_qualifierKey", Measurement.Type.STRING),
-            new Measurement("sleepScores_restlessness_qualifierKey", Measurement.Type.STRING),
-            new Measurement("sleepScores_lightPercentage_qualifierKey", Measurement.Type.STRING),
-            new Measurement("sleepScores_deepPercentage_qualifierKey", Measurement.Type.STRING)
+            new Measurement("data_totalNapDurationInSeconds", Measurement.Type.LONG),
+            new Measurement("data_unmeasurableSleepInSeconds", Measurement.Type.LONG),
+            new Measurement("data_deepSleepDurationInSeconds", Measurement.Type.LONG),
+            new Measurement("data_lightSleepDurationInSeconds", Measurement.Type.LONG),
+            new Measurement("data_remSleepInSeconds", Measurement.Type.LONG),
+            new Measurement("data_awakeDurationInSeconds", Measurement.Type.LONG),
+
+            new Measurement("data_validation", Measurement.Type.STRING),
+
+            new Measurement("data_naps", Measurement.Type.OBJECT),
+            new Measurement("data_otherSleepData", Measurement.Type.OBJECT),
+            new Measurement("data_timeOffsetSleepSpo2", Measurement.Type.OBJECT),
+
+            new Measurement("data_summary_id", Measurement.Type.STRING)
     ));
 
     private static final Set<Measurement> STEP_MEASUREMENTS = Set.of(
