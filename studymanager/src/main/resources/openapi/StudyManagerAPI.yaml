@@ -2349,6 +2349,11 @@ components:
           description: |
             alternative title for better identification (informational only)
           type: string
+        gatewayUrl:
+          description: |
+            base-url of the data-gateway for external integrations
+          type: string
+          format: uri
         auth:
           type: object
           title: KeycloakSettings

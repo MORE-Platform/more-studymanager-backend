@@ -76,6 +76,7 @@ public class WebSecurityConfiguration {
         // Basics
         http.csrf(csrf -> csrf
                 .ignoringRequestMatchers("/kibana/**")
+                .ignoringRequestMatchers("/api/v1/trigger/external")
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
         );
         http.cors(AbstractHttpConfigurer::disable);
@@ -92,6 +93,8 @@ public class WebSecurityConfiguration {
                 // Study-Data-Export is authenticated internally using individual access-tokens
                 .requestMatchers(HttpMethod.GET, "/api/v1/studies/*/export/studydata/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/studies/*/calendar.ics").permitAll()
+                // External trigger endpoint is authenticated via API token, not OAuth2
+                .requestMatchers(HttpMethod.POST, "/api/v1/trigger/external").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
                 .requestMatchers("/kibana/**").authenticated()
                 .requestMatchers("/login/init").authenticated()
