@@ -11,6 +11,8 @@ package io.redlink.more.studymanager.model;
 import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Intervention {
     private Long studyId;
@@ -21,7 +23,7 @@ public class Intervention {
     private ScheduleEvent schedule;
     private Instant created;
     private Instant modified;
-    private Integer observationGroupId;
+    private Set<Integer> observationGroupIds;
 
     public Long getStudyId() {
         return studyId;
@@ -68,15 +70,6 @@ public class Intervention {
         return this;
     }
 
-    public Integer getObservationGroupId() {
-        return observationGroupId;
-    }
-
-    public Intervention setObservationGroupId(Integer observationGroupId) {
-        this.observationGroupId = observationGroupId;
-        return this;
-    }
-
     public ScheduleEvent getSchedule() {
         return schedule;
     }
@@ -103,4 +96,14 @@ public class Intervention {
         this.modified = modified;
         return this;
     }
+
+    public Intervention setObservationGroupIds(Set<Integer> observationGroupIds) {
+        this.observationGroupIds = observationGroupIds == null ? new HashSet<>() : observationGroupIds;
+        return this;
+    }
+
+    public Set<Integer> getObservationGroupIds() {
+        return observationGroupIds;
+    }
+
 }

@@ -32,7 +32,7 @@ public final class ObservationTransformer {
                 .setSchedule(EventTransformer.fromObservationScheduleDTO_V1(dto.getSchedule()))
                 .setHidden(dto.getHidden())
                 .setNoSchedule(dto.getNoSchedule())
-                .setObservationGroupId(dto.getObservationGroupId());
+                .setObservationGroupIds(dto.getObservationGroupIds());
     }
 
     public static ObservationDTO toObservationDTO_V1(Observation observation) {
@@ -52,7 +52,7 @@ public final class ObservationTransformer {
                 .modified(instant)
                 .hidden(observation.getHidden())
                 .noSchedule(observation.getNoSchedule())
-                .observationGroupId(observation.getObservationGroupId());
+                .observationGroupIds(observation.getObservationGroupIds());
     }
 
 }

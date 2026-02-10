@@ -123,7 +123,7 @@ public class ImportExportServiceTest {
                                 .setStudyGroupId(3)
                                 .setProperties(new ObservationProperties())
                                 .setSchedule(new Event())
-                                .setObservationGroupId(1),
+                                .setObservationGroupIds(Set.of(1)),
                         new Observation()
                                 .setObservationId(3)
                                 .setTitle("observation Title")
@@ -133,7 +133,17 @@ public class ImportExportServiceTest {
                                 .setStudyGroupId(null)
                                 .setProperties(new ObservationProperties())
                                 .setSchedule(new Event())
-                                .setObservationGroupId(2)))
+                                .setObservationGroupIds(Set.of(2)),
+                        new Observation()
+                                .setObservationId(4)
+                                .setTitle("observation Title")
+                                .setPurpose("observation purpose")
+                                .setParticipantInfo("observation info")
+                                .setType("gps-mobile-observation")
+                                .setStudyGroupId(null)
+                                .setProperties(new ObservationProperties())
+                                .setSchedule(new Event())
+                                .setObservationGroupIds(Set.of(1,2))))
                 .setStudyGroups(List.of(
                         new StudyGroup()
                                 .setStudyGroupId(2)
@@ -159,14 +169,21 @@ public class ImportExportServiceTest {
                                 .setPurpose("intervention purpose")
                                 .setStudyGroupId(2)
                                 .setSchedule(new Event())
-                                .setObservationGroupId(1),
+                                .setObservationGroupIds(Set.of(1)),
                         new Intervention()
                                 .setInterventionId(3)
                                 .setTitle("intervention title")
                                 .setPurpose("intervention purpose")
                                 .setStudyGroupId(3)
                                 .setSchedule(new Event())
-                                .setObservationGroupId(2)))
+                                .setObservationGroupIds(Set.of(2)),
+                        new Intervention()
+                                .setInterventionId(4)
+                                .setTitle("intervention title")
+                                .setPurpose("intervention purpose")
+                                .setStudyGroupId(3)
+                                .setSchedule(new Event())
+                                .setObservationGroupIds(Set.of(1,2))))
                 .setTriggers(Map.of(3, new Trigger()
                         .setType("sth")
                         .setProperties(new TriggerProperties())))
@@ -213,24 +230,30 @@ public class ImportExportServiceTest {
         assertThat(studyGroupCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
 
 
-        verify(observationService, times(2)).importObservation(idLongCaptor.capture(), observationCaptor.capture());
-        verify(interventionService, times(2)).importIntervention(idLongCaptor.capture(), interventionCaptor.capture(), triggerCaptor.capture(), actionCaptor.capture());
+        verify(observationService, times(3)).importObservation(idLongCaptor.capture(), observationCaptor.capture());
+        verify(interventionService, times(3)).importIntervention(idLongCaptor.capture(), interventionCaptor.capture(), triggerCaptor.capture(), actionCaptor.capture());
         verify(participantService, times(8)).createParticipant(participantsCaptor.capture());
         verify(integrationService, times(2)).addToken(idLongCaptor.capture(), idIntegerCaptor.capture(), aliasCaptor.capture());
 
         assertThat(observationCaptor.getAllValues().get(0).getObservationId()).isEqualTo(1);
         assertThat(observationCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(3);
-        assertThat(observationCaptor.getAllValues().get(0).getObservationGroupId()).isEqualTo(1);
+        assertThat(observationCaptor.getAllValues().get(0).getObservationGroupIds()).containsExactlyInAnyOrder(1);
         assertThat(observationCaptor.getAllValues().get(1).getObservationId()).isEqualTo(3);
-        assertThat(observationCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(null);
-        assertThat(observationCaptor.getAllValues().get(1).getObservationGroupId()).isEqualTo(2);
+        assertThat(observationCaptor.getAllValues().get(1).getStudyGroupId()).isNull();
+        assertThat(observationCaptor.getAllValues().get(1).getObservationGroupIds()).containsExactlyInAnyOrder(2);
+        assertThat(observationCaptor.getAllValues().get(2).getObservationId()).isEqualTo(4);
+        assertThat(observationCaptor.getAllValues().get(2).getStudyGroupId()).isNull();
+        assertThat(observationCaptor.getAllValues().get(2).getObservationGroupIds()).containsExactlyInAnyOrder(1, 2);
 
-        assertThat(interventionCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(2);
         assertThat(interventionCaptor.getAllValues().get(0).getInterventionId()).isEqualTo(2);
-        assertThat(interventionCaptor.getAllValues().get(0).getObservationGroupId()).isEqualTo(1);
-        assertThat(interventionCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
+        assertThat(interventionCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(2);
+        assertThat(interventionCaptor.getAllValues().get(0).getObservationGroupIds()).containsExactlyInAnyOrder(1);
         assertThat(interventionCaptor.getAllValues().get(1).getInterventionId()).isEqualTo(3);
-        assertThat(interventionCaptor.getAllValues().get(1).getObservationGroupId()).isEqualTo(2);
+        assertThat(interventionCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
+        assertThat(interventionCaptor.getAllValues().get(1).getObservationGroupIds()).containsExactlyInAnyOrder(2);
+        assertThat(interventionCaptor.getAllValues().get(2).getInterventionId()).isEqualTo(4);
+        assertThat(interventionCaptor.getAllValues().get(2).getStudyGroupId()).isEqualTo(3);
+        assertThat(interventionCaptor.getAllValues().get(2).getObservationGroupIds()).containsExactlyInAnyOrder(1, 2);
 
         assertThat(idLongCaptor.getAllValues()).allMatch(Predicate.isEqual(1L));
 
