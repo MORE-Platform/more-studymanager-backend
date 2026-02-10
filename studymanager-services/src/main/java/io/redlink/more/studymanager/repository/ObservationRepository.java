@@ -23,14 +23,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNullableIntegerValue;
 
@@ -39,19 +37,56 @@ public class ObservationRepository {
 
     private final static Logger LOG = LoggerFactory.getLogger(ObservationRepository.class);
 
-    private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule,observation_group_id) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule,:observation_group_id) RETURNING *";
-    private static final String IMPORT_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule,observation_group_id) VALUES (:study_id,:observation_id,:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule,:observation_group_id) RETURNING *";
-    private static final String GET_OBSERVATION_BY_IDS = "SELECT * FROM observations WHERE study_id = ? AND observation_id = ?";
+    private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule)";
+    private static final String IMPORT_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,:observation_id,:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule)";
+    private static final String GET_OBSERVATION_BY_IDS = """
+        SELECT o.*, ARRAY_AGG(oog.observation_group_id) FILTER (WHERE oog.observation_group_id IS NOT NULL) AS observation_group_ids
+        FROM observations o
+            LEFT JOIN observation_observation_groups oog ON o.study_id = oog.study_id AND o.observation_id = oog.observation_id
+        WHERE o.study_id = ? AND o.observation_id = ?
+        GROUP BY o.study_id, o.observation_id""";
     private static final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
-    private static final String LIST_OBSERVATIONS = "SELECT * FROM observations WHERE study_id = :study_id";
-    private static final String LIST_OBSERVATIONS_FOR_GROUP = "SELECT * FROM observations WHERE study_id = :study_id AND (study_group_id IS NULL OR study_group_id = :study_group_id) AND (observation_group_id IS NULL OR observation_group_id = ANY(:observation_group_ids::INT[]))";
-    private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, observation_group_id=:observation_group_id, modified=now(), hidden=:hidden, no_schedule=:no_schedule WHERE study_id=:study_id AND observation_id=:observation_id";
+    private static final String LIST_OBSERVATIONS = """
+        SELECT o.*, ARRAY_AGG(oog.observation_group_id) FILTER (WHERE oog.observation_group_id IS NOT NULL) AS observation_group_ids
+        FROM observations o
+            LEFT JOIN observation_observation_groups oog ON o.study_id = oog.study_id AND o.observation_id = oog.observation_id
+        WHERE o.study_id = :study_id
+        GROUP BY o.study_id, o.observation_id""";
+    private static final String LIST_OBSERVATIONS_FOR_GROUP = """
+        SELECT o.*, ARRAY_AGG(oog.observation_group_id) FILTER (WHERE oog.observation_group_id IS NOT NULL) AS observation_group_ids
+        FROM observations o
+            LEFT JOIN observation_observation_groups oog ON o.study_id = oog.study_id AND o.observation_id = oog.observation_id
+        WHERE o.study_id = :study_id
+          AND (o.study_group_id IS NULL OR o.study_group_id = :study_group_id)
+          AND (NOT EXISTS (
+            SELECT 1 FROM observation_observation_groups oog3\s
+            WHERE oog3.study_id = o.study_id
+              AND oog3.observation_id = o.observation_id
+            ) OR EXISTS (
+              SELECT 1 FROM observation_observation_groups oog2
+              WHERE oog2.study_id = o.study_id
+                AND oog2.observation_id = o.observation_id
+                AND oog2.observation_group_id = ANY(:observation_group_ids)))
+        GROUP BY o.study_id, o.observation_id""";
+    private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now(), hidden=:hidden, no_schedule=:no_schedule WHERE study_id=:study_id AND observation_id=:observation_id";
     private static final String DELETE_ALL = "DELETE FROM observations";
     private static final String SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "INSERT INTO participant_observation_properties(study_id,participant_id,observation_id,properties) VALUES (:study_id,:participant_id,:observation_id,:properties::jsonb) ON CONFLICT (study_id, participant_id, observation_id) DO UPDATE SET properties = EXCLUDED.properties";
     private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT properties FROM participant_observation_properties WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
     private static final String GET_ALL_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT * FROM participant_observation_properties WHERE  study_id = ?";
     private static final String DELETE_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "DELETE FROM participant_observation_properties WHERE study_id = ? AND participant_id = ? AND observation_id = ?";
     private static final String REMOVE_PARTICIPANT_PROPERTY_KEY = "UPDATE participant_observation_properties SET properties = properties - :key WHERE study_id = :study_id AND observation_id = :observation_id";
+
+    /*
+     * SQL Statements for managing participant_observation_groups mapping for participants
+     */
+    private static final String DELETE_OBSERVATION_OBSERVATION_GROUP_IDS =
+            "DELETE FROM observation_observation_groups " +
+                    "WHERE study_id = :study_id AND observation_id = :observation_id;";
+
+    private static final String SET_OBSERVATION_OBSERVATION_GROUP_IDS =
+            "INSERT INTO observation_observation_groups (study_id, observation_id, observation_group_id) " +
+                    "SELECT :study_id, :observation_id, unnest(:observation_group_ids::int[]);";
+
 
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -61,20 +96,16 @@ public class ObservationRepository {
         this.namedTemplate = new NamedParameterJdbcTemplate(template);
     }
 
+    @Transactional
     public Observation insert(Observation observation) {
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
-            return namedTemplate.queryForObject(INSERT_NEW_OBSERVATION, toParams(observation), getObservationRowMapper());
+            namedTemplate.update(INSERT_NEW_OBSERVATION, toParams(observation), keyHolder, new String[]{"observation_id"});
         } catch (DataIntegrityViolationException e) {
             String message;
-            if (observation.getStudyGroupId() != null && observation.getObservationGroupId() != null) {
-                message = String.format("Study group %s and/or observation group %s do not exist on study %s",
-                        observation.getStudyGroupId(), observation.getObservationGroupId(), observation.getStudyId());
-            } else if (observation.getStudyGroupId() != null) {
+            if (observation.getStudyGroupId() != null) {
                 message = String.format("Study group %s does not exist on study %s",
                         observation.getStudyGroupId(), observation.getStudyId());
-            } else if (observation.getObservationGroupId() != null) {
-                message = String.format("Observation group %s does not exist on study %s",
-                        observation.getObservationGroupId(), observation.getStudyId());
             } else {
                 message = String.format("Encountered %s while inserting observation", e.getClass().getSimpleName());
                 LOG.warn("Unable to insert {}", observation, e);
@@ -84,17 +115,22 @@ public class ObservationRepository {
             LOG.warn("Unable to insert {}", observation, e);
             throw new BadRequestException("Unable to insert observation (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ")");
         }
+        Integer observationId = keyHolder.getKey().intValue();
+        setObservationObservationGroupIds(observation.getStudyId(), observationId, observation.getObservationGroupIds());
+        return getById(observation.getStudyId(), observationId);
     }
 
+    @Transactional
     public Observation doImport(Long studyId, Observation observation) {
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
         try {
-            return namedTemplate.queryForObject(
+            namedTemplate.update(
                     IMPORT_OBSERVATION,
                     toParams(observation)
-                            .addValue("study_id", studyId)
-                            .addValue("observation_id", observation.getObservationId()),
-                    getObservationRowMapper()
-            );
+                        .addValue("study_id", studyId)
+                        .addValue("observation_id", observation.getObservationId()),
+                    keyHolder,
+                    new String[]{"observation_id"});
         } catch (DataIntegrityViolationException | JsonProcessingException e) {
             throw new BadRequestException(
                     "Error during import of observation " +
@@ -103,6 +139,9 @@ public class ObservationRepository {
                             observation.getStudyId()
             );
         }
+        Integer observationId = keyHolder.getKey().intValue();
+        setObservationObservationGroupIds(observation.getStudyId(), observationId, observation.getObservationGroupIds());
+        return getById(observation.getStudyId(), observationId);
     }
 
     public Observation getById(Long studyId, Integer observationId) {
@@ -154,10 +193,12 @@ public class ObservationRepository {
         );
     }
 
+    @Transactional
     public Observation updateObservation(Observation observation) {
         try {
             namedTemplate.update(UPDATE_OBSERVATION,
                     toParams(observation).addValue("observation_id", observation.getObservationId()));
+            setObservationObservationGroupIds(observation.getStudyId(), observation.getObservationId(), observation.getObservationGroupIds());
             return getById(observation.getStudyId(), observation.getObservationId());
         } catch (JsonProcessingException e) {
             return null;
@@ -242,9 +283,19 @@ public class ObservationRepository {
         template.update(DELETE_OBSERVATION_PROPERTIES_FOR_PARTICIPANT, studyId, participantId, observationId);
     }
 
-    private static MapSqlParameterSource toParams(Observation observation) throws JsonProcessingException {
+    private static MapSqlParameterSource toParams(Long studyId) {
         return new MapSqlParameterSource()
-                .addValue("study_id", observation.getStudyId())
+                .addValue("study_id", studyId)
+                ;
+    }
+
+    private static MapSqlParameterSource toParams(Long studyId, Integer observationId) {
+        return toParams(studyId)
+                .addValue("observation_id", observationId);
+    }
+
+    private static MapSqlParameterSource toParams(Observation observation) throws JsonProcessingException {
+        return toParams(observation.getStudyId())
                 .addValue("title", observation.getTitle())
                 .addValue("purpose", observation.getPurpose())
                 .addValue("participant_info", observation.getParticipantInfo())
@@ -253,8 +304,7 @@ public class ObservationRepository {
                 .addValue("properties", MapperUtils.writeValueAsString(observation.getProperties()))
                 .addValue("schedule", MapperUtils.writeValueAsString(observation.getSchedule()))
                 .addValue("hidden", observation.getHidden())
-                .addValue("no_schedule", observation.getNoSchedule())
-                .addValue("observation_group_id", observation.getObservationGroupId());
+                .addValue("no_schedule", observation.getNoSchedule());
     }
 
     private static RowMapper<ObservationProperties> getParticipantObservationPropertiesRowMapper() {
@@ -276,6 +326,17 @@ public class ObservationRepository {
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setHidden(rs.getBoolean("hidden"))
                 .setNoSchedule(rs.getBoolean("no_schedule"))
-                .setObservationGroupId(RepositoryUtils.getValidNullableIntegerValue(rs, "observation_group_id"));
+                .setObservationGroupIds(RepositoryUtils.readSet(rs, "observation_group_ids", Integer.class));
     }
+
+    private void setObservationObservationGroupIds(Long studyId, Integer observationId, Set<Integer> observationGroupIds) {
+        final var params = toParams(studyId, observationId);
+        namedTemplate.update(DELETE_OBSERVATION_OBSERVATION_GROUP_IDS, params);
+        if (observationGroupIds != null && !observationGroupIds.isEmpty()) {
+            params.addValue("observation_group_ids", observationGroupIds.toArray(new Integer[0]));
+            namedTemplate.update(SET_OBSERVATION_OBSERVATION_GROUP_IDS, params);
+        }
+    }
+
+
 }

@@ -30,6 +30,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -83,7 +84,7 @@ class InterventionRepositoryTest {
                         .setDateStart(startTime)
                         .setDateEnd(endTime)
                         .setRRule(new RecurrenceRule().setFreq("DAILY").setCount(7)))
-                .setObservationGroupId(observationGroupId1);
+                .setObservationGroupIds(Set.of(observationGroupId1));
 
         //insert
         Intervention interventionResponse = interventionRepository.insert(intervention);
@@ -93,48 +94,58 @@ class InterventionRepositoryTest {
         assertThat(((Event)interventionResponse.getSchedule()).getDateStart()).isEqualTo(startTime);
         assertThat(MapperUtils.writeValueAsString(interventionResponse.getSchedule()))
                 .isEqualTo(MapperUtils.writeValueAsString(intervention.getSchedule()));
-        assertThat(interventionResponse.getObservationGroupId()).isEqualTo(observationGroupId1);
+        assertThat(interventionResponse.getObservationGroupIds()).containsExactlyInAnyOrder(observationGroupId1);
 
         //update
         interventionResponse = interventionRepository.updateIntervention(interventionResponse
                 .setTitle("some new title")
-                .setObservationGroupId(null));
+                .setObservationGroupIds(null));
 
         assertThat(interventionResponse.getTitle()).isEqualTo("some new title");
-        assertThat(interventionResponse.getObservationGroupId()).isNull();
+        assertThat(interventionResponse.getObservationGroupIds()).isEmpty();
 
         Intervention intervention2 = interventionRepository.insert(new Intervention()
                 .setStudyId(studyId)
                 .setTitle("Intervention 2")
                 .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)))
                 .setStudyGroupId(null)
-                .setObservationGroupId(null));
+                .setObservationGroupIds(Collections.emptySet()));
         Intervention intervention3a = interventionRepository.insert(new Intervention()
                 .setStudyId(studyId)
                 .setTitle("Intervaion 3a")
                 .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)))
                 .setStudyGroupId(null)
-                .setObservationGroupId(observationGroupId1));
+                .setObservationGroupIds(Set.of(observationGroupId1)));
         Intervention intervention3b = interventionRepository.insert(new Intervention()
                 .setStudyId(studyId)
                 .setTitle("Intervaion 3b")
                 .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)))
                 .setStudyGroupId(null)
-                .setObservationGroupId(observationGroupId2));
+                .setObservationGroupIds(Set.of(observationGroupId2)));
+        Intervention intervention3c = interventionRepository.insert(new Intervention()
+                .setStudyId(studyId)
+                .setTitle("Intervaion 3c")
+                .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)))
+                .setStudyGroupId(null)
+                .setObservationGroupIds(Set.of(observationGroupId1, observationGroupId2)));
         Intervention intervention4a = interventionRepository.insert(new Intervention()
                 .setStudyId(studyId)
                 .setTitle("Intervaion 4a")
                 .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)))
                 .setStudyGroupId(studyGroupId)
-                .setObservationGroupId(observationGroupId1));
+                .setObservationGroupIds(Set.of(observationGroupId1)));
         Intervention intervention4b = interventionRepository.insert(new Intervention()
                 .setStudyId(studyId)
                 .setTitle("Intervaion 4b")
                 .setSchedule(new Event().setDateEnd(Instant.now()).setDateEnd(Instant.now().plusSeconds(60)))
                 .setStudyGroupId(studyGroupId)
-                .setObservationGroupId(observationGroupId2));
+                .setObservationGroupIds(Set.of(observationGroupId2)));
 
-        assertThat(interventionRepository.listInterventions(studyId).size()).isEqualTo(6);
+        assertThat(interventionRepository.listInterventions(studyId).size()).isEqualTo(7);
+
+        //assert that intervation 3c has both expencted observation group ids
+        assertThat(interventionRepository.getByIds(studyId, intervention3c.getInterventionId()).getObservationGroupIds())
+                .containsExactlyInAnyOrder(observationGroupId1, observationGroupId2);
 
         //list interventions with no groups
         assertThat(interventionRepository.listInterventionsForGroup(studyId,null, Set.of()))
@@ -147,24 +158,24 @@ class InterventionRepositoryTest {
         //list interventions in observation group 1 with no studyGroup (or no studyGroup)
         assertThat(interventionRepository.listInterventionsForGroup(studyId,null, Set.of(observationGroupId1)))
                 .extracting(Intervention::getInterventionId)
-                .containsExactly(intervention2.getInterventionId(), intervention3a.getInterventionId());
+                .containsExactly(intervention2.getInterventionId(), intervention3a.getInterventionId(), intervention3c.getInterventionId());
         //same for none existing group
         assertThat(interventionRepository.listInterventionsForGroup(studyId,-1, Set.of(observationGroupId1)))
                 .extracting(Intervention::getInterventionId)
-                .containsExactly(intervention2.getInterventionId(), intervention3a.getInterventionId());
+                .containsExactly(intervention2.getInterventionId(), intervention3a.getInterventionId(), intervention3c.getInterventionId());
         //list interventions in study group 1 and observation group 1 with no studyGroup (or no studyGroup)
         assertThat(interventionRepository.listInterventionsForGroup(studyId, studyGroupId, Set.of(observationGroupId1)))
                 .extracting(Intervention::getInterventionId)
                 .containsExactly(
                         interventionResponse.getInterventionId(), intervention2.getInterventionId(),
-                        intervention3a.getInterventionId(), intervention4a.getInterventionId());
+                        intervention3a.getInterventionId(), intervention3c.getInterventionId(), intervention4a.getInterventionId());
 
         //list interventions in study group 1 and observation group 1 or observation group 2with no studyGroup (or no studyGroup)
         assertThat(interventionRepository.listInterventionsForGroup(studyId, studyGroupId, Set.of(observationGroupId1, observationGroupId2)))
                 .extracting(Intervention::getInterventionId)
                 .containsExactly(
                         interventionResponse.getInterventionId(), intervention2.getInterventionId(),
-                        intervention3a.getInterventionId(), intervention3b.getInterventionId(),
+                        intervention3a.getInterventionId(), intervention3b.getInterventionId(), intervention3c.getInterventionId(),
                         intervention4a.getInterventionId(), intervention4b.getInterventionId());
 
         interventionRepository.deleteByIds(interventionResponse.getStudyId(), interventionResponse.getInterventionId());
@@ -172,14 +183,14 @@ class InterventionRepositoryTest {
         interventionResponse = interventionRepository.getByIds(intervention2.getStudyId(), intervention2.getInterventionId());
 
         assertThat(interventionResponse.getInterventionId()).isEqualTo(intervention2.getInterventionId());
-        assertThat(interventionRepository.listInterventions(studyId).size()).isEqualTo(5);
+        assertThat(interventionRepository.listInterventions(studyId).size()).isEqualTo(6);
 
         //assert delete Observation Group sets property of Observation to null
         observationGroupRepository.deleteById(studyId, observationGroupId1);
-        assertThat((interventionRepository.getByIds(studyId, intervention3a.getInterventionId()).getObservationGroupId()))
-                .isNull();
-        assertThat((interventionRepository.getByIds(studyId, intervention4a.getInterventionId()).getObservationGroupId()))
-                .isNull();
+        assertThat((interventionRepository.getByIds(studyId, intervention3a.getInterventionId()).getObservationGroupIds()))
+                .isEmpty();;
+        assertThat((interventionRepository.getByIds(studyId, intervention4a.getInterventionId()).getObservationGroupIds()))
+                .isEmpty();
 
 
     }
