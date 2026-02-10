@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -92,7 +93,7 @@ class InterventionControllerTest {
                         .setSchedule(new Event()
                                 .setDateStart(dateStart)
                                 .setDateEnd(dateEnd))
-                        .setObservationGroupId(((Intervention)invocationOnMock.getArgument(0)).getObservationGroupId())
+                        .setObservationGroupIds(((Intervention)invocationOnMock.getArgument(0)).getObservationGroupIds())
                         .setCreated(Instant.now())
                         .setModified(Instant.now()));
 
@@ -105,7 +106,7 @@ class InterventionControllerTest {
                 .schedule(new EventDTO()
                         .dtstart(dateStart)
                         .dtend(dateEnd))
-                .observationGroupId(1);
+                .observationGroupIds(Set.of(1));
 
         mvc.perform(post("/api/v1/studies/1/interventions")
                         .content(mapper.writeValueAsString(interventionRequest))
@@ -115,7 +116,9 @@ class InterventionControllerTest {
                 .andExpect(jsonPath("$.title").value(interventionRequest.getTitle()))
                 .andExpect(jsonPath("$.interventionId").value(interventionRequest.getInterventionId()))
                 .andExpect(jsonPath("$.schedule").exists())
-                .andExpect(jsonPath("$.observationGroupId").value(interventionRequest.getObservationGroupId()));
+                .andExpect(jsonPath("$.observationGroupIds").isArray())
+                .andExpect(jsonPath("$.observationGroupIds[0]").value(interventionRequest.getObservationGroupIds().iterator().next()));
+
     }
 
     @Test
