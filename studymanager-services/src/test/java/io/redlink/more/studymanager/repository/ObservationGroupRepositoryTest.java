@@ -154,6 +154,7 @@ class ObservationGroupRepositoryTest {
                 .setPurpose("Test Purpose")
                 .setParticipantInfo("Info")
                 .setType("questionnaire")
+                .setHidden(false)
                 .setProperties(new ObservationProperties())
                 .setSchedule(null); // Assuming null is allowed
         Observation obsResp = observationRepository.insert(obs);
@@ -171,7 +172,8 @@ class ObservationGroupRepositoryTest {
         // Create participant
         Participant p = new Participant()
                 .setStudyId(studyId)
-                .setAlias("Test Participant");
+                .setAlias("Test Participant")
+                .setRegistrationToken("rt_p1");
         Participant pResp = participantRepository.insert(p);
         int pId = pResp.getParticipantId();
 
