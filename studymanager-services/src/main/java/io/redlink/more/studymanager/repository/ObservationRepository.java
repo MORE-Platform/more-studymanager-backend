@@ -28,7 +28,12 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNullableIntegerValue;
 
@@ -40,34 +45,34 @@ public class ObservationRepository {
     private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule)";
     private static final String IMPORT_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,:observation_id,:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule)";
     private static final String GET_OBSERVATION_BY_IDS = """
-        SELECT o.*, ARRAY_AGG(oog.observation_group_id) FILTER (WHERE oog.observation_group_id IS NOT NULL) AS observation_group_ids
-        FROM observations o
-            LEFT JOIN observation_observation_groups oog ON o.study_id = oog.study_id AND o.observation_id = oog.observation_id
-        WHERE o.study_id = ? AND o.observation_id = ?
-        GROUP BY o.study_id, o.observation_id""";
+            SELECT o.*, ARRAY_AGG(oog.observation_group_id) FILTER (WHERE oog.observation_group_id IS NOT NULL) AS observation_group_ids
+            FROM observations o
+                LEFT JOIN observation_observation_groups oog ON o.study_id = oog.study_id AND o.observation_id = oog.observation_id
+            WHERE o.study_id = ? AND o.observation_id = ?
+            GROUP BY o.study_id, o.observation_id""";
     private static final String DELETE_BY_IDS = "DELETE FROM observations WHERE study_id = ? AND observation_id = ?";
     private static final String LIST_OBSERVATIONS = """
-        SELECT o.*, ARRAY_AGG(oog.observation_group_id) FILTER (WHERE oog.observation_group_id IS NOT NULL) AS observation_group_ids
-        FROM observations o
-            LEFT JOIN observation_observation_groups oog ON o.study_id = oog.study_id AND o.observation_id = oog.observation_id
-        WHERE o.study_id = :study_id
-        GROUP BY o.study_id, o.observation_id""";
+            SELECT o.*, ARRAY_AGG(oog.observation_group_id) FILTER (WHERE oog.observation_group_id IS NOT NULL) AS observation_group_ids
+            FROM observations o
+                LEFT JOIN observation_observation_groups oog ON o.study_id = oog.study_id AND o.observation_id = oog.observation_id
+            WHERE o.study_id = :study_id
+            GROUP BY o.study_id, o.observation_id""";
     private static final String LIST_OBSERVATIONS_FOR_GROUP = """
-        SELECT o.*, ARRAY_AGG(oog.observation_group_id) FILTER (WHERE oog.observation_group_id IS NOT NULL) AS observation_group_ids
-        FROM observations o
-            LEFT JOIN observation_observation_groups oog ON o.study_id = oog.study_id AND o.observation_id = oog.observation_id
-        WHERE o.study_id = :study_id
-          AND (o.study_group_id IS NULL OR o.study_group_id = :study_group_id)
-          AND (NOT EXISTS (
-            SELECT 1 FROM observation_observation_groups oog3\s
-            WHERE oog3.study_id = o.study_id
-              AND oog3.observation_id = o.observation_id
-            ) OR EXISTS (
-              SELECT 1 FROM observation_observation_groups oog2
-              WHERE oog2.study_id = o.study_id
-                AND oog2.observation_id = o.observation_id
-                AND oog2.observation_group_id = ANY(:observation_group_ids)))
-        GROUP BY o.study_id, o.observation_id""";
+            SELECT o.*, ARRAY_AGG(oog.observation_group_id) FILTER (WHERE oog.observation_group_id IS NOT NULL) AS observation_group_ids
+            FROM observations o
+                LEFT JOIN observation_observation_groups oog ON o.study_id = oog.study_id AND o.observation_id = oog.observation_id
+            WHERE o.study_id = :study_id
+              AND (o.study_group_id IS NULL OR o.study_group_id = :study_group_id)
+              AND (NOT EXISTS (
+                SELECT 1 FROM observation_observation_groups oog3\s
+                WHERE oog3.study_id = o.study_id
+                  AND oog3.observation_id = o.observation_id
+                ) OR EXISTS (
+                  SELECT 1 FROM observation_observation_groups oog2
+                  WHERE oog2.study_id = o.study_id
+                    AND oog2.observation_id = o.observation_id
+                    AND oog2.observation_group_id = ANY(:observation_group_ids)))
+            GROUP BY o.study_id, o.observation_id""";
     private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now(), hidden=:hidden, no_schedule=:no_schedule WHERE study_id=:study_id AND observation_id=:observation_id";
     private static final String DELETE_ALL = "DELETE FROM observations";
     private static final String SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "INSERT INTO participant_observation_properties(study_id,participant_id,observation_id,properties) VALUES (:study_id,:participant_id,:observation_id,:properties::jsonb) ON CONFLICT (study_id, participant_id, observation_id) DO UPDATE SET properties = EXCLUDED.properties";
@@ -75,6 +80,8 @@ public class ObservationRepository {
     private static final String GET_ALL_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT * FROM participant_observation_properties WHERE  study_id = ?";
     private static final String DELETE_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "DELETE FROM participant_observation_properties WHERE study_id = ? AND participant_id = ? AND observation_id = ?";
     private static final String REMOVE_PARTICIPANT_PROPERTY_KEY = "UPDATE participant_observation_properties SET properties = properties - :key WHERE study_id = :study_id AND observation_id = :observation_id";
+    private static final String GET_ALL_OBSERVATIONS_FOR_PARTICIPANT = "SELECT * FROM observations WHERE study_id = ? AND participant_id = ?";
+    private static final String GET_ALL_OBSERVATIONS_FOR_PARTICIPANT_AND_TYPE = "SELECT * FROM observations WHERE study_id = ? AND participant_id = ? AND type = ?";
 
     /*
      * SQL Statements for managing participant_observation_groups mapping for participants
@@ -127,8 +134,8 @@ public class ObservationRepository {
             namedTemplate.update(
                     IMPORT_OBSERVATION,
                     toParams(observation)
-                        .addValue("study_id", studyId)
-                        .addValue("observation_id", observation.getObservationId()),
+                            .addValue("study_id", studyId)
+                            .addValue("observation_id", observation.getObservationId()),
                     keyHolder,
                     new String[]{"observation_id"});
         } catch (DataIntegrityViolationException | JsonProcessingException e) {
@@ -189,6 +196,25 @@ public class ObservationRepository {
                 new MapSqlParameterSource("study_id", studyId)
                         .addValue("study_group_id", studyGroupId)
                         .addValue("observation_group_ids", observationGroupIds == null ? new Integer[0] : observationGroupIds.toArray(new Integer[0])),
+                getObservationRowMapper()
+        );
+    }
+
+    public List<Observation> listObservationsForParticipant(Long studyId, Integer participantId) {
+        return namedTemplate.query(
+                GET_ALL_OBSERVATIONS_FOR_PARTICIPANT,
+                new MapSqlParameterSource("study_id", studyId)
+                        .addValue("participant_id", participantId),
+                getObservationRowMapper()
+        );
+    }
+
+    public List<Observation> listObservationsForParticipantAndType(Long studyId, Integer participantId, String type) {
+        return namedTemplate.query(
+                GET_ALL_OBSERVATIONS_FOR_PARTICIPANT_AND_TYPE,
+                new MapSqlParameterSource("study_id", studyId)
+                        .addValue("participant_id", participantId)
+                        .addValue("type", type),
                 getObservationRowMapper()
         );
     }

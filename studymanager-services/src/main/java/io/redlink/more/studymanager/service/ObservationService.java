@@ -139,6 +139,20 @@ public class ObservationService {
         return result;
     }
 
+    public List<Observation> listObservationsForParticipant(Long studyId, Integer participantId) {
+        if (studyId == null || participantId == null) {
+            throw new IllegalArgumentException("studyId and participantId must be provided");
+        }
+        return repository.listObservationsForParticipant(studyId, participantId);
+    }
+
+    public List<Observation> listObservationsForParticipantAndType(Long studyId, Integer participantId, String type) {
+        if (studyId == null || participantId == null || type == null) {
+            throw new IllegalArgumentException("studyId, participantId and type must be provided");
+        }
+        return repository.listObservationsForParticipantAndType(studyId, participantId, type);
+    }
+
     public DataViewInfo[] listDataViews(Long studyId, Integer observationId) {
         var obs = getObservation(studyId, observationId).orElseThrow();
 
