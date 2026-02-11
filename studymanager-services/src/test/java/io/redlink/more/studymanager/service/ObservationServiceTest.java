@@ -25,6 +25,8 @@ import io.redlink.more.studymanager.core.validation.ConfigurationValidationRepor
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.repository.ObservationRepository;
+import io.redlink.more.studymanager.sdk.MoreSDK;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +49,12 @@ class ObservationServiceTest {
 
     @Mock
     StudyStateService studyStateService;
+
+    @Mock
+    ObservationRepository repository;
+
+    @Mock
+    MoreSDK sdk;
 
     @InjectMocks
     ObservationService observationService;
@@ -128,5 +136,112 @@ class ObservationServiceTest {
         assertThat(garminHeartRateFactory.getVisibility().isHiddenByDefault()).isFalse();
         assertThat(garminSleepFactory.getVisibility().isHiddenByDefault()).isFalse();
         assertThat(garminStepsFactory.getVisibility().isHiddenByDefault()).isFalse();
+    }
+
+    @Test
+    void testListObservationsForParticipant_nullChecks() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> observationService.listObservationsForParticipant(null, 1));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> observationService.listObservationsForParticipant(1L, null));
+    }
+
+    @Test
+    void testListObservationsForParticipant_delegatesToRepository() {
+        java.util.List<Observation> expected = java.util.List.of(new Observation().setObservationId(1));
+        org.mockito.Mockito.when(repository.listObservationsForParticipant(1L, 2)).thenReturn(expected);
+
+        java.util.List<Observation> result = observationService.listObservationsForParticipant(1L, 2);
+
+        org.assertj.core.api.Assertions.assertThat(result).isSameAs(expected);
+        org.mockito.Mockito.verify(repository).listObservationsForParticipant(1L, 2);
+    }
+
+    @Test
+    void testListObservationsForParticipantAndType_nullChecks() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> observationService.listObservationsForParticipantAndType(null, 1, "t"));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> observationService.listObservationsForParticipantAndType(1L, null, "t"));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> observationService.listObservationsForParticipantAndType(1L, 1, null));
+    }
+
+    @Test
+    void testListObservationsForParticipantAndType_delegatesToRepository() {
+        java.util.List<Observation> expected = java.util.List.of(new Observation().setObservationId(3));
+        org.mockito.Mockito.when(repository.listObservationsForParticipantAndType(1L, 2, "t")).thenReturn(expected);
+
+        java.util.List<Observation> result = observationService.listObservationsForParticipantAndType(1L, 2, "t");
+
+        org.assertj.core.api.Assertions.assertThat(result).isSameAs(expected);
+        org.mockito.Mockito.verify(repository).listObservationsForParticipantAndType(1L, 2, "t");
+    }
+
+    @Test
+    void testGetObservationFactory_optional() {
+        Observation obs = new Observation().setType("x");
+        ObservationFactory factory = org.mockito.Mockito.mock(ObservationFactory.class);
+        org.mockito.Mockito.when(observationFactories.get("x")).thenReturn(factory);
+
+        java.util.Optional<ObservationFactory> present = observationService.getObservationFactory(obs);
+        org.assertj.core.api.Assertions.assertThat(present).containsSame(factory);
+
+        org.mockito.Mockito.when(observationFactories.get("x")).thenReturn(null);
+        java.util.Optional<ObservationFactory> empty = observationService.getObservationFactory(obs);
+        org.assertj.core.api.Assertions.assertThat(empty).isEmpty();
+    }
+
+    @Test
+    void testGetParticipantObservationProperties_delegatesToRepository() {
+        java.util.List<io.redlink.more.studymanager.model.ParticipantWithObservationProperties> expected = java.util.List.of();
+        org.mockito.Mockito.when(repository.getParticipantObservationProperties(5L)).thenReturn(expected);
+
+        java.util.List<io.redlink.more.studymanager.model.ParticipantWithObservationProperties> result = observationService.getParticipantObservationProperties(5L);
+
+        org.assertj.core.api.Assertions.assertThat(result).isSameAs(expected);
+        org.mockito.Mockito.verify(repository).getParticipantObservationProperties(5L);
+    }
+
+    @Test
+    void testListDataViews_usesFactoryAndSdk() {
+        Observation obs = new Observation().setStudyId(10L).setStudyGroupId(20).setObservationId(30).setType("t");
+        org.mockito.Mockito.when(repository.getById(10L, 30)).thenReturn(obs);
+
+        io.redlink.more.studymanager.core.ui.DataViewInfo[] infos = new io.redlink.more.studymanager.core.ui.DataViewInfo[]{
+                org.mockito.Mockito.mock(io.redlink.more.studymanager.core.ui.DataViewInfo.class)
+        };
+
+        io.redlink.more.studymanager.core.component.Observation component = org.mockito.Mockito.mock(io.redlink.more.studymanager.core.component.Observation.class);
+        org.mockito.Mockito.when(component.listViews()).thenReturn(infos);
+
+        ObservationFactory factory = org.mockito.Mockito.mock(ObservationFactory.class);
+        org.mockito.Mockito.when(observationFactories.get("t")).thenReturn(factory);
+        org.mockito.Mockito.when(factory.create(org.mockito.Mockito.any(), org.mockito.Mockito.any())).thenReturn(component);
+
+
+        io.redlink.more.studymanager.core.ui.DataViewInfo[] result = observationService.listDataViews(10L, 30);
+        org.assertj.core.api.Assertions.assertThat(result).isSameAs(infos);
+
+        org.mockito.Mockito.verify(observationFactories).get("t");
+        org.mockito.Mockito.verify(factory).create(org.mockito.Mockito.any(), org.mockito.Mockito.any());
+        org.mockito.Mockito.verify(component).listViews();
+    }
+
+    @Test
+    void testQueryData_usesFactoryAndSdk() {
+        Observation obs = new Observation().setStudyId(10L).setStudyGroupId(21).setObservationId(31).setType("t2");
+        org.mockito.Mockito.when(repository.getById(10L, 31)).thenReturn(obs);
+
+        io.redlink.more.studymanager.core.ui.DataView dataView = org.mockito.Mockito.mock(io.redlink.more.studymanager.core.ui.DataView.class);
+        io.redlink.more.studymanager.core.component.Observation component = org.mockito.Mockito.mock(io.redlink.more.studymanager.core.component.Observation.class);
+        org.mockito.Mockito.when(component.getView(org.mockito.Mockito.eq("v2"), org.mockito.Mockito.eq(21), org.mockito.Mockito.eq(1), org.mockito.Mockito.any())).thenReturn(dataView);
+
+        ObservationFactory factory = org.mockito.Mockito.mock(ObservationFactory.class);
+        org.mockito.Mockito.when(observationFactories.get("t2")).thenReturn(factory);
+        org.mockito.Mockito.when(factory.create(org.mockito.Mockito.any(), org.mockito.Mockito.any())).thenReturn(component);
+
+
+        io.redlink.more.studymanager.core.ui.DataView result = observationService.queryData(10L, 31, "v2", 21, 1, null);
+        org.assertj.core.api.Assertions.assertThat(result).isSameAs(dataView);
+
+        org.mockito.Mockito.verify(observationFactories).get("t2");
+        org.mockito.Mockito.verify(factory).create(org.mockito.Mockito.any(), org.mockito.Mockito.any());
+        org.mockito.Mockito.verify(component).getView(org.mockito.Mockito.eq("v2"), org.mockito.Mockito.eq(21), org.mockito.Mockito.eq(1), org.mockito.Mockito.any());
     }
 }
