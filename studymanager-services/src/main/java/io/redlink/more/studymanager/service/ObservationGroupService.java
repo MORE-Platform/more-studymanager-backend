@@ -55,4 +55,56 @@ public class ObservationGroupService {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         this.repository.deleteById(studyId, observationGroupId);
     }
+
+    public void addObservationToGroup(long studyId, int observationGroupId, int observationId) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
+        getObservationGroup(studyId, observationGroupId);
+        repository.addObservationToGroup(studyId, observationId, observationGroupId);
+    }
+
+    public void addInterventionToGroup(long studyId, int observationGroupId, int interventionId) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
+        getObservationGroup(studyId, observationGroupId);
+        repository.addInterventionToGroup(studyId, interventionId, observationGroupId);
+    }
+
+    public void addParticipantToGroup(long studyId, int observationGroupId, int participantId) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
+        getObservationGroup(studyId, observationGroupId);
+        repository.addParticipantToGroup(studyId, participantId, observationGroupId);
+    }
+
+    public void removeObservationFromGroup(long studyId, int observationGroupId, int observationId) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
+        getObservationGroup(studyId, observationGroupId);
+        repository.removeObservationFromGroup(studyId, observationId, observationGroupId);
+    }
+
+    public void removeInterventionFromGroup(long studyId, int observationGroupId, int interventionId) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
+        getObservationGroup(studyId, observationGroupId);
+        repository.removeInterventionFromGroup(studyId, interventionId, observationGroupId);
+    }
+
+    public void removeParticipantFromGroup(long studyId, int observationGroupId, int participantId) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
+        getObservationGroup(studyId, observationGroupId);
+        repository.removeParticipantFromGroup(studyId, participantId, observationGroupId);
+    }
+
+    public int countObservationsInGroup(long studyId, int observationGroupId) {
+        //getObservationGroup(studyId, observationGroupId);
+        return repository.countObservationsInGroup(studyId, observationGroupId);
+    }
+
+    public int countInterventionsInGroup(long studyId, int observationGroupId) {
+        //getObservationGroup(studyId, observationGroupId);
+        return repository.countInterventionsInGroup(studyId, observationGroupId);
+    }
+
+    public int countParticipantsInGroup(long studyId, int observationGroupId) {
+        //getObservationGroup(studyId, observationGroupId);
+        return repository.countParticipantsInGroup(studyId, observationGroupId);
+    }
+
 }

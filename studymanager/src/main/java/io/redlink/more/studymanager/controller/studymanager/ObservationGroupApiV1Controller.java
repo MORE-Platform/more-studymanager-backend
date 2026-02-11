@@ -49,7 +49,7 @@ public class ObservationGroupApiV1Controller implements ObservationGroupsApi {
         );
         LOGGER.debug("ObservationGroup created: {}", observationGroup);
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                ObservationGroupTransformer.toObservationGroupDTO_V1(observationGroup)
+                ObservationGroupTransformer.toObservationGroupDTO_V1(observationGroup,0,0,0)
         );
     }
 
@@ -59,7 +59,11 @@ public class ObservationGroupApiV1Controller implements ObservationGroupsApi {
     public ResponseEntity<List<ObservationGroupDTO>> listObservationGroups(Long studyId) {
         return ResponseEntity.ok(
                 service.listObservationGroups(studyId).stream()
-                        .map(ObservationGroupTransformer::toObservationGroupDTO_V1)
+                        .map(og -> ObservationGroupTransformer.toObservationGroupDTO_V1(
+                            og,
+                            service.countObservationsInGroup(studyId, og.getObservationGroupId()),
+                            service.countInterventionsInGroup(studyId, og.getObservationGroupId()),
+                            service.countParticipantsInGroup(studyId, og.getObservationGroupId())))
                         .toList()
         );
     }
@@ -68,9 +72,16 @@ public class ObservationGroupApiV1Controller implements ObservationGroupsApi {
     @RequiresStudyRole
     @Audited
     public ResponseEntity<ObservationGroupDTO> getObservationGroup(Long studyId, Integer observationGroupId) {
+        var og = service.getObservationGroup(studyId, observationGroupId);
+        if(og == null) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok(
-                ObservationGroupTransformer.toObservationGroupDTO_V1(service.getObservationGroup(studyId, observationGroupId))
-        );
+            ObservationGroupTransformer.toObservationGroupDTO_V1(
+                og,
+                service.countObservationsInGroup(og.getStudyId(), og.getObservationGroupId()),
+                service.countInterventionsInGroup(og.getStudyId(), og.getObservationGroupId()),
+                service.countParticipantsInGroup(og.getStudyId(), og.getObservationGroupId())));
     }
 
     @Override
@@ -79,13 +90,14 @@ public class ObservationGroupApiV1Controller implements ObservationGroupsApi {
     public ResponseEntity<ObservationGroupDTO> updateObservationGroup(Long studyId, Integer observationGroupId, ObservationGroupDTO observationGroupDTO) {
         observationGroupDTO.setStudyId(studyId);
         observationGroupDTO.setObservationGroupId(observationGroupId);
+        var og = service.updateObservationGroup(
+                ObservationGroupTransformer.fromObservationGroupDTO_V1(observationGroupDTO));
         return ResponseEntity.ok(
                 ObservationGroupTransformer.toObservationGroupDTO_V1(
-                        service.updateObservationGroup(
-                                ObservationGroupTransformer.fromObservationGroupDTO_V1(observationGroupDTO)
-                        )
-                )
-        );
+                        og,
+                        service.countObservationsInGroup(og.getStudyId(), og.getObservationGroupId()),
+                        service.countInterventionsInGroup(og.getStudyId(), og.getObservationGroupId()),
+                        service.countParticipantsInGroup(og.getStudyId(), og.getObservationGroupId())));
     }
 
     @Override
