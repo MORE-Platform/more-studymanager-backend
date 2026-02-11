@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {
         ObservationGroupRepository.class, StudyRepository.class,
+        ObservationRepository.class, InterventionRepository.class, ParticipantRepository.class,
         JPAConfiguration.class
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -50,9 +51,21 @@ class ObservationGroupRepositoryTest {
     @Autowired
     private StudyRepository studyRepository;
 
+    @Autowired
+    private ObservationRepository observationRepository;
+
+    @Autowired
+    private InterventionRepository interventionRepository;
+
+    @Autowired
+    private ParticipantRepository participantRepository;
+
     @BeforeEach
     void deleteAll() {
         observationGroupRepository.clear();
+        observationRepository.clear();
+        interventionRepository.clear();
+        participantRepository.clear();
     }
 
     @Test
@@ -122,4 +135,80 @@ class ObservationGroupRepositoryTest {
         assertThat(observationGroupRepository.listObservationGroupsOrderedByObservationGroupIdAsc(studyId))
                 .hasSize(1);
     }
+
+    @Test
+    @DisplayName("Adding, removing and counting members in observation groups")
+    public void testGroupMemberships() {
+        Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
+
+        ObservationGroup og = observationGroupRepository.insert(new ObservationGroup()
+                .setStudyId(studyId)
+                .setTitle("Test Group")
+                .setPurpose("Test Purpose"));
+        int ogId = og.getObservationGroupId();
+
+        // Create observation
+        Observation obs = new Observation()
+                .setStudyId(studyId)
+                .setTitle("Test Observation")
+                .setPurpose("Test Purpose")
+                .setParticipantInfo("Info")
+                .setType("questionnaire")
+                .setProperties(new ObservationProperties())
+                .setSchedule(null); // Assuming null is allowed
+        Observation obsResp = observationRepository.insert(obs);
+        int obsId = obsResp.getObservationId();
+
+        // Create intervention
+        Intervention intv = new Intervention()
+                .setStudyId(studyId)
+                .setTitle("Test Intervention")
+                .setPurpose("Test Purpose")
+                .setSchedule(null); // Assuming null is allowed
+        Intervention intvResp = interventionRepository.insert(intv);
+        int intvId = intvResp.getInterventionId();
+
+        // Create participant
+        Participant p = new Participant()
+                .setStudyId(studyId)
+                .setAlias("Test Participant");
+        Participant pResp = participantRepository.insert(p);
+        int pId = pResp.getParticipantId();
+
+        // Initial counts should be 0
+        assertThat(observationGroupRepository.countObservationsInGroup(studyId, ogId)).isEqualTo(0);
+        assertThat(observationGroupRepository.countInterventionsInGroup(studyId, ogId)).isEqualTo(0);
+        assertThat(observationGroupRepository.countParticipantsInGroup(studyId, ogId)).isEqualTo(0);
+
+        // Add to group
+        observationGroupRepository.addObservationToGroup(studyId, obsId, ogId);
+        observationGroupRepository.addInterventionToGroup(studyId, intvId, ogId);
+        observationGroupRepository.addParticipantToGroup(studyId, pId, ogId);
+
+        // Counts should be 1
+        assertThat(observationGroupRepository.countObservationsInGroup(studyId, ogId)).isEqualTo(1);
+        assertThat(observationGroupRepository.countInterventionsInGroup(studyId, ogId)).isEqualTo(1);
+        assertThat(observationGroupRepository.countParticipantsInGroup(studyId, ogId)).isEqualTo(1);
+
+        // Add again (should not increase due to ON CONFLICT DO NOTHING)
+        observationGroupRepository.addObservationToGroup(studyId, obsId, ogId);
+        observationGroupRepository.addInterventionToGroup(studyId, intvId, ogId);
+        observationGroupRepository.addParticipantToGroup(studyId, pId, ogId);
+
+        // Counts still 1
+        assertThat(observationGroupRepository.countObservationsInGroup(studyId, ogId)).isEqualTo(1);
+        assertThat(observationGroupRepository.countInterventionsInGroup(studyId, ogId)).isEqualTo(1);
+        assertThat(observationGroupRepository.countParticipantsInGroup(studyId, ogId)).isEqualTo(1);
+
+        // Remove from group
+        observationGroupRepository.removeObservationFromGroup(studyId, obsId, ogId);
+        observationGroupRepository.removeInterventionFromGroup(studyId, intvId, ogId);
+        observationGroupRepository.removeParticipantFromGroup(studyId, pId, ogId);
+
+        // Counts should be 0
+        assertThat(observationGroupRepository.countObservationsInGroup(studyId, ogId)).isEqualTo(0);
+        assertThat(observationGroupRepository.countInterventionsInGroup(studyId, ogId)).isEqualTo(0);
+        assertThat(observationGroupRepository.countParticipantsInGroup(studyId, ogId)).isEqualTo(0);
+    }
+
 }

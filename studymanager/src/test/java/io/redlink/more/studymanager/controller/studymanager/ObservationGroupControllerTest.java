@@ -160,6 +160,22 @@ class ObservationGroupControllerTest {
                     );
         });
 
+        when(observationGroupService.countObservationsInGroup(anyLong(), anyInt())).thenAnswer(invocationOnMock -> {
+            Long studyId = ((Long) invocationOnMock.getArgument(0));
+            Integer groupId = ((Integer) invocationOnMock.getArgument(1));
+            return (studyId.intValue() + groupId) * 2;
+        });
+        when(observationGroupService.countInterventionsInGroup(anyLong(), anyInt())).thenAnswer(invocationOnMock -> {
+            Long studyId = ((Long) invocationOnMock.getArgument(0));
+            Integer groupId = ((Integer) invocationOnMock.getArgument(1));
+            return (studyId.intValue() + groupId) * 3;
+        });
+        when(observationGroupService.countParticipantsInGroup(anyLong(), anyInt())).thenAnswer(invocationOnMock -> {
+            Long studyId = ((Long) invocationOnMock.getArgument(0));
+            Integer groupId = ((Integer) invocationOnMock.getArgument(1));
+            return (studyId.intValue() + groupId) * 4;
+        });
+
         mvc.perform(get("/api/v1/studies/1/observationGroups"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -169,12 +185,21 @@ class ObservationGroupControllerTest {
                 .andExpect(jsonPath("$[0].observationGroupId").value(1))
                 .andExpect(jsonPath("$[0].title").value("Observation group 1"))
                 .andExpect(jsonPath("$[0].purpose").value("purpose 1"))
+                .andExpect(jsonPath("$[0].numberOfObservations").value(4))
+                .andExpect(jsonPath("$[0].numberOfInterventions").value(6))
+                .andExpect(jsonPath("$[0].numberOfParticipants").value(8))
                 .andExpect(jsonPath("$[0].created").exists())
                 .andExpect(jsonPath("$[0].modified").exists())
                 .andExpect(jsonPath("$[1].studyId").value(1))
                 .andExpect(jsonPath("$[1].observationGroupId").value(2))
+                .andExpect(jsonPath("$[1].numberOfObservations").value(6))
+                .andExpect(jsonPath("$[1].numberOfInterventions").value(9))
+                .andExpect(jsonPath("$[1].numberOfParticipants").value(12))
                 .andExpect(jsonPath("$[2].studyId").value(1))
-                .andExpect(jsonPath("$[2].observationGroupId").value(3));
+                .andExpect(jsonPath("$[2].observationGroupId").value(3))
+                .andExpect(jsonPath("$[2].numberOfObservations").value(8))
+                .andExpect(jsonPath("$[2].numberOfInterventions").value(12))
+                .andExpect(jsonPath("$[2].numberOfParticipants").value(16));
     }
 
     @Test

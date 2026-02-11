@@ -26,7 +26,12 @@ public final class ObservationGroupTransformer {
                 .setPurpose(ObservationGroupDTO.getPurpose());
     }
 
-    public static ObservationGroupDTO toObservationGroupDTO_V1(ObservationGroup ObservationGroup) {
+    public static ObservationGroupDTO toObservationGroupDTO_V1(
+            ObservationGroup ObservationGroup,
+            int observationCount,
+            int interventionCount,
+            int participantCount
+    ) {
         Instant instant = ObservationGroup.getModified();
         Instant instant1 = ObservationGroup.getCreated();
         return new ObservationGroupDTO()
@@ -34,6 +39,9 @@ public final class ObservationGroupTransformer {
                 .observationGroupId(ObservationGroup.getObservationGroupId())
                 .title(ObservationGroup.getTitle())
                 .purpose(ObservationGroup.getPurpose())
+                .numberOfObservations(observationCount)
+                .numberOfInterventions(interventionCount)
+                .numberOfParticipants(participantCount)
                 .created(instant1)
                 .modified(instant);
     }
