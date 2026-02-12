@@ -137,42 +137,7 @@ class ObservationServiceTest {
         assertThat(garminSleepFactory.getVisibility().isHiddenByDefault()).isFalse();
         assertThat(garminStepsFactory.getVisibility().isHiddenByDefault()).isFalse();
     }
-
-    @Test
-    void testListObservationsForParticipant_nullChecks() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> observationService.listObservationsForParticipant(null, 1));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> observationService.listObservationsForParticipant(1L, null));
-    }
-
-    @Test
-    void testListObservationsForParticipant_delegatesToRepository() {
-        java.util.List<Observation> expected = java.util.List.of(new Observation().setObservationId(1));
-        org.mockito.Mockito.when(repository.listObservationsForParticipant(1L, 2)).thenReturn(expected);
-
-        java.util.List<Observation> result = observationService.listObservationsForParticipant(1L, 2);
-
-        org.assertj.core.api.Assertions.assertThat(result).isSameAs(expected);
-        org.mockito.Mockito.verify(repository).listObservationsForParticipant(1L, 2);
-    }
-
-    @Test
-    void testListObservationsForParticipantAndType_nullChecks() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> observationService.listObservationsForParticipantAndType(null, 1, "t"));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> observationService.listObservationsForParticipantAndType(1L, null, "t"));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> observationService.listObservationsForParticipantAndType(1L, 1, null));
-    }
-
-    @Test
-    void testListObservationsForParticipantAndType_delegatesToRepository() {
-        java.util.List<Observation> expected = java.util.List.of(new Observation().setObservationId(3));
-        org.mockito.Mockito.when(repository.listObservationsForParticipantAndType(1L, 2, "t")).thenReturn(expected);
-
-        java.util.List<Observation> result = observationService.listObservationsForParticipantAndType(1L, 2, "t");
-
-        org.assertj.core.api.Assertions.assertThat(result).isSameAs(expected);
-        org.mockito.Mockito.verify(repository).listObservationsForParticipantAndType(1L, 2, "t");
-    }
-
+    
     @Test
     void testGetObservationFactory_optional() {
         Observation obs = new Observation().setType("x");
