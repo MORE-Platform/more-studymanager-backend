@@ -80,8 +80,8 @@ public class ObservationRepository {
     private static final String GET_ALL_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT * FROM participant_observation_properties WHERE  study_id = ?";
     private static final String DELETE_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "DELETE FROM participant_observation_properties WHERE study_id = ? AND participant_id = ? AND observation_id = ?";
     private static final String REMOVE_PARTICIPANT_PROPERTY_KEY = "UPDATE participant_observation_properties SET properties = properties - :key WHERE study_id = :study_id AND observation_id = :observation_id";
-    private static final String GET_ALL_OBSERVATIONS_FOR_PARTICIPANT = "SELECT * FROM observations WHERE study_id = ? AND participant_id = ?";
-    private static final String GET_ALL_OBSERVATIONS_FOR_PARTICIPANT_AND_TYPE = "SELECT * FROM observations WHERE study_id = ? AND participant_id = ? AND type = ?";
+    private static final String GET_ALL_OBSERVATIONS_FOR_PARTICIPANT = "SELECT * FROM observations WHERE study_id = :study_id AND participant_id = :participant_id";
+    private static final String GET_ALL_OBSERVATIONS_FOR_PARTICIPANT_AND_TYPE = "SELECT * FROM observations WHERE study_id = :study_id AND participant_id = :participant_id AND type = :type";
 
     /*
      * SQL Statements for managing participant_observation_groups mapping for participants
