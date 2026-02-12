@@ -42,8 +42,8 @@ public class ObservationRepository {
 
     private final static Logger LOG = LoggerFactory.getLogger(ObservationRepository.class);
 
-    private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule)";
-    private static final String IMPORT_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule) VALUES (:study_id,:observation_id,:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule)";
+    private static final String INSERT_NEW_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule,reminder) VALUES (:study_id,(SELECT COALESCE(MAX(observation_id),0)+1 FROM observations WHERE study_id = :study_id),:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule,:reminder)";
+    private static final String IMPORT_OBSERVATION = "INSERT INTO observations(study_id,observation_id,title,purpose,participant_info,type,study_group_id,properties,schedule,hidden,no_schedule,reminder) VALUES (:study_id,:observation_id,:title,:purpose,:participant_info,:type,:study_group_id,:properties::jsonb,:schedule::jsonb,:hidden,:no_schedule,:reminder)";
     private static final String GET_OBSERVATION_BY_IDS = """
             SELECT o.*, ARRAY_AGG(oog.observation_group_id) FILTER (WHERE oog.observation_group_id IS NOT NULL) AS observation_group_ids
             FROM observations o
@@ -73,7 +73,7 @@ public class ObservationRepository {
                     AND oog2.observation_id = o.observation_id
                     AND oog2.observation_group_id = ANY(:observation_group_ids)))
             GROUP BY o.study_id, o.observation_id""";
-    private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now(), hidden=:hidden, no_schedule=:no_schedule WHERE study_id=:study_id AND observation_id=:observation_id";
+    private static final String UPDATE_OBSERVATION = "UPDATE observations SET title=:title, purpose=:purpose, participant_info=:participant_info, study_group_id=:study_group_id, properties=:properties::jsonb, schedule=:schedule::jsonb, modified=now(), hidden=:hidden, no_schedule=:no_schedule, reminder=:reminder WHERE study_id=:study_id AND observation_id=:observation_id";
     private static final String DELETE_ALL = "DELETE FROM observations";
     private static final String SET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "INSERT INTO participant_observation_properties(study_id,participant_id,observation_id,properties) VALUES (:study_id,:participant_id,:observation_id,:properties::jsonb) ON CONFLICT (study_id, participant_id, observation_id) DO UPDATE SET properties = EXCLUDED.properties";
     private static final String GET_OBSERVATION_PROPERTIES_FOR_PARTICIPANT = "SELECT properties FROM participant_observation_properties WHERE  study_id = ? AND participant_id = ? AND observation_id = ?";
@@ -330,7 +330,8 @@ public class ObservationRepository {
                 .addValue("properties", MapperUtils.writeValueAsString(observation.getProperties()))
                 .addValue("schedule", MapperUtils.writeValueAsString(observation.getSchedule()))
                 .addValue("hidden", observation.getHidden())
-                .addValue("no_schedule", observation.getNoSchedule());
+                .addValue("no_schedule", observation.getNoSchedule())
+                .addValue("reminder", observation.getReminder());
     }
 
     private static RowMapper<ObservationProperties> getParticipantObservationPropertiesRowMapper() {
@@ -352,7 +353,8 @@ public class ObservationRepository {
                 .setModified(RepositoryUtils.readInstant(rs, "modified"))
                 .setHidden(rs.getBoolean("hidden"))
                 .setNoSchedule(rs.getBoolean("no_schedule"))
-                .setObservationGroupIds(RepositoryUtils.readSet(rs, "observation_group_ids", Integer.class));
+                .setObservationGroupIds(RepositoryUtils.readSet(rs, "observation_group_ids", Integer.class))
+                .setReminder(rs.getBoolean("reminder"));
     }
 
     private void setObservationObservationGroupIds(Long studyId, Integer observationId, Set<Integer> observationGroupIds) {
