@@ -63,7 +63,7 @@ class ElasticSearchServiceTest {
             .withEnv("discovery.type", "single-node")
             .withEnv("action.auto_create_index", "true")
             .withEnv("bootstrap.memory_lock", "true")
-            .withEnv("ES_JAVA_OPTS", "-Xms256m -Xmx512m");
+            .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
 
     @Autowired
     private ElasticService elasticService;
@@ -116,7 +116,7 @@ class ElasticSearchServiceTest {
         //wait for auto commit
         Thread.sleep(2000);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try(outputStream) {
+        try (outputStream) {
             outputStream.write("[".getBytes(StandardCharsets.UTF_8));
             elasticService.exportData(outputStream, 1L, List.of(2), List.of(1), List.of(1), null, null);
             outputStream.write("]".getBytes(StandardCharsets.UTF_8));
@@ -131,7 +131,7 @@ class ElasticSearchServiceTest {
     private void setDataPoint(Long studyId, String studyGroupId, String participantId, String observationId, int i) {
         elasticService.setDataPoint(studyId, new ElasticObservationDataPoint(
                 "DP_" + studyId + "_" + participantId + "_" + i,
-                "participant_"+ participantId,
+                "participant_" + participantId,
                 "study_" + studyId,
                 "study_group_" + studyGroupId,
                 observationId,
@@ -144,14 +144,14 @@ class ElasticSearchServiceTest {
     }
 
     @Test
-    void testGetParticipationData() throws InterruptedException{
+    void testGetParticipationData() throws InterruptedException {
         Study study = new Study().setStudyId(30L);
-        indexDoc(study,3);
-        indexDoc(study,4);
-        indexDoc(study,5);
-        indexDoc(study,6);
-        indexDoc(study,7);
-        indexDoc(study,8);
+        indexDoc(study, 3);
+        indexDoc(study, 4);
+        indexDoc(study, 5);
+        indexDoc(study, 6);
+        indexDoc(study, 7);
+        indexDoc(study, 8);
 
         Thread.sleep(1000);
 
