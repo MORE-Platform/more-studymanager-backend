@@ -59,7 +59,7 @@ class ElasticSearchServiceTest {
     private final static Logger LOG = LoggerFactory.getLogger(ElasticSearchServiceTest.class);
 
     @Container
-    public static ElasticsearchContainer elasticContainer = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.3.2")
+    public static ElasticsearchContainer elasticContainer = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.11.4")
             .withEnv("xpack.security.enabled", "false")
             .withEnv("discovery.type", "single-node")
             .withEnv("action.auto_create_index", "true")
