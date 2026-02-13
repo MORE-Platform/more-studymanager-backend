@@ -37,6 +37,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +64,8 @@ class ElasticSearchServiceTest {
             .withEnv("discovery.type", "single-node")
             .withEnv("action.auto_create_index", "true")
             .withEnv("bootstrap.memory_lock", "true")
-            .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
+            .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+            .withStartupTimeout(Duration.ofMinutes(5));
 
     @Autowired
     private ElasticService elasticService;
