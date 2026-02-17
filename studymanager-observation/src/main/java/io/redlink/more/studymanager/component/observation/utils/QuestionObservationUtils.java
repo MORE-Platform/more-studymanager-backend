@@ -1,4 +1,4 @@
-package io.redlink.more.studymanager.core.utils;
+package io.redlink.more.studymanager.component.observation.utils;
 
 import io.redlink.more.studymanager.core.datavalidity.MeasurementSummary;
 import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;

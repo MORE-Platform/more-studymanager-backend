@@ -16,7 +16,7 @@ import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.ui.*;
-import io.redlink.more.studymanager.core.utils.QuestionObservationUtils;
+import io.redlink.more.studymanager.component.observation.utils.QuestionObservationUtils;
 
 import java.time.Instant;
 import java.util.List;
