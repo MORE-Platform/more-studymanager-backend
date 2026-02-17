@@ -38,7 +38,7 @@ public class QuestionObservationFactory<C extends Observation<P>, P extends Obse
                 .setRequired(true),
             new StringListValue("answers")
                     .setMinSize(2)
-                    .setMaxSize(5)
+                    .setMaxSize(10)
                     .setName("observation.factory.simpleQuestion.configProps.answerName")
                     .setDescription("observation.factory.simpleQuestion.configProps.answerDesc")
                     .setDefaultValue(List.of(
