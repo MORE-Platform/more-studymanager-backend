@@ -22,15 +22,15 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class QuestionObservation<C extends ObservationProperties> extends Observation<C> {
+public class MultipleChoiceQuestionObservation<C extends ObservationProperties> extends Observation<C> {
 
-    public QuestionObservation(MoreObservationSDK sdk, C properties) throws ConfigurationValidationException {
+    public MultipleChoiceQuestionObservation(MoreObservationSDK sdk, C properties) throws ConfigurationValidationException {
         super(sdk, properties);
     }
 
     @Override
     public DataViewInfo[] listViews() {
-        return QuestionObservationUtils.createDefaultQuestionDataViews("monitoring.charts.simpleQuestion", QuestionObservationFactory.FIELD_ANSWER).toArray(new DataViewInfo[0]);
+        return QuestionObservationUtils.createDefaultQuestionDataViews("monitoring.charts.multipleChoiceQuestion", MultipleChoiceQuestionObservationFactory.FIELD_ANSWERS).toArray(new DataViewInfo[0]);
     }
 
     @Override
@@ -50,18 +50,19 @@ public class QuestionObservation<C extends ObservationProperties> extends Observ
     }
 
     private DataViewData addMissingAnswerOptions(QuestionObservationUtils.SimpleDataViewInfo dataView, DataViewData dataViewData) {
-        List<String> allPossibleAnswerOptions = (List<String>) this.properties.get("answers");
+        List<String> allPossibleAnswerOptions = (List<String>) properties.get("answers");
         return QuestionObservationUtils.addMissingAnswerOptionsHelper(
                 QuestionObservationUtils.DataViewInfoType.valueOf(dataView.name()),
                 dataViewData,
                 allPossibleAnswerOptions
         );
     }
+
     @Override
     public ObservationValidationResult validateData(Instant start, Instant end, ObservationDataSummary observationDataSummary) {
         return QuestionObservationUtils.validateSingleAnswerObservation(
                 observationDataSummary,
-                QuestionObservationFactory.FIELD_ANSWER
+                MultipleChoiceQuestionObservationFactory.FIELD_ANSWERS
         );
     }
 }

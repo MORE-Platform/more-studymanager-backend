@@ -22,44 +22,44 @@ import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import java.util.List;
 import java.util.Set;
 
-public class QuestionObservationFactory<C extends Observation<P>, P extends ObservationProperties>
+public class MultipleChoiceQuestionObservationFactory<C extends Observation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
 
-    public static final String FIELD_ANSWER =  "answer";
+    public static final String FIELD_ANSWERS =  "answers";
 
     private static final MeasurementSet measurements = new MeasurementSet(
-            "SIMPLE_ANSWER", Set.of(new Measurement(FIELD_ANSWER, Measurement.Type.STRING))
+            "MULTIPLE_CHOICE_ANSWERS", Set.of(new Measurement(FIELD_ANSWERS, Measurement.Type.STRING_ARRAY))
     );
 
     private static List<Value> properties = List.of(
         new StringValue("question")
-                .setName("observation.factory.simpleQuestion.configProps.questionName")
-                .setDescription("observation.factory.simpleQuestion.configProps.questionDesc")
+                .setName("observation.factory.multipleChoiceQuestion.configProps.questionName")
+                .setDescription("observation.factory.multipleChoiceQuestion.configProps.questionDesc")
                 .setRequired(true),
             new StringListValue("answers")
                     .setMinSize(2)
                     .setMaxSize(10)
-                    .setName("observation.factory.simpleQuestion.configProps.answerName")
-                    .setDescription("observation.factory.simpleQuestion.configProps.answerDesc")
+                    .setName("observation.factory.multipleChoiceQuestion.configProps.answerName")
+                    .setDescription("observation.factory.multipleChoiceQuestion.configProps.answerDesc")
                     .setDefaultValue(List.of(
-                            "No",
-                            "Yes"
+                            "Migrane",
+                            "Dizzyness"
                     ))
     );
 
     @Override
     public String getId() {
-        return "question-observation";
+        return "multiple-choice-question-observation";
     }
 
     @Override
     public String getTitle() {
-        return "observation.factory.simpleQuestion.title";
+        return "observation.factory.multipleChoiceQuestion.title";
     }
 
     @Override
     public String getDescription() {
-        return "observation.factory.simpleQuestion.description";
+        return "observation.factory.multipleChoiceQuestion.description";
     }
 
     public List<Value> getProperties() {
@@ -67,8 +67,8 @@ public class QuestionObservationFactory<C extends Observation<P>, P extends Obse
     }
 
     @Override
-    public QuestionObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new QuestionObservation(sdk, validate((P)properties));
+    public MultipleChoiceQuestionObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+        return new MultipleChoiceQuestionObservation(sdk, validate((P)properties));
     }
 
     @Override
