@@ -43,7 +43,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/api/v1")
-public class ImportExportApiV1Controller implements ImportExportApi {
+public abstract class ImportExportApiV1Controller implements ImportExportApi {
     private static final Logger LOGGER = LoggerFactory.getLogger(StudyApiV1Controller.class);
 
     private final ImportExportService service;
@@ -99,7 +99,7 @@ public class ImportExportApiV1Controller implements ImportExportApi {
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
     @Audited
-    public ResponseEntity<StreamingResponseBody> exportStudyData(Long studyId, String token, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
+    public ResponseEntity<StreamingResponseBody> exportStudyData(Long studyId, String token, List<Integer> studyGroupId, List<Integer> observationGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
         Optional<DownloadToken> dt = tokenRepository.getToken(token).filter(t -> t.getStudyId().equals(studyId));
 
         if (dt.isPresent()) {
@@ -112,7 +112,7 @@ public class ImportExportApiV1Controller implements ImportExportApi {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(outputStream -> {
                         try {
-                            service.exportStudyData(outputStream, studyId, studyGroupId, participantId, observationId, from, to);
+                            service.exportStudyData(outputStream, studyId, studyGroupId, observationGroupId, participantId, observationId, from, to);
                         } catch (Exception e) {
                             LOGGER.warn("Error exporting study data for study_{}: {}", studyId, e.getMessage(), e);
                         }

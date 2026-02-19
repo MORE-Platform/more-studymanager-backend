@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ImportExportService {
@@ -168,16 +169,29 @@ public class ImportExportService {
         return newStudy;
     }
 
-    public void exportStudyData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
+    public void exportStudyData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> observationGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
         if (studyService.existsStudy(studyId).orElse(false)) {
-            exportStudyDataAsync(outputStream, studyId, studyGroupId, participantId, observationId, from, to);
+            Collection<Integer> selectedObservationIds;
+            if(!observationGroupId.isEmpty()){
+                selectedObservationIds = observationService.listObservationsForGroup(studyId, null,observationGroupId)
+                        .stream().map(Observation::getObservationId).collect(Collectors.toSet());
+                LOGGER.debug("Selected observation ids for parsed ObservationGroups: {}", selectedObservationIds);
+                if(observationId != null){
+                    selectedObservationIds.addAll(observationId);
+                }
+            } else {
+                selectedObservationIds = observationId;
+            }
+            LOGGER.info("Export StudyData[study:{}, studyGroup: {}, participants: {}, observationIds: {}, from: {}, to: {}]",
+                    studyId, studyGroupId, participantId, selectedObservationIds, from, to);
+            exportStudyDataAsync(outputStream, studyId, studyGroupId, participantId, selectedObservationIds, from, to);
         } else {
             throw NotFoundException.Study(studyId);
         }
     }
 
     @Async
-    public void exportStudyDataAsync(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
+    public void exportStudyDataAsync(OutputStream outputStream, Long studyId, Collection<Integer> studyGroupId, Collection<Integer> participantId, Collection<Integer> observationId, Instant from, Instant to) {
         try (outputStream) {
             outputStream.write("[".getBytes(StandardCharsets.UTF_8));
             elasticService.exportData(outputStream, studyId, studyGroupId, participantId, observationId, from, to);
