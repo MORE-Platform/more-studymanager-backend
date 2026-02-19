@@ -27,23 +27,27 @@ public final class ObservationGroupTransformer {
     }
 
     public static ObservationGroupDTO toObservationGroupDTO_V1(
-            ObservationGroup ObservationGroup,
+            ObservationGroup observationGroup,
             int observationCount,
             int interventionCount,
             int participantCount
     ) {
-        Instant instant = ObservationGroup.getModified();
-        Instant instant1 = ObservationGroup.getCreated();
-        return new ObservationGroupDTO()
-                .studyId(ObservationGroup.getStudyId())
-                .observationGroupId(ObservationGroup.getObservationGroupId())
-                .title(ObservationGroup.getTitle())
-                .purpose(ObservationGroup.getPurpose())
+        return toObservationGroupDTO_V1(observationGroup)
                 .numberOfObservations(observationCount)
                 .numberOfInterventions(interventionCount)
-                .numberOfParticipants(participantCount)
-                .created(instant1)
-                .modified(instant);
+                .numberOfParticipants(participantCount);
+    }
+
+    public static ObservationGroupDTO toObservationGroupDTO_V1(
+            ObservationGroup observationGroup
+    ) {
+        return new ObservationGroupDTO()
+                .studyId(observationGroup.getStudyId())
+                .observationGroupId(observationGroup.getObservationGroupId())
+                .title(observationGroup.getTitle())
+                .purpose(observationGroup.getPurpose())
+                .created(observationGroup.getCreated())
+                .modified(observationGroup.getModified());
     }
 
 
