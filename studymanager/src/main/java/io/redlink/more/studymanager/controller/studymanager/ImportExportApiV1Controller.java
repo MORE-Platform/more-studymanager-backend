@@ -43,7 +43,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/api/v1")
-public abstract class ImportExportApiV1Controller implements ImportExportApi {
+public class ImportExportApiV1Controller implements ImportExportApi {
     private static final Logger LOGGER = LoggerFactory.getLogger(StudyApiV1Controller.class);
 
     private final ImportExportService service;
