@@ -12,9 +12,11 @@ import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.ObservationGroup;
+import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyGroup;
 import io.redlink.more.studymanager.model.StudyImportExport;
@@ -29,10 +31,13 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +75,17 @@ class ImportExportControllerTest {
     @Autowired
     private MockMvc mvc;
 
+    @BeforeEach
+    void setUp() {
+        when(oAuth2AuthenticationService.getCurrentUser()).thenReturn(
+                new AuthenticatedUser(
+                        UUID.randomUUID().toString(),
+                        "Test User", "test@example.com", "Test Inc.",
+                        EnumSet.allOf(PlatformRole.class)
+                )
+        );
+    }
+
     @Test
     @DisplayName("Participants should be exported in csv format as a Resource")
     void testExportParticipants() throws Exception {
@@ -80,6 +96,7 @@ class ImportExportControllerTest {
                 .thenAnswer(invocationOnMock -> new ByteArrayResource(csv.getBytes(StandardCharsets.UTF_8)));
 
         MvcResult result = mvc.perform(get("/api/v1/studies/1/export/participants")
+                        .accept("text/csv")
                         .contentType("text/csv"))
                 .andDo(print())
                 .andReturn();
@@ -96,8 +113,8 @@ class ImportExportControllerTest {
                 .setParticipantInfo("testInfo")
                 .setConsentInfo("testConsent")
                 .setStudyState(Study.Status.DRAFT)
-                .setPlannedStartDate(LocalDate.now())
-                .setPlannedEndDate(LocalDate.now().plus(2, ChronoUnit.MONTHS))
+                .setPlannedStartDate(LocalDate.parse("2026-02-19"))
+                .setPlannedEndDate(LocalDate.parse("2026-04-19"))
                 .setCreated(Instant.now())
                 .setModified(Instant.now());
         StudyGroup group = new StudyGroup()

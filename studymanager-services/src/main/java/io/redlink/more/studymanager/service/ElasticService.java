@@ -344,7 +344,7 @@ public class ElasticService {
         }
     }
 
-    public void exportData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) throws IOException {
+    public void exportData(OutputStream outputStream, Long studyId, Collection<Integer> studyGroupId, Collection<Integer> participantId, Collection<Integer> observationId, Instant from, Instant to) throws IOException {
         String index = getStudyIdString(studyId);
 
         if(!client.indices().exists(e -> e.index(index)).value()) {
@@ -374,7 +374,7 @@ public class ElasticService {
         outputStream.write(datapoints.getBytes(StandardCharsets.UTF_8));
     }
 
-    private SearchRequest getQuery(String index, List<Integer> studyGroupIds, List<Integer> participantIds, List<Integer> observationIds, Instant from, Instant to, List<FieldValue> searchAfterSort) {
+    private SearchRequest getQuery(String index, Collection<Integer> studyGroupIds, Collection<Integer> participantIds, Collection<Integer> observationIds, Instant from, Instant to, List<FieldValue> searchAfterSort) {
         SearchRequest.Builder builder = new SearchRequest.Builder();
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
