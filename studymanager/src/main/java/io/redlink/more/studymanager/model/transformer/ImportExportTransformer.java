@@ -29,6 +29,7 @@ public final class ImportExportTransformer {
         return new StudyImportExport()
                 .setStudy(StudyTransformer.fromStudyDTO_V1(dto.getStudy()))
                 .setStudyGroups(transform(dto.getStudyGroups(), StudyGroupTransformer::fromStudyGroupDTO_V1))
+                .setObservationGroups(transform(dto.getObservationGroups(), ObservationGroupTransformer::fromObservationGroupDTO_V1))
                 .setObservations(transform(dto.getObservations(), ObservationTransformer::fromObservationDTO_V1))
                 .setInterventions(transform(dto.getInterventions(), InterventionTransformer::fromInterventionDTO_V1))
                 .setTriggers(
