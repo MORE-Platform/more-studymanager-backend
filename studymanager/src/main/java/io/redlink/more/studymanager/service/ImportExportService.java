@@ -172,7 +172,7 @@ public class ImportExportService {
     public void exportStudyData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> observationGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
         if (studyService.existsStudy(studyId).orElse(false)) {
             Collection<Integer> selectedObservationIds;
-            if(!observationGroupId.isEmpty()){
+            if(observationGroupId != null && !observationGroupId.isEmpty()){
                 selectedObservationIds = observationService.listObservationsForGroup(studyId, null,observationGroupId)
                         .stream().map(Observation::getObservationId).collect(Collectors.toSet());
                 LOGGER.debug("Selected observation ids for parsed ObservationGroups: {}", selectedObservationIds);
