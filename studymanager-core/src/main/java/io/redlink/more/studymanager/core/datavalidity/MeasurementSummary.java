@@ -10,6 +10,7 @@ public class MeasurementSummary {
     private StringMeasurementSummary stringResult;
     private BooleanMeasurementSummary booleanResult;
     private DateMeasurementSummary dateResult;
+    private StringArrayMeasurementSummary arrayResult;
 
     public MeasurementSummary(Measurement measurement) {
         this.measurement = measurement;
@@ -33,6 +34,7 @@ public class MeasurementSummary {
 
     /**
      * Getter for the Measurement
+     *
      * @return
      */
     public Measurement getMeasurement() {
@@ -42,6 +44,7 @@ public class MeasurementSummary {
     /**
      * Getter for information about numeric values. Only present
      * of {@link Measurement#getType()} is {@link Measurement.Type#DOUBLE} or {@link Measurement.Type#INTEGER}
+     *
      * @return
      */
     public NumericMeasurementSummary getNumericResult() {
@@ -51,6 +54,7 @@ public class MeasurementSummary {
     /**
      * Getter for information about string values. Only present
      * of {@link Measurement#getType()} is {@link Measurement.Type#STRING}}
+     *
      * @return
      */
     public StringMeasurementSummary getStringResult() {
@@ -60,6 +64,7 @@ public class MeasurementSummary {
     /**
      * Getter for information about boolean values. Only present
      * of {@link Measurement#getType()} is {@link Measurement.Type#BOOLEAN}}
+     *
      * @return
      */
     public BooleanMeasurementSummary getBooleanResult() {
@@ -69,10 +74,15 @@ public class MeasurementSummary {
     /**
      * Getter for information about date values. Only present
      * of {@link Measurement#getType()} is {@link Measurement.Type#DATE}}
+     *
      * @return
      */
     public DateMeasurementSummary getDateResult() {
         return dateResult;
+    }
+
+    public StringArrayMeasurementSummary getArrayResult() {
+        return arrayResult;
     }
 
 
@@ -96,6 +106,7 @@ public class MeasurementSummary {
                 ", stringResult=" + stringResult +
                 ", booleanResult=" + booleanResult +
                 ", dateResult=" + dateResult +
+                ", arrayResult=" + arrayResult +
                 '}';
     }
 }

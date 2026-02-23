@@ -4,7 +4,11 @@ import io.redlink.more.studymanager.core.datavalidity.MeasurementSummary;
 import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;
 import io.redlink.more.studymanager.core.datavalidity.ObservationDataSummary;
 import io.redlink.more.studymanager.core.datavalidity.ObservationValidationResult;
-import io.redlink.more.studymanager.core.ui.*;
+import io.redlink.more.studymanager.core.ui.DataView;
+import io.redlink.more.studymanager.core.ui.DataViewData;
+import io.redlink.more.studymanager.core.ui.DataViewInfo;
+import io.redlink.more.studymanager.core.ui.DataViewRow;
+import io.redlink.more.studymanager.core.ui.ViewConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +17,8 @@ import java.util.stream.Stream;
 
 public final class QuestionObservationUtils {
 
-    private QuestionObservationUtils() {}
+    private QuestionObservationUtils() {
+    }
 
     public enum DataViewInfoType {
         response_distribution,
@@ -188,8 +193,30 @@ public final class QuestionObservationUtils {
                     .filter(it -> fieldId.equals(it.getMeasurement().getId()))
                     .findFirst()
                     .orElse(null);
-            boolean hasAnswers = answerMeasurementSummary != null &&
-                    answerMeasurementSummary.getStringResult().values().stream().noneMatch(it -> it.value() == null);
+            boolean hasAnswers = answerMeasurementSummary != null
+                    && answerMeasurementSummary.getStringResult() != null
+                    && answerMeasurementSummary.getStringResult().values().stream().noneMatch(it -> it.value() == null);
+            return new ObservationValidationResult(!hasAnswers, hasAnswers ? ObservationDataState.COMPLETE : ObservationDataState.MISSING);
+        }
+    }
+
+    public static ObservationValidationResult validateMultiChoiceObservation(ObservationDataSummary observationDataSummary, String fieldId) {
+        if (observationDataSummary == null) {
+            return new ObservationValidationResult(false, ObservationDataState.MISSING);
+        }
+        if (observationDataSummary.numDocs() <= 0) {
+            return new ObservationValidationResult(false, ObservationDataState.MISSING);
+        } else if (observationDataSummary.numDocs() > 1) {
+            return new ObservationValidationResult(true, ObservationDataState.COMPLETE);
+
+        } else {
+            MeasurementSummary answerMeasurementSummary = observationDataSummary.measurements().stream()
+                    .filter(it -> fieldId.equals(it.getMeasurement().getId()))
+                    .findFirst()
+                    .orElse(null);
+            boolean hasAnswers = answerMeasurementSummary != null
+                    && answerMeasurementSummary.getArrayResult() != null
+                    && answerMeasurementSummary.getArrayResult().values().stream().noneMatch(List::isEmpty);
             return new ObservationValidationResult(!hasAnswers, hasAnswers ? ObservationDataState.COMPLETE : ObservationDataState.MISSING);
         }
     }

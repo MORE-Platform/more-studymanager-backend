@@ -2,7 +2,12 @@ package io.redlink.more.studymanager.component.observation.lime;
 
 import io.redlink.more.studymanager.component.observation.MultipleChoiceQuestionObservation;
 import io.redlink.more.studymanager.component.observation.MultipleChoiceQuestionObservationFactory;
-import io.redlink.more.studymanager.core.datavalidity.*;
+import io.redlink.more.studymanager.core.datavalidity.DateMeasurementSummary;
+import io.redlink.more.studymanager.core.datavalidity.MeasurementSummary;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataSummary;
+import io.redlink.more.studymanager.core.datavalidity.StringFieldValue;
+import io.redlink.more.studymanager.core.datavalidity.StringMeasurementSummary;
 import io.redlink.more.studymanager.core.measurement.Measurement;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
@@ -18,7 +23,7 @@ import static org.mockito.Mockito.mock;
 public class MultipleChoiceQuestionObservationTest {
 
     @Test
-    public void testValidation(){
+    public void testValidation() {
         MoreObservationSDK sdk = mock(MoreObservationSDK.class);
         ObservationProperties properties = mock(ObservationProperties.class);
 
@@ -40,8 +45,8 @@ public class MultipleChoiceQuestionObservationTest {
                 List.of(answerSummary)
         );
         var result = observation.validateData(start, end, validSummary);
-        Assertions.assertFalse(result.invalid());
-        Assertions.assertEquals(ObservationDataState.COMPLETE, result.state());
+        Assertions.assertTrue(result.invalid());
+        Assertions.assertEquals(ObservationDataState.MISSING, result.state());
 
         ObservationDataSummary invalidMultipleAnswersSummary = new ObservationDataSummary(
                 2,
