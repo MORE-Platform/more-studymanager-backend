@@ -145,8 +145,8 @@ public class ObservationRepository {
             );
         }
         Integer observationId = keyHolder.getKey().intValue();
-        setObservationObservationGroupIds(observation.getStudyId(), observationId, observation.getObservationGroupIds());
-        return getById(observation.getStudyId(), observationId);
+        setObservationObservationGroupIds(studyId, observationId, observation.getObservationGroupIds());
+        return getById(studyId, observationId);
     }
 
     public Observation getById(Long studyId, Integer observationId) {
