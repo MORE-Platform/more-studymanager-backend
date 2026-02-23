@@ -128,8 +128,8 @@ public class InterventionRepository {
                     intervention.getStudyId() + "(" + e.getClass().getSimpleName() + ": " + e.getMessage() + ")");
         }
         Integer interventionId = keyHolder.getKey().intValue();
-        setInverventionObservationGroupIds(intervention.getStudyId(), interventionId, intervention.getObservationGroupIds());
-        return getByIds(intervention.getStudyId(), interventionId);
+        setInverventionObservationGroupIds(studyId, interventionId, intervention.getObservationGroupIds());
+        return getByIds(studyId, interventionId);
     }
 
     public List<Intervention> listInterventions(Long studyId) {
