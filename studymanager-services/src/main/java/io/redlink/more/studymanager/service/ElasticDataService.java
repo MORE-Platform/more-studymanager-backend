@@ -15,7 +15,14 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.util.ObjectBuilder;
-import io.redlink.more.studymanager.core.datavalidity.*;
+import io.redlink.more.studymanager.core.datavalidity.BooleanFieldValue;
+import io.redlink.more.studymanager.core.datavalidity.BooleanMeasurementSummary;
+import io.redlink.more.studymanager.core.datavalidity.DateMeasurementSummary;
+import io.redlink.more.studymanager.core.datavalidity.FieldValue;
+import io.redlink.more.studymanager.core.datavalidity.MeasurementSummary;
+import io.redlink.more.studymanager.core.datavalidity.NumericMeasurementSummary;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataSummary;
+import io.redlink.more.studymanager.core.datavalidity.StringMeasurementSummary;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.measurement.Measurement;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
@@ -23,17 +30,21 @@ import io.redlink.more.studymanager.core.ui.DataViewData;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.StudyGroup;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static io.redlink.more.studymanager.service.ElasticService.getFilters;
 import static io.redlink.more.studymanager.service.ElasticService.getStudyIdString;
@@ -179,12 +190,12 @@ public class ElasticDataService {
                     case STRING:
                         String termsName = field + "_counts";
                         StringTermsAggregate stringTerms = searchResponse.aggregations().get(termsName).sterms();
-                        List<StringFieldValue> stringValues = new ArrayList<>();
+                        List<FieldValue<String>> stringValues = new ArrayList<>();
                         for (StringTermsBucket bucket : stringTerms.buckets().array()) {
                             String key = bucket.key().stringValue();
                             long count = bucket.docCount();
                             String value = "missing".equals(key) ? null : key;
-                            stringValues.add(new StringFieldValue(value, count));
+                            stringValues.add(new FieldValue<>(value, count));
                         }
                         ms.setStringResult(new StringMeasurementSummary(stringValues));
                         break;

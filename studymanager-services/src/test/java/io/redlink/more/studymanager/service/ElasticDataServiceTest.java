@@ -16,8 +16,8 @@ import co.elastic.clients.json.JsonpMapper;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.json.jackson.JacksonJsonpParser;
 import com.fasterxml.jackson.core.JsonFactory;
+import io.redlink.more.studymanager.core.datavalidity.FieldValue;
 import io.redlink.more.studymanager.core.datavalidity.MeasurementSummary;
-import io.redlink.more.studymanager.core.datavalidity.StringFieldValue;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.core.measurement.Measurement;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
@@ -39,9 +39,9 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.assertj.core.api.Assertions.assertThat;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -55,7 +55,7 @@ class ElasticDataServiceTest {
 
     private ParticipantService participantServic = Mockito.mock(ParticipantService.class);
 
-    private StudyGroupService studyGroupService =  Mockito.mock(StudyGroupService.class);
+    private StudyGroupService studyGroupService = Mockito.mock(StudyGroupService.class);
 
     @BeforeEach
     void init() {
@@ -66,19 +66,19 @@ class ElasticDataServiceTest {
     public void testValidateObservationData() throws IOException {
 
         MeasurementSet measurementSet = new MeasurementSet("test", Set.of(
-            new Measurement("activityType", Measurement.Type.STRING),
-            new Measurement("activeTimeInSeconds", Measurement.Type.INTEGER),
-            new Measurement("maxMotionIntensity", Measurement.Type.DOUBLE),
-            new Measurement("active", Measurement.Type.BOOLEAN)
+                new Measurement("activityType", Measurement.Type.STRING),
+                new Measurement("activeTimeInSeconds", Measurement.Type.INTEGER),
+                new Measurement("maxMotionIntensity", Measurement.Type.DOUBLE),
+                new Measurement("active", Measurement.Type.BOOLEAN)
         ));
         SearchResponse<Void> expectedResponse;
-        try(InputStream responseData = ElasticDataServiceTest.class.getClassLoader().getResourceAsStream("testdata/validateObservationDataResponse1.json")){
+        try (InputStream responseData = ElasticDataServiceTest.class.getClassLoader().getResourceAsStream("testdata/validateObservationDataResponse1.json")) {
             expectedResponse = deserializeJsonToSearchResponse(responseData);
         }
         ArgumentCaptor<Long> requestCaptor = ArgumentCaptor.forClass(Long.class);
         when(client.search(any(SearchRequest.class), any(Class.class))).thenReturn(expectedResponse);
 
-        var results = elasticDataService.validateObservationData(15,null,1, 11,
+        var results = elasticDataService.validateObservationData(15, null, 1, 11,
                 new Timeframe(
                         Instant.parse("2025-12-01T16:00:00Z"),
                         Instant.parse("2025-12-02T00:00:00Z")),
@@ -93,7 +93,7 @@ class ElasticDataServiceTest {
         MeasurementSummary activityTypeValue = results.measurements().stream().filter(mv -> mv.getMeasurement().getId().equals("activityType")).findFirst().orElse(null);
         assertThat(activityTypeValue).isNotNull();
         assertThat(activityTypeValue.getStringResult()).isNotNull();
-        assertThat(activityTypeValue.getStringResult().values().stream().map(StringFieldValue::value).collect(Collectors.toList())).containsExactlyInAnyOrder("SEDENTARY", "WALKING", "GENERIC");
+        assertThat(activityTypeValue.getStringResult().values().stream().map(FieldValue::value).collect(Collectors.toList())).containsExactlyInAnyOrder("SEDENTARY", "WALKING", "GENERIC");
         assertThat(activityTypeValue.getStringResult().values().stream().filter(it -> "SEDENTARY".equals(it.value())).findFirst().get().count()).isEqualTo(40);
         assertThat(activityTypeValue.getStringResult().values().stream().filter(it -> "WALKING".equals(it.value())).findFirst().get().count()).isEqualTo(8);
         assertThat(activityTypeValue.getStringResult().values().stream().filter(it -> "GENERIC".equals(it.value())).findFirst().get().count()).isEqualTo(1);
@@ -130,21 +130,22 @@ class ElasticDataServiceTest {
         var jsonFactory = new JsonFactory();
         var jacksonParser = jsonFactory.createParser(json);
         var mapper = new JacksonJsonpMapper();
-        JsonParser parser  = new JacksonJsonpParser(jacksonParser, mapper);
+        JsonParser parser = new JacksonJsonpParser(jacksonParser, mapper);
 
         var documentDeserializer = new JsonpDeserializer<Void>() {
-            public Void deserialize(JsonParser parser , JsonpMapper mapper) {
+            public Void deserialize(JsonParser parser, JsonpMapper mapper) {
                 parser.skipArray();
                 parser.skipObject();
                 return null;
             }
-            public Void deserialize(JsonParser parser , JsonpMapper mapper , JsonParser.Event event) {
-            if (event == JsonParser.Event.VALUE_NULL) {
+
+            public Void deserialize(JsonParser parser, JsonpMapper mapper, JsonParser.Event event) {
+                if (event == JsonParser.Event.VALUE_NULL) {
+                    return null;
+                }
+                parser.skipArray();
+                parser.skipObject();
                 return null;
-            }
-            parser.skipArray();
-            parser.skipObject();
-            return null;
             }
 
             public EnumSet<JsonParser.Event> acceptedEvents() {
