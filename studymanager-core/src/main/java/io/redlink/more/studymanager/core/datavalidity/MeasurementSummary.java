@@ -10,7 +10,7 @@ public class MeasurementSummary {
     private StringMeasurementSummary stringResult;
     private BooleanMeasurementSummary booleanResult;
     private DateMeasurementSummary dateResult;
-    private StringArrayMeasurementSummary arrayResult;
+    private ArrayMeasurementSummary<?> arrayResult;
 
     public MeasurementSummary(Measurement measurement) {
         this.measurement = measurement;
@@ -30,6 +30,10 @@ public class MeasurementSummary {
 
     public void setDateResult(DateMeasurementSummary dateResult) {
         this.dateResult = dateResult;
+    }
+
+    public void setArrayResult(ArrayMeasurementSummary<?> arrayResult) {
+        this.arrayResult = arrayResult;
     }
 
     /**
@@ -81,7 +85,7 @@ public class MeasurementSummary {
         return dateResult;
     }
 
-    public StringArrayMeasurementSummary getArrayResult() {
+    public ArrayMeasurementSummary<?> getArrayResult() {
         return arrayResult;
     }
 
@@ -90,7 +94,12 @@ public class MeasurementSummary {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         MeasurementSummary that = (MeasurementSummary) o;
-        return Objects.equals(measurement, that.measurement) && Objects.equals(numericResult, that.numericResult) && Objects.equals(stringResult, that.stringResult) && Objects.equals(booleanResult, that.booleanResult) && Objects.equals(dateResult, that.dateResult);
+        return Objects.equals(measurement, that.measurement)
+                && Objects.equals(numericResult, that.numericResult)
+                && Objects.equals(stringResult, that.stringResult)
+                && Objects.equals(booleanResult, that.booleanResult)
+                && Objects.equals(dateResult, that.dateResult)
+                && Objects.equals(arrayResult, that.arrayResult);
     }
 
     @Override

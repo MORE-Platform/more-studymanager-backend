@@ -1,7 +1,7 @@
 package io.redlink.more.studymanager.core.datavalidity;
 
-public record StringFieldValue(
-        String value,
+public record FieldValue<T>(
+        T value,
         long count
 ) {
 }

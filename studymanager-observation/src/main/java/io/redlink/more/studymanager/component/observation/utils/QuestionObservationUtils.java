@@ -1,5 +1,7 @@
 package io.redlink.more.studymanager.component.observation.utils;
 
+import io.redlink.more.studymanager.core.datavalidity.ArrayMeasurementSummary;
+import io.redlink.more.studymanager.core.datavalidity.FieldValue;
 import io.redlink.more.studymanager.core.datavalidity.MeasurementSummary;
 import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;
 import io.redlink.more.studymanager.core.datavalidity.ObservationDataSummary;
@@ -12,6 +14,7 @@ import io.redlink.more.studymanager.core.ui.ViewConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -214,9 +217,13 @@ public final class QuestionObservationUtils {
                     .filter(it -> fieldId.equals(it.getMeasurement().getId()))
                     .findFirst()
                     .orElse(null);
-            boolean hasAnswers = answerMeasurementSummary != null
-                    && answerMeasurementSummary.getArrayResult() != null
-                    && answerMeasurementSummary.getArrayResult().values().stream().noneMatch(List::isEmpty);
+            boolean hasAnswers =
+                    Optional.ofNullable(answerMeasurementSummary)
+                            .map(MeasurementSummary::getArrayResult)
+                            .map(ArrayMeasurementSummary::values)
+                            .map(FieldValue::value)
+                            .filter(list -> !list.isEmpty())
+                            .isPresent();
             return new ObservationValidationResult(!hasAnswers, hasAnswers ? ObservationDataState.COMPLETE : ObservationDataState.MISSING);
         }
     }

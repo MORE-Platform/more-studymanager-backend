@@ -2,7 +2,12 @@ package io.redlink.more.studymanager.component.observation.lime;
 
 import io.redlink.more.studymanager.component.observation.QuestionObservation;
 import io.redlink.more.studymanager.component.observation.QuestionObservationFactory;
-import io.redlink.more.studymanager.core.datavalidity.*;
+import io.redlink.more.studymanager.core.datavalidity.DateMeasurementSummary;
+import io.redlink.more.studymanager.core.datavalidity.FieldValue;
+import io.redlink.more.studymanager.core.datavalidity.MeasurementSummary;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataSummary;
+import io.redlink.more.studymanager.core.datavalidity.StringMeasurementSummary;
 import io.redlink.more.studymanager.core.measurement.Measurement;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
@@ -19,7 +24,7 @@ public class QuestionObservationTest {
 
 
     @Test
-    public void testValidation(){
+    public void testValidation() {
         MoreObservationSDK sdk = mock(MoreObservationSDK.class);
         ObservationProperties properties = mock(ObservationProperties.class);
 
@@ -31,10 +36,10 @@ public class QuestionObservationTest {
 
         var answerSummary = new MeasurementSummary(
                 new Measurement(QuestionObservationFactory.FIELD_ANSWER, Measurement.Type.STRING));
-        answerSummary.setStringResult(new StringMeasurementSummary(List.of(new StringFieldValue("Antwort 1", 1))));
+        answerSummary.setStringResult(new StringMeasurementSummary(List.of(new FieldValue<>("Antwort 1", 1))));
         ObservationDataSummary validSummary = new ObservationDataSummary(
                 1,
-                new DateMeasurementSummary(stored,stored,0L),
+                new DateMeasurementSummary(stored, stored, 0L),
                 List.of(answerSummary)
         );
         var result = questionObservation.validateData(start, end, validSummary);
@@ -43,7 +48,7 @@ public class QuestionObservationTest {
 
         ObservationDataSummary invalidMultipleAnswersSummary = new ObservationDataSummary(
                 2,
-                new DateMeasurementSummary(stored,stored,0L),
+                new DateMeasurementSummary(stored, stored, 0L),
                 List.of(answerSummary)
         );
         result = questionObservation.validateData(start, end, invalidMultipleAnswersSummary);
@@ -61,10 +66,10 @@ public class QuestionObservationTest {
 
         var nullAnswerSummary = new MeasurementSummary(
                 new Measurement(QuestionObservationFactory.FIELD_ANSWER, Measurement.Type.STRING));
-        nullAnswerSummary.setStringResult(new StringMeasurementSummary(List.of(new StringFieldValue(null, 1))));
+        nullAnswerSummary.setStringResult(new StringMeasurementSummary(List.of(new FieldValue<String>(null, 1))));
         ObservationDataSummary invalidAnswerSummary = new ObservationDataSummary(
                 1,
-                new DateMeasurementSummary(stored,stored,0L),
+                new DateMeasurementSummary(stored, stored, 0L),
                 List.of(nullAnswerSummary)
         );
         result = questionObservation.validateData(start, end, invalidAnswerSummary);
