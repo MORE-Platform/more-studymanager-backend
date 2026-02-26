@@ -37,10 +37,12 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     public void activate() {
         String surveyId = checkAndGetSurveyId();
 
+        LOGGER.info("Activating Lime Survey Observation: {}", surveyId);
         //FIXME: This creates a LIME survey user for every participant, regardless if the Observation is relevant to the participant
         Set<Integer> participantIds = sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL);
         //FIXME: Check for the expected keys (token and limeUrl) and not just if any properties are present!
         participantIds.removeIf(id -> sdk.getPropertiesForParticipant(id).isPresent());
+        LOGGER.info("Activating participant IDs: {}", participantIds);
         limeSurveyRequestService.activateParticipants(participantIds, surveyId)
                 .forEach(data ->
                         sdk.mergePropertiesForParticipant(
@@ -77,6 +79,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
         // for downwards compatibility (already running studies)
         String newSurveyId = properties.getString(LIME_SURVEY_ID);
         String activeSurveyId = sdk.getValue(LIME_SURVEY_ID, String.class).orElse(null);
+        LOGGER.info("Deactivating Lime Survey Observation {}", newSurveyId);
 
         if (activeSurveyId == null || activeSurveyId.equals(newSurveyId)) {
             sdk.setValue(LIME_SURVEY_ID, newSurveyId);
@@ -86,21 +89,27 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     public boolean writeDataPoints(String token, int surveyId, int savedId) {
         //check if token exists, get participant and answer and store as datapoint
         getParticipantForToken(token).ifPresent(participantId ->
-                limeSurveyRequestService.getAnswer(token, surveyId, savedId).ifPresent(m ->
-                        sdk.storeDataPoint(participantId, "lime-survey-observation", m)
+                limeSurveyRequestService.getAnswer(token, surveyId, savedId).ifPresent(m -> {
+                            LOGGER.info("Writing data points for participant {} with token {}: {}", participantId, token, m);
+                            sdk.storeDataPoint(participantId, "lime-survey-observation", m);
+                        }
                 )
         );
         return true;
     }
 
     public Optional<Integer> getParticipantForToken(String token) {
-        return sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL).stream()
-                .filter(id ->
-                        sdk.getPropertiesForParticipant(id)
-                                .map(o -> o.getString("token"))
-                                .map(t -> t.equals(token))
-                                .orElse(false)
-                )
-                .findFirst();
+        try (var stream = sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL).stream()) {
+            return stream.filter(id ->
+                            sdk.getPropertiesForParticipant(id)
+                                    .map(o -> o.getString("token"))
+                                    .map(t -> t.equals(token))
+                                    .orElse(false)
+                    )
+                    .findFirst();
+        } catch (RuntimeException e) {
+            LOGGER.error("Could not get participant for token {}", token, e);
+            throw e;
+        }
     }
 }

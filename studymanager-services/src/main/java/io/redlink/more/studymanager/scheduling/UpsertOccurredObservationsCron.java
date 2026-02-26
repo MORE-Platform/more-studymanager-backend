@@ -48,8 +48,8 @@ public class UpsertOccurredObservationsCron {
         this.calendarService = calendarService;
     }
 
-    @Scheduled(cron = "0 */2 * * * ?") //every 5min
-    protected void upsertOccurredObservations() {
+    @Scheduled(cron="0 */5 * * * ?") //every 5min
+    protected void upsertOccurredObservations(){
         try (var stream = studyService.getStudiesByStates(Study.Status.ACTIVE_STATES)) {
             stream.forEach(this::upsertOccurredObservations);
         }
@@ -57,33 +57,34 @@ public class UpsertOccurredObservationsCron {
 
     private void upsertOccurredObservations(Study study) {
         try (var ctx = LoggingUtils.createContext()) {
-            if (study == null || !Study.Status.ACTIVE_STATES.contains(study.getStudyState())) {
+            if(study == null || !Study.Status.ACTIVE_STATES.contains(study.getStudyState())) {
                 return; //nothing to do
             }
             ctx.putStudy(study);
             List<Participant> participants = participantService.listParticipants(study.getStudyId());
-            Instant lastOccurredObservation = occurredObservationService.getLatestStartTime(study.getStudyId());
             //NOTE: use now + 1min for current because:
             //  1. we truncatedTo(ChronoUnit.MINUTES) all Instants and
             //  2. we check with start.isBefore(current)
             // doing so will include all Observations that start in the current minute
             Instant current = Instant.now().plus(1, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MINUTES);
-            LOGGER.debug("Upsert Occurred Observations for Study(id: {}) and timeperiode(start:{}, end:{})", study.getStudyId(), lastOccurredObservation, current);
+            LOGGER.debug("Upsert Occurred Observations for Study(id: {}) ", study.getStudyId());
             participants.stream()
-                    .filter(participant -> participant.getStatus() == Participant.Status.ACTIVE)
-                    .forEach(participant -> {
-                        ctx.putParticipant(participant);
-                        //NOTE: from, to are currently not supported
-                        var timeline = calendarService.getTimeline(study, participant, null, null, null, null, null);
-                        for (ObservationTimelineEvent event : timeline.observationTimelineEvents()) {
-                            var start = event.start().truncatedTo(ChronoUnit.MINUTES);
-                            if ((lastOccurredObservation == null || start.isAfter(lastOccurredObservation)) && start.isBefore(current)) {
-                                LOGGER.trace("upsert occurred observation for study: {}, observation: {}, participant: {}, start: {}, end: {}",
-                                        study.getStudyId(), event.observationId(), participant.getParticipantId(), event.start(), event.end());
-                                occurredObservationService.upsert(study.getStudyId(), event.observationId(), participant.getParticipantId(), event.start(), event.end());
-                            } //else outside of time range ... ignore
-                        }
-                    });
+                .filter(participant -> participant.getStatus() == Participant.Status.ACTIVE)
+                .forEach(participant -> {
+                    Instant lastOccurredObservation = occurredObservationService.getLatestStartTime(study.getStudyId(), participant.getParticipantId());
+                    LOGGER.debug("Upsert Occurred Observations for Study(id: {}) Participant(id: {}) and timeperiode(start:{}, end:{})", study.getStudyId(), participant.getParticipantId(), lastOccurredObservation, current);
+                    ctx.putParticipant(participant);
+                    //NOTE: from, to are currently not supported
+                    var timeline = calendarService.getTimeline(study, participant, null, null, null, null, null);
+                    for(ObservationTimelineEvent event : timeline.observationTimelineEvents()){
+                        var start = event.start().truncatedTo(ChronoUnit.MINUTES);
+                        if((lastOccurredObservation == null || start.isAfter(lastOccurredObservation)) && start.isBefore(current)){
+                            LOGGER.trace("upsert occurred observation for study: {}, observation: {}, participant: {}, start: {}, end: {}",
+                                    study.getStudyId(), event.observationId(), participant.getParticipantId(), event.start(), event.end());
+                            occurredObservationService.upsert(study.getStudyId(), event.observationId(), participant.getParticipantId(), event.start(), event.end());
+                        } //else outside of time range ... ignore
+                    }
+                });
         } catch (Exception e) {
             LOGGER.warn("Cannot execute Trigger-Job: {}", e.getMessage(), e);
         }
