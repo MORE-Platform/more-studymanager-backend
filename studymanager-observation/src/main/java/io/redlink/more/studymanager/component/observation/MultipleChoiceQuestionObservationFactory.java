@@ -25,17 +25,17 @@ import java.util.Set;
 public class MultipleChoiceQuestionObservationFactory<C extends Observation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
 
-    public static final String FIELD_ANSWERS =  "answers";
+    public static final String FIELD_ANSWERS = "answers";
 
     private static final MeasurementSet measurements = new MeasurementSet(
-            "MULTIPLE_CHOICE_ANSWERS", Set.of(new Measurement(FIELD_ANSWERS, Measurement.Type.STRING_ARRAY))
+            "MULTIPLE_CHOICE_ANSWERS", Set.of(new Measurement(FIELD_ANSWERS, Measurement.Type.ARRAY))
     );
 
     private static List<Value> properties = List.of(
-        new StringValue("question")
-                .setName("observation.factory.multipleChoiceQuestion.configProps.questionName")
-                .setDescription("observation.factory.multipleChoiceQuestion.configProps.questionDesc")
-                .setRequired(true),
+            new StringValue("question")
+                    .setName("observation.factory.multipleChoiceQuestion.configProps.questionName")
+                    .setDescription("observation.factory.multipleChoiceQuestion.configProps.questionDesc")
+                    .setRequired(true),
             new StringListValue("answers")
                     .setMinSize(2)
                     .setMaxSize(10)
@@ -68,7 +68,7 @@ public class MultipleChoiceQuestionObservationFactory<C extends Observation<P>, 
 
     @Override
     public MultipleChoiceQuestionObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new MultipleChoiceQuestionObservation(sdk, validate((P)properties));
+        return new MultipleChoiceQuestionObservation(sdk, validate((P) properties));
     }
 
     @Override

@@ -15,6 +15,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.util.ObjectBuilder;
+import io.redlink.more.studymanager.core.datavalidity.ArrayMeasurementSummary;
 import io.redlink.more.studymanager.core.datavalidity.BooleanFieldValue;
 import io.redlink.more.studymanager.core.datavalidity.BooleanMeasurementSummary;
 import io.redlink.more.studymanager.core.datavalidity.DateMeasurementSummary;
@@ -120,6 +121,7 @@ public class ElasticDataService {
             Measurement.Type type = measurement.getType();
             switch (type) {
                 case STRING:
+                case ARRAY:
                     String termsName = field + "_counts";
                     builder.aggregations(termsName, Aggregation.of(a -> a.terms(t -> t.field(field + ".keyword").missing("missing"))));
                     break;
@@ -129,13 +131,14 @@ public class ElasticDataService {
                     break;
                 case INTEGER:
                 case DOUBLE:
+                case LONG:
                 case DATE:
                     String statsName = field + "_stats";
                     builder.aggregations(statsName, Aggregation.of(a -> a.stats(s -> s.field(field))));
                     String missingName = field + "_missing";
                     builder.aggregations(missingName, Aggregation.of(a -> a.missing(m -> m.field(field))));
                     break;
-                case OBJECT:
+                default:
                     // do nothing
                     break;
             }
@@ -222,6 +225,7 @@ public class ElasticDataService {
                         break;
                     case INTEGER:
                     case DOUBLE:
+                    case LONG:
                         String numericStatsName = field + "_stats";
                         StatsAggregate numericStats = searchResponse.aggregations().get(numericStatsName).stats();
                         String numericMissingName = field + "_missing";
@@ -245,7 +249,26 @@ public class ElasticDataService {
                         long dateMissing = dateMiss.docCount();
                         ms.setDateResult(new DateMeasurementSummary(dateMinInst, dateMaxInst, dateMissing));
                         break;
-                    case OBJECT:
+                    case ARRAY:
+                        String arrayTermsName = field + "_counts";
+                        StringTermsAggregate arrayTerms = searchResponse.aggregations().get(arrayTermsName).sterms();
+
+                        List<String> distinctValues = new ArrayList<>();
+                        long missingDocs = 0;
+                        for (StringTermsBucket bucket : arrayTerms.buckets().array()) {
+                            String key = bucket.key().stringValue();
+                            if ("missing".equals(key)) {
+                                missingDocs = bucket.docCount();
+                            } else {
+                                distinctValues.add(key);
+                            }
+                        }
+
+                        long presentDocs = numDocs - missingDocs;
+                        FieldValue<List<String>> arrayValue = new FieldValue<>(distinctValues.isEmpty() ? null : distinctValues, presentDocs);
+                        ms.setArrayResult(new ArrayMeasurementSummary<>(arrayValue));
+                        break;
+                    default:
                         // do nothing
                         break;
                 }
