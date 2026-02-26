@@ -32,6 +32,18 @@ paths:
           description: Internal Error
 
 components:
+  schemas:
+    TriggerRequest:
+      type: object
+      required:
+        - participantIds
+      properties:
+        participantIds:
+          type: array
+          items:
+            type: integer
+          description: List of participant IDs to trigger
+          example: [1, 2, 3]
   securitySchemes:
     ApiKeyAuth:
       type: apiKey

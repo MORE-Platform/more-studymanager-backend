@@ -77,6 +77,9 @@ class StudyServiceTest {
     @Mock
     StudyStateService studyStateService;
 
+    @Mock
+    InterventionTokenService interventionTokenService;
+
     @InjectMocks
     StudyService studyService;
 

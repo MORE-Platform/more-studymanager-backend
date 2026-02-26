@@ -58,6 +58,7 @@ public class StudyService {
     private final ParticipantService participantService;
     private final StudyStateService studyStateService;
     private final IntegrationService integrationService;
+    private final InterventionTokenService interventionTokenService;
     private final ElasticService elasticService;
 
     private final PushNotificationService pushNotificationService;
@@ -66,7 +67,8 @@ public class StudyService {
 
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
                         StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService,
-                        ParticipantService participantService, IntegrationService integrationService, ElasticService elasticService, PushNotificationService pushNotificationService, StudyGroupRepository studyGroupRepository) {
+                        ParticipantService participantService, IntegrationService integrationService, InterventionTokenService interventionTokenService,
+                        ElasticService elasticService, PushNotificationService pushNotificationService, StudyGroupRepository studyGroupRepository) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
@@ -75,6 +77,7 @@ public class StudyService {
         this.observationService = observationService;
         this.participantService = participantService;
         this.integrationService = integrationService;
+        this.interventionTokenService = interventionTokenService;
         this.elasticService = elasticService;
         this.pushNotificationService = pushNotificationService;
         this.studyGroupRepository = studyGroupRepository;
@@ -169,6 +172,7 @@ public class StudyService {
         interventionService.alignInterventionsWithStudyState(s);
         observationService.alignObservationsWithStudyState(s);
         integrationService.alignIntegrationsWithStudyState(s);
+        interventionTokenService.alignWithStudyState(s);
     }
 
     public Map<MoreUser, Set<StudyRole>> getACL(Long studyId) {
