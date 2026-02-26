@@ -200,7 +200,7 @@ public class UpsertOccurredObservationsCronTest {
 
 
         //finally moch the two methods used in the occurredObservationService
-        when(occurredObservationService.getLatestStartTime(anyLong()))
+        when(occurredObservationService.getLatestStartTime(anyLong(), anyInt()))
                 .thenReturn(lastOoTimestamp);
 
         when(occurredObservationService.upsert(anyLong(), anyInt(), anyInt(), any(), any()))
@@ -219,9 +219,11 @@ public class UpsertOccurredObservationsCronTest {
 
         //verify the the #getLatestStartTime(..) method is called for each study once
         ArgumentCaptor<Long> studyIdCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(occurredObservationService, times(2))
-                .getLatestStartTime(studyIdCaptor.capture());
+        ArgumentCaptor<Integer> participantIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(occurredObservationService, times(5))
+                .getLatestStartTime(studyIdCaptor.capture(), participantIdCaptor.capture());
         assertThat(studyIdCaptor.getAllValues()).contains(1L, 2L);
+        assertThat(participantIdCaptor.getAllValues()).contains(1,2,3,1,2);
 
         ArgumentCaptor<Long> ooStudyIdCaptor = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<Integer> ooObservationIdCaptor = ArgumentCaptor.forClass(Integer.class);
