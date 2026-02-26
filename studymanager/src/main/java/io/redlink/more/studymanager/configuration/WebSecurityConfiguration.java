@@ -93,7 +93,7 @@ public class WebSecurityConfiguration {
                 // Study-Data-Export is authenticated internally using individual access-tokens
                 .requestMatchers(HttpMethod.GET, "/api/v1/studies/*/export/studydata/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/studies/*/calendar.ics").permitAll()
-                // External trigger endpoint is authenticated via API token, not OAuth2
+                // External trigger endpoint (token validated by data-gateway)
                 .requestMatchers(HttpMethod.POST, "/api/v1/trigger/external").permitAll()
                 .requestMatchers("/api/v1/**").authenticated()
                 .requestMatchers("/kibana/**").authenticated()

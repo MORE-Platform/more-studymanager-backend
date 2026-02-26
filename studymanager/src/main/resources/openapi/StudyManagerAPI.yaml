@@ -953,6 +953,22 @@ paths:
     parameters:
       - $ref: '#/components/parameters/StudyId'
       - $ref: '#/components/parameters/InterventionId'
+    post:
+      tags:
+        - interventions
+      description: Trigger intervention for specific participants
+      operationId: triggerIntervention
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerRequest'
+      responses:
+        '202':
+          description: Trigger accepted
+        '400':
+          description: Bad request
     get:
       tags:
         - interventions
@@ -1483,8 +1499,57 @@ paths:
               schema:
                 $ref: '#/components/schemas/BuildInfo'
 
+  /trigger/external:
+    post:
+      tags:
+        - trigger
+      description: External trigger endpoint (pre-validated by data-gateway)
+      operationId: triggerExternal
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExternalTriggerRequest'
+      responses:
+        '202':
+          description: Trigger accepted
+        '400':
+          description: Bad request
+
 components:
   schemas:
+    TriggerRequest:
+      type: object
+      required:
+        - participantIds
+      properties:
+        participantIds:
+          type: array
+          items:
+            type: integer
+          description: List of participant IDs to trigger
+
+    ExternalTriggerRequest:
+      type: object
+      required:
+        - studyId
+        - interventionId
+        - participantIds
+      properties:
+        studyId:
+          type: integer
+          format: int64
+          description: The study ID
+        interventionId:
+          type: integer
+          description: The intervention ID
+        participantIds:
+          type: array
+          items:
+            type: integer
+          description: List of participant IDs to trigger
     ComponentFactory:
       type: object
       properties:

@@ -9,6 +9,7 @@
 package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.EndpointTokenDTO;
+import io.redlink.more.studymanager.api.v1.model.ExternalTriggerRequestDTO;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.EndpointToken;
 import io.redlink.more.studymanager.model.StudyRole;
@@ -18,7 +19,6 @@ import io.redlink.more.studymanager.service.InterventionTokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.Serializable;
@@ -39,17 +39,6 @@ public class ApiTriggerController {
                                 InterventionTokenService interventionTokenService) {
         this.nvpairs = nvpairs;
         this.interventionTokenService = interventionTokenService;
-    }
-
-    @PostMapping("/studies/{studyId}/interventions/{interventionId}/trigger")
-    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
-    public ResponseEntity<Void> triggerIntervention(
-            @PathVariable Long studyId,
-            @PathVariable Integer interventionId,
-            @RequestBody TriggerRequest request) {
-
-        addPendingParticipants(studyId, interventionId, request.participantIds());
-        return ResponseEntity.accepted().build();
     }
 
     // --- Token management endpoints (OAuth2-protected) ---
@@ -93,23 +82,15 @@ public class ApiTriggerController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- External trigger endpoint (token-authenticated, no OAuth2) ---
+    // --- External trigger endpoint (pre-validated by data-gateway) ---
 
     @PostMapping("/trigger/external")
     public ResponseEntity<Void> triggerExternal(
-            @RequestHeader("More-Api-Token") String moreApiToken,
-            @RequestBody TriggerRequest request) {
+            @RequestBody ExternalTriggerRequestDTO request) {
 
-        try {
-            InterventionTokenService.ResolvedToken resolved = interventionTokenService.validateToken(moreApiToken);
-            addPendingParticipants(resolved.studyId(), resolved.interventionId(), request.participantIds());
-            return ResponseEntity.accepted().build();
-        } catch (AccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        addPendingParticipants(request.getStudyId(), request.getInterventionId(), request.getParticipantIds());
+        return ResponseEntity.accepted().build();
     }
-
-    // --- Shared helpers ---
 
     @SuppressWarnings("unchecked")
     private void addPendingParticipants(Long studyId, Integer interventionId, List<Integer> participantIds) {
@@ -121,6 +102,4 @@ public class ApiTriggerController {
 
         nvpairs.setTriggerValue(studyId, interventionId, PENDING_PARTICIPANTS_KEY, (Serializable) pending);
     }
-
-    public record TriggerRequest(List<Integer> participantIds) {}
 }
