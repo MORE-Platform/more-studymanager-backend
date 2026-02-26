@@ -62,16 +62,17 @@ public class UpsertOccurredObservationsCron {
             }
             ctx.putStudy(study);
             List<Participant> participants = participantService.listParticipants(study.getStudyId());
-            Instant lastOccurredObservation = occurredObservationService.getLatestStartTime(study.getStudyId());
             //NOTE: use now + 1min for current because:
             //  1. we truncatedTo(ChronoUnit.MINUTES) all Instants and
             //  2. we check with start.isBefore(current)
             // doing so will include all Observations that start in the current minute
             Instant current = Instant.now().plus(1, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MINUTES);
-            LOGGER.debug("Upsert Occurred Observations for Study(id: {}) and timeperiode(start:{}, end:{})", study.getStudyId(), lastOccurredObservation, current);
+            LOGGER.debug("Upsert Occurred Observations for Study(id: {}) ", study.getStudyId());
             participants.stream()
                 .filter(participant -> participant.getStatus() == Participant.Status.ACTIVE)
                 .forEach(participant -> {
+                    Instant lastOccurredObservation = occurredObservationService.getLatestStartTime(study.getStudyId(), participant.getParticipantId());
+                    LOGGER.debug("Upsert Occurred Observations for Study(id: {}) Participant(id: {}) and timeperiode(start:{}, end:{})", study.getStudyId(), participant.getParticipantId(), lastOccurredObservation, current);
                     ctx.putParticipant(participant);
                     //NOTE: from, to are currently not supported
                     var timeline = calendarService.getTimeline(study, participant, null, null, null, null, null);
