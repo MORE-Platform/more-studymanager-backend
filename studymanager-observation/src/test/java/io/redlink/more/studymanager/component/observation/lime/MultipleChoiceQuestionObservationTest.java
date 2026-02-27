@@ -34,7 +34,7 @@ public class MultipleChoiceQuestionObservationTest {
         MultipleChoiceQuestionObservation<?> observation = new MultipleChoiceQuestionObservation<>(sdk, properties);
 
         var answerSummary = new MeasurementSummary(
-                new Measurement(MultipleChoiceQuestionObservationFactory.FIELD_ANSWERS, Measurement.Type.STRING_ARRAY));
+                new Measurement(MultipleChoiceQuestionObservationFactory.FIELD_ANSWERS, Measurement.Type.ARRAY));
         answerSummary.setArrayResult(new ArrayMeasurementSummary<>(new FieldValue<>(List.of("Antwort1", "Antwort 2"), 2)));
         ObservationDataSummary validSummary = new ObservationDataSummary(
                 1,
@@ -64,7 +64,7 @@ public class MultipleChoiceQuestionObservationTest {
         Assertions.assertEquals(ObservationDataState.MISSING, result.state());
 
         var nullAnswerSummary = new MeasurementSummary(
-                new Measurement(MultipleChoiceQuestionObservationFactory.FIELD_ANSWERS, Measurement.Type.STRING_ARRAY));
+                new Measurement(MultipleChoiceQuestionObservationFactory.FIELD_ANSWERS, Measurement.Type.ARRAY));
         nullAnswerSummary.setArrayResult(new ArrayMeasurementSummary<String>(new FieldValue<>(null, 1)));
         ObservationDataSummary invalidAnswerSummary = new ObservationDataSummary(
                 1,
