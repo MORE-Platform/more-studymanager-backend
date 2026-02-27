@@ -54,7 +54,7 @@ public class ValidateActiveObservationDataCron {
 
 
     //TODO: Make schedules configureable
-    @Scheduled(cron = "30 */2 * * * ?") //every 5min, 30sec after updating active observation data
+    @Scheduled(cron = "30 */5 * * * ?") //every 5min, 30sec after updating active observation data
     public void validateActiveObservationData() {
         final Instant now = Instant.now();
         final LocalTime currentTime = LocalTime.ofInstant(now, ZoneId.systemDefault());
