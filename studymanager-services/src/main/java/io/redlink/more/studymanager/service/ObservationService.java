@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.core.component.Component;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
@@ -24,6 +25,7 @@ import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.utils.RandomSchedulerUtils;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -94,7 +96,12 @@ public class ObservationService {
         return updatedObservation;
     }
 
-    public void alignObservationsWithStudyState(Study study) {
+    @EventListener
+    public void handleStudyStateChange(StudyStateChangedEvent event) {
+        alignObservationsWithStudyState(event.getStudy());
+    }
+
+    protected void alignObservationsWithStudyState(Study study) {
         if (Study.Status.ACTIVE_STATES.contains(study.getStudyState()))
             activateObservationsFor(study);
         else deactivateObservationsFor(study);

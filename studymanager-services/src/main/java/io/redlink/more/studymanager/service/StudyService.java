@@ -8,11 +8,11 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.MoreUser;
-import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyGroup;
 import io.redlink.more.studymanager.model.StudyRole;
@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,31 +53,27 @@ public class StudyService {
     private final StudyRepository studyRepository;
     private final StudyAclRepository aclRepository;
     private final UserRepository userRepo;
-    private final InterventionService interventionService;
-    private final ObservationService observationService;
-    private final ParticipantService participantService;
     private final StudyStateService studyStateService;
-    private final IntegrationService integrationService;
     private final ElasticService elasticService;
+    private final OccurredObservationService occurredObservationService;
 
-    private final PushNotificationService pushNotificationService;
     private final StudyGroupRepository studyGroupRepository;
+
+    private ApplicationEventPublisher applicationEventPublisher;
 
 
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
-                        StudyStateService studyStateService, InterventionService interventionService, ObservationService observationService,
-                        ParticipantService participantService, IntegrationService integrationService, ElasticService elasticService, PushNotificationService pushNotificationService, StudyGroupRepository studyGroupRepository) {
+                        StudyStateService studyStateService, OccurredObservationService occurredObservationService,
+                        ElasticService elasticService, StudyGroupRepository studyGroupRepository,
+                        ApplicationEventPublisher applicationEventPublisher) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
         this.studyStateService = studyStateService;
-        this.interventionService = interventionService;
-        this.observationService = observationService;
-        this.participantService = participantService;
-        this.integrationService = integrationService;
         this.elasticService = elasticService;
-        this.pushNotificationService = pushNotificationService;
         this.studyGroupRepository = studyGroupRepository;
+        this.occurredObservationService = occurredObservationService;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     public Study createStudy(Study study, User currentUser) {
@@ -114,6 +110,7 @@ public class StudyService {
         studyStateService.assertStudyState(studyId, Study.Status.DRAFT, Study.Status.CLOSED);
         studyRepository.deleteById(studyId);
         elasticService.deleteIndex(studyId);
+        occurredObservationService.deleteOccurredObservations(studyId);
     }
 
     @Transactional
@@ -130,45 +127,23 @@ public class StudyService {
         return studyRepository.setStateById(studyId, newState)
                 .map(s -> {
                     try {
-                        alignWithStudyState(s);
-                        participantService.listParticipants(studyId).forEach(participant ->
-                                pushNotificationService.sendStudyStateUpdate(participant, oldState, s.getStudyState())
-                        );
-                        participantService.alignParticipantsWithStudyState(s);
+                        publishStudyStateChangedEvent(s, oldState);
                         if (s.getStudyState() == Study.Status.DRAFT) {
-                            log.info("Study {} transitioned back to {}, dropping collected observation data", study.getStudyId(), s.getStudyState());
+                            log.info("Study {} transitioned back to {}, dropping collected observation and data health information", study.getStudyId(), s.getStudyState());
                             elasticService.deleteIndex(s.getStudyId());
+                            occurredObservationService.deleteOccurredObservations(studyId);
                         }
                     } catch (Exception e) {
                         log.warn("Could not set new state for study id {}; old state: {}; new state: {}", studyId, oldState.getValue(), s.getStudyState().getValue());
                         //ROLLBACK
                         studyRepository.setStateById(studyId, oldState);
-                        studyRepository.getById(studyId).ifPresent(this::alignWithStudyState);
+                        studyRepository.getById(studyId).ifPresent(rollbackStudy -> {
+                            publishStudyStateChangedEvent(rollbackStudy, newState);
+                        });
                         throw new BadRequestException("Study cannot be initialized", e);
                     }
                     return s;
                 });
-    }
-
-    // every minute
-    @Scheduled(cron = "0 * * * * ?")
-    public void closeParticipationsForStudiesWithDurations() {
-        List<Participant> participantsToClose = participantService.listParticipantsForClosing();
-        log.debug("Selected {} participants to close", participantsToClose.size());
-        participantsToClose.forEach(participant -> {
-            pushNotificationService.sendStudyStateUpdate(
-                    participant, Study.Status.ACTIVE, Study.Status.CLOSED
-            );
-            participantService.setStatus(
-                    participant.getStudyId(), participant.getParticipantId(), Participant.Status.LOCKED
-            );
-        });
-    }
-
-    private void alignWithStudyState(Study s) {
-        interventionService.alignInterventionsWithStudyState(s);
-        observationService.alignObservationsWithStudyState(s);
-        integrationService.alignIntegrationsWithStudyState(s);
     }
 
     public Map<MoreUser, Set<StudyRole>> getACL(Long studyId) {
@@ -233,4 +208,7 @@ public class StudyService {
         return states == null ? Stream.empty() : studyRepository.listStudiesByStates(states);
     }
 
+    protected void publishStudyStateChangedEvent(final Study study, final Study.Status previousState) {
+        applicationEventPublisher.publishEvent(new StudyStateChangedEvent(this, study, previousState));
+    }
 }

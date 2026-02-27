@@ -107,4 +107,9 @@ public class OccurredObservationService {
                 observationDataStates == null ? EnumSet.allOf(ObservationDataState.class) : observationDataStates);
     }
 
+    public void deleteOccurredObservations(Long studyId) {
+        repository.deleteOccurredObservations(studyId);
+    }
+
+
 }

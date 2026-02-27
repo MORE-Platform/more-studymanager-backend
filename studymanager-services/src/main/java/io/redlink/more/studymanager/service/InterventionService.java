@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.core.component.Component;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
@@ -152,7 +153,12 @@ public class InterventionService {
         });
     }
 
-    public void alignInterventionsWithStudyState(Study study) {
+    @EventListener
+    public void handleStudyStateChange(StudyStateChangedEvent event) {
+        alignInterventionsWithStudyState(event.getStudy());
+    }
+
+    protected void alignInterventionsWithStudyState(Study study) {
         if (Study.Status.ACTIVE_STATES.contains(study.getStudyState())) {
             activateInterventionsFor(study);
         } else {

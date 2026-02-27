@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
@@ -16,6 +17,7 @@ import io.redlink.more.studymanager.repository.ParticipantRepository;
 import java.util.EnumSet;
 import java.util.List;
 
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,8 +66,13 @@ public class ParticipantService {
         return participantRepository.update(participant);
     }
 
+    @EventListener
+    public void handleStudyStateChange(StudyStateChangedEvent event) {
+        alignParticipantsWithStudyState(event.getStudy());
+    }
+
     @Transactional
-    public void alignParticipantsWithStudyState(Study study) {
+    protected void alignParticipantsWithStudyState(Study study) {
         if (EnumSet.of(Study.Status.CLOSED).contains(study.getStudyState())) {
             participantRepository.cleanupParticipants(study.getStudyId());
         }
