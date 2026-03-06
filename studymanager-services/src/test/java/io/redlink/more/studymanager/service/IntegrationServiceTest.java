@@ -9,20 +9,16 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
 import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
-import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.Trigger;
-import java.util.EnumSet;
-import java.util.UUID;
-
-import io.redlink.more.studymanager.repository.InterventionRepository;
-import io.redlink.more.studymanager.repository.StudyRepository;
+import io.redlink.more.studymanager.repository.IntegrationRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,8 +26,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -40,42 +39,29 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class InterventionServiceTest {
-    @Mock
-    Map<String, TriggerFactory> triggerFactories;
+class IntegrationServiceTest {
     @Mock
     StudyStateService studyStateService;
     @Mock
-    InterventionRepository repository;
+    IntegrationRepository repository;
     @Mock
-    StudyRepository studyRepository;
+    PasswordEncoder passwordEncoder;
     @InjectMocks
-    InterventionService interventionService;
-
-    private final AuthenticatedUser currentUser = new AuthenticatedUser(
-            UUID.randomUUID().toString(),
-            "Test User", "test@example.com", "Test Inc.",
-            EnumSet.allOf(PlatformRole.class)
-    );
+    IntegrationService integrationService;
 
     @Test
-    void testNotFoundValidation() {
-        NotFoundException notFoundException = Assertions.assertThrows(NotFoundException.class, () ->
-                interventionService.updateTrigger(1L, 1, new Trigger().setType("my-trigger"))
-        );
-        Assertions.assertEquals("Trigger Factory 'my-trigger' cannot be found", notFoundException.getMessage());
-    }
+    void testHandleStudyStateChange() {
+        Study study = new Study()
+                .setStudyId(1L)
+                .setTitle("Test study")
+                .setStudyState(Study.Status.ACTIVE);
 
-    @Test
-    void testBadRequestValidation() {
-        TriggerFactory factory = mock(TriggerFactory.class);
-        when(factory.validate(any())).thenThrow(new ConfigurationValidationException(ConfigurationValidationReport.init().error("My error")));
-        when(triggerFactories.get("my-trigger")).thenReturn(factory);
-        when(triggerFactories.containsKey("my-trigger")).thenReturn(true);
+        integrationService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.DRAFT ));
+        Mockito.verify(repository, Mockito.never()).clearForStudyId(anyLong());
+        study.setStudyState(Study.Status.CLOSED);
+        integrationService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.ACTIVE ));
+        Mockito.verify(repository, Mockito.times(1)).clearForStudyId(eq(study.getStudyId()));
 
-        Assertions.assertThrows(BadRequestException.class, () ->
-                interventionService.updateTrigger(1L, 1, new Trigger().setType("my-trigger"))
-        );
     }
 
 }

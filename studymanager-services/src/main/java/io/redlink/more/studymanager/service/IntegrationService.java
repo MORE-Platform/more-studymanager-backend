@@ -82,7 +82,7 @@ public class IntegrationService {
         alignIntegrationsWithStudyState(event.getStudy());
     }
 
-    protected void alignIntegrationsWithStudyState(Study study) {
+    private void alignIntegrationsWithStudyState(Study study) {
         if(study.getStudyState() == Study.Status.CLOSED) {
             repository.clearForStudyId(study.getStudyId());
         }

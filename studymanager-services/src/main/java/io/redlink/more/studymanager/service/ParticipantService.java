@@ -67,12 +67,13 @@ public class ParticipantService {
     }
 
     @EventListener
+    @Transactional
     public void handleStudyStateChange(StudyStateChangedEvent event) {
         alignParticipantsWithStudyState(event.getStudy());
     }
 
-    @Transactional
-    protected void alignParticipantsWithStudyState(Study study) {
+
+    private void alignParticipantsWithStudyState(Study study) {
         if (EnumSet.of(Study.Status.CLOSED).contains(study.getStudyState())) {
             participantRepository.cleanupParticipants(study.getStudyId());
         }

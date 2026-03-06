@@ -158,7 +158,7 @@ public class InterventionService {
         alignInterventionsWithStudyState(event.getStudy());
     }
 
-    protected void alignInterventionsWithStudyState(Study study) {
+    private void alignInterventionsWithStudyState(Study study) {
         if (Study.Status.ACTIVE_STATES.contains(study.getStudyState())) {
             activateInterventionsFor(study);
         } else {
