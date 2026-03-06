@@ -8,7 +8,9 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -16,10 +18,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -73,4 +78,32 @@ class ParticipantServiceTest {
         verify(elasticService, times(2)).removeDataForParticipant(any(), any());
 
     }
+
+    @Test
+    void testHandleStudyStateChange() {
+        Study study = new Study()
+                .setStudyId(1L)
+                .setTitle("Test study")
+                .setStudyState(Study.Status.ACTIVE);
+
+        participantService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.DRAFT ));
+        Mockito.verify(participantRepository, Mockito.never()).resetParticipants(anyLong(), any());
+        Mockito.verify(participantRepository, Mockito.never()).cleanupParticipants(anyLong());
+
+        //validate participants are reset if study goes to DRAFT state
+        study.setStudyState(Study.Status.DRAFT);
+        participantService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.PREVIEW ));
+        Mockito.verify(participantRepository, Mockito.times(1)).resetParticipants(eq(study.getStudyId()), any());
+        Mockito.verify(participantRepository, Mockito.never()).cleanupParticipants(anyLong());
+
+        Mockito.reset(participantRepository);
+
+        //validate participants are cleaned if study goes to CLOSED state
+        study.setStudyState(Study.Status.CLOSED);
+        participantService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.ACTIVE ));
+        Mockito.verify(participantRepository, Mockito.times(1)).cleanupParticipants(eq(study.getStudyId()));
+        Mockito.verify(participantRepository, Mockito.never()).resetParticipants(anyLong(), any());
+
+    }
+
 }
