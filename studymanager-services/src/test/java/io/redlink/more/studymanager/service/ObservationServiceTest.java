@@ -34,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationContext;
 
 import java.util.Map;
 
@@ -46,9 +47,6 @@ import static org.mockito.Mockito.when;
 class ObservationServiceTest {
 
     @Mock
-    Map<String, ObservationFactory> observationFactories;
-
-    @Mock
     StudyStateService studyStateService;
 
     @Mock
@@ -56,6 +54,9 @@ class ObservationServiceTest {
 
     @Mock
     MoreSDK sdk;
+
+    @Mock
+    ApplicationContext applicationContext;
 
     @InjectMocks
     ObservationService observationService;
@@ -65,12 +66,11 @@ class ObservationServiceTest {
         NotFoundException notFoundException = Assertions.assertThrows(NotFoundException.class, () ->
                 observationService.addObservation(new Observation().setStudyId(1L).setObservationId(1).setType("my-observation"))
         );
-        Assertions.assertEquals("Observation Factory 'my-observation' cannot be found", notFoundException.getMessage());
+        Assertions.assertEquals("ObservationFactory for Observation[study: 1, id:1, type: my-observation] cannot be found", notFoundException.getMessage());
 
         ObservationFactory factory = mock(ObservationFactory.class);
         when(factory.validate(any())).thenThrow(new ConfigurationValidationException(ConfigurationValidationReport.init().error("My error")));
-        when(observationFactories.get("my-observation")).thenReturn(factory);
-        when(observationFactories.containsKey("my-observation")).thenReturn(true);
+        when(applicationContext.getBean("my-observation", ObservationFactory.class)).thenReturn(factory);
 
         BadRequestException badRequestException = Assertions.assertThrows(BadRequestException.class, () ->
                 observationService.addObservation(new Observation().setStudyId(1L).setObservationId(1).setType("my-observation"))
@@ -149,12 +149,12 @@ class ObservationServiceTest {
     void testGetObservationFactory_optional() {
         Observation obs = new Observation().setType("x");
         ObservationFactory factory = org.mockito.Mockito.mock(ObservationFactory.class);
-        org.mockito.Mockito.when(observationFactories.get("x")).thenReturn(factory);
+        org.mockito.Mockito.when(applicationContext.getBean("x", ObservationFactory.class)).thenReturn(factory);
 
         java.util.Optional<ObservationFactory> present = observationService.getObservationFactory(obs);
         org.assertj.core.api.Assertions.assertThat(present).containsSame(factory);
 
-        org.mockito.Mockito.when(observationFactories.get("x")).thenReturn(null);
+        org.mockito.Mockito.when(applicationContext.getBean("x", ObservationFactory.class)).thenReturn(null);
         java.util.Optional<ObservationFactory> empty = observationService.getObservationFactory(obs);
         org.assertj.core.api.Assertions.assertThat(empty).isEmpty();
     }
@@ -183,14 +183,14 @@ class ObservationServiceTest {
         org.mockito.Mockito.when(component.listViews()).thenReturn(infos);
 
         ObservationFactory factory = org.mockito.Mockito.mock(ObservationFactory.class);
-        org.mockito.Mockito.when(observationFactories.get("t")).thenReturn(factory);
+        org.mockito.Mockito.when(applicationContext.getBean("t", ObservationFactory.class)).thenReturn(factory);
         org.mockito.Mockito.when(factory.create(org.mockito.Mockito.any(), org.mockito.Mockito.any())).thenReturn(component);
 
 
         io.redlink.more.studymanager.core.ui.DataViewInfo[] result = observationService.listDataViews(10L, 30);
         org.assertj.core.api.Assertions.assertThat(result).isSameAs(infos);
 
-        org.mockito.Mockito.verify(observationFactories).get("t");
+        org.mockito.Mockito.verify(applicationContext).getBean("t", ObservationFactory.class);
         org.mockito.Mockito.verify(factory).create(org.mockito.Mockito.any(), org.mockito.Mockito.any());
         org.mockito.Mockito.verify(component).listViews();
     }
@@ -205,14 +205,15 @@ class ObservationServiceTest {
         org.mockito.Mockito.when(component.getView(org.mockito.Mockito.eq("v2"), org.mockito.Mockito.eq(21), org.mockito.Mockito.eq(1), org.mockito.Mockito.any())).thenReturn(dataView);
 
         ObservationFactory factory = org.mockito.Mockito.mock(ObservationFactory.class);
-        org.mockito.Mockito.when(observationFactories.get("t2")).thenReturn(factory);
+        org.mockito.Mockito.when(applicationContext.getBean("t2", ObservationFactory.class)).thenReturn(factory);
+
         org.mockito.Mockito.when(factory.create(org.mockito.Mockito.any(), org.mockito.Mockito.any())).thenReturn(component);
 
 
         io.redlink.more.studymanager.core.ui.DataView result = observationService.queryData(10L, 31, "v2", 21, 1, null);
         org.assertj.core.api.Assertions.assertThat(result).isSameAs(dataView);
 
-        org.mockito.Mockito.verify(observationFactories).get("t2");
+        org.mockito.Mockito.verify(applicationContext).getBean("t2", ObservationFactory.class);
         org.mockito.Mockito.verify(factory).create(org.mockito.Mockito.any(), org.mockito.Mockito.any());
         org.mockito.Mockito.verify(component).getView(org.mockito.Mockito.eq("v2"), org.mockito.Mockito.eq(21), org.mockito.Mockito.eq(1), org.mockito.Mockito.any());
     }

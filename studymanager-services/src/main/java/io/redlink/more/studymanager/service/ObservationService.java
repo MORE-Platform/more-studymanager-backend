@@ -25,9 +25,14 @@ import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.utils.RandomSchedulerUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Lookup;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -37,20 +42,22 @@ import java.util.Optional;
 @Service
 public class ObservationService {
 
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
+
     private final StudyStateService studyStateService;
     private final ObservationRepository repository;
 
-    private final Map<String, ObservationFactory> observationFactories;
     private final MoreSDK sdk;
+    ApplicationContext applicationContext;
 
     public ObservationService(StudyStateService studyStateService,
                               ObservationRepository repository,
-                              Map<String, ObservationFactory> observationFactories,
-                              MoreSDK sdk) {
+                              MoreSDK sdk,
+                              ApplicationContext applicationContext) {
         this.studyStateService = studyStateService;
         this.repository = repository;
-        this.observationFactories = observationFactories;
         this.sdk = sdk;
+        this.applicationContext = applicationContext;
     }
 
     public Observation addObservation(Observation observation) {
@@ -123,7 +130,6 @@ public class ObservationService {
                 for (ValidationIssue issue : e.getReport().getIssues()) {
                     issue.setComponentTitle(observation.getTitle());
                 }
-
                 throw e;
             }
         }
@@ -136,11 +142,9 @@ public class ObservationService {
         validateProperties(observations);
 
         for (Observation observation : observations) {
-            result.add(factory(observation)
-                    .create(
-                            sdk.scopedObservationSDK(observation.getStudyId(), observation.getStudyGroupId(), observation.getObservationId()),
-                            observation.getProperties()
-                    ));
+            result.add(factory(observation).create(
+                sdk.scopedObservationSDK(observation.getStudyId(), observation.getStudyGroupId(), observation.getObservationId()),
+                observation.getProperties()));
         }
 
         return result;
@@ -162,25 +166,29 @@ public class ObservationService {
         ).getView(viewName, studyGroupId, participantId, timerange);
     }
 
-    public Optional<ObservationFactory> getObservationFactory(Observation observation) {
-        return Optional.ofNullable(factory(observation));
-    }
-
     public List<ParticipantWithObservationProperties> getParticipantObservationProperties(Long studyId) {
         return repository.getParticipantObservationProperties(studyId);
     }
 
+    public Optional<ObservationFactory> getObservationFactory(Observation observation) {
+        return Optional.ofNullable(applicationContext.getBean(observation.getType(), ObservationFactory.class));
+    }
+
+    /**
+     * Ensures the observationFactory for the parsed Observation
+     * @param observation
+     * @return the factory
+     * @throws NotFoundException if the {@link ObservationFactory} for the parsed observation is not present
+     */
     private ObservationFactory factory(Observation observation) {
-        return observationFactories.get(observation.getType());
+        return getObservationFactory(observation)
+                .orElseThrow(() -> new NotFoundException(String.format("ObservationFactory for Observation[study: %s, id:%s, type: %s]",
+                        observation.getStudyId(), observation.getObservationId(), observation.getType())));
     }
 
     private Observation validate(Observation observation) {
-        if (!observationFactories.containsKey(observation.getType())) {
-            throw NotFoundException.ObservationFactory(observation.getType());
-        }
         try {
-            final var factory = factory(observation);
-            factory.validate(observation.getProperties());
+            factory(observation).validate(observation.getProperties());
         } catch (ConfigurationValidationException e) {
             throw new BadRequestException(e.getMessage());
         }

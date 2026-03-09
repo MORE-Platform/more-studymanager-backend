@@ -13,6 +13,8 @@ import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.properties.ComponentFactoriesProperties;
 import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 @Configuration
 @EnableConfigurationProperties({ComponentFactoriesProperties.class})
 public class ComponentFactoriesConfiguration implements BeanFactoryAware {
+    private final Logger logger = LoggerFactory.getLogger(ComponentFactoriesConfiguration.class);
     private BeanFactory beanFactory;
 
     private final Reflections reflections;
@@ -61,8 +64,10 @@ public class ComponentFactoriesConfiguration implements BeanFactoryAware {
         Set<Class<? extends ObservationFactory>> observationFactories = reflections.getSubTypesOf(ObservationFactory.class);
         observationFactories.stream().map(this::instantiate)
                 .map(f -> f.init(componentFactoriesProperties.get(f.getId())))
-                .forEach(m ->
-                configurableBeanFactory.registerSingleton(m.getId(), m)
+                .forEach(m -> {
+                    logger.trace("Registering observation factory: {}[class:{}, properties:{}]", m.getId(),m.getClass().getName(), m.getProperties());
+                    configurableBeanFactory.registerSingleton(m.getId(), m);
+                }
         );
 
         /*
