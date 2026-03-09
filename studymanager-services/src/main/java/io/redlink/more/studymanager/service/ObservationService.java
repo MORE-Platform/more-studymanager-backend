@@ -56,7 +56,6 @@ public class ObservationService {
                               ApplicationContext applicationContext) {
         this.studyStateService = studyStateService;
         this.repository = repository;
-        //this.observationFactories = observationFactories;
         this.sdk = sdk;
         this.applicationContext = applicationContext;
     }
