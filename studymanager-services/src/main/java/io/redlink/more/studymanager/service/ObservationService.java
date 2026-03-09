@@ -131,7 +131,6 @@ public class ObservationService {
                 for (ValidationIssue issue : e.getReport().getIssues()) {
                     issue.setComponentTitle(observation.getTitle());
                 }
-
                 throw e;
             }
         }
@@ -144,11 +143,9 @@ public class ObservationService {
         validateProperties(observations);
 
         for (Observation observation : observations) {
-            result.add(factory(observation)
-                    .create(
-                            sdk.scopedObservationSDK(observation.getStudyId(), observation.getStudyGroupId(), observation.getObservationId()),
-                            observation.getProperties()
-                    ));
+            result.add(factory(observation).create(
+                sdk.scopedObservationSDK(observation.getStudyId(), observation.getStudyGroupId(), observation.getObservationId()),
+                observation.getProperties()));
         }
 
         return result;
@@ -170,27 +167,29 @@ public class ObservationService {
         ).getView(viewName, studyGroupId, participantId, timerange);
     }
 
-    public Optional<ObservationFactory> getObservationFactory(Observation observation) {
-        return Optional.ofNullable(factory(observation));
-    }
-
     public List<ParticipantWithObservationProperties> getParticipantObservationProperties(Long studyId) {
         return repository.getParticipantObservationProperties(studyId);
     }
 
+    public Optional<ObservationFactory> getObservationFactory(Observation observation) {
+        return Optional.ofNullable(applicationContext.getBean(observation.getType(), ObservationFactory.class));
+    }
+
+    /**
+     * Ensures the observationFactory for the parsed Observation
+     * @param observation
+     * @return the factory
+     * @throws NotFoundException if the {@link ObservationFactory} for the parsed observation is not present
+     */
     private ObservationFactory factory(Observation observation) {
-        ObservationFactory factory = applicationContext.getBean(observation.getType(), ObservationFactory.class);
-        if(factory == null) {
-            throw NotFoundException.ObservationFactory(observation.getType());
-        } else {
-            return factory;
-        }
+        return getObservationFactory(observation)
+                .orElseThrow(() -> new NotFoundException(String.format("ObservationFactory for Observation[study: %s, id:%s, type: %s]",
+                        observation.getStudyId(), observation.getObservationId(), observation.getType())));
     }
 
     private Observation validate(Observation observation) {
         try {
-            final var factory = factory(observation);
-            factory.validate(observation.getProperties());
+            factory(observation).validate(observation.getProperties());
         } catch (ConfigurationValidationException e) {
             throw new BadRequestException(e.getMessage());
         }
