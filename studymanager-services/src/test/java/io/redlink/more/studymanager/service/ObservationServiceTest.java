@@ -9,6 +9,7 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.component.observation.AccMobileObservationFactory;
+import io.redlink.more.studymanager.component.observation.AppUsageObservationFactory;
 import io.redlink.more.studymanager.component.observation.ExternalObservationFactory;
 import io.redlink.more.studymanager.component.observation.GpsMobileObservationFactory;
 import io.redlink.more.studymanager.component.observation.PolarVerityObservationFactory;
@@ -104,6 +105,9 @@ class ObservationServiceTest {
                 .setType("question-observation")
                 .setHidden(true);
 
+        Observation action = new Observation()
+                .setType("app-usage-observation");
+
         Observation garminActivity = new Observation().setType("garmin-activity-observation");
         Observation garminBloodPressure = new Observation().setType("garmin-blood-pressure-observation");
         Observation garminHeartRate = new Observation().setType("garmin-heart-rate-observation");
@@ -123,6 +127,8 @@ class ObservationServiceTest {
         GarminSleepObservationFactory garminSleepFactory = new GarminSleepObservationFactory();
         GarminDailyStepsObservationFactory garminStepsFactory = new GarminDailyStepsObservationFactory();
 
+        AppUsageObservationFactory appUsageFactory = new AppUsageObservationFactory();
+
         assertThat(accFactory.getHidden()).isTrue();
         assertThat(polFactory.getHidden()).isTrue();
         assertThat(gpsFactory.getHidden()).isTrue();
@@ -136,8 +142,9 @@ class ObservationServiceTest {
         assertThat(garminHeartRateFactory.getVisibility().isHiddenByDefault()).isFalse();
         assertThat(garminSleepFactory.getVisibility().isHiddenByDefault()).isFalse();
         assertThat(garminStepsFactory.getVisibility().isHiddenByDefault()).isFalse();
+        assertThat(appUsageFactory.getVisibility().isHiddenByDefault()).isFalse();
     }
-    
+
     @Test
     void testGetObservationFactory_optional() {
         Observation obs = new Observation().setType("x");
