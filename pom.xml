@@ -35,7 +35,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <repository.owner>redlink-gmbh</repository.owner>
+        <repository.owner>MORE-Platform</repository.owner>
         <repository.name>more-studymanager-backend</repository.name>
 
         <java.version>17</java.version>
