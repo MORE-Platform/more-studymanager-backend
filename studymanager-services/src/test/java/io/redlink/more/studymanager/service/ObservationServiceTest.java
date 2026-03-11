@@ -8,7 +8,17 @@
  */
 package io.redlink.more.studymanager.service;
 
-import io.redlink.more.studymanager.component.observation.*;
+import io.redlink.more.studymanager.component.observation.AccMobileObservationFactory;
+import io.redlink.more.studymanager.component.observation.AppUsageObservationFactory;
+import io.redlink.more.studymanager.component.observation.ExternalObservationFactory;
+import io.redlink.more.studymanager.component.observation.GpsMobileObservationFactory;
+import io.redlink.more.studymanager.component.observation.PolarVerityObservationFactory;
+import io.redlink.more.studymanager.component.observation.QuestionObservationFactory;
+import io.redlink.more.studymanager.component.observation.garmin.activity.GarminActivityObservationFactory;
+import io.redlink.more.studymanager.component.observation.garmin.bloodpressure.GarminBloodPressureObservationFactory;
+import io.redlink.more.studymanager.component.observation.garmin.heartrate.GarminHeartRateObservationFactory;
+import io.redlink.more.studymanager.component.observation.garmin.sleep.GarminSleepObservationFactory;
+import io.redlink.more.studymanager.component.observation.garmin.steps.daily.GarminDailyStepsObservationFactory;
 import io.redlink.more.studymanager.component.observation.lime.LimeSurveyObservationFactory;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
@@ -17,12 +27,14 @@ import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.repository.ObservationRepository;
+import io.redlink.more.studymanager.sdk.MoreSDK;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationContext;
 
 import java.util.Map;
 
@@ -35,10 +47,16 @@ import static org.mockito.Mockito.when;
 class ObservationServiceTest {
 
     @Mock
-    Map<String, ObservationFactory> observationFactories;
+    StudyStateService studyStateService;
 
     @Mock
-    StudyStateService studyStateService;
+    ObservationRepository repository;
+
+    @Mock
+    MoreSDK sdk;
+
+    @Mock
+    ApplicationContext applicationContext;
 
     @InjectMocks
     ObservationService observationService;
@@ -48,12 +66,11 @@ class ObservationServiceTest {
         NotFoundException notFoundException = Assertions.assertThrows(NotFoundException.class, () ->
                 observationService.addObservation(new Observation().setStudyId(1L).setObservationId(1).setType("my-observation"))
         );
-        Assertions.assertEquals("Observation Factory 'my-observation' cannot be found", notFoundException.getMessage());
+        Assertions.assertEquals("ObservationFactory for Observation[study: 1, id:1, type: my-observation] cannot be found", notFoundException.getMessage());
 
         ObservationFactory factory = mock(ObservationFactory.class);
         when(factory.validate(any())).thenThrow(new ConfigurationValidationException(ConfigurationValidationReport.init().error("My error")));
-        when(observationFactories.get("my-observation")).thenReturn(factory);
-        when(observationFactories.containsKey("my-observation")).thenReturn(true);
+        when(applicationContext.getBean("my-observation", ObservationFactory.class)).thenReturn(factory);
 
         BadRequestException badRequestException = Assertions.assertThrows(BadRequestException.class, () ->
                 observationService.addObservation(new Observation().setStudyId(1L).setObservationId(1).setType("my-observation"))
@@ -88,6 +105,15 @@ class ObservationServiceTest {
                 .setType("question-observation")
                 .setHidden(true);
 
+        Observation action = new Observation()
+                .setType("app-usage-observation");
+
+        Observation garminActivity = new Observation().setType("garmin-activity-observation");
+        Observation garminBloodPressure = new Observation().setType("garmin-blood-pressure-observation");
+        Observation garminHeartRate = new Observation().setType("garmin-heart-rate-observation");
+        Observation garminSleep = new Observation().setType("garmin-sleep-observation");
+        Observation garminSteps = new Observation().setType("garmin-steps-observation");
+
         AccMobileObservationFactory accFactory = new AccMobileObservationFactory();
         PolarVerityObservationFactory polFactory = new PolarVerityObservationFactory();
         GpsMobileObservationFactory gpsFactory = new GpsMobileObservationFactory();
@@ -95,12 +121,100 @@ class ObservationServiceTest {
         QuestionObservationFactory qstFactory = new QuestionObservationFactory();
         ExternalObservationFactory extFactory = new ExternalObservationFactory();
 
+        GarminActivityObservationFactory garminActivityFactory = new GarminActivityObservationFactory();
+        GarminBloodPressureObservationFactory garminBloodPressureFactory = new GarminBloodPressureObservationFactory();
+        GarminHeartRateObservationFactory garminHeartRateFactory = new GarminHeartRateObservationFactory();
+        GarminSleepObservationFactory garminSleepFactory = new GarminSleepObservationFactory();
+        GarminDailyStepsObservationFactory garminStepsFactory = new GarminDailyStepsObservationFactory();
+
+        AppUsageObservationFactory appUsageFactory = new AppUsageObservationFactory();
+
         assertThat(accFactory.getHidden()).isTrue();
         assertThat(polFactory.getHidden()).isTrue();
         assertThat(gpsFactory.getHidden()).isTrue();
         assertThat(limFactory.getHidden()).isTrue();
         assertThat(qstFactory.getHidden()).isTrue();
-        assertThat(extFactory.getHidden()).isFalse();
 
+        assertThat(extFactory.getVisibility().isChangeable()).isFalse();
+
+        assertThat(garminActivityFactory.getVisibility().isHiddenByDefault()).isFalse();
+        assertThat(garminBloodPressureFactory.getVisibility().isHiddenByDefault()).isFalse();
+        assertThat(garminHeartRateFactory.getVisibility().isHiddenByDefault()).isFalse();
+        assertThat(garminSleepFactory.getVisibility().isHiddenByDefault()).isFalse();
+        assertThat(garminStepsFactory.getVisibility().isHiddenByDefault()).isFalse();
+        assertThat(appUsageFactory.getVisibility().isHiddenByDefault()).isFalse();
+    }
+
+    @Test
+    void testGetObservationFactory_optional() {
+        Observation obs = new Observation().setType("x");
+        ObservationFactory factory = org.mockito.Mockito.mock(ObservationFactory.class);
+        org.mockito.Mockito.when(applicationContext.getBean("x", ObservationFactory.class)).thenReturn(factory);
+
+        java.util.Optional<ObservationFactory> present = observationService.getObservationFactory(obs);
+        org.assertj.core.api.Assertions.assertThat(present).containsSame(factory);
+
+        org.mockito.Mockito.when(applicationContext.getBean("x", ObservationFactory.class)).thenReturn(null);
+        java.util.Optional<ObservationFactory> empty = observationService.getObservationFactory(obs);
+        org.assertj.core.api.Assertions.assertThat(empty).isEmpty();
+    }
+
+    @Test
+    void testGetParticipantObservationProperties_delegatesToRepository() {
+        java.util.List<io.redlink.more.studymanager.model.ParticipantWithObservationProperties> expected = java.util.List.of();
+        org.mockito.Mockito.when(repository.getParticipantObservationProperties(5L)).thenReturn(expected);
+
+        java.util.List<io.redlink.more.studymanager.model.ParticipantWithObservationProperties> result = observationService.getParticipantObservationProperties(5L);
+
+        org.assertj.core.api.Assertions.assertThat(result).isSameAs(expected);
+        org.mockito.Mockito.verify(repository).getParticipantObservationProperties(5L);
+    }
+
+    @Test
+    void testListDataViews_usesFactoryAndSdk() {
+        Observation obs = new Observation().setStudyId(10L).setStudyGroupId(20).setObservationId(30).setType("t");
+        org.mockito.Mockito.when(repository.getById(10L, 30)).thenReturn(obs);
+
+        io.redlink.more.studymanager.core.ui.DataViewInfo[] infos = new io.redlink.more.studymanager.core.ui.DataViewInfo[]{
+                org.mockito.Mockito.mock(io.redlink.more.studymanager.core.ui.DataViewInfo.class)
+        };
+
+        io.redlink.more.studymanager.core.component.Observation component = org.mockito.Mockito.mock(io.redlink.more.studymanager.core.component.Observation.class);
+        org.mockito.Mockito.when(component.listViews()).thenReturn(infos);
+
+        ObservationFactory factory = org.mockito.Mockito.mock(ObservationFactory.class);
+        org.mockito.Mockito.when(applicationContext.getBean("t", ObservationFactory.class)).thenReturn(factory);
+        org.mockito.Mockito.when(factory.create(org.mockito.Mockito.any(), org.mockito.Mockito.any())).thenReturn(component);
+
+
+        io.redlink.more.studymanager.core.ui.DataViewInfo[] result = observationService.listDataViews(10L, 30);
+        org.assertj.core.api.Assertions.assertThat(result).isSameAs(infos);
+
+        org.mockito.Mockito.verify(applicationContext).getBean("t", ObservationFactory.class);
+        org.mockito.Mockito.verify(factory).create(org.mockito.Mockito.any(), org.mockito.Mockito.any());
+        org.mockito.Mockito.verify(component).listViews();
+    }
+
+    @Test
+    void testQueryData_usesFactoryAndSdk() {
+        Observation obs = new Observation().setStudyId(10L).setStudyGroupId(21).setObservationId(31).setType("t2");
+        org.mockito.Mockito.when(repository.getById(10L, 31)).thenReturn(obs);
+
+        io.redlink.more.studymanager.core.ui.DataView dataView = org.mockito.Mockito.mock(io.redlink.more.studymanager.core.ui.DataView.class);
+        io.redlink.more.studymanager.core.component.Observation component = org.mockito.Mockito.mock(io.redlink.more.studymanager.core.component.Observation.class);
+        org.mockito.Mockito.when(component.getView(org.mockito.Mockito.eq("v2"), org.mockito.Mockito.eq(21), org.mockito.Mockito.eq(1), org.mockito.Mockito.any())).thenReturn(dataView);
+
+        ObservationFactory factory = org.mockito.Mockito.mock(ObservationFactory.class);
+        org.mockito.Mockito.when(applicationContext.getBean("t2", ObservationFactory.class)).thenReturn(factory);
+
+        org.mockito.Mockito.when(factory.create(org.mockito.Mockito.any(), org.mockito.Mockito.any())).thenReturn(component);
+
+
+        io.redlink.more.studymanager.core.ui.DataView result = observationService.queryData(10L, 31, "v2", 21, 1, null);
+        org.assertj.core.api.Assertions.assertThat(result).isSameAs(dataView);
+
+        org.mockito.Mockito.verify(applicationContext).getBean("t2", ObservationFactory.class);
+        org.mockito.Mockito.verify(factory).create(org.mockito.Mockito.any(), org.mockito.Mockito.any());
+        org.mockito.Mockito.verify(component).getView(org.mockito.Mockito.eq("v2"), org.mockito.Mockito.eq(21), org.mockito.Mockito.eq(1), org.mockito.Mockito.any());
     }
 }

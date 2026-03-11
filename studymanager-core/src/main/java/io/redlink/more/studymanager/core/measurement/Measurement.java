@@ -12,7 +12,7 @@ import java.util.Objects;
 
 public class Measurement {
     public enum Type {
-        INTEGER,DOUBLE,STRING,BOOLEAN,DATE,OBJECT
+        INTEGER, DOUBLE, LONG, STRING, BOOLEAN, DATE, OBJECT, ARRAY
     }
 
     private String id;

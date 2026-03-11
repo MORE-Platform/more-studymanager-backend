@@ -12,6 +12,8 @@ import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Observation {
     private Long studyId;
@@ -27,6 +29,8 @@ public class Observation {
     private Instant modified;
     private Boolean hidden;
     private Boolean noSchedule = false;
+    private Set<Integer> observationGroupIds;
+    private Boolean reminder = false;
 
     public Long getStudyId() {
         return studyId;
@@ -127,7 +131,9 @@ public class Observation {
         return this;
     }
 
-    public Boolean getHidden() { return hidden; }
+    public Boolean getHidden() {
+        return hidden;
+    }
 
     public Observation setHidden(Boolean hidden) {
         this.hidden = hidden;
@@ -140,6 +146,24 @@ public class Observation {
 
     public Observation setNoSchedule(Boolean noSchedule) {
         this.noSchedule = noSchedule;
+        return this;
+    }
+
+    public Observation setObservationGroupIds(Set<Integer> observationGroupIds) {
+        this.observationGroupIds = observationGroupIds == null ? new HashSet<>() : observationGroupIds;
+        return this;
+    }
+
+    public Set<Integer> getObservationGroupIds() {
+        return observationGroupIds;
+    }
+
+    public Boolean getReminder() {
+        return reminder;
+    }
+
+    public Observation setReminder(Boolean reminder) {
+        this.reminder = reminder;
         return this;
     }
 }

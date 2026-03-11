@@ -40,10 +40,11 @@ public class OccurredObservationService {
     /**
      * The latest start time of any {@link OccurredObservation} for the parst studyId
      * @param studyId the study id
+     * @param participantId the participantId
      * @return the latest start time or <code>null</code> if no {@link OccurredObservation} is present for the study
      */
-    public Instant getLatestStartTime(long studyId) {
-        return repository.getLatestStartTime(studyId, null, null, null, null);
+    public Instant getLatestStartTime(long studyId, int participantId) {
+        return repository.getLatestStartTime(studyId, participantId, null, null, null);
     }
 
     /**
@@ -105,5 +106,10 @@ public class OccurredObservationService {
                 includeInvalid ? null : true,
                 observationDataStates == null ? EnumSet.allOf(ObservationDataState.class) : observationDataStates);
     }
+
+    public void deleteOccurredObservations(Long studyId) {
+        repository.deleteOccurredObservations(studyId);
+    }
+
 
 }

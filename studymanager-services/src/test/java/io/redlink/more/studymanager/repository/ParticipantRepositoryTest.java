@@ -9,10 +9,7 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.configuration.JPAConfiguration;
-import io.redlink.more.studymanager.model.Contact;
-import io.redlink.more.studymanager.model.Participant;
-import io.redlink.more.studymanager.model.Study;
-import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.scheduling.config.TaskExecutionOutcome;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -27,13 +25,17 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Instant;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Testcontainers
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {
-        ParticipantRepository.class, StudyRepository.class, StudyGroupRepository.class,
+        ParticipantRepository.class, StudyRepository.class, StudyGroupRepository.class, ObservationGroupRepository.class,
         JPAConfiguration.class
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -49,6 +51,9 @@ class ParticipantRepositoryTest {
     @Autowired
     private StudyGroupRepository studyGroupRepository;
 
+    @Autowired
+    private ObservationGroupRepository observationGroupRepository;
+
     @BeforeEach
     void deleteAll() {
         participantRepository.clear();
@@ -56,26 +61,42 @@ class ParticipantRepositoryTest {
 
     @Test
     @DisplayName("Participant is inserted and returned")
-    void testInsert() {
+    void testInsert() throws InterruptedException {
         Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup()
                 .setStudyId(studyId)).getStudyGroupId();
+
+        Integer observationGroupId1 = observationGroupRepository.insert(new ObservationGroup().setStudyId(studyId).setTitle("Observation Group 1").setPurpose("test")).getObservationGroupId();
+        Integer observationGroupId2 = observationGroupRepository.insert(new ObservationGroup().setStudyId(studyId).setTitle("Observation Group 2").setPurpose("test")).getObservationGroupId();
+        Integer observationGroupId3 = observationGroupRepository.insert(new ObservationGroup().setStudyId(studyId).setTitle("Observation Group 3").setPurpose("test")).getObservationGroupId();
 
         Participant participant = new Participant()
                 .setAlias("participant x")
                 .setStudyGroupId(studyGroupId)
                 .setStudyId(studyId)
-                .setRegistrationToken("TEST123");
+                .setRegistrationToken("TEST123")
+                .setObservationGroupIds(Set.of(observationGroupId1, observationGroupId2));
 
         Participant participantResponse = participantRepository.insert(participant);
 
         assertThat(participantResponse.getAlias()).isEqualTo(participant.getAlias());
         assertThat(participantResponse.getStatus()).isEqualTo(Participant.Status.NEW);
         assertThat(participantResponse.getParticipantId()).isNotNull();
+        assertThat(participantResponse.getObservationGroupIds()).containsExactlyInAnyOrder(observationGroupId1, observationGroupId2);
 
-        Participant update = participantResponse.setAlias("new participant x");
+        Participant update = participantResponse
+                .setAlias("new participant x")
+                .setObservationGroupIds(Set.of(observationGroupId1, observationGroupId3)); //replace observationGroup1 with observationGroup3
+
+        TimeUnit.MICROSECONDS.sleep(1); //to ensure a different modified time
 
         Participant updated = participantRepository.update(update);
+
+        assertThat(update.getStudyId()).isEqualTo(participantResponse.getStudyId());
+        assertThat(update.getAlias()).isEqualTo(updated.getAlias());
+        assertThat(update.getObservationGroupIds()).containsExactlyInAnyOrder(observationGroupId1, observationGroupId3);
+        assertThat(updated.getCreated()).isEqualTo(participantResponse.getCreated());
+        assertThat(updated.getModified()).isAfter(participantResponse.getModified());
 
         Participant queried = participantRepository.getByIds(participantResponse.getStudyId(), participantResponse.getParticipantId());
 
@@ -83,11 +104,8 @@ class ParticipantRepositoryTest {
         assertThat(queried.getStudyId()).isEqualTo(updated.getStudyId());
         assertThat(queried.getCreated()).isEqualTo(updated.getCreated());
         assertThat(queried.getStatus()).isEqualTo(updated.getStatus());
+        assertThat(queried.getObservationGroupIds()).containsExactlyInAnyOrder(observationGroupId1, observationGroupId3);
 
-        assertThat(update.getAlias()).isEqualTo(updated.getAlias());
-        assertThat(participantResponse.getStudyId()).isEqualTo(updated.getStudyId());
-        assertThat(participantResponse.getCreated()).isEqualTo(updated.getCreated());
-        assertThat(participantResponse.getModified().toEpochMilli()).isLessThan(updated.getModified().toEpochMilli());
     }
 
     @Test
@@ -143,16 +161,25 @@ class ParticipantRepositoryTest {
     void testSetState() {
         Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
 
-        Participant participant = participantRepository.insert(new Participant().setStudyId(studyId).setRegistrationToken("TEST123"));
+        Integer observationGroup1 = observationGroupRepository.insert(new ObservationGroup().setStudyId(studyId).setTitle("Observation Group 1").setPurpose("Purpose 1")).getObservationGroupId();
+        Integer observationGroup2 = observationGroupRepository.insert(new ObservationGroup().setStudyId(studyId).setTitle("Observation Group 2").setPurpose("Purpose 2")).getObservationGroupId();
+
+        Participant participant = participantRepository.insert(new Participant().setStudyId(studyId).setRegistrationToken("TEST123").setObservationGroupIds(Set.of(observationGroup1,observationGroup2)));
         assertThat(participant.getStatus()).isEqualTo(Participant.Status.NEW);
 
         participant = participantRepository.getByIds(studyId, participant.getParticipantId());
         assertThat(participant.getStatus()).isEqualTo(Participant.Status.NEW);
 
-        participantRepository.setStatusByIds(studyId, participant.getParticipantId(), Participant.Status.ACTIVE);
+        participant = participantRepository.setStatusByIds(studyId, participant.getParticipantId(), Participant.Status.ACTIVE).get();
+        assertThat(participant.getStatus()).isEqualTo(Participant.Status.ACTIVE);
+        //Assert that the SQL query for the status update correctly retrieves the observation groups for the participant
+        assertThat(participant.getObservationGroupIds()).containsExactlyInAnyOrder(observationGroup1, observationGroup2);
 
+        //make an additional retrieval just to be sure
         participant = participantRepository.getByIds(studyId, participant.getParticipantId());
         assertThat(participant.getStatus()).isEqualTo(Participant.Status.ACTIVE);
+        //Assert that the SQL query for the status update correctly retrieves the observation groups for the participant
+        assertThat(participant.getObservationGroupIds()).containsExactlyInAnyOrder(observationGroup1, observationGroup2);
     }
 
     @Test
@@ -162,6 +189,18 @@ class ParticipantRepositoryTest {
         Participant participant = participantRepository
                 .insert(new Participant().setStudyId(studyId).setRegistrationToken("abc"));
         assertThat(participant.getStudyGroupId()).isNull();
+    }
+
+    @Test
+    @DisplayName("Participants for closing")
+    void testClosing() {
+        Study study = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test")));
+        studyRepository.setStateById(study.getStudyId(), Study.Status.ACTIVE);
+        Participant participant = participantRepository
+                .insert(new Participant().setStudyId(study.getStudyId()).setRegistrationToken("abc").setStart(Instant.now()));
+        participantRepository.setStatusByIds(study.getStudyId(), participant.getParticipantId(), Participant.Status.ACTIVE);
+
+        var participants = participantRepository.listParticipantsForClosing();
     }
 
 }

@@ -22,11 +22,8 @@ import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.ObservationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import java.time.Instant;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -94,7 +91,8 @@ class ObservationControllerTest {
                         .setStudyGroupId(((Observation)invocationOnMock.getArgument(0)).getStudyGroupId())
                         .setCreated(Instant.ofEpochMilli(System.currentTimeMillis()))
                         .setModified(Instant.ofEpochMilli(System.currentTimeMillis()))
-                        .setHidden(((Observation) invocationOnMock.getArgument(0)).getHidden()));
+                        .setHidden(((Observation) invocationOnMock.getArgument(0)).getHidden())
+                        .setObservationGroupIds(((Observation) invocationOnMock.getArgument(0)).getObservationGroupIds()));
 
         ObservationDTO observationRequest = new ObservationDTO()
                 .title("observation 1")
@@ -105,7 +103,8 @@ class ObservationControllerTest {
                 .type("accelerometer")
                 .properties(Map.of("name", "value"))
                 .studyGroupId(1)
-                .hidden(null);
+                .hidden(null)
+                .observationGroupIds(Set.of(1));
 
         mvc.perform(post("/api/v1/studies/1/observations")
                         .content(mapper.writeValueAsString(observationRequest))
@@ -116,7 +115,9 @@ class ObservationControllerTest {
                 .andExpect(jsonPath("$.observationId").value(observationRequest.getObservationId()))
                 .andExpect(jsonPath("$.type").value(observationRequest.getType()))
                 .andExpect(jsonPath("$.properties.name").value("value"))
-                .andExpect(jsonPath("$.hidden").value(observationRequest.getHidden()));
+                .andExpect(jsonPath("$.hidden").value(observationRequest.getHidden()))
+                .andExpect(jsonPath("$.observationGroupIds").isArray())
+                .andExpect(jsonPath("$.observationGroupIds[0]").value(observationRequest.getObservationGroupIds().iterator().next()));
     }
 
     @Test

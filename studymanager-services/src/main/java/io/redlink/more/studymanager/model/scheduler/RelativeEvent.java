@@ -21,6 +21,8 @@ public class RelativeEvent implements ScheduleEvent {
 
     private RelativeRecurrenceRule rrrule;
 
+    private Randomization randomization;
+
     public RelativeEvent() {
     }
 
@@ -53,6 +55,15 @@ public class RelativeEvent implements ScheduleEvent {
 
     public RelativeEvent setRrrule(RelativeRecurrenceRule rrrule) {
         this.rrrule = rrrule;
+        return this;
+    }
+
+    public Randomization getRandomization() {
+        return randomization;
+    }
+
+    public RelativeEvent setRandomization(Randomization randomization) {
+        this.randomization = randomization;
         return this;
     }
 }

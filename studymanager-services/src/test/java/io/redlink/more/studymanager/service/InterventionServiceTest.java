@@ -10,24 +10,32 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
+import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.PlatformRole;
+import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.Trigger;
 import java.util.EnumSet;
 import java.util.UUID;
+
+import io.redlink.more.studymanager.repository.InterventionRepository;
+import io.redlink.more.studymanager.repository.StudyRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +45,10 @@ class InterventionServiceTest {
     Map<String, TriggerFactory> triggerFactories;
     @Mock
     StudyStateService studyStateService;
+    @Mock
+    InterventionRepository repository;
+    @Mock
+    StudyRepository studyRepository;
     @InjectMocks
     InterventionService interventionService;
 

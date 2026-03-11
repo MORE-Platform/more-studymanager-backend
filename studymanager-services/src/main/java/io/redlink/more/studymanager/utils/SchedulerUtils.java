@@ -14,6 +14,7 @@ import biweekly.util.Frequency;
 import biweekly.util.Recurrence;
 import biweekly.util.com.google.ical.compat.javautil.DateIterator;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.ParticipantObservationSeed;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.scheduler.Event;
@@ -22,6 +23,9 @@ import io.redlink.more.studymanager.model.scheduler.RelativeDate;
 import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
 import io.redlink.more.studymanager.model.scheduler.RelativeRecurrenceRule;
 import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
+import org.apache.commons.lang3.Range;
+import org.quartz.CronExpression;
+
 import java.sql.Date;
 import java.text.ParseException;
 import java.time.Instant;
@@ -36,11 +40,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.TimeZone;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.Range;
-import org.quartz.CronExpression;
 
 public final class SchedulerUtils {
-
     public static List<Range<Instant>> parseToObservationSchedulesForRelativeEvent(
             RelativeEvent event, Instant start, Instant maxEnd) {
 
@@ -97,51 +98,51 @@ public final class SchedulerUtils {
         return List.copyOf(observationSchedules);
     }
 
-    public static List<Range<Instant>> parseToObservationSchedules(ScheduleEvent scheduleEvent, Instant start, Instant end) {
+    public static List<Range<Instant>> parseToObservationSchedules(ParticipantObservationSeed seed, ScheduleEvent scheduleEvent, Instant start, Instant end) {
         if (scheduleEvent == null) return Collections.emptyList();
+        List<Range<Instant>> ranges = Collections.emptyList();
         if (scheduleEvent instanceof Event event) {
-            return parseToObservationSchedulesForEvent(event, start, end);
+            ranges = parseToObservationSchedulesForEvent(event, start, end);
         } else if (scheduleEvent instanceof RelativeEvent relativeEvent) {
-            return parseToObservationSchedulesForRelativeEvent(relativeEvent, start, end);
-        } else {
-            return Collections.emptyList();
+            ranges = parseToObservationSchedulesForRelativeEvent(relativeEvent, start, end);
         }
+        return randomSchedule(seed, scheduleEvent, ranges);
     }
 
     public static LocalDate alignStartDateToSignupInstant(final Instant signup, List<Observation> observations) {
         return LocalDate.ofInstant(observations.stream()
-                // All the observation-schedules
-                .map(Observation::getSchedule)
-                // ... the relative ones
-                .filter(e -> RelativeEvent.TYPE.equals(e.getType()))
-                .map(e -> (RelativeEvent) e)
-                // all the relative schedules END
-                .map(RelativeEvent::getDtend)
-                // Get the EARLIEST relative schedule end
-                .min(Comparator.comparing(RelativeDate::getOffset, io.redlink.more.studymanager.model.scheduler.Duration.DURATION_COMPARATOR))
-                // Convert the relative schedule end to the actual instant
-                .map(rd -> LocalDate.ofInstant(
-                                toInstantFrom(rd, signup), ZoneId.systemDefault()
+                        // All the observation-schedules
+                        .map(Observation::getSchedule)
+                        // ... the relative ones
+                        .filter(e -> RelativeEvent.TYPE.equals(e.getType()))
+                        .map(e -> (RelativeEvent) e)
+                        // all the relative schedules END
+                        .map(RelativeEvent::getDtend)
+                        // Get the EARLIEST relative schedule end
+                        .min(Comparator.comparing(RelativeDate::getOffset, io.redlink.more.studymanager.model.scheduler.Duration.DURATION_COMPARATOR))
+                        // Convert the relative schedule end to the actual instant
+                        .map(rd -> LocalDate.ofInstant(
+                                                toInstantFrom(rd, signup), ZoneId.systemDefault()
+                                        )
+                                        .atTime(rd.getTime())
+                                        .atZone(ZoneId.systemDefault())
+                                        .toInstant()
                         )
-                        .atTime(rd.getTime())
-                        .atZone(ZoneId.systemDefault())
-                        .toInstant()
-                )
-                // has the first relative schedule end already passed?
-                .filter(end -> end.isBefore(signup))
-                // then we start "tomorrow"
-                .map(i -> signup.atZone(ZoneId.systemDefault()).plusDays(1).toInstant())
-                // otherwise we start "now"
-                .orElse(signup),
-            ZoneId.systemDefault()
+                        // has the first relative schedule end already passed?
+                        .filter(end -> end.isBefore(signup))
+                        // then we start "tomorrow"
+                        .map(i -> signup.atZone(ZoneId.systemDefault()).plusDays(1).toInstant())
+                        // otherwise we start "now"
+                        .orElse(signup),
+                ZoneId.systemDefault()
         );
     }
 
     public static List<Instant> parseToInterventionSchedules(Trigger trigger, Instant start, Instant end) {
-        if(trigger == null) return Collections.emptyList();
-        if(Objects.equals(trigger.getType(), "relative-time-trigger")) {
+        if (trigger == null) return Collections.emptyList();
+        if (Objects.equals(trigger.getType(), "relative-time-trigger")) {
             return parseToInterventionSchedulesForRelativeTrigger(trigger, start, end);
-        } else if(Objects.equals(trigger.getType(), "scheduled-trigger")) {
+        } else if (Objects.equals(trigger.getType(), "scheduled-trigger")) {
             return parseToInterventionSchedulesForScheduledTrigger(trigger, start, end);
         } else {
             return Collections.emptyList();
@@ -171,7 +172,8 @@ public final class SchedulerUtils {
                     events.add(currentDate);
                     currentDate = cronExpression.getNextValidTimeAfter(Date.from(currentDate)).toInstant();
                 }
-            } catch (ParseException ignore) {}
+            } catch (ParseException ignore) {
+            }
         }
         return List.copyOf(events);
     }
@@ -251,5 +253,16 @@ public final class SchedulerUtils {
 
     private static void setByMonthDay(Recurrence.Builder builder, Integer byMonthDay) {
         if (byMonthDay != null) builder.byMonthDay(byMonthDay);
+    }
+
+    private static List<Range<Instant>> randomSchedule(ParticipantObservationSeed seed, ScheduleEvent event, List<Range<Instant>> ranges) {
+        if (seed == null || seed.seed() == null || event.getRandomization() == null || !event.getRandomization().state() || event.getRandomization().duration() <= 0) {
+            return ranges;
+        }
+        if (ranges == null || ranges.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Long durationInSeconds = event.getRandomization().duration() * 60L;
+        return RandomSchedulerUtils.parseScheduleWithSeed(seed.seed(), ranges, durationInSeconds);
     }
 }

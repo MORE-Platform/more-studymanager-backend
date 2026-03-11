@@ -12,24 +12,31 @@ import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.ParticipantObservationSeed;
+import io.redlink.more.studymanager.model.ParticipantWithObservationProperties;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.timeline.InterventionTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
+import io.redlink.more.studymanager.utils.RandomSchedulerUtils;
 import io.redlink.more.studymanager.utils.SchedulerUtils;
+import org.apache.commons.lang3.Range;
+import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.Range;
-import org.springframework.stereotype.Service;
+import java.util.stream.Stream;
 
 
 @Service
@@ -48,7 +55,7 @@ public class CalendarService {
         this.participantService = participantService;
     }
 
-    public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, Instant referenceDate, LocalDate from, LocalDate to) {
+    public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, Collection<Integer> observationGroupIds, Instant referenceDate, LocalDate from, LocalDate to) {
         final Study study = studyService.getStudy(studyId, null)
                 .orElseThrow(() -> NotFoundException.Study(studyId));
         final Participant participant;
@@ -58,10 +65,10 @@ public class CalendarService {
         } else {
             participant = null;
         }
-        return getTimeline(study, participant, studyGroupId, referenceDate, from, to);
+        return getTimeline(study, participant, studyGroupId, observationGroupIds, referenceDate, from, to);
     }
 
-    public StudyTimeline getTimeline(Study study, Participant participant, Integer studyGroupId, Instant referenceDate, LocalDate from, LocalDate to) {
+    public StudyTimeline getTimeline(Study study, Participant participant, Integer studyGroupId, Collection<Integer> observationGroupIds, Instant referenceDate, LocalDate from, LocalDate to) {
         final Range<LocalDate> studyRange = Range.of(
                 Objects.requireNonNullElse(study.getStartDate(), study.getPlannedStartDate()),
                 Objects.requireNonNullElse(study.getEndDate(), study.getPlannedEndDate()),
@@ -88,26 +95,32 @@ public class CalendarService {
         }
 
         /*
-         * effectiveGroup:
+         * effectiveStudyGroups:
          * (1) participant.group (if participant is provided)
          * (2) studyGroupId (if provided by user and participant is NOT provided)
          * (3) <unset> otherwise
          */
-        final Integer effectiveGroup;
+        final Integer effectiveStudyGroups;
         if (participant != null) {
-            effectiveGroup = participant.getStudyGroupId();
+            effectiveStudyGroups = participant.getStudyGroupId();
         } else {
-            effectiveGroup = studyGroupId;
+            effectiveStudyGroups = studyGroupId;
+        }
+        final Collection<Integer> effectiveObservationGroups;
+        if (participant != null) {
+            effectiveObservationGroups = participant.getObservationGroupIds();
+        } else {
+            effectiveObservationGroups = observationGroupIds == null ? Collections.emptyList() : observationGroupIds;
         }
 
-        final List<Observation> observations = observationService.listObservationsForGroup(study.getStudyId(), effectiveGroup);
-        final List<Intervention> interventions = interventionService.listInterventionsForGroup(study.getStudyId(), effectiveGroup);
+        final List<Observation> observations = observationService.listObservationsForGroup(study.getStudyId(), effectiveStudyGroups, effectiveObservationGroups);
+        final List<Intervention> interventions = interventionService.listInterventionsForGroup(study.getStudyId(), effectiveStudyGroups, effectiveObservationGroups);
 
         // Shift the effective study-start if the participant would miss a relative observation
         final LocalDate firstDayInStudy = SchedulerUtils.alignStartDateToSignupInstant(participantStart, observations);
 
         // now how long does the study run?
-        final Duration studyDuration = Optional.ofNullable(effectiveGroup)
+        final Duration studyDuration = Optional.ofNullable(effectiveStudyGroups)
                 .flatMap(eg -> studyService.getStudyDuration(study.getStudyId(), eg))
                 .or(() -> Optional.ofNullable(study.getDuration()))
                 .or(() -> Optional.ofNullable(new Duration()
@@ -137,19 +150,38 @@ public class CalendarService {
         //        to == null ? Instant.MAX : to.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()
         //);
 
+        var properties = observationService.getParticipantObservationProperties(study.getStudyId())
+                .stream()
+                .filter(p -> participant == null || participant.getParticipantId() == null || p.participantId().equals(participant.getParticipantId()))
+                .map(CalendarService::toParticipantObservationSeed).toList();
+
+
         return new StudyTimeline(
                 participantStart,
                 Range.of(firstDayInStudy, lastDayInStudy, LocalDate::compareTo),
                 observations.stream()
-                        .flatMap(o -> SchedulerUtils
-                                .parseToObservationSchedules(
-                                        o.getSchedule(), effectiveRange.getMinimum(), effectiveRange.getMaximum()
-                                )
-                                .stream()
-                                // Disabled client-side filter for now...
-                                //Ï .filter(filterWindow::isOverlappedBy)
-                                .map(e -> ObservationTimelineEvent.fromObservation(o, e.getMinimum(), e.getMaximum()))
-                        )
+                        .flatMap(o -> {
+                            List<ParticipantObservationSeed> matchingSeeds = properties.stream()
+                                    .filter(p -> Objects.equals(o.getObservationId(), p.observationId()))
+                                    .toList();
+
+                            try (Stream<ParticipantObservationSeed> seedStream =
+                                         matchingSeeds.isEmpty() ? Stream.of((ParticipantObservationSeed) null) : matchingSeeds.stream()) {
+                                List<ParticipantObservationSeed> seedsToUse = seedStream.toList();
+                                return seedsToUse
+                                        .stream()
+                                        .flatMap(seed ->
+                                                SchedulerUtils
+                                                        .parseToObservationSchedules(
+                                                                seed, o.getSchedule(), effectiveRange.getMinimum(), effectiveRange.getMaximum()
+                                                        )
+                                                        .stream()
+                                                        // Disabled client-side filter for now...
+                                                        // .filter(filterWindow::isOverlappedBy)
+                                                        .map(e -> ObservationTimelineEvent.fromObservation(o, e.getMinimum(), e.getMaximum()))
+                                        );
+                            }
+                        })
                         .toList(),
                 interventions.stream()
                         .map(intervention -> {
@@ -169,6 +201,14 @@ public class CalendarService {
                         .collect(Collectors.toList())
 
         );
+    }
+
+    public static ParticipantObservationSeed toParticipantObservationSeed(ParticipantWithObservationProperties participantWithObservationProperties) {
+        return new ParticipantObservationSeed(
+                participantWithObservationProperties.studyId(),
+                participantWithObservationProperties.participantId(),
+                participantWithObservationProperties.observationId(),
+                (Long) participantWithObservationProperties.properties().getOrDefault(RandomSchedulerUtils.OBSERVATION_SCHEDULE_SEED_KEY, null));
     }
 
 }

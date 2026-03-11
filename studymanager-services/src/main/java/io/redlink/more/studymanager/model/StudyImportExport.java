@@ -8,19 +8,24 @@
  */
 package io.redlink.more.studymanager.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class StudyImportExport {
 
     private Study study;
-    private List<StudyGroup> studyGroups;
-    private List<Observation> observations;
-    private List<Intervention> interventions;
-    private List<ParticipantInfo> participants;
-    private Map<Integer, Trigger> triggers;
-    private Map<Integer, List<Action>> actions;
-    private List<IntegrationInfo> integrations;
+    private List<StudyGroup> studyGroups = new ArrayList<>();
+    private List<ObservationGroup> observationGroups = new ArrayList<>();
+    private List<Observation> observations = new ArrayList<>();
+    private List<Intervention> interventions = new ArrayList<>();
+    private List<ParticipantInfo> participants = new ArrayList<>();
+    private Map<Integer, Trigger> triggers = new HashMap<>();
+    private Map<Integer, List<Action>> actions =  new HashMap<>();
+    private List<IntegrationInfo> integrations = new ArrayList<>();
 
     public Study getStudy() {
         return study;
@@ -36,7 +41,16 @@ public class StudyImportExport {
     }
 
     public StudyImportExport setStudyGroups(List<StudyGroup> studyGroups) {
-        this.studyGroups = studyGroups;
+        this.studyGroups = studyGroups == null ? new ArrayList<>() : studyGroups;
+        return this;
+    }
+
+    public List<ObservationGroup> getObservationGroups() {
+        return observationGroups;
+    }
+
+    public StudyImportExport setObservationGroups(List<ObservationGroup> observationGroups) {
+        this.observationGroups = observationGroups == null ? new ArrayList<>() : observationGroups;
         return this;
     }
 
@@ -45,7 +59,7 @@ public class StudyImportExport {
     }
 
     public StudyImportExport setObservations(List<Observation> observations) {
-        this.observations = observations;
+        this.observations = observations ==  null ? new ArrayList<>() : observations;
         return this;
     }
 
@@ -54,7 +68,7 @@ public class StudyImportExport {
     }
 
     public StudyImportExport setInterventions(List<Intervention> interventions) {
-        this.interventions = interventions;
+        this.interventions = interventions == null ? new ArrayList<>() : interventions;
         return this;
     }
 
@@ -63,7 +77,7 @@ public class StudyImportExport {
     }
 
     public StudyImportExport setTriggers(Map<Integer, Trigger> triggers) {
-        this.triggers = triggers;
+        this.triggers = triggers == null ? new HashMap<>() : triggers;
         return this;
     }
 
@@ -72,7 +86,7 @@ public class StudyImportExport {
     }
 
     public StudyImportExport setActions(Map<Integer, List<Action>> actions) {
-        this.actions = actions;
+        this.actions = actions == null ? new HashMap<>() : actions;
         return this;
     }
 
@@ -81,7 +95,7 @@ public class StudyImportExport {
     }
 
     public StudyImportExport setParticipants(List<ParticipantInfo> participants) {
-        this.participants = participants;
+        this.participants = participants == null ? new ArrayList<>() : participants;
         return this;
     }
 
@@ -90,11 +104,16 @@ public class StudyImportExport {
     }
 
     public StudyImportExport setIntegrations(List<IntegrationInfo> integrations) {
-        this.integrations = integrations;
+        this.integrations = integrations == null ? new ArrayList<>() : integrations;
         return this;
     }
 
     public record ParticipantInfo(
-            Integer groupId
-    ) {}
+            Integer groupId,
+            Set<Integer> observationGroupIds
+    ) {
+        public ParticipantInfo {
+            observationGroupIds = observationGroupIds == null ? Collections.emptySet() : observationGroupIds;
+        }
+    }
 }

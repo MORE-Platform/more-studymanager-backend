@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Contact;
@@ -30,15 +31,19 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -51,19 +56,7 @@ class StudyServiceTest {
     StudyRepository studyRepository;
 
     @Mock
-    ParticipantService participantService;
-
-    @Mock
-    ObservationService observationService;
-
-    @Mock
-    InterventionService interventionService;
-
-    @Mock
-    IntegrationService integrationService;
-
-    @Mock
-    PushNotificationService pushNotificationService;
+    OccurredObservationService occurredObservationService;
 
     @Mock
     ElasticService elasticService;
@@ -76,6 +69,9 @@ class StudyServiceTest {
 
     @Mock
     StudyStateService studyStateService;
+
+    @Mock
+    ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     StudyService studyService;
@@ -168,7 +164,8 @@ class StudyServiceTest {
         );
 
         when(studyRepository.getById(eq(study.getStudyId()), any())).thenReturn(Optional.of(study));
-        when(participantService.listParticipants(study.getStudyId())).thenReturn(pt);
+
+        doNothing().when(applicationEventPublisher).publishEvent(any(StudyStateChangedEvent.class));
         when(studyRepository.setStateById(eq(study.getStudyId()), any()))
                 .thenAnswer(i -> Optional.of(study.setStudyState(i.getArgument(1))));
 
@@ -176,27 +173,18 @@ class StudyServiceTest {
             tos.forEach(to -> {
                 study.setStudyState(from);
                 clearInvocations(
-                        observationService, interventionService, integrationService,
-                        participantService, pushNotificationService, elasticService
+                        occurredObservationService, elasticService, applicationEventPublisher
                 );
 
                 studyService.setStatus(1L, to, currentUser);
 
-                verify(observationService,
+                ArgumentCaptor<StudyStateChangedEvent> eventCaptor = ArgumentCaptor.forClass(StudyStateChangedEvent.class);
+                verify(applicationEventPublisher,
                         times(1).description("%s -> %s should align observations".formatted(from, to))
-                ).alignObservationsWithStudyState(study);
-                verify(interventionService,
-                        times(1).description("%s -> %s should align interventions".formatted(from, to))
-                ).alignInterventionsWithStudyState(study);
-                verify(integrationService,
-                        times(1).description("%s -> %s should align integrations".formatted(from, to))
-                ).alignIntegrationsWithStudyState(study);
-                verify(participantService,
-                        times(1).description("%s -> %s should align participants".formatted(from, to))
-                ).alignParticipantsWithStudyState(study);
-                verify(pushNotificationService,
-                        times(pt.size()).description("%s -> %s should send %d notifications".formatted(from, to, pt.size()))
-                ).sendStudyStateUpdate(any(), any(), any());
+                ).publishEvent(eventCaptor.capture());
+                assertThat(eventCaptor.getValue().getStudy().getStudyId()).isEqualTo(study.getStudyId());
+                assertThat(eventCaptor.getValue().getStudy().getStudyState()).isEqualTo(to);
+                assertThat(eventCaptor.getValue().getPreviousState()).isEqualTo(from);
 
                 // ONLY when transitioning to back to DRAFT, clear the collected data in Elastic
                 if ((from == Study.Status.PREVIEW || from == Study.Status.PAUSED_PREVIEW)
@@ -204,16 +192,21 @@ class StudyServiceTest {
                     verify(elasticService,
                             times(1).description("%s -> %s should delete the elastic index".formatted(from, to))
                     ).deleteIndex(study.getStudyId());
+                    verify(occurredObservationService,
+                            times(1).description("%s -> %s should delete the elastic index".formatted(from, to))
+                    ).deleteOccurredObservations(study.getStudyId());
                 } else {
                     verify(elasticService,
                             never().description("%s -> %s must not delete the elastic index".formatted(from, to))
                     ).deleteIndex(study.getStudyId());
+                    verify(occurredObservationService,
+                            never().description("%s -> %s must not delete the elastic index".formatted(from, to))
+                    ).deleteOccurredObservations(study.getStudyId());
                 }
             });
 
             clearInvocations(
-                    observationService, interventionService, integrationService,
-                    participantService, pushNotificationService, elasticService
+                    occurredObservationService, elasticService, applicationEventPublisher
             );
             EnumSet.complementOf(EnumSet.copyOf(tos)).forEach(invalidTo -> {
                 study.setStudyState(from);
@@ -221,8 +214,7 @@ class StudyServiceTest {
                         () -> studyService.setStatus(1L, invalidTo, currentUser),
                         () -> "Invalid Transition: %s -> %s".formatted(from, invalidTo));
                 Mockito.verifyNoInteractions(
-                        observationService, interventionService, integrationService,
-                        participantService, pushNotificationService, elasticService
+                        occurredObservationService, elasticService, applicationEventPublisher
                 );
             });
 

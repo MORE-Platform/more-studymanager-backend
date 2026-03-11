@@ -11,11 +11,13 @@ package io.redlink.more.studymanager.model.transformer;
 import io.redlink.more.studymanager.api.v1.model.*;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.scheduler.Event;
+import io.redlink.more.studymanager.model.scheduler.Randomization;
 import io.redlink.more.studymanager.model.scheduler.RecurrenceRule;
 import io.redlink.more.studymanager.model.scheduler.RelativeDate;
 import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
 import io.redlink.more.studymanager.model.scheduler.RelativeRecurrenceRule;
 import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
+
 import java.time.Instant;
 
 public final class EventTransformer {
@@ -25,15 +27,17 @@ public final class EventTransformer {
 
     public static ScheduleEvent fromObservationScheduleDTO_V1(ObservationScheduleDTO genericDto) {
         if (genericDto != null) {
-            if(genericDto.getType() == null || Event.TYPE.equals(genericDto.getType())) {
+            if (genericDto.getType() == null || Event.TYPE.equals(genericDto.getType())) {
                 EventDTO dto = (EventDTO) genericDto;
                 Instant offsetDateTime = dto.getDtend();
                 Instant offsetDateTime1 = dto.getDtstart();
+                RandomizationDTO randomizationDTO = dto.getRandom() == null ? new RandomizationDTO(false) : dto.getRandom();
                 return new Event()
                         .setDateStart(offsetDateTime1)
                         .setDateEnd(offsetDateTime)
-                        .setRRule(fromRecurrenceRuleDTO(dto.getRrule()));
-            } else if(RelativeEvent.TYPE.equals(genericDto.getType())) {
+                        .setRRule(fromRecurrenceRuleDTO(dto.getRrule()))
+                        .setRandomization(fromRandomizationDTO(randomizationDTO));
+            } else if (RelativeEvent.TYPE.equals(genericDto.getType())) {
                 RelativeEventDTO dto = (RelativeEventDTO) genericDto;
                 return new RelativeEvent()
                         .setDtstart(new RelativeDate()
@@ -42,18 +46,18 @@ public final class EventTransformer {
                         .setDtend(new RelativeDate()
                                 .setOffset(fromDurationDTO(dto.getDtend().getOffset()))
                                 .setTime(dto.getDtend().getTime()))
-                        .setRrrule(fromRelativeRecurrenceRuleDTO(dto.getRrrule()));
+                        .setRrrule(fromRelativeRecurrenceRuleDTO(dto.getRrrule()))
+                        .setRandomization(fromRandomizationDTO(dto.getRandom()));
 
             } else {
                 throw new IllegalArgumentException("Unknown Event Type: " + genericDto.getType());
             }
-        }
-        else return null;
+        } else return null;
     }
 
     public static ObservationScheduleDTO toObservationScheduleDTO_V1(ScheduleEvent event) {
         if (event != null)
-            if(event.getType() == null || Event.TYPE.equals(event.getType())) {
+            if (event.getType() == null || Event.TYPE.equals(event.getType())) {
                 Event e = (Event) event;
                 Instant instant = e.getDateEnd();
                 Instant instant1 = e.getDateStart();
@@ -61,8 +65,9 @@ public final class EventTransformer {
                         .type(Event.TYPE)
                         .dtstart(instant1)
                         .dtend(instant)
-                        .rrule(toRecurrenceRuleDTO(e.getRRule()));
-            } else if(RelativeEvent.TYPE.equals(event.getType())) {
+                        .rrule(toRecurrenceRuleDTO(e.getRRule()))
+                        .random(toRandomizationDTO(e.getRandomization()));
+            } else if (RelativeEvent.TYPE.equals(event.getType())) {
                 RelativeEvent e = (RelativeEvent) event;
                 return new RelativeEventDTO()
                         .type(RelativeEvent.TYPE)
@@ -72,7 +77,8 @@ public final class EventTransformer {
                         .dtend(new RelativeDateDTO()
                                 .offset(toDurationDTO(e.getDtend().getOffset()))
                                 .time(e.getDtend().getTime()))
-                        .rrrule(toRelativeRecurrenceRuleDTO(e.getRrrule()));
+                        .rrrule(toRelativeRecurrenceRuleDTO(e.getRrrule()))
+                        .random(toRandomizationDTO(e.getRandomization()));
             } else {
                 throw new IllegalArgumentException("Unknown Event Type: " + event.getType());
             }
@@ -91,8 +97,23 @@ public final class EventTransformer {
                     .setByMonth(dto.getBymonth())
                     .setByMonthDay(dto.getBymonthday())
                     .setBySetPos(dto.getBysetpos());
+        } else return null;
+    }
+
+    private static Randomization fromRandomizationDTO(RandomizationDTO dto) {
+        if (dto != null) {
+            return new Randomization(dto.getState(), dto.getDuration() != null ? dto.getDuration() : 0);
         }
-        else return null;
+        return null;
+    }
+
+    private static RandomizationDTO toRandomizationDTO(Randomization randomization) {
+        if (randomization != null) {
+            return new RandomizationDTO()
+                    .state(randomization.state())
+                    .duration(randomization.duration());
+        }
+        return null;
     }
 
     private static RecurrenceRuleDTO toRecurrenceRuleDTO(RecurrenceRule recurrenceRule) {
@@ -107,8 +128,7 @@ public final class EventTransformer {
                     .bymonth(recurrenceRule.getByMonth())
                     .bymonthday(recurrenceRule.getByMonthDay())
                     .bysetpos(recurrenceRule.getBySetPos());
-        }
-        else return null;
+        } else return null;
     }
 
     private static RelativeRecurrenceRuleDTO toRelativeRecurrenceRuleDTO(RelativeRecurrenceRule relativeRecurrenceRule) {

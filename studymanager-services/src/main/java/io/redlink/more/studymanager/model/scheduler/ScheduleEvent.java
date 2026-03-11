@@ -22,5 +22,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = RelativeEvent.class, name = RelativeEvent.TYPE)
 })
 public interface ScheduleEvent {
-    public String getType();
+    String getType();
+
+    Randomization getRandomization();
+
+    ScheduleEvent setRandomization(Randomization randomization);
 }

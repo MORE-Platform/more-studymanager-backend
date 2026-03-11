@@ -10,6 +10,7 @@ public class MeasurementSummary {
     private StringMeasurementSummary stringResult;
     private BooleanMeasurementSummary booleanResult;
     private DateMeasurementSummary dateResult;
+    private ArrayMeasurementSummary<?> arrayResult;
 
     public MeasurementSummary(Measurement measurement) {
         this.measurement = measurement;
@@ -31,8 +32,13 @@ public class MeasurementSummary {
         this.dateResult = dateResult;
     }
 
+    public void setArrayResult(ArrayMeasurementSummary<?> arrayResult) {
+        this.arrayResult = arrayResult;
+    }
+
     /**
      * Getter for the Measurement
+     *
      * @return
      */
     public Measurement getMeasurement() {
@@ -42,6 +48,7 @@ public class MeasurementSummary {
     /**
      * Getter for information about numeric values. Only present
      * of {@link Measurement#getType()} is {@link Measurement.Type#DOUBLE} or {@link Measurement.Type#INTEGER}
+     *
      * @return
      */
     public NumericMeasurementSummary getNumericResult() {
@@ -51,6 +58,7 @@ public class MeasurementSummary {
     /**
      * Getter for information about string values. Only present
      * of {@link Measurement#getType()} is {@link Measurement.Type#STRING}}
+     *
      * @return
      */
     public StringMeasurementSummary getStringResult() {
@@ -60,6 +68,7 @@ public class MeasurementSummary {
     /**
      * Getter for information about boolean values. Only present
      * of {@link Measurement#getType()} is {@link Measurement.Type#BOOLEAN}}
+     *
      * @return
      */
     public BooleanMeasurementSummary getBooleanResult() {
@@ -69,10 +78,15 @@ public class MeasurementSummary {
     /**
      * Getter for information about date values. Only present
      * of {@link Measurement#getType()} is {@link Measurement.Type#DATE}}
+     *
      * @return
      */
     public DateMeasurementSummary getDateResult() {
         return dateResult;
+    }
+
+    public ArrayMeasurementSummary<?> getArrayResult() {
+        return arrayResult;
     }
 
 
@@ -80,7 +94,12 @@ public class MeasurementSummary {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         MeasurementSummary that = (MeasurementSummary) o;
-        return Objects.equals(measurement, that.measurement) && Objects.equals(numericResult, that.numericResult) && Objects.equals(stringResult, that.stringResult) && Objects.equals(booleanResult, that.booleanResult) && Objects.equals(dateResult, that.dateResult);
+        return Objects.equals(measurement, that.measurement)
+                && Objects.equals(numericResult, that.numericResult)
+                && Objects.equals(stringResult, that.stringResult)
+                && Objects.equals(booleanResult, that.booleanResult)
+                && Objects.equals(dateResult, that.dateResult)
+                && Objects.equals(arrayResult, that.arrayResult);
     }
 
     @Override
@@ -96,6 +115,7 @@ public class MeasurementSummary {
                 ", stringResult=" + stringResult +
                 ", booleanResult=" + booleanResult +
                 ", dateResult=" + dateResult +
+                ", arrayResult=" + arrayResult +
                 '}';
     }
 }

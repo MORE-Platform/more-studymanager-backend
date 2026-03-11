@@ -14,7 +14,10 @@ import io.redlink.more.studymanager.api.v1.model.ParticipantInfoDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyImportExportDTO;
 import io.redlink.more.studymanager.model.IntegrationInfo;
 import io.redlink.more.studymanager.model.StudyImportExport;
+
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -26,6 +29,7 @@ public final class ImportExportTransformer {
         return new StudyImportExport()
                 .setStudy(StudyTransformer.fromStudyDTO_V1(dto.getStudy()))
                 .setStudyGroups(transform(dto.getStudyGroups(), StudyGroupTransformer::fromStudyGroupDTO_V1))
+                .setObservationGroups(transform(dto.getObservationGroups(), ObservationGroupTransformer::fromObservationGroupDTO_V1))
                 .setObservations(transform(dto.getObservations(), ObservationTransformer::fromObservationDTO_V1))
                 .setInterventions(transform(dto.getInterventions(), InterventionTransformer::fromInterventionDTO_V1))
                 .setTriggers(
@@ -50,6 +54,7 @@ public final class ImportExportTransformer {
         return new StudyImportExportDTO()
                 .study(StudyTransformer.toStudyDTO_V1(studyImportExport.getStudy()))
                 .studyGroups(transform(studyImportExport.getStudyGroups(), StudyGroupTransformer::toStudyGroupDTO_V1))
+                .observationGroups(transform(studyImportExport.getObservationGroups(), ObservationGroupTransformer::toObservationGroupDTO_V1))
                 .observations(transform(studyImportExport.getObservations(), ObservationTransformer::toObservationDTO_V1))
                 .interventions(transform(studyImportExport.getInterventions(), intervention ->
                     InterventionTransformer.toInterventionDTO_V1(intervention)
@@ -71,11 +76,14 @@ public final class ImportExportTransformer {
 
     private static ParticipantInfoDTO toParticipantDTO_V1(StudyImportExport.ParticipantInfo participant) {
         return new ParticipantInfoDTO()
-                .studyGroup(participant.groupId());
+                .studyGroup(participant.groupId())
+                .observationGroups(participant.observationGroupIds());
     }
 
     private static StudyImportExport.ParticipantInfo fromParticipantDTO_V1(ParticipantInfoDTO participant) {
-        return new StudyImportExport.ParticipantInfo(participant.getStudyGroup());
+        return new StudyImportExport.ParticipantInfo(
+                participant.getStudyGroup(),
+                participant.getObservationGroups() == null ? Collections.emptySet() : participant.getObservationGroups());
     }
 
     private static <S, T> List<T> transform(List<S> list, Function<S, T> transformer) {

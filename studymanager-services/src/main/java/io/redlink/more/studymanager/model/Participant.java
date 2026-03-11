@@ -8,6 +8,9 @@
  */
 package io.redlink.more.studymanager.model;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Participant {
     private Long studyId;
@@ -19,6 +22,7 @@ public class Participant {
     private Instant modified;
     private Instant start;
     private String registrationToken;
+    private Set<Integer> observationGroupIds = new HashSet<>();
 
     public Long getStudyId() {
         return this.studyId;
@@ -89,6 +93,27 @@ public class Participant {
 
     public Participant setStudyGroupId(Integer studyGroupId) {
         this.studyGroupId = studyGroupId;
+        return this;
+    }
+
+    public Participant setObservationGroupIds(Set<Integer> observationGroupIds) {
+        this.observationGroupIds = observationGroupIds == null ? new HashSet<>() : observationGroupIds;
+        return this;
+    }
+
+    public Set<Integer> getObservationGroupIds() {
+        return observationGroupIds;
+    }
+
+    public Participant addObservationGroupId(Integer observationGroupId) {
+        if(observationGroupIds != null) {
+            this.observationGroupIds.add(observationGroupId);
+        }
+        return this;
+    }
+
+    public Participant removeObservationGroupId(Integer observationGroupId) {
+        this.observationGroupIds.remove(observationGroupId);
         return this;
     }
 

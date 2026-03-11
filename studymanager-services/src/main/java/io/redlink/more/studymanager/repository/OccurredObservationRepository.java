@@ -69,6 +69,11 @@ public class OccurredObservationRepository {
                     LIMIT 1
             """;
 
+    private static String DELETE_BY_STUDY_ID = """
+            DELETE FROM occurred_observation oo
+            WHERE oo.study_id = :study_id
+    """;
+
     private static final String DELETE_ALL = "DELETE FROM occurred_observation";
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -152,6 +157,12 @@ public class OccurredObservationRepository {
         }
     }
 
+    public void deleteOccurredObservations(Long studyId) {
+        namedTemplate.update(DELETE_ALL,
+                new MapSqlParameterSource("study_id", studyId));
+    }
+
+
     public void clear() {
         template.update(DELETE_ALL);
     }
@@ -203,4 +214,5 @@ public class OccurredObservationRepository {
         return (rs, rowNum) -> withTimezone ? RepositoryUtils.readInstantUTC(rs, field) :
                 RepositoryUtils.readInstant(rs, field);
     }
+
 }

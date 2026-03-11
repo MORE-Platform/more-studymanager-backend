@@ -126,4 +126,14 @@ public abstract class Value<T> {
         this.validationFunction = validationFunction;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "Value{" +
+                "id='" + id + '\'' +
+                ", defaultValue=" + defaultValue +
+                ", required=" + required +
+                ", immutable=" + immutable +
+                '}';
+    }
 }

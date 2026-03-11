@@ -8,9 +8,11 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.model.EndpointToken;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.repository.IntegrationRepository;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -75,7 +77,12 @@ public class IntegrationService {
         return repository.updateToken(studyId, observationId, tokenId, tokenLabel);
     }
 
-    public void alignIntegrationsWithStudyState(Study study) {
+    @EventListener
+    public void handleStudyStateChange(StudyStateChangedEvent event) {
+        alignIntegrationsWithStudyState(event.getStudy());
+    }
+
+    private void alignIntegrationsWithStudyState(Study study) {
         if(study.getStudyState() == Study.Status.CLOSED) {
             repository.clearForStudyId(study.getStudyId());
         }

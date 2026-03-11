@@ -109,15 +109,24 @@ public class ElasticService {
         return queries;
     }
 
-    static List<Query> getFilters(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, TimeRange timerange) {
+    static List<Query> getFilters(Long studyId, Integer observationId, Integer studyGroupId, Integer participantId, String dataType, TimeRange timerange) {
         List<Query> filters = new ArrayList<>();
+        if(studyId == null) {
+            throw new IllegalArgumentException("studyId cannot be null");
+        }
         filters.add(getStudyFilter(studyId));
-        filters.add(getObservationFilter(observationId));
+        if(observationId != null) {
+            filters.add(getObservationFilter(observationId));
+        }
 
         if (participantId != null) {
             filters.add(getParticipantFilter(participantId));
         } else if(studyGroupId != null) {
             filters.add(getStudyGroupFilter(studyGroupId));
+        }
+
+        if(dataType != null) {
+            filters.add(getDataTypeFilter(dataType));
         }
 
         if (timerange != null && timerange.getFromString() != null && timerange.getToString() != null) {
@@ -152,6 +161,13 @@ public class ElasticService {
                 term(t -> t.
                         field("participant_id.keyword").
                         value(getParticipantIdString(participantId))));
+    }
+
+    static Query getDataTypeFilter(String dataType) {
+        return Query.of(f -> f.
+                term(t -> t.
+                        field("data_type.keyword").
+                        value(dataType)));
     }
 
     static Query getTimeRangeFilter(TimeRange timerange) {
@@ -328,7 +344,7 @@ public class ElasticService {
         }
     }
 
-    public void exportData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) throws IOException {
+    public void exportData(OutputStream outputStream, Long studyId, Collection<Integer> studyGroupId, Collection<Integer> participantId, Collection<Integer> observationId, Instant from, Instant to) throws IOException {
         String index = getStudyIdString(studyId);
 
         if(!client.indices().exists(e -> e.index(index)).value()) {
@@ -358,7 +374,7 @@ public class ElasticService {
         outputStream.write(datapoints.getBytes(StandardCharsets.UTF_8));
     }
 
-    private SearchRequest getQuery(String index, List<Integer> studyGroupIds, List<Integer> participantIds, List<Integer> observationIds, Instant from, Instant to, List<FieldValue> searchAfterSort) {
+    private SearchRequest getQuery(String index, Collection<Integer> studyGroupIds, Collection<Integer> participantIds, Collection<Integer> observationIds, Instant from, Instant to, List<FieldValue> searchAfterSort) {
         SearchRequest.Builder builder = new SearchRequest.Builder();
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 

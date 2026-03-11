@@ -256,6 +256,10 @@ class OccurredObservationRepositoryTest {
         //validate that searching for a combination with no entry returns null
         var lastStartTimeNotFound = occurredObservationRepository.getLatestStartTime(studyId, -1, null, null, null);
         assertThat(lastStartTimeNotFound).isNull();
+
+        //Test deletion by studyId
+        occurredObservationRepository.deleteOccurredObservations(studyId);
+        assertThat(occurredObservationRepository.listOccurredObservations(studyId, null, null, null, null).toList()).isEmpty();
     }
 
 }
