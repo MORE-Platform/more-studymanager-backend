@@ -1,0 +1,54 @@
+package io.redlink.more.studymanager.component.observation;
+
+import io.redlink.more.studymanager.component.observation.measurement.GenericMeasurementSets;
+import io.redlink.more.studymanager.core.component.Observation;
+import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
+import io.redlink.more.studymanager.core.factory.ObservationFactory;
+import io.redlink.more.studymanager.core.measurement.MeasurementSet;
+import io.redlink.more.studymanager.core.properties.ObservationProperties;
+import io.redlink.more.studymanager.core.properties.model.BooleanValue;
+import io.redlink.more.studymanager.core.properties.model.IntegerValue;
+import io.redlink.more.studymanager.core.properties.model.Value;
+import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
+
+import java.util.List;
+
+public class Polar360AccObservationFactory<C extends Observation<P>, P extends ObservationProperties>
+        extends ObservationFactory<C, P> {
+
+    private static final List<Value> properties = List.of(
+            new IntegerValue("sampling_rate").setDefaultValue(1).setDescription("Downsampling for online streaming"),
+            new BooleanValue("Offline_recording").setDefaultValue(false).setDescription("Offline recording on device or online streaming"),
+            new BooleanValue("continuous_recording").setDefaultValue(false).setDescription("Continuous data collection with offline recording, restart recording after fetching records")
+    );
+
+    @Override
+    public String getId() {
+        return "polar360observation:acc";
+    }
+
+    @Override
+    public String getTitle() {
+        return "Polar 360 Accelerometer";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Collect accelerometer (ACC) data from Polar 360 device";
+    }
+
+    @Override
+    public List<Value> getProperties() {
+        return properties;
+    }
+
+    @Override
+    public Polar360Observation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+        return new Polar360Observation(sdk, validate((P) properties));
+    }
+
+    @Override
+    public MeasurementSet getMeasurementSet() {
+        return GenericMeasurementSets.NOT_SPECIFIED;
+    }
+}
