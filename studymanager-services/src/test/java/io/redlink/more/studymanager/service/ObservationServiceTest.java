@@ -12,7 +12,7 @@ import io.redlink.more.studymanager.component.observation.AccMobileObservationFa
 import io.redlink.more.studymanager.component.observation.AppUsageObservationFactory;
 import io.redlink.more.studymanager.component.observation.ExternalObservationFactory;
 import io.redlink.more.studymanager.component.observation.GpsMobileObservationFactory;
-import io.redlink.more.studymanager.component.observation.PolarVerityObservationFactory;
+import io.redlink.more.studymanager.component.observation.polarverity.PolarVerityObservationFactory;
 import io.redlink.more.studymanager.component.observation.QuestionObservationFactory;
 import io.redlink.more.studymanager.component.observation.garmin.activity.GarminActivityObservationFactory;
 import io.redlink.more.studymanager.component.observation.garmin.bloodpressure.GarminBloodPressureObservationFactory;

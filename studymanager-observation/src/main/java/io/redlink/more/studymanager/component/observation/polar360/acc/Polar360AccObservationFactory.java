@@ -1,4 +1,4 @@
-package io.redlink.more.studymanager.component.observation;
+package io.redlink.more.studymanager.component.observation.polar360.acc;
 
 import io.redlink.more.studymanager.component.observation.measurement.GenericMeasurementSets;
 import io.redlink.more.studymanager.core.component.Observation;
@@ -13,7 +13,7 @@ import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
 import java.util.List;
 
-public class Polar360TempObservationFactory<C extends Observation<P>, P extends ObservationProperties>
+public class Polar360AccObservationFactory<C extends Observation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
 
     private static final List<Value> properties = List.of(
@@ -24,17 +24,17 @@ public class Polar360TempObservationFactory<C extends Observation<P>, P extends 
 
     @Override
     public String getId() {
-        return "polar360observation:temp";
+        return "polar360observation:acc";
     }
 
     @Override
     public String getTitle() {
-        return "Polar 360 Temperature";
+        return "Polar 360 Accelerometer";
     }
 
     @Override
     public String getDescription() {
-        return "Collect temperature (TEMP) data from Polar 360 device";
+        return "Collect accelerometer (ACC) data from Polar 360 device";
     }
 
     @Override
@@ -43,8 +43,8 @@ public class Polar360TempObservationFactory<C extends Observation<P>, P extends 
     }
 
     @Override
-    public Polar360Observation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new Polar360Observation(sdk, validate((P) properties));
+    public Polar360AccObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+        return new Polar360AccObservation(sdk, validate((P) properties));
     }
 
     @Override

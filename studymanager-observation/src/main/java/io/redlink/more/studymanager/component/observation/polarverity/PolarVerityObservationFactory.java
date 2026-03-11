@@ -6,7 +6,7 @@
  * Förderung der wissenschaftlichen Forschung).
  * Licensed under the Elastic License 2.0.
  */
-package io.redlink.more.studymanager.component.observation;
+package io.redlink.more.studymanager.component.observation.polarverity;
 
 import io.redlink.more.studymanager.component.observation.measurement.GenericMeasurementSets;
 import io.redlink.more.studymanager.core.component.Observation;
@@ -35,7 +35,7 @@ public class PolarVerityObservationFactory<C extends Observation<P>, P extends O
 
     @Override
     public PolarVerityObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new PolarVerityObservation(sdk, validate((P)properties));
+        return new PolarVerityObservation(sdk, validate((P) properties));
     }
 
     @Override
