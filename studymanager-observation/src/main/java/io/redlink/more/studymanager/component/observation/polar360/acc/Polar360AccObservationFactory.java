@@ -17,7 +17,6 @@ public class Polar360AccObservationFactory<C extends Observation<P>, P extends O
         extends ObservationFactory<C, P> {
 
     private static final List<Value> properties = List.of(
-            new IntegerValue("sampling_rate").setDefaultValue(1).setDescription("Downsampling for online streaming"),
             new BooleanValue("Offline_recording").setDefaultValue(false).setDescription("Offline recording on device or online streaming"),
             new BooleanValue("continuous_recording").setDefaultValue(false).setDescription("Continuous data collection with offline recording, restart recording after fetching records")
     );
