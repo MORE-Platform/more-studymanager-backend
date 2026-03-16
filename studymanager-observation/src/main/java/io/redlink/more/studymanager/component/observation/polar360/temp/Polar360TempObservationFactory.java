@@ -1,20 +1,18 @@
 package io.redlink.more.studymanager.component.observation.polar360.temp;
 
 import io.redlink.more.studymanager.component.observation.measurement.GenericMeasurementSets;
-import io.redlink.more.studymanager.core.component.Observation;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.properties.model.BooleanValue;
-import io.redlink.more.studymanager.core.properties.model.IntegerValue;
 import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 
 import java.util.List;
 
-public class Polar360TempObservationFactory<C extends Observation<P>, P extends ObservationProperties>
-        extends ObservationFactory<C, P> {
+public class Polar360TempObservationFactory
+        extends ObservationFactory<Polar360TempObservation<ObservationProperties>, ObservationProperties> {
 
     private static final List<Value> properties = List.of(
             new BooleanValue("Offline_recording").setDefaultValue(false).setDescription("Offline recording on device or online streaming"),
@@ -42,8 +40,8 @@ public class Polar360TempObservationFactory<C extends Observation<P>, P extends 
     }
 
     @Override
-    public Polar360TempObservation create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
-        return new Polar360TempObservation(sdk, validate((P) properties));
+    public Polar360TempObservation<ObservationProperties> create(MoreObservationSDK sdk, ObservationProperties properties) throws ConfigurationValidationException {
+        return new Polar360TempObservation<>(sdk, validate(properties));
     }
 
     @Override
