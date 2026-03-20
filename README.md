@@ -25,6 +25,22 @@ MORE_FE_KC_CLIENT_ID: study-manager
 
 [keycloak-dev]: https://github.com/MORE-Platform/more-auth-keycloak#connect-the-applications-to-keycloak
 
+### Login Token Configuration
+
+The Login Token service can be configured via the following properties (environment variables):
+
+```yaml
+login-token:
+  length: 8
+  use-numbers: true
+  use-letters: true
+  encryption-key: ${LOGIN_TOKEN_ENCRYPTION_KEY:}
+  salt-key: ${LOGIN_TOKEN_SALT_KEY:}
+  hash-algorithm: ${LOGIN_TOKEN_HASH_ALGORITHM:SHA-256}
+```
+
+Note: The `encryption-key` and `salt-key` should be a hash.
+
 ## Planning & Documentation
 
 * [Architecture Decision Records](docs/adr)

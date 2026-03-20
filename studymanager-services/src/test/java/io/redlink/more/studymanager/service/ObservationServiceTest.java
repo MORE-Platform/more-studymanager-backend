@@ -36,8 +36,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -142,7 +140,7 @@ class ObservationServiceTest {
         assertThat(garminHeartRateFactory.getVisibility().isHiddenByDefault()).isFalse();
         assertThat(garminSleepFactory.getVisibility().isHiddenByDefault()).isFalse();
         assertThat(garminStepsFactory.getVisibility().isHiddenByDefault()).isFalse();
-        assertThat(appUsageFactory.getVisibility().isHiddenByDefault()).isFalse();
+        assertThat(appUsageFactory.getVisibility().isHiddenByDefault()).isTrue();
     }
 
     @Test

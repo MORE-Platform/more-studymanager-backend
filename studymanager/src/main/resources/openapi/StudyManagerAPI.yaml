@@ -1706,6 +1706,9 @@ components:
           type: string
           format: date-time
           readOnly: true
+        participantPortalAccess:
+          type: boolean
+          default: false
         userRoles:
           type: array
           description: the roles the _current user_ has within _this_ study.

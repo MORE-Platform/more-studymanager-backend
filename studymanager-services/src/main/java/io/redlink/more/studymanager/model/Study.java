@@ -32,6 +32,7 @@ public class Study {
     private Instant created;
     private Instant modified;
     private Contact contact;
+    private Boolean participantPortalAccess;
     private Set<StudyRole> userRoles;
 
     public enum Status {
@@ -208,6 +209,15 @@ public class Study {
         return this;
     }
 
+    public Boolean getParticipantPortalAccess() {
+        return participantPortalAccess;
+    }
+
+    public Study setParticipantPortalAccess(Boolean participantPortalAccess) {
+        this.participantPortalAccess = participantPortalAccess;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "Study{" +
@@ -228,6 +238,7 @@ public class Study {
                 ", contactPerson=" + contact.getPerson() +
                 ", contactEmail=" + contact.getEmail() +
                 ", contactPhoneNumber=" + contact.getPhoneNumber() +
+                ", participantPortalAccess=" + participantPortalAccess +
                 '}';
     }
 }

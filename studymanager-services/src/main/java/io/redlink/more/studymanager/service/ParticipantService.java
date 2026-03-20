@@ -9,17 +9,17 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.event.StudyStateChangedEvent;
+import io.redlink.more.studymanager.model.LoginTokenApplication;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
-
-import java.util.EnumSet;
-import java.util.List;
-
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.EnumSet;
+import java.util.List;
 
 @Service
 public class ParticipantService {
@@ -27,12 +27,14 @@ public class ParticipantService {
     private final StudyStateService studyStateService;
     private final ParticipantRepository participantRepository;
     private final ElasticService elasticService;
+    private final LoginTokenService loginTokenService;
 
     public ParticipantService(
-            StudyStateService studyStateService, ParticipantRepository repository, ElasticService elasticService) {
+            StudyStateService studyStateService, ParticipantRepository repository, ElasticService elasticService, LoginTokenService loginTokenService) {
         this.studyStateService = studyStateService;
         this.participantRepository = repository;
         this.elasticService = elasticService;
+        this.loginTokenService = loginTokenService;
     }
 
     public Participant createParticipant(Participant participant) {
@@ -56,8 +58,9 @@ public class ParticipantService {
     public void deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         participantRepository.deleteParticipant(studyId, participantId);
-        if(Boolean.TRUE.equals(includeData)) {
-               elasticService.removeDataForParticipant(studyId, participantId);
+        loginTokenService.deleteParticipantTokens(studyId, participantId);
+        if (Boolean.TRUE.equals(includeData)) {
+            elasticService.removeDataForParticipant(studyId, participantId);
         }
     }
 
@@ -74,11 +77,27 @@ public class ParticipantService {
 
 
     private void alignParticipantsWithStudyState(Study study) {
-        if (EnumSet.of(Study.Status.CLOSED).contains(study.getStudyState())) {
-            participantRepository.cleanupParticipants(study.getStudyId());
+        switch (study.getStudyState()) {
+            case CLOSED:
+                participantRepository.cleanupParticipants(study.getStudyId());
+                loginTokenService.deleteStudyTokens(study.getStudyId());
+                break;
+            case DRAFT:
+                participantRepository.resetParticipants(study.getStudyId(), RandomTokenGenerator::generate);
+                loginTokenService.deleteStudyTokens(study.getStudyId());
+                break;
+            case ACTIVE:
+            case PREVIEW:
+                alignParticipantsInActiveState(study);
+                break;
         }
-        if (EnumSet.of(Study.Status.DRAFT).contains(study.getStudyState())) {
-            participantRepository.resetParticipants(study.getStudyId(), RandomTokenGenerator::generate);
+    }
+
+    private void alignParticipantsInActiveState(Study study) {
+        if (study.getParticipantPortalAccess()) {
+            loginTokenService.createMissingTokens(study.getStudyId(), LoginTokenApplication.PARTICIPANT_PORTAL.name());
+        } else {
+            loginTokenService.deleteTokens(study.getStudyId(), LoginTokenApplication.PARTICIPANT_PORTAL.name());
         }
     }
 
@@ -88,6 +107,7 @@ public class ParticipantService {
         if (EnumSet.of(Participant.Status.ABANDONED, Participant.Status.KICKED_OUT, Participant.Status.LOCKED)
                 .contains(status)) {
             participantRepository.cleanupParticipant(studyId, participantId);
+            loginTokenService.deleteParticipantTokens(studyId, participantId);
         }
     }
 }
