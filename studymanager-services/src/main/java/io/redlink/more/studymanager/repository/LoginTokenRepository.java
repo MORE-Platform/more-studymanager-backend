@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public class LoginTokenRepository {
@@ -46,6 +47,9 @@ public class LoginTokenRepository {
 
     private static final String DELETE_TOKEN =
             "DELETE FROM login_tokens WHERE study_id = ? AND participant_id = ? AND application = ?";
+
+    private static final String DELETE_BY_STUDY_EXCEPT_APPLICATIONS =
+            "DELETE FROM login_tokens WHERE study_id = :study_id AND application NOT IN (:applications)";
 
     private final JdbcTemplate template;
     private final NamedParameterJdbcTemplate namedTemplate;
@@ -89,6 +93,17 @@ public class LoginTokenRepository {
 
     public void deleteAllByStudy(Long studyId) {
         template.update(DELETE_BY_STUDY, studyId);
+    }
+
+    public void deleteAllByStudyExcept(Long studyId, Set<String> applications) {
+        if (applications.isEmpty()) {
+            deleteAllByStudy(studyId);
+        } else {
+            namedTemplate.update(DELETE_BY_STUDY_EXCEPT_APPLICATIONS,
+                    new MapSqlParameterSource()
+                            .addValue("study_id", studyId)
+                            .addValue("applications", applications));
+        }
     }
 
     public void delete(Long studyId, Integer participantId, String application) {

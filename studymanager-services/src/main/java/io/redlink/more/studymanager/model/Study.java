@@ -32,7 +32,8 @@ public class Study {
     private Instant created;
     private Instant modified;
     private Contact contact;
-    private Boolean participantPortalAccess;
+    private Set<String> applicationAccess = Collections.emptySet();
+
     private Set<StudyRole> userRoles;
 
     public enum Status {
@@ -209,12 +210,12 @@ public class Study {
         return this;
     }
 
-    public Boolean getParticipantPortalAccess() {
-        return participantPortalAccess;
+    public Set<String> getApplicationAccess() {
+        return applicationAccess;
     }
 
-    public Study setParticipantPortalAccess(Boolean participantPortalAccess) {
-        this.participantPortalAccess = participantPortalAccess;
+    public Study setApplicationAccess(Set<String> applicationAccess) {
+        this.applicationAccess = applicationAccess;
         return this;
     }
 
@@ -238,7 +239,7 @@ public class Study {
                 ", contactPerson=" + contact.getPerson() +
                 ", contactEmail=" + contact.getEmail() +
                 ", contactPhoneNumber=" + contact.getPhoneNumber() +
-                ", participantPortalAccess=" + participantPortalAccess +
+                ", applicationAccess=" + applicationAccess +
                 '}';
     }
 }

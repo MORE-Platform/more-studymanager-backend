@@ -22,6 +22,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -87,7 +90,7 @@ class ParticipantServiceTest {
                 .setStudyId(1L)
                 .setTitle("Test study")
                 .setStudyState(Study.Status.ACTIVE)
-                .setParticipantPortalAccess(true);
+                .setApplicationAccess(Set.of(LoginTokenApplication.PARTICIPANT_PORTAL.name()));
 
         participantService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.DRAFT ));
         Mockito.verify(participantRepository, Mockito.never()).resetParticipants(anyLong(), any());
@@ -95,9 +98,9 @@ class ParticipantServiceTest {
         Mockito.verify(loginTokenService, Mockito.times(1)).createMissingTokens(eq(1L), eq(LoginTokenApplication.PARTICIPANT_PORTAL.name()));
 
         Mockito.reset(loginTokenService);
-        study.setParticipantPortalAccess(false);
+        study.setApplicationAccess(Collections.emptySet());
         participantService.handleStudyStateChange(new StudyStateChangedEvent(this, study, Study.Status.DRAFT));
-        Mockito.verify(loginTokenService, Mockito.times(1)).deleteTokens(eq(1L), eq(LoginTokenApplication.PARTICIPANT_PORTAL.name()));
+        Mockito.verify(loginTokenService, Mockito.times(1)).deleteTokensExcept(eq(1L), eq(Collections.emptySet()));
 
         //validate participants are reset if study goes to DRAFT state
         study.setStudyState(Study.Status.DRAFT);

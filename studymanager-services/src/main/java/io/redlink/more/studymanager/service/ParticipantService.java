@@ -9,7 +9,6 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.event.StudyStateChangedEvent;
-import io.redlink.more.studymanager.model.LoginTokenApplication;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
@@ -94,11 +93,8 @@ public class ParticipantService {
     }
 
     private void alignParticipantsInActiveState(Study study) {
-        if (study.getParticipantPortalAccess()) {
-            loginTokenService.createMissingTokens(study.getStudyId(), LoginTokenApplication.PARTICIPANT_PORTAL.name());
-        } else {
-            loginTokenService.deleteTokens(study.getStudyId(), LoginTokenApplication.PARTICIPANT_PORTAL.name());
-        }
+        study.getApplicationAccess().forEach(application -> loginTokenService.createMissingTokens(study.getStudyId(), application));
+        loginTokenService.deleteTokensExcept(study.getStudyId(), study.getApplicationAccess());
     }
 
     public void setStatus(Long studyId, Integer participantId, Participant.Status status) {

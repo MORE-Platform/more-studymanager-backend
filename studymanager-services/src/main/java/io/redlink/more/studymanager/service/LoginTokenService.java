@@ -114,6 +114,10 @@ public class LoginTokenService {
         loginTokenRepository.deleteAllByStudyAndApplication(studyId, application);
     }
 
+    public void deleteTokensExcept(Long studyId, Set<String> applications) {
+        loginTokenRepository.deleteAllByStudyExcept(studyId, applications);
+    }
+
     public void deleteToken(Long studyId, Integer participantId, String application) {
         loginTokenRepository.delete(studyId, participantId, application);
     }
