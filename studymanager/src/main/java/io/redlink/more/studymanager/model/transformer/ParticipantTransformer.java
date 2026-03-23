@@ -8,9 +8,11 @@
  */
 package io.redlink.more.studymanager.model.transformer;
 
+import io.redlink.more.studymanager.api.v1.model.ParticipantApplicationAccessDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipantStatusDTO;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 
 import java.net.URI;
@@ -44,8 +46,16 @@ public final class ParticipantTransformer {
                 .registrationUrl(registrationUri)
                 .status(ParticipantStatusDTO.fromValue(participant.getStatus().getValue()))
                 .observationGroupIds(participant.getObservationGroupIds())
+                .applicationAccess(participant.getApplicationAccess().stream().map(ParticipantTransformer::toParticipantApplicationAccessDTO_V1).toList())
                 .start(instant2)
                 .modified(instant1)
                 .created(instant);
+    }
+
+    public static ParticipantApplicationAccessDTO toParticipantApplicationAccessDTO_V1(ParticipantApplicationAccess applicationAccess) {
+        return new ParticipantApplicationAccessDTO()
+                .applicationType(applicationAccess.getApplicationType())
+                .applicationUrl(applicationAccess.getApplicationUrl())
+                .accessCode(applicationAccess.getAccessCode());
     }
 }

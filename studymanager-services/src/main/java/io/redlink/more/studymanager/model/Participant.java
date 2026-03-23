@@ -7,9 +7,11 @@
  * Licensed under the Elastic License 2.0.
  */
 package io.redlink.more.studymanager.model;
+
 import java.time.Instant;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class Participant {
@@ -23,6 +25,7 @@ public class Participant {
     private Instant start;
     private String registrationToken;
     private Set<Integer> observationGroupIds = new HashSet<>();
+    private List<ParticipantApplicationAccess> applicationAccess = new ArrayList<>();
 
     public Long getStudyId() {
         return this.studyId;
@@ -135,6 +138,15 @@ public class Participant {
         return this;
     }
 
+    public List<ParticipantApplicationAccess> getApplicationAccess() {
+        return applicationAccess;
+    }
+
+    public Participant setApplicationAccess(List<ParticipantApplicationAccess> applicationAccess) {
+        this.applicationAccess = applicationAccess == null ? new ArrayList<>() : applicationAccess;
+        return this;
+    }
+
     public String getRegistrationToken() {
         return registrationToken;
     }
@@ -156,6 +168,7 @@ public class Participant {
                 ", modified=" + modified +
                 ", start=" + start +
                 ", registrationToken='" + registrationToken + '\'' +
+                ", applicationAccess=" + applicationAccess +
                 '}';
     }
 }

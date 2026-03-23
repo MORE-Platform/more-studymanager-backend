@@ -1862,6 +1862,10 @@ components:
           type: string
           format: date-time
           readOnly: true
+        applicationAccess:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipantApplicationAccess'
 
     ParticipantStatus:
       type: string
@@ -1872,6 +1876,23 @@ components:
         - kicked_out
         - locked
       default: new
+
+    ParticipantApplicationAccess:
+      type: object
+      properties:
+        accessCode:
+          type: string
+          description: Access code for participant application
+        applicationType:
+          type: string
+          description: Type of participant application
+        applicationUrl:
+          type: string
+          description: URL for application
+      required:
+        - accessCode
+        - applicationType
+        - applicationUrl
 
     Observation:
       type: object

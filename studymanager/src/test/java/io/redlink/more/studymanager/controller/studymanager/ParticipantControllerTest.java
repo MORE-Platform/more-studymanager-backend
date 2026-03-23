@@ -17,15 +17,6 @@ import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.EnumSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Stream;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,11 +30,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Stream;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -63,9 +61,6 @@ class ParticipantControllerTest {
     OccurredObservationService occurredObservationService;
 
     @Autowired
-    private GatewayProperties gatewayProperties;
-
-    @Autowired
     ObjectMapper mapper;
 
     @Autowired
@@ -81,7 +76,7 @@ class ParticipantControllerTest {
     }
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         when(oAuth2AuthenticationService.getCurrentUser()).thenReturn(
                 new AuthenticatedUser(
                         UUID.randomUUID().toString(),

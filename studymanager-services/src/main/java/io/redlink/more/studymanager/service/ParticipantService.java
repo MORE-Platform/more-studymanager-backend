@@ -26,14 +26,14 @@ public class ParticipantService {
     private final StudyStateService studyStateService;
     private final ParticipantRepository participantRepository;
     private final ElasticService elasticService;
-    private final LoginTokenService loginTokenService;
+    private final ApplicationAccessService applicationAccessService;
 
     public ParticipantService(
-            StudyStateService studyStateService, ParticipantRepository repository, ElasticService elasticService, LoginTokenService loginTokenService) {
+            StudyStateService studyStateService, ParticipantRepository repository, ElasticService elasticService, ApplicationAccessService applicationAccessService) {
         this.studyStateService = studyStateService;
         this.participantRepository = repository;
         this.elasticService = elasticService;
-        this.loginTokenService = loginTokenService;
+        this.applicationAccessService = applicationAccessService;
     }
 
     public Participant createParticipant(Participant participant) {
@@ -43,7 +43,9 @@ public class ParticipantService {
     }
 
     public List<Participant> listParticipants(Long studyId) {
-        return participantRepository.listParticipants(studyId);
+        return participantRepository.listParticipants(studyId).stream()
+                .map(p -> p.setApplicationAccess(applicationAccessService.getParticipantApplicationAccess(studyId, p.getParticipantId())))
+                .toList();
     }
 
     public List<Participant> listParticipantsForClosing() {
@@ -51,13 +53,17 @@ public class ParticipantService {
     }
 
     public Participant getParticipant(Long studyId, Integer participantId) {
-        return participantRepository.getByIds(studyId, participantId);
+        Participant participant = participantRepository.getByIds(studyId, participantId);
+        if (participant != null) {
+            participant.setApplicationAccess(applicationAccessService.getParticipantApplicationAccess(studyId, participantId));
+        }
+        return participant;
     }
 
     public void deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         participantRepository.deleteParticipant(studyId, participantId);
-        loginTokenService.deleteParticipantTokens(studyId, participantId);
+        applicationAccessService.deleteApplicationAccess(studyId, participantId);
         if (Boolean.TRUE.equals(includeData)) {
             elasticService.removeDataForParticipant(studyId, participantId);
         }
@@ -79,11 +85,11 @@ public class ParticipantService {
         switch (study.getStudyState()) {
             case CLOSED:
                 participantRepository.cleanupParticipants(study.getStudyId());
-                loginTokenService.deleteStudyTokens(study.getStudyId());
+                applicationAccessService.deleteApplicationAccess(study.getStudyId());
                 break;
             case DRAFT:
                 participantRepository.resetParticipants(study.getStudyId(), RandomTokenGenerator::generate);
-                loginTokenService.deleteStudyTokens(study.getStudyId());
+                applicationAccessService.deleteApplicationAccess(study.getStudyId());
                 break;
             case ACTIVE:
             case PREVIEW:
@@ -93,8 +99,8 @@ public class ParticipantService {
     }
 
     private void alignParticipantsInActiveState(Study study) {
-        study.getApplicationAccess().forEach(application -> loginTokenService.createMissingTokens(study.getStudyId(), application));
-        loginTokenService.deleteTokensExcept(study.getStudyId(), study.getApplicationAccess());
+        applicationAccessService.generateMissingApplicationAccess(study.getStudyId(), study.getApplicationAccess());
+        applicationAccessService.deleteApplicationAccessExcept(study.getStudyId(), study.getApplicationAccess());
     }
 
     public void setStatus(Long studyId, Integer participantId, Participant.Status status) {
@@ -103,7 +109,7 @@ public class ParticipantService {
         if (EnumSet.of(Participant.Status.ABANDONED, Participant.Status.KICKED_OUT, Participant.Status.LOCKED)
                 .contains(status)) {
             participantRepository.cleanupParticipant(studyId, participantId);
-            loginTokenService.deleteParticipantTokens(studyId, participantId);
+            applicationAccessService.deleteApplicationAccess(studyId, participantId);
         }
     }
 }
