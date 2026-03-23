@@ -97,8 +97,6 @@ class ParticipantServiceTest {
         participantService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.DRAFT ));
         Mockito.verify(participantRepository, Mockito.never()).resetParticipants(anyLong(), any());
         Mockito.verify(participantRepository, Mockito.never()).cleanupParticipants(anyLong());
-        Mockito.verify(loginTokenService, Mockito.times(1)).createMissingToken(eq(1L), eq(100), eq(LoginTokenApplication.PARTICIPANT_PORTAL.name()));
-        Mockito.verify(participantRepository, Mockito.times(1)).setStatusIfCurrentStatusIs(eq(1L), eq(100), eq(Participant.Status.INVITED), eq(Participant.Status.NEW));
 
         Mockito.reset(loginTokenService);
         study.setApplicationAccess(Collections.emptySet());

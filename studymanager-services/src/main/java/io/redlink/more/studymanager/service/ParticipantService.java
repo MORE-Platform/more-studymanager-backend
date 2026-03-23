@@ -98,15 +98,7 @@ public class ParticipantService {
     }
 
     private void alignParticipantsInActiveState(Study study) {
-        study.getApplicationAccess().forEach(application -> createMissingTokens(study.getStudyId(), application));
         loginTokenService.deleteTokensExcept(study.getStudyId(), study.getApplicationAccess());
-    }
-
-    private void createMissingTokens(Long studyId, String application) {
-        participantRepository.listParticipants(studyId).forEach(p -> {
-            loginTokenService.createMissingToken(studyId, p.getParticipantId(), application);
-            participantRepository.setStatusIfCurrentStatusIs(studyId, p.getParticipantId(), Participant.Status.INVITED, Participant.Status.NEW);
-        });
     }
 
     public void setStatus(Long studyId, Integer participantId, Participant.Status status) {
