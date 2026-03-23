@@ -54,6 +54,11 @@ public class ParticipantService {
         return participantRepository.getByIds(studyId, participantId);
     }
 
+    public void generateLoginToken(Long studyId, Integer participantId, String application) {
+        loginTokenService.createMissingToken(studyId, participantId, application);
+        participantRepository.setStatusIfCurrentStatusIs(studyId, participantId, Participant.Status.INVITED, Participant.Status.NEW);
+    }
+
     public void deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         participantRepository.deleteParticipant(studyId, participantId);
@@ -93,8 +98,15 @@ public class ParticipantService {
     }
 
     private void alignParticipantsInActiveState(Study study) {
-        study.getApplicationAccess().forEach(application -> loginTokenService.createMissingTokens(study.getStudyId(), application));
+        study.getApplicationAccess().forEach(application -> createMissingTokens(study.getStudyId(), application));
         loginTokenService.deleteTokensExcept(study.getStudyId(), study.getApplicationAccess());
+    }
+
+    private void createMissingTokens(Long studyId, String application) {
+        participantRepository.listParticipants(studyId).forEach(p -> {
+            loginTokenService.createMissingToken(studyId, p.getParticipantId(), application);
+            participantRepository.setStatusIfCurrentStatusIs(studyId, p.getParticipantId(), Participant.Status.INVITED, Participant.Status.NEW);
+        });
     }
 
     public void setStatus(Long studyId, Integer participantId, Participant.Status status) {

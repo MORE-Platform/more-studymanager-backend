@@ -7,8 +7,8 @@
  * Licensed under the Elastic License 2.0.
  */
 package io.redlink.more.studymanager.model;
+
 import java.time.Instant;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,6 +34,7 @@ public class Participant {
 
     public enum Status {
         NEW("new"),
+        INVITED("invited"),
         ACTIVE("active"),
         ABANDONED("abandoned"),
         KICKED_OUT("kicked_out"),

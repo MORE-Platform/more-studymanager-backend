@@ -9,6 +9,9 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.model.Participant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.Array;
 import java.sql.ResultSet;
@@ -16,15 +19,15 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.RowMapper;
 
 public final class RepositoryUtils {
 
@@ -74,6 +77,7 @@ public final class RepositoryUtils {
 
         return switch (val) {
             case "new" -> Participant.Status.NEW;
+            case "invited" -> Participant.Status.INVITED;
             case "active" -> Participant.Status.ACTIVE;
             case "abandoned" -> Participant.Status.ABANDONED;
             case "kicked_out" -> Participant.Status.KICKED_OUT;
@@ -90,6 +94,7 @@ public final class RepositoryUtils {
 
         return switch (status) {
             case NEW -> "new";
+            case INVITED -> "invited";
             case ACTIVE -> "active";
             case ABANDONED -> "abandoned";
             case KICKED_OUT -> "kicked_out";
