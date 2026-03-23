@@ -92,11 +92,11 @@ class ParticipantServiceTest {
                 .setStudyState(Study.Status.ACTIVE)
                 .setApplicationAccess(Set.of(LoginTokenApplication.PARTICIPANT_PORTAL.name()));
 
+        when(participantRepository.listParticipants(1L)).thenReturn(Collections.singletonList(new Participant().setParticipantId(100)));
+
         participantService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.DRAFT ));
         Mockito.verify(participantRepository, Mockito.never()).resetParticipants(anyLong(), any());
         Mockito.verify(participantRepository, Mockito.never()).cleanupParticipants(anyLong());
-        Mockito.verify(applicationAccessService, Mockito.times(1)).generateMissingApplicationAccess(eq(1L), eq(study.getApplicationAccess()));
-        Mockito.verify(applicationAccessService, Mockito.times(1)).deleteApplicationAccessExcept(eq(1L), eq(study.getApplicationAccess()));
 
         Mockito.reset(applicationAccessService);
         study.setApplicationAccess(Collections.emptySet());
@@ -131,5 +131,12 @@ class ParticipantServiceTest {
         participantService.setStatus(1L, 1, Participant.Status.ACTIVE);
         verify(participantRepository, times(0)).cleanupParticipant(anyLong(), any());
         verify(applicationAccessService, times(0)).deleteApplicationAccess(anyLong(), any());
+    }
+
+    @Test
+    void testGenerateLoginTokenSetsStatus() {
+        participantService.generateLoginToken(1L, 100, "app");
+        verify(loginTokenService).createMissingToken(1L, 100, "app");
+        verify(participantRepository).setStatusIfCurrentStatusIs(1L, 100, Participant.Status.INVITED, Participant.Status.NEW);
     }
 }

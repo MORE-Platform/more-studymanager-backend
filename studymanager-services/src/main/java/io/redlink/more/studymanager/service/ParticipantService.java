@@ -60,6 +60,11 @@ public class ParticipantService {
         return participant;
     }
 
+    public void generateLoginToken(Long studyId, Integer participantId, String application) {
+        loginTokenService.createMissingToken(studyId, participantId, application);
+        participantRepository.setStatusIfCurrentStatusIs(studyId, participantId, Participant.Status.INVITED, Participant.Status.NEW);
+    }
+
     public void deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         participantRepository.deleteParticipant(studyId, participantId);

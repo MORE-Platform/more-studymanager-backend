@@ -11,13 +11,17 @@ package io.redlink.more.studymanager.properties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 @Component
 @ConfigurationProperties(prefix = "more.login-token")
 public class LoginTokenProperties {
 
     private boolean useNumbers = true;
     private boolean useLetters = true;
-    private int length = 8;
+    private Integer length = null;
     private String encryptionKey;
     private String saltKey;
     private String hashAlgorithm = "SHA-256";
@@ -42,8 +46,8 @@ public class LoginTokenProperties {
         return length;
     }
 
-    public void setLength(int length) {
-        this.length = Math.max(length, 4);
+    public void setLength(Integer length) {
+        this.length = length;
     }
 
     public String getEncryptionKey() {
@@ -69,4 +73,23 @@ public class LoginTokenProperties {
     public void setHashAlgorithm(String hashAlgorithm) {
         this.hashAlgorithm = hashAlgorithm;
     }
+
+    @PostConstruct
+    public void validateConfiguration() {
+        if (getEncryptionKey() == null || getEncryptionKey().isBlank()) {
+            throw new IllegalStateException("Login token encryption key must be provided.");
+        }
+        if (getSaltKey() == null || getSaltKey().isBlank()) {
+            throw new IllegalStateException("Login token salt key must be provided.");
+        }
+        if (length == null || length < 4) {
+            throw new IllegalStateException("Login token length must be greater than or equal to 4.");
+        }
+        try {
+            MessageDigest.getInstance(getHashAlgorithm());
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Invalid hash algorithm: " + getHashAlgorithm(), e);
+        }
+    }
+
 }

@@ -9,11 +9,9 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.LoginToken;
-import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.SaltToken;
 import io.redlink.more.studymanager.properties.LoginTokenProperties;
 import io.redlink.more.studymanager.repository.LoginTokenRepository;
-import io.redlink.more.studymanager.repository.ParticipantRepository;
 import io.redlink.more.studymanager.repository.SaltTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,9 +39,6 @@ class LoginTokenServiceTest {
     @Mock
     private SaltTokenRepository saltTokenRepository;
 
-    @Mock
-    private ParticipantRepository participantRepository;
-
     private LoginTokenProperties properties;
     private LoginTokenService loginTokenService;
 
@@ -61,19 +56,19 @@ class LoginTokenServiceTest {
         properties.setUseLetters(true);
         properties.setUseNumbers(true);
 
-        loginTokenService = new LoginTokenService(loginTokenRepository, saltTokenRepository, participantRepository, properties);
+        loginTokenService = new LoginTokenService(loginTokenRepository, saltTokenRepository, properties);
     }
 
     @Test
     @DisplayName("validateConfiguration should throw exception if encryption key is default or missing")
     void testValidateConfigurationEncryptionKey() {
         properties.setEncryptionKey("");
-        assertThatThrownBy(() -> loginTokenService.validateConfiguration())
+        assertThatThrownBy(() -> properties.validateConfiguration())
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("encryption key");
 
         properties.setEncryptionKey(null);
-        assertThatThrownBy(() -> loginTokenService.validateConfiguration())
+        assertThatThrownBy(() -> properties.validateConfiguration())
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("encryption key");
     }
@@ -82,21 +77,35 @@ class LoginTokenServiceTest {
     @DisplayName("validateConfiguration should throw exception if salt key is default or missing")
     void testValidateConfigurationSaltKey() {
         properties.setSaltKey("");
-        assertThatThrownBy(() -> loginTokenService.validateConfiguration())
+        assertThatThrownBy(() -> properties.validateConfiguration())
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("salt key");
 
         properties.setSaltKey(null);
-        assertThatThrownBy(() -> loginTokenService.validateConfiguration())
+        assertThatThrownBy(() -> properties.validateConfiguration())
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("salt key");
+    }
+
+
+    @Test
+    @DisplayName("validateConfiguration should throw exception if token length is null or less than 4")
+    void testValidateConfigurationTokenLength() {
+        properties.setLength(null);
+        assertThatThrownBy(() -> properties.validateConfiguration())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Login token length must be greater than or equal to 4");
+        properties.setLength(3);
+        assertThatThrownBy(() -> properties.validateConfiguration())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Login token length must be greater than or equal to 4");
     }
 
     @Test
     @DisplayName("validateConfiguration should throw exception for invalid hash algorithm")
     void testValidateConfigurationHashAlgorithm() {
         properties.setHashAlgorithm("INVALID-HASH");
-        assertThatThrownBy(() -> loginTokenService.validateConfiguration())
+        assertThatThrownBy(() -> properties.validateConfiguration())
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid hash algorithm");
     }
@@ -196,7 +205,7 @@ class LoginTokenServiceTest {
         assertThat(validToken).isNotNull();
 
         // Use a fresh instance of the service with a fresh TextEncryptor to be sure
-        LoginTokenService freshService = new LoginTokenService(loginTokenRepository, saltTokenRepository, participantRepository, properties);
+        LoginTokenService freshService = new LoginTokenService(loginTokenRepository, saltTokenRepository, properties);
 
         // 2. Prepare for retrieval
         reset(saltTokenRepository, loginTokenRepository);
@@ -270,7 +279,7 @@ class LoginTokenServiceTest {
         properties.setUseLetters(true);
         properties.setUseNumbers(false);
         properties.setLength(10);
-        loginTokenService = new LoginTokenService(loginTokenRepository, saltTokenRepository, participantRepository, properties);
+        loginTokenService = new LoginTokenService(loginTokenRepository, saltTokenRepository, properties);
         // We need to return an empty salt so it creates a new one (properly encrypted)
         when(saltTokenRepository.findByIds(any(), any())).thenReturn(Optional.empty());
 
@@ -282,7 +291,7 @@ class LoginTokenServiceTest {
         properties.setUseLetters(false);
         properties.setUseNumbers(true);
         properties.setLength(5);
-        loginTokenService = new LoginTokenService(loginTokenRepository, saltTokenRepository, participantRepository, properties);
+        loginTokenService = new LoginTokenService(loginTokenRepository, saltTokenRepository, properties);
         // Reset mock as it's a new service instance but sharing the mock
         reset(saltTokenRepository);
         when(saltTokenRepository.findByIds(any(), any())).thenReturn(Optional.empty());
@@ -293,26 +302,20 @@ class LoginTokenServiceTest {
     }
 
     @Test
-    @DisplayName("createMissingTokens should only create tokens for participants without them")
-    void testCreateMissingTokens() {
-        Participant p1 = new Participant().setStudyId(studyId).setParticipantId(1);
-        Participant p2 = new Participant().setStudyId(studyId).setParticipantId(2);
-        Participant p3 = new Participant().setStudyId(studyId).setParticipantId(3);
+    @DisplayName("createMissingToken should only create token if it does not exist")
+    void testCreateMissingToken() {
+        when(loginTokenRepository.findAllByStudyAndApplication(studyId, application)).thenReturn(List.of());
+        when(saltTokenRepository.findByIds(eq(studyId), eq(participantId))).thenReturn(Optional.empty());
 
-        when(participantRepository.listParticipants(studyId)).thenReturn(List.of(p1, p2, p3));
+        loginTokenService.createMissingToken(studyId, participantId, application);
 
-        LoginToken t1 = new LoginToken().setStudyId(studyId).setParticipantId(1).setApplication(application);
+        verify(loginTokenRepository, times(1)).save(any(LoginToken.class));
+
+        LoginToken t1 = new LoginToken().setStudyId(studyId).setParticipantId(participantId).setApplication(application);
         when(loginTokenRepository.findAllByStudyAndApplication(studyId, application)).thenReturn(List.of(t1));
 
-        // Return empty salt for p2 and p3 so new tokens can be created
-        when(saltTokenRepository.findByIds(eq(studyId), anyInt())).thenReturn(Optional.empty());
-
-        loginTokenService.createMissingTokens(studyId, application);
-
-        // Should be called for p2 and p3, but not for p1
-        verify(loginTokenRepository, times(2)).save(any(LoginToken.class));
-        verify(loginTokenRepository, never()).save(argThat(t -> t.getParticipantId() == 1));
-        verify(loginTokenRepository).save(argThat(t -> t.getParticipantId() == 2));
-        verify(loginTokenRepository).save(argThat(t -> t.getParticipantId() == 3));
+        loginTokenService.createMissingToken(studyId, participantId, application);
+        // Should not have called save again
+        verify(loginTokenRepository, times(1)).save(any(LoginToken.class));
     }
 }

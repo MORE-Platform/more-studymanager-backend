@@ -37,6 +37,7 @@ public class Participant {
 
     public enum Status {
         NEW("new"),
+        INVITED("invited"),
         ACTIVE("active"),
         ABANDONED("abandoned"),
         KICKED_OUT("kicked_out"),

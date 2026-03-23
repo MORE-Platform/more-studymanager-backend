@@ -9,11 +9,9 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.LoginToken;
-import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.SaltToken;
 import io.redlink.more.studymanager.properties.LoginTokenProperties;
 import io.redlink.more.studymanager.repository.LoginTokenRepository;
-import io.redlink.more.studymanager.repository.ParticipantRepository;
 import io.redlink.more.studymanager.repository.SaltTokenRepository;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -24,14 +22,12 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.crypto.keygen.KeyGenerators;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class LoginTokenService {
@@ -40,31 +36,14 @@ public class LoginTokenService {
 
     private final LoginTokenRepository loginTokenRepository;
     private final SaltTokenRepository saltTokenRepository;
-    private final ParticipantRepository participantRepository;
     private final LoginTokenProperties properties;
     private final TextEncryptor saltEncryptor;
 
-    public LoginTokenService(LoginTokenRepository loginTokenRepository, SaltTokenRepository saltTokenRepository, ParticipantRepository participantRepository, LoginTokenProperties properties) {
+    public LoginTokenService(LoginTokenRepository loginTokenRepository, SaltTokenRepository saltTokenRepository, LoginTokenProperties properties) {
         this.loginTokenRepository = loginTokenRepository;
         this.saltTokenRepository = saltTokenRepository;
-        this.participantRepository = participantRepository;
         this.properties = properties;
         this.saltEncryptor = Encryptors.text(properties.getEncryptionKey(), hashToken(properties.getSaltKey()));
-    }
-
-    @PostConstruct
-    public void validateConfiguration() {
-        if (properties.getEncryptionKey() == null || properties.getEncryptionKey().isBlank()) {
-            throw new IllegalStateException("Login token encryption key must be provided.");
-        }
-        if (properties.getSaltKey() == null || properties.getSaltKey().isBlank()) {
-            throw new IllegalStateException("Login token salt key must be provided.");
-        }
-        try {
-            MessageDigest.getInstance(properties.getHashAlgorithm());
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Invalid hash algorithm: " + properties.getHashAlgorithm(), e);
-        }
     }
 
     public LoginToken createToken(Long studyId, Integer participantId, String application) {
@@ -94,16 +73,10 @@ public class LoginTokenService {
                 .toList();
     }
 
-    public void createMissingTokens(Long studyId, String application) {
-        List<Participant> participants = participantRepository.listParticipants(studyId);
+    public LoginToken createMissingToken(Long studyId, Integer participantId, String application) {
         List<LoginToken> existingTokens = loginTokenRepository.findAllByStudyAndApplication(studyId, application);
-        Set<Integer> participantsWithTokens = existingTokens.stream()
-                .map(LoginToken::getParticipantId)
-                .collect(Collectors.toSet());
-
-        participants.stream()
-                .filter(p -> !participantsWithTokens.contains(p.getParticipantId()))
-                .forEach(p -> createToken(studyId, p.getParticipantId(), application));
+        Optional<LoginToken> existingApplicationToken = existingTokens.stream().filter(token -> token.getParticipantId().equals(participantId)).findFirst();
+        return existingApplicationToken.orElseGet(() -> createToken(studyId, participantId, application));
     }
 
     public LoginToken updateToken(Long studyId, Integer participantId, String application) {

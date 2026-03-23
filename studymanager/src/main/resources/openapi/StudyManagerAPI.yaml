@@ -1871,6 +1871,7 @@ components:
       type: string
       enum:
         - new
+        - invited
         - active
         - abandoned
         - kicked_out

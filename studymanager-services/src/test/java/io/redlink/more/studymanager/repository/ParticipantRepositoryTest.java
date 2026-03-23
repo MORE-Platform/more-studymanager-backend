@@ -9,7 +9,11 @@
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.configuration.JPAConfiguration;
-import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.Contact;
+import io.redlink.more.studymanager.model.ObservationGroup;
+import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyGroup;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,12 +21,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.scheduling.config.TaskExecutionOutcome;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
@@ -169,6 +170,14 @@ class ParticipantRepositoryTest {
 
         participant = participantRepository.getByIds(studyId, participant.getParticipantId());
         assertThat(participant.getStatus()).isEqualTo(Participant.Status.NEW);
+
+        participant = participantRepository.setStatusIfCurrentStatusIs(studyId, participant.getParticipantId(), Participant.Status.INVITED, Participant.Status.NEW).get();
+        assertThat(participant.getStatus()).isEqualTo(Participant.Status.INVITED);
+        assertThat(participant.getObservationGroupIds()).containsExactlyInAnyOrder(observationGroup1, observationGroup2);
+
+        // Should not change if current status does not match
+        var empty = participantRepository.setStatusIfCurrentStatusIs(studyId, participant.getParticipantId(), Participant.Status.ACTIVE, Participant.Status.NEW);
+        assertThat(empty).isEmpty();
 
         participant = participantRepository.setStatusByIds(studyId, participant.getParticipantId(), Participant.Status.ACTIVE).get();
         assertThat(participant.getStatus()).isEqualTo(Participant.Status.ACTIVE);
