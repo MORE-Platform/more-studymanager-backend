@@ -127,3 +127,11 @@ more:
       - paused
       - closed
     details-byte-limit: 1000
+
+  login-token:
+    length: 8
+    use-numbers: true
+    use-letters: true
+    encryption-key: '${LOGIN_TOKEN_ENCRYPTION_KEY:}'
+    salt-key: '${LOGIN_TOKEN_SALT_KEY:}'
+    hash-algorithm: '${LOGIN_TOKEN_HASH_ALGORITHM:SHA-256}'

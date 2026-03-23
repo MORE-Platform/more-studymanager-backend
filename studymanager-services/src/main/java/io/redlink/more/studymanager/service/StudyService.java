@@ -23,19 +23,19 @@ import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyGroupRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Stream;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 @Service
 public class StudyService {
@@ -58,6 +58,7 @@ public class StudyService {
     private final OccurredObservationService occurredObservationService;
 
     private final StudyGroupRepository studyGroupRepository;
+    private final LoginTokenService loginTokenService;
 
     private ApplicationEventPublisher applicationEventPublisher;
 
@@ -65,6 +66,7 @@ public class StudyService {
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
                         StudyStateService studyStateService, OccurredObservationService occurredObservationService,
                         ElasticService elasticService, StudyGroupRepository studyGroupRepository,
+                        LoginTokenService loginTokenService,
                         ApplicationEventPublisher applicationEventPublisher) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
@@ -73,6 +75,7 @@ public class StudyService {
         this.elasticService = elasticService;
         this.studyGroupRepository = studyGroupRepository;
         this.occurredObservationService = occurredObservationService;
+        this.loginTokenService = loginTokenService;
         this.applicationEventPublisher = applicationEventPublisher;
     }
 
@@ -109,6 +112,7 @@ public class StudyService {
     public void deleteStudy(Long studyId) {
         studyStateService.assertStudyState(studyId, Study.Status.DRAFT, Study.Status.CLOSED);
         studyRepository.deleteById(studyId);
+        loginTokenService.deleteStudyTokens(studyId);
         elasticService.deleteIndex(studyId);
         occurredObservationService.deleteOccurredObservations(studyId);
     }

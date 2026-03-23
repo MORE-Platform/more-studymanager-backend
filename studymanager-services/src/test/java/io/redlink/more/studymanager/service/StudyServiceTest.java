@@ -21,12 +21,6 @@ import io.redlink.more.studymanager.model.User;
 import io.redlink.more.studymanager.repository.StudyAclRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
 import io.redlink.more.studymanager.repository.UserRepository;
-import java.time.Instant;
-import java.util.Base64;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,18 +30,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+
+import java.time.Instant;
+import java.util.Base64;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class StudyServiceTest {
@@ -72,6 +67,9 @@ class StudyServiceTest {
 
     @Mock
     ApplicationEventPublisher applicationEventPublisher;
+
+    @Mock
+    LoginTokenService loginTokenService;
 
     @InjectMocks
     StudyService studyService;
@@ -219,5 +217,14 @@ class StudyServiceTest {
             });
 
         });
+    }
+
+    @Test
+    void testDeleteStudy() {
+        studyService.deleteStudy(1L);
+        verify(studyRepository).deleteById(1L);
+        verify(loginTokenService).deleteStudyTokens(1L);
+        verify(elasticService).deleteIndex(1L);
+        verify(occurredObservationService).deleteOccurredObservations(1L);
     }
 }

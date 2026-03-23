@@ -1706,6 +1706,11 @@ components:
           type: string
           format: date-time
           readOnly: true
+        applicationAccess:
+          type: array
+          description: Application types which the user have access to
+          items:
+            type: string
         userRoles:
           type: array
           description: the roles the _current user_ has within _this_ study.
@@ -1862,6 +1867,7 @@ components:
       type: string
       enum:
         - new
+        - invited
         - active
         - abandoned
         - kicked_out

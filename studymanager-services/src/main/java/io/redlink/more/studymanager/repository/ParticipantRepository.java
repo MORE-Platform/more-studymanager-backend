@@ -73,7 +73,9 @@ public class ParticipantRepository {
             "UPDATE participants p SET status= :new_status::participant_status, modified = now() " +
                     "WHERE study_id = :study_id AND participant_id = :participant_id " +
                     "   AND status = :current_status::participant_status " +
-                    "RETURNING *, (SELECT token FROM registration_tokens t WHERE t.study_id = p.study_id AND t.participant_id = p.participant_id ) as token";
+                    "RETURNING *, " +
+                    "    (SELECT token FROM registration_tokens t WHERE t.study_id = p.study_id AND t.participant_id = p.participant_id ) as token, " +
+                    "    (SELECT ARRAY_AGG(observation_group_id) FROM participant_observation_groups pog WHERE pog.study_id = p.study_id AND pog.participant_id = p.participant_id ) as observation_group_ids";
 
     private static final String LIST_PARTICIPANTS_FOR_CLOSING =
             "SELECT DISTINCT p.*, 't' as token, ARRAY_AGG(pog.observation_group_id) AS observation_group_ids " +
@@ -160,6 +162,16 @@ public class ParticipantRepository {
         return namedTemplate.query(SET_STATUS,
                 toParams(studyId, participantId)
                         .addValue("status", RepositoryUtils.toParam(status)),
+                getParticipantRowMapper()
+        ).stream().findFirst();
+    }
+
+    @Transactional
+    public Optional<Participant> setStatusIfCurrentStatusIs(Long studyId, Integer participantId, Participant.Status newStatus, Participant.Status currentStatus) {
+        return namedTemplate.query(SET_STATUS_IF,
+                toParams(studyId, participantId)
+                        .addValue("new_status", RepositoryUtils.toParam(newStatus))
+                        .addValue("current_status", RepositoryUtils.toParam(currentStatus)),
                 getParticipantRowMapper()
         ).stream().findFirst();
     }

@@ -32,6 +32,8 @@ public class Study {
     private Instant created;
     private Instant modified;
     private Contact contact;
+    private Set<String> applicationAccess = Collections.emptySet();
+
     private Set<StudyRole> userRoles;
 
     public enum Status {
@@ -208,6 +210,15 @@ public class Study {
         return this;
     }
 
+    public Set<String> getApplicationAccess() {
+        return applicationAccess;
+    }
+
+    public Study setApplicationAccess(Set<String> applicationAccess) {
+        this.applicationAccess = applicationAccess;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "Study{" +
@@ -228,6 +239,7 @@ public class Study {
                 ", contactPerson=" + contact.getPerson() +
                 ", contactEmail=" + contact.getEmail() +
                 ", contactPhoneNumber=" + contact.getPhoneNumber() +
+                ", applicationAccess=" + applicationAccess +
                 '}';
     }
 }
