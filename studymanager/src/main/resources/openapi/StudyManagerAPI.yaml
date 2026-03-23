@@ -584,6 +584,26 @@ paths:
         '500':
           description: Error while deleting the observation group
 
+  /studies/{studyId}/application:
+    get:
+      tags:
+        - applications
+      description: get available applications for a study
+      operationId: getStudyApplications
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+      responses:
+        '200':
+          description: successfully retrieved all available study application names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '404':
+          description: not found
+
   /studies/{studyId}/participants:
     post:
       tags:
@@ -720,6 +740,88 @@ paths:
       responses:
         '204':
           description: participant deleted
+        '500':
+          description: Error
+  /studies/{studyId}/participants/{participantId}/application:
+    get:
+      tags:
+        - participants
+      description: get all participant access data for all applications
+      operationId: getParticipantApplications
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - $ref: '#/components/parameters/ParticipantId'
+      responses:
+        '200':
+          description: successfully retrieved participant applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParticipantApplicationAccess'
+        '404':
+          description: not found
+
+
+  /studies/{studyId}/participants/{participantId}/application/{application}:
+    get:
+      tags:
+        - participants
+      description: get participant login data for an application
+      operationId: getParticipantAccessData
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - $ref: '#/components/parameters/ParticipantId'
+        - $ref: '#/components/parameters/ApplicationName'
+      responses:
+        '200':
+          description: successfully retrieved participant application access data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantApplicationAccess'
+        '404':
+          description: not found
+    put:
+      tags:
+        - participants
+      description: generate participant login data for an application, if none exist
+      operationId: createParticipantAccessData
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - $ref: '#/components/parameters/ParticipantId'
+        - $ref: '#/components/parameters/ApplicationName'
+      responses:
+        '201':
+          description: successfully created participant application access data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantApplicationAccess'
+        '403':
+          description: participant application access data already exists
+        '400':
+          description: could not create participant application access data
+        '404':
+          description: not found
+    delete:
+      tags:
+        - participants
+      description: Delete participant application access data
+      operationId: deleteParticipantApplicationAccessData
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - $ref: '#/components/parameters/ParticipantId'
+        - $ref: '#/components/parameters/ApplicationName'
+        - name: includeData
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '204':
+          description: participant access data deleted
         '500':
           description: Error
 
@@ -1862,10 +1964,6 @@ components:
           type: string
           format: date-time
           readOnly: true
-        applicationAccess:
-          type: array
-          items:
-            $ref: '#/components/schemas/ParticipantApplicationAccess'
 
     ParticipantStatus:
       type: string
@@ -2648,6 +2746,12 @@ components:
       schema:
         type: integer
         format: int32
+      required: true
+    ApplicationName:
+      name: application
+      in: path
+      schema:
+        type: string
       required: true
     ObservationId:
       name: observationId

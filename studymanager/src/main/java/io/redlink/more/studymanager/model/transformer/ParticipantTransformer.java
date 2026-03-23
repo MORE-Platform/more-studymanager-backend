@@ -46,7 +46,6 @@ public final class ParticipantTransformer {
                 .registrationUrl(registrationUri)
                 .status(ParticipantStatusDTO.fromValue(participant.getStatus().getValue()))
                 .observationGroupIds(participant.getObservationGroupIds())
-                .applicationAccess(participant.getApplicationAccess().stream().map(ParticipantTransformer::toParticipantApplicationAccessDTO_V1).toList())
                 .start(instant2)
                 .modified(instant1)
                 .created(instant);

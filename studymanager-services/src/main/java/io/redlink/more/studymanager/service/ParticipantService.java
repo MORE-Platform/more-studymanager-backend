@@ -10,6 +10,7 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ParticipantService {
@@ -60,9 +62,17 @@ public class ParticipantService {
         return participant;
     }
 
-    public void generateLoginToken(Long studyId, Integer participantId, String application) {
-        loginTokenService.createMissingToken(studyId, participantId, application);
-        participantRepository.setStatusIfCurrentStatusIs(studyId, participantId, Participant.Status.INVITED, Participant.Status.NEW);
+    public Optional<ParticipantApplicationAccess> createApplicationAccess(Long studyId, Integer participantId, String application) {
+        var accessData = applicationAccessService.createMissingApplicationAccess(studyId, participantId, application);
+        if (accessData.isPresent()) {
+            participantRepository.setStatusIfCurrentStatusIs(studyId, participantId, Participant.Status.INVITED, Participant.Status.NEW);
+        }
+        return accessData;
+    }
+
+    public void deleteParticipantApplicationAccess(Long studyId, Integer participantId, String application) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
+        applicationAccessService.deleteApplicationAccess(studyId, participantId, application);
     }
 
     public void deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
@@ -104,7 +114,6 @@ public class ParticipantService {
     }
 
     private void alignParticipantsInActiveState(Study study) {
-        applicationAccessService.generateMissingApplicationAccess(study.getStudyId(), study.getApplicationAccess());
         applicationAccessService.deleteApplicationAccessExcept(study.getStudyId(), study.getApplicationAccess());
     }
 

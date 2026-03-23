@@ -11,12 +11,21 @@ package io.redlink.more.studymanager.model;
 import java.util.Objects;
 
 public class ParticipantApplicationAccess {
-
+    private boolean newlyCreated;
     private String accessCode;
     private String applicationType;
     private String applicationUrl;
 
     public ParticipantApplicationAccess() {
+    }
+
+    public boolean isNewlyCreated() {
+        return newlyCreated;
+    }
+
+    public ParticipantApplicationAccess setNewlyCreated(boolean newlyCreated) {
+        this.newlyCreated = newlyCreated;
+        return this;
     }
 
     public String getAccessCode() {

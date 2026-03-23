@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
+import io.redlink.more.studymanager.api.v1.model.ParticipantApplicationAccessDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ParticipantsApi;
 import io.redlink.more.studymanager.audit.Audited;
@@ -147,5 +148,48 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
                 toParticipantDTO(participant)
                         .dataHealthIndicator(getDataHealthIndicator(studyId, participant.getParticipantId()))
         );
+    }
+
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Override
+    @Audited
+    public ResponseEntity<ParticipantApplicationAccessDTO> createParticipantAccessData(Long studyId, Integer participantId, String application) {
+        return service.createApplicationAccess(studyId, participantId, application)
+                .map(it -> {
+                    if (it.isNewlyCreated()) {
+                        return ResponseEntity.status(HttpStatus.CREATED).body(ParticipantTransformer.toParticipantApplicationAccessDTO_V1(it));
+                    } else {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<ParticipantApplicationAccessDTO>build();
+                    }
+                })
+                .orElseThrow(() -> new NotFoundException("Participant or application not found"));
+    }
+
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Override
+    @Audited
+    public ResponseEntity<List<ParticipantApplicationAccessDTO>> getParticipantApplications(Long studyId, Integer participantId) {
+        return ResponseEntity.ok(
+                service.getParticipant(studyId, participantId).getApplicationAccess().stream()
+                        .map(ParticipantTransformer::toParticipantApplicationAccessDTO_V1)
+                        .toList()
+        );
+    }
+
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Override
+    @Audited
+    public ResponseEntity<ParticipantApplicationAccessDTO> getParticipantAccessData(Long studyId, Integer participantId, String application) {
+        return service.createApplicationAccess(studyId, participantId, application)
+                .map(it -> ResponseEntity.ok(ParticipantTransformer.toParticipantApplicationAccessDTO_V1(it)))
+                .orElseThrow(() -> new NotFoundException("Participant or application not found"));
+    }
+
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Override
+    @Audited
+    public ResponseEntity<Void> deleteParticipantApplicationAccessData(Long studyId, Integer participantId, String application, Boolean includeData) {
+        service.deleteParticipantApplicationAccess(studyId, participantId, application);
+        return ResponseEntity.noContent().build();
     }
 }

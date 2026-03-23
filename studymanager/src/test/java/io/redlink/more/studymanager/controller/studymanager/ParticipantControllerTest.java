@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
@@ -257,5 +258,108 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$.created").exists())
                 .andExpect(jsonPath("$.registrationToken").isEmpty())
                 .andExpect(jsonPath("$.registrationUrl").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Create participant access data should return 201 when newly created")
+    void testCreateParticipantAccessData() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final String application = "test-app";
+
+        ParticipantApplicationAccess access = new ParticipantApplicationAccess()
+                .setNewlyCreated(true)
+                .setApplicationType(application)
+                .setAccessCode("code123")
+                .setApplicationUrl("http://app.url/1/uuid");
+
+        when(participantService.createApplicationAccess(studyId, participantId, application))
+                .thenReturn(java.util.Optional.of(access));
+
+        mvc.perform(put("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
+                        studyId, participantId, application))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.applicationType").value(application))
+                .andExpect(jsonPath("$.accessCode").value("code123"))
+                .andExpect(jsonPath("$.applicationUrl").value("http://app.url/1/uuid"));
+    }
+
+    @Test
+    @DisplayName("Create participant access data should return 403 when already exists")
+    void testCreateParticipantAccessDataAlreadyExists() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final String application = "test-app";
+
+        ParticipantApplicationAccess access = new ParticipantApplicationAccess()
+                .setNewlyCreated(false)
+                .setApplicationType(application)
+                .setAccessCode("code123")
+                .setApplicationUrl("http://app.url/1/uuid");
+
+        when(participantService.createApplicationAccess(studyId, participantId, application))
+                .thenReturn(java.util.Optional.of(access));
+
+        mvc.perform(put("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
+                        studyId, participantId, application))
+                .andDo(print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("Get participant access data should return 200")
+    void testGetParticipantAccessData() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final String application = "test-app";
+
+        ParticipantApplicationAccess access = new ParticipantApplicationAccess()
+                .setApplicationType(application)
+                .setAccessCode("code123")
+                .setApplicationUrl("http://app.url/1/uuid");
+
+        when(participantService.createApplicationAccess(studyId, participantId, application))
+                .thenReturn(java.util.Optional.of(access));
+
+        mvc.perform(get("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
+                        studyId, participantId, application))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.applicationType").value(application))
+                .andExpect(jsonPath("$.accessCode").value("code123"))
+                .andExpect(jsonPath("$.applicationUrl").value("http://app.url/1/uuid"));
+    }
+
+    @Test
+    @DisplayName("Get participant access data should return 404 when not found")
+    void testGetParticipantAccessDataNotFound() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final String application = "test-app";
+
+        when(participantService.createApplicationAccess(studyId, participantId, application))
+                .thenReturn(java.util.Optional.empty());
+
+        mvc.perform(get("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
+                        studyId, participantId, application))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Delete participant access data should return 204")
+    void testDeleteParticipantAccessData() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final String application = "test-app";
+
+        mvc.perform(delete("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
+                        studyId, participantId, application))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+        org.mockito.Mockito.verify(participantService).deleteParticipantApplicationAccess(studyId, participantId, application);
     }
 }

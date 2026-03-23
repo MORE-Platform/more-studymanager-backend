@@ -13,9 +13,11 @@ import io.redlink.more.studymanager.model.LoginTokenApplication;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.ParticipantApplication;
 import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
+import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.properties.ApplicationProperties;
 import io.redlink.more.studymanager.repository.ParticipantApplicationRepository;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
+import io.redlink.more.studymanager.repository.StudyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +49,8 @@ class ApplicationAccessServiceTest {
     @Mock
     private ParticipantRepository participantRepository;
     @Mock
+    private StudyRepository studyRepository;
+    @Mock
     private ApplicationProperties applicationProperties;
 
     @InjectMocks
@@ -65,56 +69,35 @@ class ApplicationAccessServiceTest {
     }
 
     @Test
-    @DisplayName("generateApplicationAccess should create tokens and applications if they don't exist")
-    void testGenerateApplicationAccess() {
+    @DisplayName("createMissingApplicationAccess should create tokens and applications if they don't exist")
+    void testCreateMissingApplicationAccess() {
+        Study study = new Study().setApplicationAccess(Set.of(application));
+        when(studyRepository.getById(studyId)).thenReturn(Optional.of(study));
         when(loginTokenService.getToken(anyLong(), anyInt(), anyString())).thenReturn(Optional.empty());
+        when(loginTokenService.createToken(anyLong(), anyInt(), anyString())).thenReturn(new LoginToken().setCode("code"));
         when(participantApplicationRepository.findByIds(anyLong(), anyInt(), anyString())).thenReturn(Optional.empty());
+        when(participantApplicationRepository.save(any(ParticipantApplication.class))).thenReturn(new ParticipantApplication().setUuid(UUID.randomUUID()));
 
-        applicationAccessService.generateApplicationAccess(studyId, participantId, Set.of(application));
+        Optional<ParticipantApplicationAccess> result = applicationAccessService.createMissingApplicationAccess(studyId, participantId, application);
 
+        assertThat(result).isPresent();
         verify(loginTokenService).createToken(studyId, participantId, application);
         verify(participantApplicationRepository).save(any(ParticipantApplication.class));
     }
 
     @Test
-    @DisplayName("generateApplicationAccess should not create tokens and applications if they exist")
-    void testGenerateApplicationAccessExisting() {
-        when(loginTokenService.getToken(anyLong(), anyInt(), anyString())).thenReturn(Optional.of(new LoginToken()));
-        when(participantApplicationRepository.findByIds(anyLong(), anyInt(), anyString())).thenReturn(Optional.of(new ParticipantApplication()));
+    @DisplayName("createMissingApplicationAccess should not create tokens and applications if they exist")
+    void testCreateMissingApplicationAccessExisting() {
+        Study study = new Study().setApplicationAccess(Set.of(application));
+        when(studyRepository.getById(studyId)).thenReturn(Optional.of(study));
+        when(loginTokenService.getToken(anyLong(), anyInt(), anyString())).thenReturn(Optional.of(new LoginToken().setCode("code")));
+        when(participantApplicationRepository.findByIds(anyLong(), anyInt(), anyString())).thenReturn(Optional.of(new ParticipantApplication().setUuid(UUID.randomUUID())));
 
-        applicationAccessService.generateApplicationAccess(studyId, participantId, Set.of(application));
+        Optional<ParticipantApplicationAccess> result = applicationAccessService.createMissingApplicationAccess(studyId, participantId, application);
 
+        assertThat(result).isPresent();
         verify(loginTokenService, never()).createToken(anyLong(), anyInt(), anyString());
         verify(participantApplicationRepository, never()).save(any(ParticipantApplication.class));
-    }
-
-    @Test
-    @DisplayName("generateMissingApplicationAccess should create missing tokens and applications for all participants")
-    void testGenerateMissingApplicationAccess() {
-        Participant participant = new Participant().setParticipantId(participantId);
-        when(participantRepository.listParticipants(studyId)).thenReturn(List.of(participant));
-        when(participantApplicationRepository.findAllByStudyAndApplication(studyId, application)).thenReturn(Collections.emptyList());
-
-        applicationAccessService.generateMissingApplicationAccess(studyId, Set.of(application));
-
-        verify(loginTokenService).createMissingTokens(studyId, application);
-        verify(participantApplicationRepository).save(any(ParticipantApplication.class));
-    }
-
-    @Test
-    @DisplayName("generateApplicationAccess should do nothing if applications is empty")
-    void testGenerateApplicationAccessEmpty() {
-        applicationAccessService.generateApplicationAccess(studyId, participantId, Collections.emptyList());
-
-        verify(loginTokenService, never()).createToken(anyLong(), anyInt(), anyString());
-    }
-
-    @Test
-    @DisplayName("generateApplicationAccess should skip invalid applications")
-    void testGenerateApplicationAccessInvalid() {
-        applicationAccessService.generateApplicationAccess(studyId, participantId, Set.of("INVALID_APP"));
-
-        verify(loginTokenService, never()).createToken(anyLong(), anyInt(), anyString());
     }
 
     @Test
@@ -128,6 +111,13 @@ class ApplicationAccessServiceTest {
     @Test
     @DisplayName("updateApplicationAccess should delete existing and generate new access")
     void testUpdateApplicationAccess() {
+        Study study = new Study().setApplicationAccess(Set.of(application));
+        when(studyRepository.getById(studyId)).thenReturn(Optional.of(study));
+        when(loginTokenService.getToken(anyLong(), anyInt(), anyString())).thenReturn(Optional.empty());
+        when(loginTokenService.createToken(anyLong(), anyInt(), anyString())).thenReturn(new LoginToken().setCode("code"));
+        when(participantApplicationRepository.findByIds(anyLong(), anyInt(), anyString())).thenReturn(Optional.empty());
+        when(participantApplicationRepository.save(any(ParticipantApplication.class))).thenReturn(new ParticipantApplication().setUuid(UUID.randomUUID()));
+
         applicationAccessService.updateApplicationAccess(studyId, participantId, Set.of(application));
 
         verify(loginTokenService).deleteParticipantTokens(studyId, participantId);

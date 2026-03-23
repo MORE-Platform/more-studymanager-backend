@@ -134,9 +134,11 @@ class ParticipantServiceTest {
     }
 
     @Test
-    void testGenerateLoginTokenSetsStatus() {
-        participantService.generateLoginToken(1L, 100, "app");
-        verify(loginTokenService).createMissingToken(1L, 100, "app");
+    void testCreateApplicationAccessSetsStatus() {
+        when(applicationAccessService.createMissingApplicationAccess(1L, 100, "app"))
+                .thenReturn(java.util.Optional.of(new io.redlink.more.studymanager.model.ParticipantApplicationAccess().setNewlyCreated(true)));
+        participantService.createApplicationAccess(1L, 100, "app");
+        verify(applicationAccessService).createMissingApplicationAccess(1L, 100, "app");
         verify(participantRepository).setStatusIfCurrentStatusIs(1L, 100, Participant.Status.INVITED, Participant.Status.NEW);
     }
 }

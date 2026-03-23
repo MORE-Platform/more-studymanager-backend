@@ -40,6 +40,9 @@ public class ParticipantApplicationRepository {
     private static final String SELECT_BY_STUDY_AND_APPLICATION =
             "SELECT * FROM participant_applications WHERE study_id = ? AND application = ?";
 
+    private static final String DELETE_BY_PARTICIPANT_AND_APPLICATION =
+            "DELETE FROM participant_applications WHERE study_id = ? AND participant_id = ? AND application = ?";
+
     private static final String DELETE_BY_PARTICIPANT =
             "DELETE FROM participant_applications WHERE study_id = ? AND participant_id = ?";
 
@@ -82,6 +85,10 @@ public class ParticipantApplicationRepository {
 
     public List<ParticipantApplication> findAllByStudyAndApplication(Long studyId, String application) {
         return template.query(SELECT_BY_STUDY_AND_APPLICATION, getRowMapper(), studyId, application);
+    }
+
+    public void delete(Long studyId, Integer participantId, String application) {
+        template.update(DELETE_BY_PARTICIPANT_AND_APPLICATION, studyId, participantId, application);
     }
 
     public void deleteAllByParticipant(Long studyId, Integer participantId) {
