@@ -9,20 +9,15 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.LoginToken;
-import io.redlink.more.studymanager.model.LoginTokenApplication;
-import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.ParticipantApplication;
 import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.properties.ApplicationProperties;
 import io.redlink.more.studymanager.repository.ParticipantApplicationRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +27,6 @@ import java.util.UUID;
 
 @Service
 public class ApplicationAccessService {
-    private static final Logger LOG = LoggerFactory.getLogger(ApplicationAccessService.class);
     private final LoginTokenService loginTokenService;
     private final ParticipantApplicationRepository participantApplicationRepository;
     private final StudyRepository studyRepository;
@@ -113,34 +107,43 @@ public class ApplicationAccessService {
         participantApplicationRepository.deleteAllByStudyExcept(studyId, applications);
     }
 
+    public Optional<ParticipantApplicationAccess> getParticipantApplicationAccess(Long studyId, Integer participantId, String application) {
+        if (studyId == null || participantId == null || application == null || application.isEmpty() || !applicationProperties.getUrls().containsKey(application)) {
+            throw new IllegalArgumentException("Provided arguments are invalid!");
+        }
+        Optional<ParticipantApplication> applicationAccess = participantApplicationRepository.findByIds(studyId, participantId, application);
+        if (applicationAccess.isEmpty()) {
+            return Optional.empty();
+        }
+        return getCredentialsForApplication(studyId, participantId, applicationAccess.get());
+    }
+
     public List<ParticipantApplicationAccess> getParticipantApplicationAccess(Long studyId, Integer participantId) {
         return participantApplicationRepository.findAllByParticipant(studyId, participantId).stream()
                 .filter(pa -> applicationProperties.getUrls().containsKey(pa.getApplication()))
-                .map(pa -> {
-                    String code = loginTokenService.getToken(studyId, participantId, pa.getApplication())
-                            .map(LoginToken::getCode)
-                            .orElse(null);
-                    String baseUrl = applicationProperties.getUrls().get(pa.getApplication());
-                    return new ParticipantApplicationAccess()
-                            .setApplicationType(pa.getApplication())
-                            .setAccessCode(code)
-                            .setApplicationUrl(UriComponentsBuilder.fromUriString(baseUrl)
-                                    .pathSegment("{studyId}", "{uuid}")
-                                    .build(Map.of("studyId", studyId, "uuid", pa.getUuid()))
-                                    .toString());
-                })
+                .map(pa -> getCredentialsForApplication(studyId, participantId, pa))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .toList();
     }
 
-    public URI generateSignupUrl(Participant participant) {
-        if (participant.getRegistrationToken() == null) return null;
-        String baseUrl = applicationProperties.getUrls().get(LoginTokenApplication.PARTICIPANT_PORTAL.name());
-        if (baseUrl == null) return null;
-
-        return UriComponentsBuilder.fromUriString(baseUrl)
-                .pathSegment("api", "v1", "signup")
-                .queryParam("token", "{token}")
-                .build(Map.of("token", participant.getRegistrationToken()));
+    private Optional<ParticipantApplicationAccess> getCredentialsForApplication(Long studyId, Integer participantId, ParticipantApplication application) {
+        if (!applicationProperties.getUrls().containsKey(application.getApplication())) {
+            return Optional.empty();
+        }
+        Optional<String> code = loginTokenService.getToken(studyId, participantId, application.getApplication())
+                .map(LoginToken::getCode);
+        if (code.isEmpty()) {
+            return Optional.empty();
+        }
+        String baseUrl = applicationProperties.getUrls().get(application.getApplication());
+        return Optional.ofNullable(new ParticipantApplicationAccess()
+                .setApplicationType(application.getApplication())
+                .setAccessCode(code.get())
+                .setApplicationUrl(UriComponentsBuilder.fromUriString(baseUrl)
+                        .pathSegment("{studyId}", "{uuid}")
+                        .build(Map.of("studyId", studyId, "uuid", application.getUuid()))
+                        .toString()));
     }
 
 }

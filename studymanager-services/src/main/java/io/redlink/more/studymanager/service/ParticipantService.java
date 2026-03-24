@@ -46,7 +46,6 @@ public class ParticipantService {
 
     public List<Participant> listParticipants(Long studyId) {
         return participantRepository.listParticipants(studyId).stream()
-                .map(p -> p.setApplicationAccess(applicationAccessService.getParticipantApplicationAccess(studyId, p.getParticipantId())))
                 .toList();
     }
 
@@ -55,11 +54,7 @@ public class ParticipantService {
     }
 
     public Participant getParticipant(Long studyId, Integer participantId) {
-        Participant participant = participantRepository.getByIds(studyId, participantId);
-        if (participant != null) {
-            participant.setApplicationAccess(applicationAccessService.getParticipantApplicationAccess(studyId, participantId));
-        }
-        return participant;
+        return participantRepository.getByIds(studyId, participantId);
     }
 
     public Optional<ParticipantApplicationAccess> createApplicationAccess(Long studyId, Integer participantId, String application) {

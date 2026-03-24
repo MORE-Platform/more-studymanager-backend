@@ -20,6 +20,7 @@ import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.properties.GatewayProperties;
+import io.redlink.more.studymanager.service.ApplicationAccessService;
 import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import org.slf4j.Logger;
@@ -42,12 +43,14 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     private final ParticipantService service;
     private final OccurredObservationService occurredObservationService;
     private final GatewayProperties gatewayProperties;
+    private final ApplicationAccessService applicationAccessService;
 
 
-    public ParticipantsApiV1Controller(ParticipantService service, OccurredObservationService occurredObservationService, GatewayProperties gatewayProperties) {
+    public ParticipantsApiV1Controller(ParticipantService service, OccurredObservationService occurredObservationService, GatewayProperties gatewayProperties, ApplicationAccessService applicationAccessService) {
         this.service = service;
         this.occurredObservationService = occurredObservationService;
         this.gatewayProperties = gatewayProperties;
+        this.applicationAccessService = applicationAccessService;
     }
 
     private ParticipantDTO toParticipantDTO(Participant p) {
@@ -169,11 +172,12 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     @Override
     @Audited
     public ResponseEntity<List<ParticipantApplicationAccessDTO>> getParticipantApplications(Long studyId, Integer participantId) {
-        return ResponseEntity.ok(
-                service.getParticipant(studyId, participantId).getApplicationAccess().stream()
-                        .map(ParticipantTransformer::toParticipantApplicationAccessDTO_V1)
-                        .toList()
-        );
+        List<ParticipantApplicationAccessDTO> applications = applicationAccessService
+                .getParticipantApplicationAccess(studyId, participantId)
+                .stream()
+                .map(ParticipantTransformer::toParticipantApplicationAccessDTO_V1)
+                .toList();
+        return ResponseEntity.ok(applications);
     }
 
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})

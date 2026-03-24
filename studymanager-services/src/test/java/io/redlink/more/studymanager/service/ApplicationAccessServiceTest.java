@@ -10,7 +10,6 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.model.LoginToken;
 import io.redlink.more.studymanager.model.LoginTokenApplication;
-import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.ParticipantApplication;
 import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
 import io.redlink.more.studymanager.model.Study;
@@ -26,8 +25,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.net.URI;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,38 +169,5 @@ class ApplicationAccessServiceTest {
         assertThat(access.getAccessCode()).isEqualTo("secret-code");
         assertThat(access.getApplicationUrl()).contains(uuid.toString());
         assertThat(access.getApplicationUrl()).startsWith(baseUrl);
-    }
-
-    @Test
-    @DisplayName("generateSignupUrl should return correct URI for participant")
-    void testGenerateSignupUrl() {
-        Participant participant = new Participant().setRegistrationToken("reg-token");
-
-        URI result = applicationAccessService.generateSignupUrl(participant);
-
-        assertThat(result).isNotNull();
-        assertThat(result.toString()).contains("reg-token");
-        assertThat(result.toString()).startsWith(baseUrl);
-    }
-
-    @Test
-    @DisplayName("generateSignupUrl should return null if participant has no registration token")
-    void testGenerateSignupUrlNoToken() {
-        Participant participant = new Participant();
-
-        URI result = applicationAccessService.generateSignupUrl(participant);
-
-        assertThat(result).isNull();
-    }
-
-    @Test
-    @DisplayName("generateSignupUrl should return null if base url is not configured")
-    void testGenerateSignupUrlNoBaseUrl() {
-        when(applicationProperties.getUrls()).thenReturn(Collections.emptyMap());
-        Participant participant = new Participant().setRegistrationToken("token");
-
-        URI result = applicationAccessService.generateSignupUrl(participant);
-
-        assertThat(result).isNull();
     }
 }

@@ -15,6 +15,7 @@ import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.GatewayProperties;
+import io.redlink.more.studymanager.service.ApplicationAccessService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
@@ -60,6 +61,9 @@ class ParticipantControllerTest {
 
     @MockitoBean
     OccurredObservationService occurredObservationService;
+
+    @MockitoBean
+    ApplicationAccessService applicationAccessService;
 
     @Autowired
     ObjectMapper mapper;
