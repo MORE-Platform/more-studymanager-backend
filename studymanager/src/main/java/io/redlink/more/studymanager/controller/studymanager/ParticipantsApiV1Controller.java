@@ -157,7 +157,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     @Override
     @Audited
     public ResponseEntity<ParticipantApplicationAccessDTO> createParticipantAccessData(Long studyId, Integer participantId, String application) {
-        return service.createApplicationAccess(studyId, participantId, application)
+        return applicationAccessService.createApplicationAccess(studyId, participantId, application)
                 .map(it -> {
                     if (it.isNewlyCreated()) {
                         return ResponseEntity.status(HttpStatus.CREATED).body(ParticipantTransformer.toParticipantApplicationAccessDTO_V1(it));
@@ -184,7 +184,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     @Override
     @Audited
     public ResponseEntity<ParticipantApplicationAccessDTO> getParticipantAccessData(Long studyId, Integer participantId, String application) {
-        return service.createApplicationAccess(studyId, participantId, application)
+        return applicationAccessService.createApplicationAccess(studyId, participantId, application)
                 .map(it -> ResponseEntity.ok(ParticipantTransformer.toParticipantApplicationAccessDTO_V1(it)))
                 .orElseThrow(() -> new NotFoundException("Participant or application not found"));
     }
@@ -193,7 +193,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     @Override
     @Audited
     public ResponseEntity<Void> deleteParticipantApplicationAccessData(Long studyId, Integer participantId, String application, Boolean includeData) {
-        service.deleteParticipantApplicationAccess(studyId, participantId, application);
+        applicationAccessService.deleteParticipantApplicationAccess(studyId, participantId, application);
         return ResponseEntity.noContent().build();
     }
 }

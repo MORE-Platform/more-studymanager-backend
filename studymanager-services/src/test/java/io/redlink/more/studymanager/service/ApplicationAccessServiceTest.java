@@ -8,8 +8,10 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.model.LoginToken;
 import io.redlink.more.studymanager.model.LoginTokenApplication;
+import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.ParticipantApplication;
 import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
 import io.redlink.more.studymanager.model.Study;
@@ -45,6 +47,8 @@ class ApplicationAccessServiceTest {
     private ParticipantApplicationRepository participantApplicationRepository;
     @Mock
     private ParticipantRepository participantRepository;
+    @Mock
+    private StudyStateService studyStateService;
     @Mock
     private StudyRepository studyRepository;
     @Mock
@@ -148,6 +152,52 @@ class ApplicationAccessServiceTest {
 
         verify(loginTokenService).deleteTokensExcept(studyId, applications);
         verify(participantApplicationRepository).deleteAllByStudyExcept(studyId, applications);
+    }
+
+    @Test
+    @DisplayName("createApplicationAccess should call createMissingApplicationAccess and set status")
+    void testCreateApplicationAccess() {
+        Study study = new Study().setApplicationAccess(Set.of(application));
+        when(studyRepository.getById(studyId)).thenReturn(Optional.of(study));
+        when(loginTokenService.getToken(anyLong(), anyInt(), anyString())).thenReturn(Optional.empty());
+        when(loginTokenService.createToken(anyLong(), anyInt(), anyString())).thenReturn(new LoginToken().setCode("code"));
+        when(participantApplicationRepository.findByIds(anyLong(), anyInt(), anyString())).thenReturn(Optional.empty());
+        when(participantApplicationRepository.save(any(ParticipantApplication.class))).thenReturn(new ParticipantApplication().setUuid(UUID.randomUUID()));
+
+        Optional<ParticipantApplicationAccess> result = applicationAccessService.createApplicationAccess(studyId, participantId, application);
+
+        assertThat(result).isPresent();
+        verify(participantRepository).setStatusIfCurrentStatusIs(studyId, participantId, Participant.Status.INVITED, Participant.Status.NEW);
+    }
+
+    @Test
+    @DisplayName("deleteParticipantApplicationAccess should assert study not closed and delete access")
+    void testDeleteParticipantApplicationAccess() {
+        applicationAccessService.deleteParticipantApplicationAccess(studyId, participantId, application);
+
+        verify(studyStateService).assertStudyNotInState(studyId, Study.Status.CLOSED);
+        verify(loginTokenService).deleteToken(studyId, participantId, application);
+        verify(participantApplicationRepository).delete(studyId, participantId, application);
+    }
+
+    @Test
+    @DisplayName("handleStudyStateChange should align application access")
+    void testHandleStudyStateChange() {
+        Study study = new Study()
+                .setStudyId(studyId)
+                .setStudyState(Study.Status.DRAFT);
+
+        applicationAccessService.handleStudyStateChange(new StudyStateChangedEvent(this, study, Study.Status.ACTIVE));
+        verify(loginTokenService).deleteStudyTokens(studyId);
+        verify(participantApplicationRepository).deleteAllByStudy(studyId);
+
+        reset(loginTokenService, participantApplicationRepository);
+
+        study.setStudyState(Study.Status.ACTIVE);
+        study.setApplicationAccess(Set.of(application));
+        applicationAccessService.handleStudyStateChange(new StudyStateChangedEvent(this, study, Study.Status.DRAFT));
+        verify(loginTokenService).deleteTokensExcept(studyId, Set.of(application));
+        verify(participantApplicationRepository).deleteAllByStudyExcept(studyId, Set.of(application));
     }
 
     @Test

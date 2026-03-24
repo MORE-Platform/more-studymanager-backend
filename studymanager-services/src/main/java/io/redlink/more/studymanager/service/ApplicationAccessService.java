@@ -8,14 +8,19 @@
  */
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.model.LoginToken;
+import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.ParticipantApplication;
 import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.properties.ApplicationProperties;
 import io.redlink.more.studymanager.repository.ParticipantApplicationRepository;
+import io.redlink.more.studymanager.repository.ParticipantRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collection;
@@ -29,18 +34,30 @@ import java.util.UUID;
 public class ApplicationAccessService {
     private final LoginTokenService loginTokenService;
     private final ParticipantApplicationRepository participantApplicationRepository;
+    private final ParticipantRepository participantRepository;
+    private final StudyStateService studyStateService;
     private final StudyRepository studyRepository;
     private final ApplicationProperties applicationProperties;
 
-    public ApplicationAccessService(LoginTokenService loginTokenService, ParticipantApplicationRepository participantApplicationRepository, StudyRepository studyRepository, ApplicationProperties applicationProperties) {
+    public ApplicationAccessService(LoginTokenService loginTokenService, ParticipantApplicationRepository participantApplicationRepository, ParticipantRepository participantRepository, StudyStateService studyStateService, StudyRepository studyRepository, ApplicationProperties applicationProperties) {
         this.loginTokenService = loginTokenService;
         this.participantApplicationRepository = participantApplicationRepository;
+        this.participantRepository = participantRepository;
+        this.studyStateService = studyStateService;
         this.studyRepository = studyRepository;
         this.applicationProperties = applicationProperties;
     }
 
     private boolean isValidApplication(String application) {
         return application != null && !application.isEmpty() && applicationProperties.getUrls().containsKey(application);
+    }
+
+    public Optional<ParticipantApplicationAccess> createApplicationAccess(Long studyId, Integer participantId, String application) {
+        var accessData = createMissingApplicationAccess(studyId, participantId, application);
+        if (accessData.isPresent()) {
+            participantRepository.setStatusIfCurrentStatusIs(studyId, participantId, Participant.Status.INVITED, Participant.Status.NEW);
+        }
+        return accessData;
     }
 
     public Optional<ParticipantApplicationAccess> createMissingApplicationAccess(Long studyId, Integer participantId, String application) {
@@ -146,4 +163,21 @@ public class ApplicationAccessService {
                         .toString()));
     }
 
+    public void deleteParticipantApplicationAccess(Long studyId, Integer participantId, String application) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
+        deleteApplicationAccess(studyId, participantId, application);
+    }
+
+    @EventListener
+    @Transactional
+    public void handleStudyStateChange(StudyStateChangedEvent event) {
+        alignApplicationAccessWithStudyState(event.getStudy());
+    }
+
+    private void alignApplicationAccessWithStudyState(Study study) {
+        switch (study.getStudyState()) {
+            case DRAFT -> deleteApplicationAccess(study.getStudyId());
+            case ACTIVE, PREVIEW -> deleteApplicationAccessExcept(study.getStudyId(), study.getApplicationAccess());
+        }
+    }
 }

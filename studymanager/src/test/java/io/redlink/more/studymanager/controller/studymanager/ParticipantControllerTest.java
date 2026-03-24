@@ -277,7 +277,7 @@ class ParticipantControllerTest {
                 .setAccessCode("code123")
                 .setApplicationUrl("http://app.url/1/uuid");
 
-        when(participantService.createApplicationAccess(studyId, participantId, application))
+        when(applicationAccessService.createApplicationAccess(studyId, participantId, application))
                 .thenReturn(java.util.Optional.of(access));
 
         mvc.perform(put("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
@@ -302,7 +302,7 @@ class ParticipantControllerTest {
                 .setAccessCode("code123")
                 .setApplicationUrl("http://app.url/1/uuid");
 
-        when(participantService.createApplicationAccess(studyId, participantId, application))
+        when(applicationAccessService.createApplicationAccess(studyId, participantId, application))
                 .thenReturn(java.util.Optional.of(access));
 
         mvc.perform(put("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
@@ -324,7 +324,7 @@ class ParticipantControllerTest {
                 .setAccessCode("code123")
                 .setApplicationUrl("http://app.url/1/uuid");
 
-        when(participantService.createApplicationAccess(studyId, participantId, application))
+        when(applicationAccessService.createApplicationAccess(studyId, participantId, application))
                 .thenReturn(java.util.Optional.of(access));
 
         mvc.perform(get("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
@@ -343,7 +343,7 @@ class ParticipantControllerTest {
         final int participantId = 100;
         final String application = "test-app";
 
-        when(participantService.createApplicationAccess(studyId, participantId, application))
+        when(applicationAccessService.createApplicationAccess(studyId, participantId, application))
                 .thenReturn(java.util.Optional.empty());
 
         mvc.perform(get("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
@@ -364,6 +364,6 @@ class ParticipantControllerTest {
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
-        org.mockito.Mockito.verify(participantService).deleteParticipantApplicationAccess(studyId, participantId, application);
+        org.mockito.Mockito.verify(applicationAccessService).deleteParticipantApplicationAccess(studyId, participantId, application);
     }
 }

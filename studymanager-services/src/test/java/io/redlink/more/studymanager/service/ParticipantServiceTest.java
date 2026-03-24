@@ -98,26 +98,19 @@ class ParticipantServiceTest {
         Mockito.verify(participantRepository, Mockito.never()).resetParticipants(anyLong(), any());
         Mockito.verify(participantRepository, Mockito.never()).cleanupParticipants(anyLong());
 
-        Mockito.reset(applicationAccessService);
-        study.setApplicationAccess(Collections.emptySet());
-        participantService.handleStudyStateChange(new StudyStateChangedEvent(this, study, Study.Status.DRAFT));
-        Mockito.verify(applicationAccessService, Mockito.times(1)).deleteApplicationAccessExcept(eq(1L), eq(Collections.emptySet()));
-
         //validate participants are reset if study goes to DRAFT state
         study.setStudyState(Study.Status.DRAFT);
         participantService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.PREVIEW ));
         Mockito.verify(participantRepository, Mockito.times(1)).resetParticipants(eq(study.getStudyId()), any());
         Mockito.verify(participantRepository, Mockito.never()).cleanupParticipants(anyLong());
-        Mockito.verify(applicationAccessService, Mockito.times(1)).deleteApplicationAccess(eq(study.getStudyId()));
 
-        Mockito.reset(participantRepository, applicationAccessService);
+        Mockito.reset(participantRepository);
 
         //validate participants are cleaned if study goes to CLOSED state
         study.setStudyState(Study.Status.CLOSED);
         participantService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.ACTIVE ));
         Mockito.verify(participantRepository, Mockito.times(1)).cleanupParticipants(eq(study.getStudyId()));
         Mockito.verify(participantRepository, Mockito.never()).resetParticipants(anyLong(), any());
-        Mockito.verify(applicationAccessService, Mockito.times(1)).deleteApplicationAccess(eq(study.getStudyId()));
 
     }
 
@@ -133,12 +126,4 @@ class ParticipantServiceTest {
         verify(applicationAccessService, times(0)).deleteApplicationAccess(anyLong(), any());
     }
 
-    @Test
-    void testCreateApplicationAccessSetsStatus() {
-        when(applicationAccessService.createMissingApplicationAccess(1L, 100, "app"))
-                .thenReturn(java.util.Optional.of(new io.redlink.more.studymanager.model.ParticipantApplicationAccess().setNewlyCreated(true)));
-        participantService.createApplicationAccess(1L, 100, "app");
-        verify(applicationAccessService).createMissingApplicationAccess(1L, 100, "app");
-        verify(participantRepository).setStatusIfCurrentStatusIs(1L, 100, Participant.Status.INVITED, Participant.Status.NEW);
-    }
 }

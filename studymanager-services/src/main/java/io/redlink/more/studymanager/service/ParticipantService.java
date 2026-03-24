@@ -10,7 +10,6 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.model.Participant;
-import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
@@ -20,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ParticipantService {
@@ -45,8 +43,7 @@ public class ParticipantService {
     }
 
     public List<Participant> listParticipants(Long studyId) {
-        return participantRepository.listParticipants(studyId).stream()
-                .toList();
+        return participantRepository.listParticipants(studyId);
     }
 
     public List<Participant> listParticipantsForClosing() {
@@ -55,19 +52,6 @@ public class ParticipantService {
 
     public Participant getParticipant(Long studyId, Integer participantId) {
         return participantRepository.getByIds(studyId, participantId);
-    }
-
-    public Optional<ParticipantApplicationAccess> createApplicationAccess(Long studyId, Integer participantId, String application) {
-        var accessData = applicationAccessService.createMissingApplicationAccess(studyId, participantId, application);
-        if (accessData.isPresent()) {
-            participantRepository.setStatusIfCurrentStatusIs(studyId, participantId, Participant.Status.INVITED, Participant.Status.NEW);
-        }
-        return accessData;
-    }
-
-    public void deleteParticipantApplicationAccess(Long studyId, Integer participantId, String application) {
-        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
-        applicationAccessService.deleteApplicationAccess(studyId, participantId, application);
     }
 
     public void deleteParticipant(Long studyId, Integer participantId, Boolean includeData) {
@@ -93,24 +77,11 @@ public class ParticipantService {
 
     private void alignParticipantsWithStudyState(Study study) {
         switch (study.getStudyState()) {
-            case CLOSED:
-                participantRepository.cleanupParticipants(study.getStudyId());
-                applicationAccessService.deleteApplicationAccess(study.getStudyId());
-                break;
-            case DRAFT:
-                participantRepository.resetParticipants(study.getStudyId(), RandomTokenGenerator::generate);
-                applicationAccessService.deleteApplicationAccess(study.getStudyId());
-                break;
-            case ACTIVE:
-            case PREVIEW:
-                alignParticipantsInActiveState(study);
-                break;
+            case CLOSED -> participantRepository.cleanupParticipants(study.getStudyId());
+            case DRAFT -> participantRepository.resetParticipants(study.getStudyId(), RandomTokenGenerator::generate);
         }
     }
 
-    private void alignParticipantsInActiveState(Study study) {
-        applicationAccessService.deleteApplicationAccessExcept(study.getStudyId(), study.getApplicationAccess());
-    }
 
     public void setStatus(Long studyId, Integer participantId, Participant.Status status) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
