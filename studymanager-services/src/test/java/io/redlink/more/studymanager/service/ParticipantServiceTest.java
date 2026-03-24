@@ -42,7 +42,7 @@ class ParticipantServiceTest {
     ElasticService elasticService;
 
     @Mock
-    LoginTokenService loginTokenService;
+    ApplicationAccessService applicationAccessService;
 
     @InjectMocks
     ParticipantService participantService;
@@ -74,14 +74,14 @@ class ParticipantServiceTest {
                 .setParticipantId(1);
 
         participantService.deleteParticipant(1L, 1, true);
-        verify(loginTokenService, times(1)).deleteParticipantTokens(1L, 1);
+        verify(applicationAccessService, times(1)).deleteApplicationAccess(1L, 1);
         participantService.deleteParticipant(1L, 1, false);
-        verify(loginTokenService, times(2)).deleteParticipantTokens(1L, 1);
+        verify(applicationAccessService, times(2)).deleteApplicationAccess(1L, 1);
         verify(elasticService, times(1)).removeDataForParticipant(any(), any());
 
         participantService.deleteParticipant(1L, 1, true);
         verify(elasticService, times(2)).removeDataForParticipant(any(), any());
-        verify(loginTokenService, times(3)).deleteParticipantTokens(1L, 1);
+        verify(applicationAccessService, times(3)).deleteApplicationAccess(1L, 1);
     }
 
     @Test
@@ -98,26 +98,19 @@ class ParticipantServiceTest {
         Mockito.verify(participantRepository, Mockito.never()).resetParticipants(anyLong(), any());
         Mockito.verify(participantRepository, Mockito.never()).cleanupParticipants(anyLong());
 
-        Mockito.reset(loginTokenService);
-        study.setApplicationAccess(Collections.emptySet());
-        participantService.handleStudyStateChange(new StudyStateChangedEvent(this, study, Study.Status.DRAFT));
-        Mockito.verify(loginTokenService, Mockito.times(1)).deleteTokensExcept(eq(1L), eq(Collections.emptySet()));
-
         //validate participants are reset if study goes to DRAFT state
         study.setStudyState(Study.Status.DRAFT);
         participantService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.PREVIEW ));
         Mockito.verify(participantRepository, Mockito.times(1)).resetParticipants(eq(study.getStudyId()), any());
         Mockito.verify(participantRepository, Mockito.never()).cleanupParticipants(anyLong());
-        Mockito.verify(loginTokenService, Mockito.times(1)).deleteStudyTokens(eq(study.getStudyId()));
 
-        Mockito.reset(participantRepository, loginTokenService);
+        Mockito.reset(participantRepository);
 
         //validate participants are cleaned if study goes to CLOSED state
         study.setStudyState(Study.Status.CLOSED);
         participantService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.ACTIVE ));
         Mockito.verify(participantRepository, Mockito.times(1)).cleanupParticipants(eq(study.getStudyId()));
         Mockito.verify(participantRepository, Mockito.never()).resetParticipants(anyLong(), any());
-        Mockito.verify(loginTokenService, Mockito.times(1)).deleteStudyTokens(eq(study.getStudyId()));
 
     }
 
@@ -125,18 +118,12 @@ class ParticipantServiceTest {
     void testSetStatusCleanup() {
         participantService.setStatus(1L, 1, Participant.Status.KICKED_OUT);
         verify(participantRepository).cleanupParticipant(1L, 1);
-        verify(loginTokenService).deleteParticipantTokens(1L, 1);
+        verify(applicationAccessService).deleteApplicationAccess(1L, 1);
 
-        Mockito.reset(participantRepository, loginTokenService);
+        Mockito.reset(participantRepository, applicationAccessService);
         participantService.setStatus(1L, 1, Participant.Status.ACTIVE);
         verify(participantRepository, times(0)).cleanupParticipant(anyLong(), any());
-        verify(loginTokenService, times(0)).deleteParticipantTokens(anyLong(), any());
+        verify(applicationAccessService, times(0)).deleteApplicationAccess(anyLong(), any());
     }
 
-    @Test
-    void testGenerateLoginTokenSetsStatus() {
-        participantService.generateLoginToken(1L, 100, "app");
-        verify(loginTokenService).createMissingToken(1L, 100, "app");
-        verify(participantRepository).setStatusIfCurrentStatusIs(1L, 100, Participant.Status.INVITED, Participant.Status.NEW);
-    }
 }
