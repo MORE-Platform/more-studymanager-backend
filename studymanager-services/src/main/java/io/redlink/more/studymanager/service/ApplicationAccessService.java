@@ -161,6 +161,7 @@ public class ApplicationAccessService {
     public boolean deleteParticipantApplicationAccess(Long studyId, Integer participantId, String application) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         deleteApplicationAccess(studyId, participantId, application);
+        participantRepository.setStatusIfCurrentStatusIs(studyId, participantId, Participant.Status.NEW, Participant.Status.INVITED);
         return true;
     }
 
