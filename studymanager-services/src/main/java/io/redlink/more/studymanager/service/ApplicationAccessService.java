@@ -18,12 +18,13 @@ import io.redlink.more.studymanager.properties.ApplicationProperties;
 import io.redlink.more.studymanager.repository.ParticipantApplicationRepository;
 import io.redlink.more.studymanager.repository.ParticipantRepository;
 import io.redlink.more.studymanager.repository.StudyRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +33,7 @@ import java.util.UUID;
 
 @Service
 public class ApplicationAccessService {
+    private static final Logger LOG = LoggerFactory.getLogger(ApplicationAccessService.class);
     private final LoginTokenService loginTokenService;
     private final ParticipantApplicationRepository participantApplicationRepository;
     private final ParticipantRepository participantRepository;
@@ -53,6 +55,7 @@ public class ApplicationAccessService {
     }
 
     public Optional<ParticipantApplicationAccess> createApplicationAccess(Long studyId, Integer participantId, String application) {
+        studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         var accessData = createMissingApplicationAccess(studyId, participantId, application);
         if (accessData.isPresent()) {
             participantRepository.setStatusIfCurrentStatusIs(studyId, participantId, Participant.Status.INVITED, Participant.Status.NEW);
@@ -60,14 +63,15 @@ public class ApplicationAccessService {
         return accessData;
     }
 
-    public Optional<ParticipantApplicationAccess> createMissingApplicationAccess(Long studyId, Integer participantId, String application) {
+    private Optional<ParticipantApplicationAccess> createMissingApplicationAccess(Long studyId, Integer participantId, String application) {
         Optional<Study> study = studyRepository.getById(studyId);
         if (study.isEmpty()) {
             throw new IllegalArgumentException("Study does not exist");
         }
         Set<String> studyApplications = study.get().getApplicationAccess();
         if (application == null || application.isEmpty() || !studyApplications.contains(application)) {
-            throw new IllegalArgumentException("Application {stud}");
+            LOG.warn("Application {} does not exist", application);
+            return Optional.empty();
         }
 
         Optional<LoginToken> loginTokenOptional = loginTokenService.getToken(studyId, participantId, application);
@@ -93,15 +97,6 @@ public class ApplicationAccessService {
                         .pathSegment("{studyId}", "{uuid}")
                         .build(Map.of("studyId", studyId, "uuid", participantApplication.getUuid()))
                         .toString()));
-    }
-
-    public void updateApplicationAccess(Long studyId, Integer participantId, Collection<String> applications) {
-        if (applications != null) {
-            deleteApplicationAccess(studyId, participantId);
-            applications.stream()
-                    .filter(this::isValidApplication)
-                    .forEach(application -> createMissingApplicationAccess(studyId, participantId, application));
-        }
     }
 
     public void deleteApplicationAccess(Long studyId, Integer participantId, String application) {
@@ -163,9 +158,10 @@ public class ApplicationAccessService {
                         .toString()));
     }
 
-    public void deleteParticipantApplicationAccess(Long studyId, Integer participantId, String application) {
+    public boolean deleteParticipantApplicationAccess(Long studyId, Integer participantId, String application) {
         studyStateService.assertStudyNotInState(studyId, Study.Status.CLOSED);
         deleteApplicationAccess(studyId, participantId, application);
+        return true;
     }
 
     @EventListener
