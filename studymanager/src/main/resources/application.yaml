@@ -96,7 +96,7 @@ more:
     base-url: '${GATEWAY_BASE_URL:http://localhost:8085}'
   application:
     urls:
-      PARTICIPANT_PORTAL: '${PARTICIPANT_PORTAL_URL:http://localhost:3002}'
+      PARTICIPANT_PORTAL: '${PARTICIPANT_PORTAL_URL:http://localhost:3001/participant-portal/api/v1}'
   components:
     lime-survey-observation:
       username: '${LIME_ADMIN_USER:more-admin}'

@@ -79,7 +79,7 @@ class ApplicationAccessServiceTest {
         when(participantApplicationRepository.findByIds(anyLong(), anyInt(), anyString())).thenReturn(Optional.empty());
         when(participantApplicationRepository.save(any(ParticipantApplication.class))).thenReturn(new ParticipantApplication().setUuid(UUID.randomUUID()));
 
-        Optional<ParticipantApplicationAccess> result = applicationAccessService.createMissingApplicationAccess(studyId, participantId, application);
+        Optional<ParticipantApplicationAccess> result = applicationAccessService.createApplicationAccess(studyId, participantId, application);
 
         assertThat(result).isPresent();
         verify(loginTokenService).createToken(studyId, participantId, application);
@@ -94,36 +94,11 @@ class ApplicationAccessServiceTest {
         when(loginTokenService.getToken(anyLong(), anyInt(), anyString())).thenReturn(Optional.of(new LoginToken().setCode("code")));
         when(participantApplicationRepository.findByIds(anyLong(), anyInt(), anyString())).thenReturn(Optional.of(new ParticipantApplication().setUuid(UUID.randomUUID())));
 
-        Optional<ParticipantApplicationAccess> result = applicationAccessService.createMissingApplicationAccess(studyId, participantId, application);
+        Optional<ParticipantApplicationAccess> result = applicationAccessService.createApplicationAccess(studyId, participantId, application);
 
         assertThat(result).isPresent();
         verify(loginTokenService, never()).createToken(anyLong(), anyInt(), anyString());
         verify(participantApplicationRepository, never()).save(any(ParticipantApplication.class));
-    }
-
-    @Test
-    @DisplayName("updateApplicationAccess should do nothing if applications is null")
-    void testUpdateApplicationAccessNull() {
-        applicationAccessService.updateApplicationAccess(studyId, participantId, null);
-
-        verify(loginTokenService, never()).deleteParticipantTokens(anyLong(), anyInt());
-    }
-
-    @Test
-    @DisplayName("updateApplicationAccess should delete existing and generate new access")
-    void testUpdateApplicationAccess() {
-        Study study = new Study().setApplicationAccess(Set.of(application));
-        when(studyRepository.getById(studyId)).thenReturn(Optional.of(study));
-        when(loginTokenService.getToken(anyLong(), anyInt(), anyString())).thenReturn(Optional.empty());
-        when(loginTokenService.createToken(anyLong(), anyInt(), anyString())).thenReturn(new LoginToken().setCode("code"));
-        when(participantApplicationRepository.findByIds(anyLong(), anyInt(), anyString())).thenReturn(Optional.empty());
-        when(participantApplicationRepository.save(any(ParticipantApplication.class))).thenReturn(new ParticipantApplication().setUuid(UUID.randomUUID()));
-
-        applicationAccessService.updateApplicationAccess(studyId, participantId, Set.of(application));
-
-        verify(loginTokenService).deleteParticipantTokens(studyId, participantId);
-        verify(participantApplicationRepository).deleteAllByParticipant(studyId, participantId);
-        verify(loginTokenService).getToken(studyId, participantId, application);
     }
 
     @Test

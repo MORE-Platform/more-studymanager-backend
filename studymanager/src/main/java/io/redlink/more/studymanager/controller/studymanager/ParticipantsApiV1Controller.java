@@ -162,7 +162,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
                     if (it.isNewlyCreated()) {
                         return ResponseEntity.status(HttpStatus.CREATED).body(ParticipantTransformer.toParticipantApplicationAccessDTO_V1(it));
                     } else {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN).<ParticipantApplicationAccessDTO>build();
+                        return ResponseEntity.status(HttpStatus.CONFLICT).<ParticipantApplicationAccessDTO>build();
                     }
                 })
                 .orElseThrow(() -> new NotFoundException("Participant or application not found"));
@@ -184,7 +184,7 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     @Override
     @Audited
     public ResponseEntity<ParticipantApplicationAccessDTO> getParticipantAccessData(Long studyId, Integer participantId, String application) {
-        return applicationAccessService.createApplicationAccess(studyId, participantId, application)
+        return applicationAccessService.getParticipantApplicationAccess(studyId, participantId, application)
                 .map(it -> ResponseEntity.ok(ParticipantTransformer.toParticipantApplicationAccessDTO_V1(it)))
                 .orElseThrow(() -> new NotFoundException("Participant or application not found"));
     }

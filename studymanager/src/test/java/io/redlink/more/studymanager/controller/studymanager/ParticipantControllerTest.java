@@ -290,7 +290,7 @@ class ParticipantControllerTest {
     }
 
     @Test
-    @DisplayName("Create participant access data should return 403 when already exists")
+    @DisplayName("Create participant access data should return 409 when already exists")
     void testCreateParticipantAccessDataAlreadyExists() throws Exception {
         final long studyId = 1L;
         final int participantId = 100;
@@ -308,7 +308,7 @@ class ParticipantControllerTest {
         mvc.perform(put("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
                         studyId, participantId, application))
                 .andDo(print())
-                .andExpect(status().isForbidden())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$").doesNotExist());
     }
 
@@ -324,7 +324,7 @@ class ParticipantControllerTest {
                 .setAccessCode("code123")
                 .setApplicationUrl("http://app.url/1/uuid");
 
-        when(applicationAccessService.createApplicationAccess(studyId, participantId, application))
+        when(applicationAccessService.getParticipantApplicationAccess(studyId, participantId, application))
                 .thenReturn(java.util.Optional.of(access));
 
         mvc.perform(get("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
@@ -343,7 +343,7 @@ class ParticipantControllerTest {
         final int participantId = 100;
         final String application = "test-app";
 
-        when(applicationAccessService.createApplicationAccess(studyId, participantId, application))
+        when(applicationAccessService.getParticipantApplicationAccess(studyId, participantId, application))
                 .thenReturn(java.util.Optional.empty());
 
         mvc.perform(get("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
