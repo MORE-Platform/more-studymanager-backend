@@ -80,6 +80,11 @@ public class AuditAspect {
         if(studyId == null){
             throw new IllegalStateException(String.format("Unable to create AuditLog for Action '%s' as studyId parameter could not be retrieved from the signature", action));
         }
+        if (user.id() == null) {
+            return new AuditLog("anonymous", studyId, action, timestamp)
+                    .setActionState(getActionState(returnValue, e))
+                    .setUserName("anonymous");
+        }
 
         AuditLog auditLog = new AuditLog(user.id(), studyId, action, timestamp)
                 .setActionState(getActionState(returnValue, e))
