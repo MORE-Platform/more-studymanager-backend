@@ -10,8 +10,10 @@ package io.redlink.more.studymanager.component.observation.lime;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.redlink.more.studymanager.component.observation.lime.model.LimeSurveyParticipantResponse;
+import io.redlink.more.studymanager.component.observation.lime.model.LimeSurveyParticipantCreationResponse;
+import io.redlink.more.studymanager.component.observation.lime.model.ParticipantCreationData;
 import io.redlink.more.studymanager.component.observation.lime.model.ParticipantData;
+import io.redlink.more.studymanager.component.observation.lime.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -37,15 +39,15 @@ public class LimeSurveyRequestServiceTest {
                 """
                         {"method":"get_session_key","params":["username","password"],"id":1}""");
 
-        Assertions.assertEquals(service.parseRequest("add_participants",
+        Assertions.assertEquals("""
+                        {"method":"add_participants","params":[1,2,[{"firstname":"3","lastname":"4"},{"firstname":"5","lastname":"6"}]],"id":1}""",
+                service.parseRequest("add_participants",
                         List.of(
                                 1,
                                 2,
                                 List.of(
-                                        new ParticipantData("3", "4", null),
-                                        new ParticipantData("5", "6", null)))),
-                """
-                        {"method":"add_participants","params":[1,2,[{"firstname":"3","lastname":"4"},{"firstname":"5","lastname":"6"}]],"id":1}""");
+                                        new ParticipantCreationData("3", "4", null),
+                                        new ParticipantCreationData("5", "6", null)))));
 
         Assertions.assertEquals(service.parseRequest("activate_tokens", List.of("1", "2")),
                 """
@@ -98,9 +100,9 @@ public class LimeSurveyRequestServiceTest {
                     	"error": null
                 }""";
         List<ParticipantData> expectedList = new ArrayList<>();
-        expectedList.add(new ParticipantData("test1", "test1", "1"));
-        expectedList.add(new ParticipantData("test2", "test2", "2"));
-        Assertions.assertEquals(new ObjectMapper().readValue(response, LimeSurveyParticipantResponse.class).result(),
+        expectedList.add(new ParticipantData(new ParticipantData.ParticipantInfo("test1", "test1", null), "1", null));
+        expectedList.add(new ParticipantData(new ParticipantData.ParticipantInfo("test2", "test2", null), "2", null));
+        Assertions.assertEquals(new ObjectMapper().readValue(response, LimeSurveyParticipantCreationResponse.class).result().stream().map(ParticipantTransformer::transformToData).toList(),
                 expectedList);
     }
 }

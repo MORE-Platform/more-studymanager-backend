@@ -65,7 +65,7 @@ services:
       SERVER_REWRITEBASEPATH: "true"
 
   limesurvey:
-    image: docker.io/martialblog/limesurvey:latest
+    image: docker.io/martialblog/limesurvey:5-apache
     environment:
       DB_TYPE: pgsql
       DB_PORT: 5432
