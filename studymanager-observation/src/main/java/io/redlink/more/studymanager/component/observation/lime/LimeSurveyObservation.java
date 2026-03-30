@@ -77,6 +77,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
                 .toList()
                 .forEach(this::updateParticipants);
 
+        //FIXME:With #476 the setSurveyEndUrl MUST point to the gateway!
         limeSurveyRequestService.setSurveyEndUrl(surveyId, sdk.getStudyId(), sdk.getObservationId());
         limeSurveyRequestService.activateSurvey(surveyId);
         sdk.setValue(LIME_SURVEY_ID, surveyId);
@@ -127,7 +128,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
 
         Optional<Map<String, Object>> answer = limeSurveyRequestService.getAnswerPlaintext(token, surveyId, savedId);
         if (answer.isEmpty() || answer.get().isEmpty()) {
-            LOGGER.warn("No answer found for token while writing datapoints for survey {} and savedId {}", surveyId, savedId);
+            LOGGER.warn("No answer found for token while writing datapoints for survey {} and savedId {} (participantId: {})", surveyId, savedId, participantId.get());
             return false;
         }
 
