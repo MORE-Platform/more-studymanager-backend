@@ -58,7 +58,6 @@ public class StudyService {
     private final OccurredObservationService occurredObservationService;
 
     private final StudyGroupRepository studyGroupRepository;
-    private final LoginTokenService loginTokenService;
 
     private ApplicationEventPublisher applicationEventPublisher;
 
@@ -66,7 +65,6 @@ public class StudyService {
     public StudyService(StudyRepository studyRepository, StudyAclRepository aclRepository, UserRepository userRepo,
                         StudyStateService studyStateService, OccurredObservationService occurredObservationService,
                         ElasticService elasticService, StudyGroupRepository studyGroupRepository,
-                        LoginTokenService loginTokenService,
                         ApplicationEventPublisher applicationEventPublisher) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
@@ -75,7 +73,6 @@ public class StudyService {
         this.elasticService = elasticService;
         this.studyGroupRepository = studyGroupRepository;
         this.occurredObservationService = occurredObservationService;
-        this.loginTokenService = loginTokenService;
         this.applicationEventPublisher = applicationEventPublisher;
     }
 
@@ -112,7 +109,6 @@ public class StudyService {
     public void deleteStudy(Long studyId) {
         studyStateService.assertStudyState(studyId, Study.Status.DRAFT, Study.Status.CLOSED);
         studyRepository.deleteById(studyId);
-        loginTokenService.deleteStudyTokens(studyId);
         elasticService.deleteIndex(studyId);
         occurredObservationService.deleteOccurredObservations(studyId);
     }
