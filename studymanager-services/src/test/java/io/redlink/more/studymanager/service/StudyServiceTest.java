@@ -68,9 +68,6 @@ class StudyServiceTest {
     @Mock
     ApplicationEventPublisher applicationEventPublisher;
 
-    @Mock
-    LoginTokenService loginTokenService;
-
     @InjectMocks
     StudyService studyService;
 
@@ -223,7 +220,6 @@ class StudyServiceTest {
     void testDeleteStudy() {
         studyService.deleteStudy(1L);
         verify(studyRepository).deleteById(1L);
-        verify(loginTokenService).deleteStudyTokens(1L);
         verify(elasticService).deleteIndex(1L);
         verify(occurredObservationService).deleteOccurredObservations(1L);
     }

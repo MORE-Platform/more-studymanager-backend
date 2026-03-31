@@ -173,7 +173,7 @@ public class ApplicationAccessService {
 
     private void alignApplicationAccessWithStudyState(Study study) {
         switch (study.getStudyState()) {
-            case DRAFT -> deleteApplicationAccess(study.getStudyId());
+            case DRAFT, CLOSED -> deleteApplicationAccess(study.getStudyId());
             case ACTIVE, PREVIEW -> deleteApplicationAccessExcept(study.getStudyId(), study.getApplicationAccess());
         }
     }
