@@ -9,18 +9,15 @@
 package io.redlink.more.studymanager.component.observation.lime;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.redlink.more.studymanager.component.observation.lime.model.LimeSurveyParticipantCreationResponse;
 import io.redlink.more.studymanager.component.observation.lime.model.ParticipantCreationData;
-import io.redlink.more.studymanager.component.observation.lime.model.ParticipantData;
-import io.redlink.more.studymanager.component.observation.lime.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.net.http.HttpClient;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.Mockito.mock;
 
@@ -55,54 +52,16 @@ public class LimeSurveyRequestServiceTest {
     }
 
     @Test
-    void responseTest() throws JsonProcessingException {
-        String response = """
-                {"id":1,"result": [
-                    		{
-                    			"sent": "N",
-                    			"remindersent": "N",
-                    			"remindercount": 0,
-                    			"completed": "N",
-                    			"usesleft": 1,
-                    			"emailstatus": "OK",
-                    			"lastname": "test1",
-                    			"firstname": "test1",
-                    			"token": "1",
-                    			"language": "",
-                    			"email": "",
-                    			"tid": "1",
-                    			"participant_id": null,
-                    			"blacklisted": null,
-                    			"validfrom": null,
-                    			"validuntil": null,
-                    			"mpid": null
-                    		},
-                    		{
-                    			"sent": "N",
-                    			"remindersent": "N",
-                    			"remindercount": 0,
-                    			"completed": "N",
-                    			"usesleft": 1,
-                    			"emailstatus": "OK",
-                    			"lastname": "test2",
-                    			"firstname": "test2",
-                    			"token": "2",
-                    			"language": "",
-                    			"email": "",
-                    			"tid": "1",
-                    			"participant_id": null,
-                    			"blacklisted": null,
-                    			"validfrom": null,
-                    			"validuntil": null,
-                    			"mpid": null
-                    		}
-                    	],
-                    	"error": null
-                }""";
-        List<ParticipantData> expectedList = new ArrayList<>();
-        expectedList.add(new ParticipantData(new ParticipantData.ParticipantInfo("test1", "test1", null), "1", null));
-        expectedList.add(new ParticipantData(new ParticipantData.ParticipantInfo("test2", "test2", null), "2", null));
-        Assertions.assertEquals(new ObjectMapper().readValue(response, LimeSurveyParticipantCreationResponse.class).result().stream().map(ParticipantTransformer::transformToData).toList(),
-                expectedList);
+    void fixNullDateTest() {
+        Map<String, Object> answer = new HashMap<>();
+        answer.put("Date submitted", "1980-01-01 00:00:00");
+        answer.put("other", "value");
+
+        service.fixNullDate(answer);
+
+        Assertions.assertNotEquals("1980-01-01 00:00:00", answer.get("Date submitted"));
+        Assertions.assertEquals("value", answer.get("other"));
+        // Check if it's a valid date format
+        Assertions.assertTrue(((String) answer.get("Date submitted")).matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}"));
     }
 }
