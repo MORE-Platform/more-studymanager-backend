@@ -31,6 +31,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,6 +48,9 @@ public class LimeSurveyRequestService {
 
     private final ComponentFactoryProperties properties;
     private final HttpClient client;
+    private static final String LIME_NULL_DATE = "1980-01-01 00:00:00";
+    private static final DateTimeFormatter LIME_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     private final ObjectMapper mapper = new ObjectMapper();
     private static final Logger LOGGER = LoggerFactory.getLogger(LimeSurveyRequestService.class);
 
@@ -575,6 +580,8 @@ public class LimeSurveyRequestService {
                 Map<String, Object> answer = mapper.convertValue(response, Map.class);
                 answer.values().removeIf(Objects::isNull);
 
+                fixNullDate(answer);
+
                 Object responseId = answer.get("Response ID");
                 Object id = answer.get("id");
                 boolean matchesSavedId = Objects.equals(String.valueOf(savedId), String.valueOf(responseId))
@@ -599,4 +606,14 @@ public class LimeSurveyRequestService {
             releaseSessionKeyQuietly(sessionKey);
         }
     }
+
+    protected void fixNullDate(Map<String, Object> answer) {
+        answer.replaceAll((key, value) -> {
+            if (LIME_NULL_DATE.equals(value)) {
+                return LocalDateTime.now().format(LIME_DATE_FORMATTER);
+            }
+            return value;
+        });
+    }
+
 }
