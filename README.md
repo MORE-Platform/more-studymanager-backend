@@ -44,3 +44,15 @@ Note: The `encryption-key` and `salt-key` should be a hash.
 ## Planning & Documentation
 
 * [Architecture Decision Records](docs/adr)
+
+## Tagging & Deployment
+
+To safely deploy new versions, we use a Git tagging strategy.
+
+- **Tag Format:** `v<Major>.<Minor>.<Patch>` (e.g., `v1.0.1`)
+- **Behavior:** When a tag matching the `v*.*.*` pattern is pushed, the GitHub Action pipeline automatically:
+    1. Compiles and tests the code.
+    2. Builds a Docker image.
+    3. Tags the Docker image with the version from the Git tag (e.g.,
+       `ghcr.io/more-platform/more-studymanager-backend:v1.0.1`).
+    4. Publishes the image to GitHub Packages.
