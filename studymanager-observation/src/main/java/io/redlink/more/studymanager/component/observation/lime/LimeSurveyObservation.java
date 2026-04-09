@@ -126,7 +126,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
             return false;
         }
 
-        Optional<Map<String, Object>> answer = limeSurveyRequestService.getAnswerPlaintext(token, surveyId, savedId);
+        Optional<Map<String, Object>> answer = limeSurveyRequestService.getAnswer(token, surveyId, savedId);
         if (answer.isEmpty() || answer.get().isEmpty()) {
             LOGGER.warn("No answer found for token while writing datapoints for survey {} and savedId {} (participantId: {})", surveyId, savedId, participantId.get());
             return false;
