@@ -62,6 +62,10 @@ class OccurredObservationRepositoryTest {
     @BeforeEach
     void deleteAll() {
         occurredObservationRepository.clear();
+        observationRepository.clear();
+        participantRepository.clear();
+        studyGroupRepository.clear();
+        studyRepository.clear();
     }
 
     @Test
