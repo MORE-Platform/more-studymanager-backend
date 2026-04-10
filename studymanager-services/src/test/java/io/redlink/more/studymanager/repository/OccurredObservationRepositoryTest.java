@@ -246,6 +246,54 @@ class OccurredObservationRepositoryTest {
         assertThat(vIPoos).hasSize(2);
         assertThat(vIPoos).containsExactlyInAnyOrder(ooO1P1T, ooO2P2Y);
 
+        // Test startTime filter only (start >= startTime) → should exclude yesterday's records
+        var startTimeFiltered = occurredObservationRepository.listOccurredObservations(
+                studyId, participant.getParticipantId(), null, null, null,
+                startTime, null).toList();
+
+        assertThat(startTimeFiltered)
+                .as("startTime filter should return only observations starting on/after startTime (today)")
+                .hasSize(1)
+                .containsExactlyInAnyOrder(ooO1P1T);
+
+        // Test endTime filter only (end <= endTime2) → should only include the earlier observation2 records
+        var endTimeFiltered = occurredObservationRepository.listOccurredObservations(
+                studyId, participant.getParticipantId(), null, null, null,
+                null, endTime.minus(1, ChronoUnit.DAYS)).toList();
+
+        assertThat(endTimeFiltered)
+                .as("endTime filter should return only observations ending on/before (endTime - 1DAY)")
+                .hasSize(2)
+                .containsExactlyInAnyOrder(ooO1P1Y, ooO2P1Y);
+
+        // Test both startTime and endTime together (narrow window around today's observation 1)
+        var timeRangeFiltered = occurredObservationRepository.listOccurredObservations(
+                studyId, participant.getParticipantId(), null, null, null,
+                startTime.minus(1, ChronoUnit.DAYS), endTime).toList();
+
+        assertThat(timeRangeFiltered)
+                .as("combined (startTime - 1Day) + endTime should return two observations")
+                .hasSize(2)
+                .containsExactlyInAnyOrder(ooO1P1Y, ooO2P1T);
+
+        // Test time range that should return no results
+        var futureRange = occurredObservationRepository.listOccurredObservations(
+                studyId, null, null, null, null,
+                startTime.plus(5, ChronoUnit.DAYS), null).toList();
+        assertThat(futureRange)
+                .as("future startTime should return empty result")
+                .isEmpty();
+
+        // Test time range combined with other filters (participant + dataValid)
+        var combinedFilter = occurredObservationRepository.listOccurredObservations(
+                studyId, participant2.getParticipantId(), null, true, null,
+                startTime, endTime.plus(1, ChronoUnit.HOURS)).toList();
+
+        assertThat(combinedFilter)
+                .as("time range + participant + dataValid filter")
+                .hasSize(1)
+                .containsExactly(ooO1P2T);
+
         //Test Query for last Start Time
         var lastStartTimeStudy = occurredObservationRepository.getLatestStartTime(studyId, null, null, null, null);
         assertThat(lastStartTimeStudy).isNotNull();

@@ -22,6 +22,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -56,6 +57,8 @@ public class OccurredObservationRepository {
                         AND (:observation_id::INT IS NULL OR oo.observation_id = :observation_id)
                         AND (:data_valid::BOOLEAN IS NULL OR oo.data_valid = :data_valid)
                         AND (:data_states::observation_data_state[] IS NULL OR oo.data_state = ANY(:data_states::observation_data_state[]))
+                        AND (:start_time::TIMESTAMPTZ IS NULL OR oo.start >= :start_time)
+                        AND (:end_time::TIMESTAMPTZ IS NULL OR oo."end" <= :end_time)
             """;
 
     private static final String FIND_LAST_START_TIME = """
@@ -131,12 +134,23 @@ public class OccurredObservationRepository {
             Boolean dataValid,
             Set<ObservationDataState> dataStates
     ) {
+        return listOccurredObservations(studyId, participantId, observationId, dataValid, dataStates, null, null);
+    }
+    public Stream<OccurredObservation> listOccurredObservations(
+            Long studyId, Integer participantId, Integer observationId,
+            Boolean dataValid,
+            Set<ObservationDataState> dataStates,
+            Instant startTime,
+            Instant endTime
+    ) {
         return namedTemplate.queryForStream(LIST_OCCURRED_OBSERVATION,
                 new MapSqlParameterSource("study_id", studyId)
                         .addValue("participant_id", participantId)
                         .addValue("observation_id", observationId)
                         .addValue("data_valid", dataValid)
-                        .addValue("data_states", dataStates == null ? null : dataStates.stream().map(ObservationDataState::getValue).toArray(String[]::new)),
+                        .addValue("data_states", dataStates == null ? null : dataStates.stream().map(ObservationDataState::getValue).toArray(String[]::new))
+                        .addValue("start_time", startTime == null ? null : startTime.atOffset(ZoneOffset.UTC))
+                        .addValue("end_time", endTime == null ? null : endTime.atOffset(ZoneOffset.UTC)),
                 getOccurredObservationRowMapper());
     }
 
