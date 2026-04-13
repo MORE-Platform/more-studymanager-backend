@@ -106,6 +106,26 @@ public class OccurredObservationService {
                 includeInvalid ? null : true,
                 observationDataStates == null ? EnumSet.allOf(ObservationDataState.class) : observationDataStates);
     }
+    /**
+     * Stream over all occurred observations for a participant of a study, where data is still missing (not in
+     * {@link ObservationDataState#COMPLETE})
+     * @param studyId the study id
+     * @param participantId the participant id or <code>null</code> as wildcard
+     * @param observationId the observation id  or <code>null</code> as wildcard
+     * @param startTime if present the start of the occurred observation is &gt;= the parsed value
+     * @param endTime if present the end of the occurred observation is &lt;= the parsed value
+     * @param includeInvalid if occurred observations marked as having invalid data are included
+     * @param observationDataStates the states to include or <code>null</code> to include all
+     * @return a stream over all ongoing or occurred observations where data are still missing
+     */
+    public Stream<OccurredObservation> streamOccurredObservations(long studyId, Integer participantId, Integer observationId, Instant startTime, Instant endTime, boolean includeInvalid, Set<ObservationDataState> observationDataStates) {
+        return repository.listOccurredObservations(
+                studyId, participantId, observationId,
+                includeInvalid ? null : true,
+                observationDataStates == null ? EnumSet.allOf(ObservationDataState.class) : observationDataStates,
+                startTime,
+                endTime);
+    }
 
     public void deleteOccurredObservations(Long studyId) {
         repository.deleteOccurredObservations(studyId);
