@@ -14,6 +14,7 @@ import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
+import io.redlink.more.studymanager.core.measurement.Measurement;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.model.User;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
@@ -22,6 +23,7 @@ import io.redlink.more.studymanager.core.properties.model.Value;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
@@ -33,14 +35,22 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
             .setImmutable(true);
 
     private static final List<Value> properties = List.of(
-            /* TODO enable Autocomplete in FE
-            new AutocompleteValue("limeSurveyId", "surveys")
-                    .setName("Survey")
-                    .setDescription("An existing survey")
-                    .setRequired(true)
-             */
             limeSurveyId
     );
+
+    public static String MEASUREMENT_ID = "id";
+    public static String MEASUREMENT_SEED = "seed";
+    /**
+     * This measurementSet includes the id and seed of the LimeSurvey. All
+     * survey specific information are stored under the survey keys. Those keys
+     * are survey specific and can be obtained via the survey data from limesurvey
+     */
+    private static MeasurementSet LIMESURVEY_METADATA = new MeasurementSet(
+            "LIMESURVEY", Set.of(
+            new Measurement(MEASUREMENT_ID, Measurement.Type.INTEGER),
+            new Measurement(MEASUREMENT_SEED, Measurement.Type.STRING))
+    );
+
 
     private LimeSurveyRequestService limeSurveyRequestService;
 
@@ -109,6 +119,6 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
 
     @Override
     public MeasurementSet getMeasurementSet() {
-        return GenericMeasurementSets.NOT_SPECIFIED;
+        return LIMESURVEY_METADATA;
     }
 }
