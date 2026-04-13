@@ -14,8 +14,6 @@ import io.redlink.more.studymanager.core.exception.ConfigurationValidationExcept
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
 import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
-import io.redlink.more.studymanager.core.validation.ConfigurationValidationReport;
-import io.redlink.more.studymanager.core.validation.ValidationIssue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,10 +40,14 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
 
     @Override
     public void activate() {
-        String surveyId = checkAndGetSurveyId();
+        Optional<String> surveyId = checkAndGetSurveyId();
+        if (surveyId.isEmpty()) {
+            LOGGER.error("Lime Survey ID not present!");
+            throw new IllegalStateException("Lime Survey ID not present!");
+        }
 
         Set<Integer> participantIds = sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL);
-        List<ParticipantData> limeParticipants = limeSurveyRequestService.listParticipants(surveyId, 0, Math.max(1, participantIds.size()));
+        List<ParticipantData> limeParticipants = limeSurveyRequestService.listParticipants(surveyId.get(), 0, Math.max(1, participantIds.size()));
 
         Set<String> existingParticipantIds = limeParticipants.stream()
                 .map(ParticipantData::firstname)
@@ -60,13 +62,13 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
                 .map(ParticipantData::tid)
                 .collect(Collectors.toSet());
 
-        limeSurveyRequestService.deleteParticipants(surveyId, participantTokenIdsToDelete);
+        limeSurveyRequestService.deleteParticipants(surveyId.get(), participantTokenIdsToDelete);
 
         Set<Integer> participantsToActivate = participantIds
                 .stream()
                 .filter(id -> !existingParticipantIds.contains(String.valueOf(id)))
                 .collect(Collectors.toSet());
-        List<ParticipantData> activatedParticipants = limeSurveyRequestService.activateParticipants(participantsToActivate, surveyId);
+        List<ParticipantData> activatedParticipants = limeSurveyRequestService.activateParticipants(participantsToActivate, surveyId.get());
 
         var participantsToUpdate = limeParticipants.stream()
                 .filter(p -> p.firstname() != null)
@@ -78,20 +80,14 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
                 .forEach(this::updateParticipants);
 
         //FIXME:With #476 the setSurveyEndUrl MUST point to the gateway!
-        limeSurveyRequestService.setSurveyEndUrl(surveyId, sdk.getStudyId(), sdk.getObservationId());
-        limeSurveyRequestService.activateSurvey(surveyId);
-        sdk.setValue(LIME_SURVEY_ID, surveyId);
+        limeSurveyRequestService.setSurveyEndUrl(surveyId.get(), sdk.getStudyId(), sdk.getObservationId());
+        limeSurveyRequestService.activateSurvey(surveyId.get());
+        sdk.setValue(LIME_SURVEY_ID, surveyId.get());
     }
 
-    protected String checkAndGetSurveyId() {
-        String newSurveyId = properties.getString(LIME_SURVEY_ID);
-        String activeSurveyId = sdk.getValue(LIME_SURVEY_ID, String.class).orElse(null);
-        if (activeSurveyId != null && !activeSurveyId.equals(newSurveyId)) {
-            LOGGER.error("SurveyId on Observation {} must not be changed: {} -> {}", sdk.getObservationId(), activeSurveyId, newSurveyId);
-            throw new ConfigurationValidationException(ConfigurationValidationReport.of(ValidationIssue.immutablePropertyChanged(LimeSurveyObservationFactory.limeSurveyId)));
-        } else {
-            return newSurveyId;
-        }
+    protected Optional<String> checkAndGetSurveyId() {
+        Optional<String> newSurveyId = Optional.ofNullable(properties.getString(LIME_SURVEY_ID));
+        return newSurveyId.isPresent() ? newSurveyId : sdk.getValue(LIME_SURVEY_ID, String.class);
     }
 
     @Override
