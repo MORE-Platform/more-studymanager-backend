@@ -578,7 +578,8 @@ public class LimeSurveyRequestService {
                 }
 
                 Map<String, Object> answer = mapper.convertValue(response, Map.class);
-                answer.values().removeIf(Objects::isNull);
+                answer.remove("token");
+                answer.values().removeIf(obj -> Objects.isNull(obj) || obj.equals(token));
 
                 fixNullDate(answer);
 
