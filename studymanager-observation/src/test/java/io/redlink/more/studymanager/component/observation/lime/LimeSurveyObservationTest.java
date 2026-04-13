@@ -36,16 +36,8 @@ public class LimeSurveyObservationTest {
         when(properties.getString(anyString())).thenReturn("valid", "equals", "different");
 
         LimeSurveyObservation o = new LimeSurveyObservation(sdk, properties, null);
-        Assertions.assertEquals("valid", o.checkAndGetSurveyId());
-        Assertions.assertEquals("equals", o.checkAndGetSurveyId());
-        boolean expectedError = false;
-        try {
-            o.checkAndGetSurveyId();
-        } catch (RuntimeException e) {
-            expectedError = true;
-        }
-
-        Assertions.assertTrue(expectedError);
+        Assertions.assertEquals("valid", o.checkAndGetSurveyId().get());
+        Assertions.assertEquals("equals", o.checkAndGetSurveyId().get());
     }
 
     @Test
