@@ -578,6 +578,7 @@ public class LimeSurveyRequestService {
                 }
 
                 Map<String, Object> answer = mapper.convertValue(response, Map.class);
+                //NOTE: Do not store the survey token
                 answer.remove("token");
                 answer.values().removeIf(obj -> Objects.isNull(obj) || obj.equals(token));
 
