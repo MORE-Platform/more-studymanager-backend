@@ -8,8 +8,14 @@
  */
 package io.redlink.more.studymanager.component.observation.lime;
 
+import io.redlink.more.studymanager.component.observation.QuestionObservationFactory;
 import io.redlink.more.studymanager.component.observation.lime.model.ParticipantData;
+import io.redlink.more.studymanager.component.observation.utils.QuestionObservationUtils;
 import io.redlink.more.studymanager.core.component.Observation;
+import io.redlink.more.studymanager.core.datavalidity.MeasurementSummary;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;
+import io.redlink.more.studymanager.core.datavalidity.ObservationDataSummary;
+import io.redlink.more.studymanager.core.datavalidity.ObservationValidationResult;
 import io.redlink.more.studymanager.core.exception.ConfigurationValidationException;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.sdk.MoreObservationSDK;
@@ -17,6 +23,7 @@ import io.redlink.more.studymanager.core.sdk.MorePlatformSDK;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -145,6 +152,41 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
                                 .orElse(false)
                 )
                 .findFirst();
+    }
+
+    @Override
+    public ObservationValidationResult validateData(Instant start, Instant end, ObservationDataSummary observationDataSummary) {
+        if(observationDataSummary == null || observationDataSummary.measurements() == null) {
+            return  new ObservationValidationResult(false, ObservationDataState.MISSING);
+        }
+        //(1) Use the default single Answer utility method
+        var validationResult = QuestionObservationUtils.validateSingleAnswerObservation(
+                observationDataSummary,
+                LimeSurveyObservationFactory.MEASUREMENT_SEED //NOTE: This utility method only works with STRING fields!!
+        );
+        //(2) Check of the ID property is present
+        MeasurementSummary answerMeasurementSummary = observationDataSummary.measurements().stream()
+                .filter(it -> LimeSurveyObservationFactory.MEASUREMENT_ID.equals(it.getMeasurement().getId()))
+                .findFirst()
+                .orElse(null);
+        //check that the field is present on all documents
+        boolean hasId = answerMeasurementSummary != null
+                && answerMeasurementSummary.getNumericResult() != null
+                && answerMeasurementSummary.getNumericResult().missing() == 0;
+
+        //(3) Adapt the validation result where necessary
+        if(!validationResult.invalid() && validationResult.state() == ObservationDataState.COMPLETE && !hasId) {
+            //The required field seed is missing in the results!
+            return new ObservationValidationResult(
+                    true,
+                    ObservationDataState.INCOMPLETE
+            );
+        } else if(validationResult.state() == ObservationDataState.MISSING && hasId){
+            //if seed is missing, but ID is present ... return INCOMPLETE instead of MISSING as result
+            return new ObservationValidationResult(validationResult.invalid(), ObservationDataState.INCOMPLETE);
+        } else { //just return the original validation format
+            return validationResult;
+        }
     }
 
     private void updateParticipants(ParticipantData participant) {
