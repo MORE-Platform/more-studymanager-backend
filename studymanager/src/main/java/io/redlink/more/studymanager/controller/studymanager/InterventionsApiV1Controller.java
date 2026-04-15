@@ -11,6 +11,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 import io.redlink.more.studymanager.api.v1.model.ActionDTO;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
+import io.redlink.more.studymanager.api.v1.model.TriggerRequestDTO;
 import io.redlink.more.studymanager.api.v1.webservices.InterventionsApi;
 import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
@@ -18,6 +19,7 @@ import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.ActionTransformer;
 import io.redlink.more.studymanager.model.transformer.InterventionTransformer;
 import io.redlink.more.studymanager.model.transformer.TriggerTransformer;
+import io.redlink.more.studymanager.repository.NameValuePairRepository;
 import io.redlink.more.studymanager.service.InterventionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,16 +27,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.Serializable;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 public class InterventionsApiV1Controller implements InterventionsApi {
 
-    private final InterventionService service;
+    private static final String PENDING_PARTICIPANTS_KEY = "pendingParticipants";
 
-    public InterventionsApiV1Controller(InterventionService service) {
+    private final InterventionService service;
+    private final NameValuePairRepository nvpairs;
+
+    public InterventionsApiV1Controller(InterventionService service, NameValuePairRepository nvpairs) {
         this.service = service;
+        this.nvpairs = nvpairs;
     }
 
 
@@ -166,5 +175,21 @@ public class InterventionsApiV1Controller implements InterventionsApi {
                         )
                 )
         );
+    }
+
+    @Override
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    public ResponseEntity<Void> triggerIntervention(Long studyId, Integer interventionId, TriggerRequestDTO triggerRequestDTO) {
+        addPendingParticipants(studyId, interventionId, triggerRequestDTO.getParticipantIds());
+        return ResponseEntity.accepted().build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addPendingParticipants(Long studyId, Integer interventionId, List<Integer> participantIds) {
+        Set<Integer> pending = nvpairs.getTriggerValue(
+                studyId, interventionId, PENDING_PARTICIPANTS_KEY, HashSet.class)
+                .orElse(new HashSet<>());
+        pending.addAll(participantIds);
+        nvpairs.setTriggerValue(studyId, interventionId, PENDING_PARTICIPANTS_KEY, (Serializable) pending);
     }
 }

@@ -13,6 +13,8 @@ import io.redlink.more.studymanager.api.v1.model.FrontendConfigurationDTO;
 import io.redlink.more.studymanager.api.v1.model.KeycloakSettingsDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ConfigurationApi;
 import io.redlink.more.studymanager.properties.FrontendConfigurationProperties;
+import io.redlink.more.studymanager.properties.GatewayProperties;
+import java.net.URI;
 import java.time.Instant;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.MediaType;
@@ -22,13 +24,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
-@EnableConfigurationProperties(FrontendConfigurationProperties.class)
+@EnableConfigurationProperties({FrontendConfigurationProperties.class, GatewayProperties.class})
 public class ConfigurationApiV1Controller implements ConfigurationApi {
 
     private final FrontendConfigurationProperties uiConfig;
+    private final GatewayProperties gatewayProperties;
 
-    public ConfigurationApiV1Controller(FrontendConfigurationProperties uiConfig) {
+    public ConfigurationApiV1Controller(FrontendConfigurationProperties uiConfig, GatewayProperties gatewayProperties) {
         this.uiConfig = uiConfig;
+        this.gatewayProperties = gatewayProperties;
     }
 
     @Override
@@ -46,18 +50,22 @@ public class ConfigurationApiV1Controller implements ConfigurationApi {
     @Override
     public ResponseEntity<FrontendConfigurationDTO> getFrontendConfig() {
         return ResponseEntity.ok(
-                transform(uiConfig)
+                transform(uiConfig, gatewayProperties)
         );
     }
 
-    private static FrontendConfigurationDTO transform(FrontendConfigurationProperties uiConfig) {
-        return new FrontendConfigurationDTO(
+    private static FrontendConfigurationDTO transform(FrontendConfigurationProperties uiConfig, GatewayProperties gatewayProperties) {
+        var dto = new FrontendConfigurationDTO(
                 new KeycloakSettingsDTO(
                         uiConfig.keycloak().server(),
                         uiConfig.keycloak().realm(),
                         uiConfig.keycloak().clientId()
                 ))
-                .title(uiConfig.title())
-                ;
+                .title(uiConfig.title());
+        String baseUrl = gatewayProperties.baseUrl();
+        if (baseUrl != null && !baseUrl.isBlank()) {
+            dto.gatewayUrl(URI.create(baseUrl));
+        }
+        return dto;
     }
 }

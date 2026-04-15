@@ -1197,6 +1197,22 @@ paths:
                 $ref: '#/components/schemas/Trigger'
         '400':
           description: bad request
+    post:
+      tags:
+        - interventions
+      description: Trigger intervention for specific participants
+      operationId: triggerIntervention
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerRequest'
+      responses:
+        '202':
+          description: Trigger accepted
+        '400':
+          description: Bad request
 
   /studies/{studyId}/interventions/{interventionId}/actions:
     parameters:
@@ -1698,7 +1714,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BuildInfo'
-
 components:
   schemas:
     ComponentFactory:
@@ -2134,6 +2149,17 @@ components:
           format: date-time
         scheduleType:
           type: string
+
+    TriggerRequest:
+      type: object
+      required:
+        - participantIds
+      properties:
+        participantIds:
+          type: array
+          items:
+            type: integer
+          description: List of participant IDs to trigger
 
     EndpointToken:
       type: object
@@ -2643,6 +2669,11 @@ components:
           description: |
             alternative title for better identification (informational only)
           type: string
+        gatewayUrl:
+          description: |
+            base-url of the data-gateway for external integrations
+          type: string
+          format: uri
         auth:
           type: object
           title: KeycloakSettings

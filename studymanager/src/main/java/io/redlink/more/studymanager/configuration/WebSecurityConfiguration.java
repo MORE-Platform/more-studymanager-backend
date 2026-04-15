@@ -76,6 +76,7 @@ public class WebSecurityConfiguration {
         // Basics
         http.csrf(csrf -> csrf
                 .ignoringRequestMatchers("/kibana/**")
+                .ignoringRequestMatchers("/api/v1/internal/**")
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
         );
         http.cors(AbstractHttpConfigurer::disable);
@@ -89,6 +90,8 @@ public class WebSecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/v1/config/buildInfo").permitAll()
                 //TODO specific handling of temporary sidecar
                 .requestMatchers("/api/v1/components/observation/lime-survey-observation/end.html").permitAll()
+                // Internal Docker-to-Docker notification endpoint — key-validated in controller
+                .requestMatchers(HttpMethod.POST, "/api/v1/internal/notifications").permitAll()
                 // Study-Data-Export is authenticated internally using individual access-tokens
                 .requestMatchers(HttpMethod.GET, "/api/v1/studies/*/export/studydata/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/studies/*/calendar.ics").permitAll()

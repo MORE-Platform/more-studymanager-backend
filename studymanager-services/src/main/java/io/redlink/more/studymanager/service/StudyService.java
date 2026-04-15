@@ -56,7 +56,7 @@ public class StudyService {
     private final StudyStateService studyStateService;
     private final ElasticService elasticService;
     private final OccurredObservationService occurredObservationService;
-
+    private final InterventionTokenService interventionTokenService;
     private final StudyGroupRepository studyGroupRepository;
     private final LoginTokenService loginTokenService;
 
@@ -67,7 +67,8 @@ public class StudyService {
                         StudyStateService studyStateService, OccurredObservationService occurredObservationService,
                         ElasticService elasticService, StudyGroupRepository studyGroupRepository,
                         LoginTokenService loginTokenService,
-                        ApplicationEventPublisher applicationEventPublisher) {
+                        ApplicationEventPublisher applicationEventPublisher,
+                        InterventionTokenService interventionTokenService) {
         this.studyRepository = studyRepository;
         this.aclRepository = aclRepository;
         this.userRepo = userRepo;
@@ -77,6 +78,7 @@ public class StudyService {
         this.occurredObservationService = occurredObservationService;
         this.loginTokenService = loginTokenService;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.interventionTokenService = interventionTokenService;
     }
 
     public Study createStudy(Study study, User currentUser) {

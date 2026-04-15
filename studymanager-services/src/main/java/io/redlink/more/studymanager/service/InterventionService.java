@@ -144,7 +144,7 @@ public class InterventionService {
 
     @EventListener(ContextRefreshedEvent.class)
     public void onStartUp() {
-        studyRepository.listStudiesByStatus(Study.Status.ACTIVE).forEach(study -> {
+        studyRepository.listStudiesByStates(Study.Status.ACTIVE_STATES).forEach(study -> {
             try (var ctx = LoggingUtils.createContext(study)) {
                 activateInterventionsFor(study);
             } catch (RuntimeException e) {

@@ -20,6 +20,7 @@ import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Event;
+import io.redlink.more.studymanager.repository.NameValuePairRepository;
 import io.redlink.more.studymanager.service.InterventionService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.utils.MapperUtils;
@@ -55,6 +56,9 @@ class InterventionControllerTest {
 
     @MockitoBean
     InterventionService interventionService;
+
+    @MockitoBean
+    NameValuePairRepository nameValuePairRepository;
 
     @MockitoBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
