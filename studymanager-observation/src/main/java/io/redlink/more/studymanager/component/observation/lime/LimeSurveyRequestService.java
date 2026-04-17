@@ -296,10 +296,11 @@ public class LimeSurveyRequestService {
             if (responseNode.get("result").isTextual()) {
                 JsonNode result = mapper.readTree(Base64.getDecoder().decode(responseNode.get("result").asText()));
                 Iterator<JsonNode> responses = result.get("responses").elements();
-                LOGGER.info("Found {} responses", responses.next().size());
                 while (responses.hasNext()) {
                     JsonNode response = responses.next();
+                    LOGGER.info("Checking response id={} against savedId={}", response.get("id"), savedId);
                     if (response.get("id").asInt() == savedId) {
+                        LOGGER.info("Found matching response for survey {}, savedId {}", surveyId, savedId);
                         return Optional.of(mapper.treeToValue(response, Map.class));
                     }
                 }
