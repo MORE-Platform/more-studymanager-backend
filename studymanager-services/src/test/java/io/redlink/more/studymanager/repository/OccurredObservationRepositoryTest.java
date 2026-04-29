@@ -120,7 +120,21 @@ class OccurredObservationRepositoryTest {
         assertThat(occurredObservationResponse.created()).isAfter(startTime);
         assertThat(occurredObservationResponse.modified()).isEqualTo(occurredObservationResponse.created());
 
+        var ooGetById = occurredObservationRepository.getByIds(studyId, participant.getParticipantId(), observation.getObservationId(), startTime);
+        assertThat(ooGetById).isNotNull();
+        assertThat(ooGetById.studyId()).isEqualTo(studyId);
+        assertThat(ooGetById.participantId()).isEqualTo(participant.getParticipantId());
+        assertThat(ooGetById.observationId()).isEqualTo(observation.getObservationId());
+        assertThat(ooGetById.start()).isEqualTo(startTime);
 
+        var getByIdNotFound1 = occurredObservationRepository.getByIds(999, participant.getParticipantId(), observation.getObservationId(), startTime);
+        assertThat(getByIdNotFound1).isNull();
+        var getByIdNotFound2 = occurredObservationRepository.getByIds(studyId, 999, observation.getObservationId(), startTime);
+        assertThat(getByIdNotFound2).isNull();
+        var getByIdNotFound3 = occurredObservationRepository.getByIds(studyId, participant.getParticipantId(), 999, startTime);
+        assertThat(getByIdNotFound3).isNull();
+        var getByIdNotFound4 = occurredObservationRepository.getByIds(studyId, participant.getParticipantId(), observation.getObservationId(), startTime.plusSeconds(1));
+        assertThat(getByIdNotFound4).isNull();
 
         var updatedOccurentObservation = new OccurredObservation(
                 occurredObservationResponse.studyId(),

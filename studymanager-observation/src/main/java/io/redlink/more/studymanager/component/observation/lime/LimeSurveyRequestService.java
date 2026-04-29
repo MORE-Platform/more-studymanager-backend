@@ -214,7 +214,7 @@ public class LimeSurveyRequestService {
                 studyId, observationId);
     }
 
-    protected List<ParticipantData> activateParticipants(Set<Integer> participantIds, String surveyId) {
+    protected List<ParticipantData> activateParticipants(Set<ParticipantData.ParticipantInfo> participantIds, String surveyId) {
         String sessionKey = getSessionKey();
         createParticipantTable(surveyId, sessionKey);
         return createParticipants(participantIds, surveyId, sessionKey);
@@ -262,15 +262,15 @@ public class LimeSurveyRequestService {
     /**
      * This method sets both firstname and lastname of lime-participants as the id of more-participants
      */
-    private List<ParticipantData> createParticipants(Set<Integer> participantIds, String surveyId, String sessionKey) {
+    private List<ParticipantData> createParticipants(Set<ParticipantData.ParticipantInfo> participantIds, String surveyId, String sessionKey) {
         if (participantIds.isEmpty()) {
             return Collections.emptyList();
         }
         try {
             var participants = participantIds
                     .stream()
-                    .map(i ->
-                            new ParticipantCreationData(i.toString(), i.toString(), null)
+                    .map(parInfo ->
+                            new ParticipantCreationData(parInfo.firstname(), parInfo.lastname(), null)
                     )
                     .toList();
             HttpRequest request = createHttpRequest(

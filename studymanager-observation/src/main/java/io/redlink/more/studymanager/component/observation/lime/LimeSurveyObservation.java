@@ -24,6 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,6 +35,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LimeSurveyObservation<C extends ObservationProperties> extends Observation<C> {
+
+    private static final String LIME_SURVEY_USER_TEMPLATE = "study_%s-observation_%s-participant_%s";
 
     public static final String LIME_SURVEY_ID = "limeSurveyId";
     private static final String LIME_SURVEY_TOKEN_KEY = "token";
@@ -45,51 +49,96 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
         this.limeSurveyRequestService = limeSurveyRequestService;
     }
 
+    private String getLimeSurveyUser(int participantId){
+        return String.format(LIME_SURVEY_ID,
+                sdk.getStudyId(),
+                sdk.getObservationId(),
+                participantId);
+    }
+
+    private Integer getParticipantId(ParticipantData limeSurveyParticipant){
+        if(limeSurveyParticipant == null || limeSurveyParticipant.firstname() == null){
+            return null;
+        }
+        //backward compatibility: in older Versions this used just the participantId as first name
+        try {
+            return Integer.parseInt(limeSurveyParticipant.firstname());
+        } catch (NumberFormatException e){/* ignore*/}
+        //the new syntax is
+        //    firstname: `study_<study_id>-observation_<observation_id>-participant_<participant_id>`
+        //    lastname: `more`
+        String participantPrefix = String.format(LIME_SURVEY_USER_TEMPLATE, sdk.getStudyId(), sdk.getObservationId(), "");
+        if("more".equals(limeSurveyParticipant.lastname()) &&
+                limeSurveyParticipant.firstname().startsWith(participantPrefix)){
+            try {
+                return Integer.parseInt(limeSurveyParticipant.firstname().substring(participantPrefix.length()));
+            } catch (NumberFormatException e) {
+                /*ignroe*/
+            }
+        }
+        return null;
+    }
+
+    private ParticipantData.ParticipantInfo toParticipantInfo(Integer participantId){
+        return new ParticipantData.ParticipantInfo(
+                String.format(LIME_SURVEY_USER_TEMPLATE, sdk.getStudyId(), sdk.getObservationId(), participantId),
+                "more"
+        );
+    }
+
+
     @Override
     public void activate() {
-        Optional<String> surveyId = checkAndGetSurveyId();
-        if (surveyId.isEmpty()) {
-            LOGGER.error("Lime Survey ID not present!");
-            throw new IllegalStateException("Lime Survey ID not present!");
-        }
+        String surveyId = checkAndGetSurveyId()
+                .orElseThrow(() -> {
+                    LOGGER.error("Lime Survey ID not present (study: {}, Observation: {})!", sdk.getStudyId(), sdk.getObservationId());
+                    return new IllegalStateException(String.format("No survey id provided for study %s and Observation %s",
+                            sdk.getStudyId(), sdk.getObservationId()));
+                });
 
         Set<Integer> participantIds = sdk.participantIds(MorePlatformSDK.ParticipantFilter.ALL);
-        List<ParticipantData> limeParticipants = limeSurveyRequestService.listParticipants(surveyId.get(), 0, Math.max(1, participantIds.size()));
+        //NOTE: This should use paging and just return all participants, as one survey can be used by multiple
+        //      studies/observations one can not really say how many participants are present
+        //      If it selects not all this will create duplicate participants on every activation of the study!!
+        Integer limit = Math.max(1000, participantIds.size()*2);
+        List<ParticipantData> limeParticipants = limeSurveyRequestService.listParticipants(surveyId, 0, limit);
 
-        Set<String> existingParticipantIds = limeParticipants.stream()
-                .map(ParticipantData::firstname)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        //look for Limesurvey survey participants that where created for this observation/study
+        Map<Integer, ParticipantData> existingParticipantIds = limeParticipants.stream()
+                .map(it -> new AbstractMap.SimpleEntry<>(getParticipantId(it), it))
+                .filter(entry -> entry.getKey() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        Set<Integer> participantTokenIdsToDelete = limeParticipants.stream()
-                .filter(participant ->
-                        participant.tid() != null
-                                && isNumeric(participant.firstname())
-                                && !participantIds.contains(Integer.parseInt(participant.firstname())))
+        //filter existingParticipants that are no longer present in the study
+        Map<Integer, ParticipantData> participantsToDelete = existingParticipantIds.entrySet().stream()
+                .filter(entry -> !participantIds.contains(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        Set<Integer> participantTokenIdsToDelete = participantsToDelete.values().stream()
                 .map(ParticipantData::tid)
                 .collect(Collectors.toSet());
 
-        limeSurveyRequestService.deleteParticipants(surveyId.get(), participantTokenIdsToDelete);
+        limeSurveyRequestService.deleteParticipants(surveyId, participantTokenIdsToDelete);
 
-        Set<Integer> participantsToActivate = participantIds
+        Set<ParticipantData.ParticipantInfo> participantsToActivate = participantIds
                 .stream()
-                .filter(id -> !existingParticipantIds.contains(String.valueOf(id)))
+                .filter(id -> !existingParticipantIds.containsKey(id))
+                .map(this::toParticipantInfo)
                 .collect(Collectors.toSet());
-        List<ParticipantData> activatedParticipants = limeSurveyRequestService.activateParticipants(participantsToActivate, surveyId.get());
+        List<ParticipantData> activatedParticipants = limeSurveyRequestService.activateParticipants(participantsToActivate, surveyId);
 
-        var participantsToUpdate = limeParticipants.stream()
-                .filter(p -> p.firstname() != null)
-                .filter(p -> isNumeric(p.firstname()))
-                .filter(p -> participantIds.contains(Integer.parseInt(p.firstname())));
+        Stream<ParticipantData> participantsToUpdate = existingParticipantIds.entrySet()
+                .stream()
+                .filter(entry -> !participantsToDelete.containsKey(entry.getKey()))
+                .map(Map.Entry::getValue);
 
         Stream.concat(participantsToUpdate, activatedParticipants.stream())
                 .toList()
                 .forEach(this::updateParticipants);
 
-        //FIXME:With #476 the setSurveyEndUrl MUST point to the gateway!
-        limeSurveyRequestService.setSurveyEndUrl(surveyId.get(), sdk.getStudyId(), sdk.getObservationId());
-        limeSurveyRequestService.activateSurvey(surveyId.get());
-        sdk.setValue(LIME_SURVEY_ID, surveyId.get());
+        limeSurveyRequestService.setSurveyEndUrl(surveyId, sdk.getStudyId(), sdk.getObservationId());
+        limeSurveyRequestService.activateSurvey(surveyId);
+        sdk.setValue(LIME_SURVEY_ID, surveyId);
     }
 
     protected Optional<String> checkAndGetSurveyId() {
@@ -99,20 +148,22 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
 
     @Override
     public void deactivate() {
-        // for downwards compatibility (already running studies)
+
         String newSurveyId = properties.getString(LIME_SURVEY_ID);
         String activeSurveyId = sdk.getValue(LIME_SURVEY_ID, String.class).orElse(null);
 
         if (activeSurveyId == null || activeSurveyId.equals(newSurveyId)) {
-            String surveyIdToDeactivate = activeSurveyId != null ? activeSurveyId : newSurveyId;
-            if (surveyIdToDeactivate != null && !surveyIdToDeactivate.isBlank()) {
-                boolean paused = limeSurveyRequestService.deactivateSurvey(surveyIdToDeactivate);
-                if (paused) {
-                    LOGGER.info("Paused LimeSurvey survey {} during observation deactivation", surveyIdToDeactivate);
-                } else {
-                    LOGGER.info("LimeSurvey survey {} could not be paused during observation deactivation; keeping stored survey id for compatibility", surveyIdToDeactivate);
-                }
-            }
+// NOTE: We can no longer deactivate surveys as those might be used by different studies. We do not want to
+//       deactivate a survey used by an other study that is still active!
+//            String surveyIdToDeactivate = activeSurveyId != null ? activeSurveyId : newSurveyId;
+//            if (surveyIdToDeactivate != null && !surveyIdToDeactivate.isBlank()) {
+//                boolean paused = limeSurveyRequestService.deactivateSurvey(surveyIdToDeactivate);
+//                if (paused) {
+//                    LOGGER.info("Paused LimeSurvey survey {} during observation deactivation", surveyIdToDeactivate);
+//                } else {
+//                    LOGGER.info("LimeSurvey survey {} could not be paused during observation deactivation; keeping stored survey id for compatibility", surveyIdToDeactivate);
+//                }
+//            }
             sdk.setValue(LIME_SURVEY_ID, newSurveyId);
         }
     }
@@ -190,7 +241,8 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     }
 
     private void updateParticipants(ParticipantData participant) {
-        if (participant == null || participant.firstname() == null || !isNumeric(participant.firstname())) {
+        Integer pid = getParticipantId(participant);
+        if (pid == null) {
             LOGGER.warn("Skipping LimeSurvey participant update for null or incomplete data: {}", participant);
             return;
         }
@@ -199,7 +251,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
             return;
         }
         sdk.mergePropertiesForParticipant(
-                Integer.parseInt(participant.firstname()),
+                pid,
                 new ObservationProperties(
                         Map.of(
                                 LIME_SURVEY_TOKEN_KEY, participant.token(),
