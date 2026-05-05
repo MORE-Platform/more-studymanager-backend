@@ -135,6 +135,9 @@ more:
     length: 8
     use-numbers: true
     use-letters: true
-    encryption-key: '${LOGIN_TOKEN_ENCRYPTION_KEY:}'
-    salt-key: '${LOGIN_TOKEN_SALT_KEY:}'
+    encryption-key: '${LOGIN_TOKEN_ENCRYPTION_KEY:local-dev-encryption-key-32chars!}'
+    salt-key: '${LOGIN_TOKEN_SALT_KEY:local-dev-salt-key}'
     hash-algorithm: '${LOGIN_TOKEN_HASH_ALGORITHM:SHA-256}'
+
+  internal:
+    api-key: '${INTERNAL_API_KEY:internal-secret-key}'
