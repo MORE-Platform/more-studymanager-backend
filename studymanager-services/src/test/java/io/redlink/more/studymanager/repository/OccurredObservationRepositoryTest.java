@@ -61,7 +61,7 @@ class OccurredObservationRepositoryTest {
 
     @BeforeEach
     void deleteAll() {
-        occurredObservationRepository.clear();
+        studyRepository.clear();
     }
 
     @Test
