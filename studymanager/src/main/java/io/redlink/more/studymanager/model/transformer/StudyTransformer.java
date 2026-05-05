@@ -16,6 +16,9 @@ import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Study;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 
 public final class StudyTransformer {
 
@@ -36,6 +39,7 @@ public final class StudyTransformer {
                 .setConsentInfo(studyDTO.getConsentInfo())
                 .setPlannedStartDate(studyDTO.getPlannedStart())
                 .setPlannedEndDate(studyDTO.getPlannedEnd())
+                .setApplicationAccess(studyDTO.getApplicationAccess() != null ? new HashSet<>(studyDTO.getApplicationAccess()) : Collections.emptySet())
                 .setContact(ContactTransformer.fromContactDTO_V1(studyDTO.getContact()));
     }
 
@@ -59,6 +63,7 @@ public final class StudyTransformer {
                 .plannedEnd(study.getPlannedEndDate())
                 .created(instant1)
                 .modified(instant)
+                .applicationAccess(new ArrayList<>(study.getApplicationAccess()))
                 .userRoles(RoleTransformer.toStudyRolesDTO(study.getUserRoles()))
                 .contact(ContactTransformer.toContactDTO_V1(study.getContact()));
     }

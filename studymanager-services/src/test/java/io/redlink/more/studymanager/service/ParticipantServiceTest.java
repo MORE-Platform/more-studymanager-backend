@@ -9,6 +9,7 @@
 package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.event.StudyStateChangedEvent;
+import io.redlink.more.studymanager.model.LoginTokenApplication;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.generator.RandomTokenGenerator;
@@ -21,13 +22,12 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ParticipantServiceTest {
@@ -40,6 +40,9 @@ class ParticipantServiceTest {
 
     @Mock
     ElasticService elasticService;
+
+    @Mock
+    ApplicationAccessService applicationAccessService;
 
     @InjectMocks
     ParticipantService participantService;
@@ -71,12 +74,14 @@ class ParticipantServiceTest {
                 .setParticipantId(1);
 
         participantService.deleteParticipant(1L, 1, true);
+        verify(applicationAccessService, times(1)).deleteApplicationAccess(1L, 1);
         participantService.deleteParticipant(1L, 1, false);
+        verify(applicationAccessService, times(2)).deleteApplicationAccess(1L, 1);
         verify(elasticService, times(1)).removeDataForParticipant(any(), any());
 
         participantService.deleteParticipant(1L, 1, true);
         verify(elasticService, times(2)).removeDataForParticipant(any(), any());
-
+        verify(applicationAccessService, times(3)).deleteApplicationAccess(1L, 1);
     }
 
     @Test
@@ -84,7 +89,10 @@ class ParticipantServiceTest {
         Study study = new Study()
                 .setStudyId(1L)
                 .setTitle("Test study")
-                .setStudyState(Study.Status.ACTIVE);
+                .setStudyState(Study.Status.ACTIVE)
+                .setApplicationAccess(Set.of(LoginTokenApplication.PARTICIPANT_PORTAL.name()));
+
+        when(participantRepository.listParticipants(1L)).thenReturn(Collections.singletonList(new Participant().setParticipantId(100)));
 
         participantService.handleStudyStateChange(new StudyStateChangedEvent(this,study, Study.Status.DRAFT ));
         Mockito.verify(participantRepository, Mockito.never()).resetParticipants(anyLong(), any());
@@ -104,6 +112,18 @@ class ParticipantServiceTest {
         Mockito.verify(participantRepository, Mockito.times(1)).cleanupParticipants(eq(study.getStudyId()));
         Mockito.verify(participantRepository, Mockito.never()).resetParticipants(anyLong(), any());
 
+    }
+
+    @Test
+    void testSetStatusCleanup() {
+        participantService.setStatus(1L, 1, Participant.Status.KICKED_OUT);
+        verify(participantRepository).cleanupParticipant(1L, 1);
+        verify(applicationAccessService).deleteApplicationAccess(1L, 1);
+
+        Mockito.reset(participantRepository, applicationAccessService);
+        participantService.setStatus(1L, 1, Participant.Status.ACTIVE);
+        verify(participantRepository, times(0)).cleanupParticipant(anyLong(), any());
+        verify(applicationAccessService, times(0)).deleteApplicationAccess(anyLong(), any());
     }
 
 }

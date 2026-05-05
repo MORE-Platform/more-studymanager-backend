@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
+import io.redlink.more.studymanager.api.v1.model.ParticipantApplicationAccessDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ParticipantsApi;
 import io.redlink.more.studymanager.audit.Audited;
@@ -19,6 +20,7 @@ import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.properties.GatewayProperties;
+import io.redlink.more.studymanager.service.ApplicationAccessService;
 import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import org.slf4j.Logger;
@@ -41,12 +43,14 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     private final ParticipantService service;
     private final OccurredObservationService occurredObservationService;
     private final GatewayProperties gatewayProperties;
+    private final ApplicationAccessService applicationAccessService;
 
 
-    public ParticipantsApiV1Controller(ParticipantService service, OccurredObservationService occurredObservationService, GatewayProperties gatewayProperties) {
+    public ParticipantsApiV1Controller(ParticipantService service, OccurredObservationService occurredObservationService, GatewayProperties gatewayProperties, ApplicationAccessService applicationAccessService) {
         this.service = service;
         this.occurredObservationService = occurredObservationService;
         this.gatewayProperties = gatewayProperties;
+        this.applicationAccessService = applicationAccessService;
     }
 
     private ParticipantDTO toParticipantDTO(Participant p) {
@@ -147,5 +151,49 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
                 toParticipantDTO(participant)
                         .dataHealthIndicator(getDataHealthIndicator(studyId, participant.getParticipantId()))
         );
+    }
+
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Override
+    @Audited
+    public ResponseEntity<ParticipantApplicationAccessDTO> createParticipantAccessData(Long studyId, Integer participantId, String application) {
+        return applicationAccessService.createApplicationAccess(studyId, participantId, application)
+                .map(it -> {
+                    if (it.isNewlyCreated()) {
+                        return ResponseEntity.status(HttpStatus.CREATED).body(ParticipantTransformer.toParticipantApplicationAccessDTO_V1(it));
+                    } else {
+                        return ResponseEntity.status(HttpStatus.CONFLICT).<ParticipantApplicationAccessDTO>build();
+                    }
+                })
+                .orElseThrow(() -> new NotFoundException("Participant or application not found"));
+    }
+
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Override
+    @Audited
+    public ResponseEntity<List<ParticipantApplicationAccessDTO>> getParticipantApplications(Long studyId, Integer participantId) {
+        List<ParticipantApplicationAccessDTO> applications = applicationAccessService
+                .getParticipantApplicationAccess(studyId, participantId)
+                .stream()
+                .map(ParticipantTransformer::toParticipantApplicationAccessDTO_V1)
+                .toList();
+        return ResponseEntity.ok(applications);
+    }
+
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Override
+    @Audited
+    public ResponseEntity<ParticipantApplicationAccessDTO> getParticipantAccessData(Long studyId, Integer participantId, String application) {
+        return applicationAccessService.getParticipantApplicationAccess(studyId, participantId, application)
+                .map(it -> ResponseEntity.ok(ParticipantTransformer.toParticipantApplicationAccessDTO_V1(it)))
+                .orElseThrow(() -> new NotFoundException("Participant or application not found"));
+    }
+
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Override
+    @Audited
+    public ResponseEntity<Void> deleteParticipantApplicationAccessData(Long studyId, Integer participantId, String application, Boolean includeData) {
+        applicationAccessService.deleteParticipantApplicationAccess(studyId, participantId, application);
+        return ResponseEntity.noContent().build();
     }
 }
