@@ -154,16 +154,16 @@ public class LimeSurveyObservationTest {
 
         LimeSurveyObservation questionObservation = new LimeSurveyObservation(sdk, properties, null);
 
-        var seedSummary = new MeasurementSummary(
-                new Measurement(LimeSurveyObservationFactory.MEASUREMENT_SEED, Measurement.Type.STRING));
-        seedSummary.setStringResult(new StringMeasurementSummary(List.of(new FieldValue<>("seed_12345", 1))));
+        var lastPageSummary = new MeasurementSummary(
+                new Measurement(LimeSurveyObservationFactory.MEASUREMENT_LASTPAGE, Measurement.Type.INTEGER));
+        lastPageSummary.setNumericResult(new NumericMeasurementSummary(1.0,1.0, 1.0, 1.0, 0));
         var idMs = new MeasurementSummary(
                 new Measurement(LimeSurveyObservationFactory.MEASUREMENT_ID, Measurement.Type.INTEGER));
         idMs.setNumericResult(new NumericMeasurementSummary(1.0,1.0, 1.0, 1.0, 0));
         ObservationDataSummary validSummary = new ObservationDataSummary(
                 1,
                 new DateMeasurementSummary(stored, stored, 0L),
-                List.of(idMs, seedSummary)
+                List.of(idMs, lastPageSummary)
         );
         var result = questionObservation.validateData(start, end, validSummary);
         Assertions.assertFalse(result.invalid());
@@ -172,7 +172,7 @@ public class LimeSurveyObservationTest {
         ObservationDataSummary invalidMultipleAnswersSummary = new ObservationDataSummary(
                 2,
                 new DateMeasurementSummary(stored, stored, 0L),
-                List.of(idMs, seedSummary)
+                List.of(idMs, lastPageSummary)
         );
         result = questionObservation.validateData(start, end, invalidMultipleAnswersSummary);
         Assertions.assertTrue(result.invalid());
@@ -187,13 +187,13 @@ public class LimeSurveyObservationTest {
         Assertions.assertFalse(result.invalid());
         Assertions.assertEquals(ObservationDataState.MISSING, result.state());
 
-        var nullSeedMs = new MeasurementSummary(
-                new Measurement(LimeSurveyObservationFactory.MEASUREMENT_SEED, Measurement.Type.STRING));
-        nullSeedMs.setStringResult(new StringMeasurementSummary(List.of(new FieldValue<String>(null, 1))));
+        var missingLastPageMs = new MeasurementSummary(
+                new Measurement(LimeSurveyObservationFactory.MEASUREMENT_LASTPAGE, Measurement.Type.INTEGER));
+        missingLastPageMs.setNumericResult(new NumericMeasurementSummary(1.0,1.0, 1.0, 1.0, 1));
         ObservationDataSummary nullSeedSummary = new ObservationDataSummary(
                 1,
                 new DateMeasurementSummary(stored, stored, 0L),
-                List.of(idMs, nullSeedMs)
+                List.of(idMs, missingLastPageMs)
         );
         result = questionObservation.validateData(start, end, nullSeedSummary);
         Assertions.assertTrue(result.invalid());
@@ -205,7 +205,7 @@ public class LimeSurveyObservationTest {
         ObservationDataSummary missingIdSummary = new ObservationDataSummary(
                 1,
                 new DateMeasurementSummary(stored, stored, 0L),
-                List.of(missingIdMs, seedSummary)
+                List.of(missingIdMs, lastPageSummary)
         );
         result = questionObservation.validateData(start, end, missingIdSummary);
         Assertions.assertTrue(result.invalid());
