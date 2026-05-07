@@ -196,9 +196,22 @@ public final class QuestionObservationUtils {
                     .filter(it -> fieldId.equals(it.getMeasurement().getId()))
                     .findFirst()
                     .orElse(null);
-            boolean hasAnswers = answerMeasurementSummary != null
-                    && answerMeasurementSummary.getStringResult() != null
-                    && answerMeasurementSummary.getStringResult().values().stream().noneMatch(it -> it.value() == null);
+            boolean hasAnswers = false;
+            if (answerMeasurementSummary != null) {
+                hasAnswers = switch (answerMeasurementSummary.getMeasurement().getType()){
+                    case STRING -> answerMeasurementSummary.getStringResult() != null &&
+                            answerMeasurementSummary.getStringResult().values().stream().noneMatch(it -> it.value() == null);
+                    case BOOLEAN -> answerMeasurementSummary.getBooleanResult() != null &&
+                            answerMeasurementSummary.getBooleanResult().values().stream().noneMatch(it -> it.value() == null);
+                    case INTEGER, LONG, DOUBLE -> answerMeasurementSummary.getNumericResult() != null &&
+                            answerMeasurementSummary.getNumericResult().missing() == 0;
+                    case DATE -> answerMeasurementSummary.getDateResult() != null &&
+                                answerMeasurementSummary.getDateResult().missing() == 0;
+                    case ARRAY -> answerMeasurementSummary.getArrayResult() != null &&
+                            !answerMeasurementSummary.getArrayResult().values().value().isEmpty();
+                    case OBJECT -> throw new IllegalStateException("Checking for answers is not supported for Measurements of type OBJECT");
+                };
+            } //else no data -> no answers
             return new ObservationValidationResult(!hasAnswers, hasAnswers ? ObservationDataState.COMPLETE : ObservationDataState.MISSING);
         }
     }
