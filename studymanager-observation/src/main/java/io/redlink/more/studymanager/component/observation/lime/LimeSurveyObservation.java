@@ -211,32 +211,27 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
             return  new ObservationValidationResult(false, ObservationDataState.MISSING);
         }
         //(1) Use the default single Answer utility method
-        var validationResult = QuestionObservationUtils.validateSingleAnswerObservation(
+        var lastPageResult = QuestionObservationUtils.validateSingleAnswerObservation(
                 observationDataSummary,
-                LimeSurveyObservationFactory.MEASUREMENT_SEED //NOTE: This utility method only works with STRING fields!!
+                LimeSurveyObservationFactory.MEASUREMENT_LASTPAGE //NOTE: This utility method only works with STRING fields!!
         );
         //(2) Check of the ID property is present
-        MeasurementSummary answerMeasurementSummary = observationDataSummary.measurements().stream()
-                .filter(it -> LimeSurveyObservationFactory.MEASUREMENT_ID.equals(it.getMeasurement().getId()))
-                .findFirst()
-                .orElse(null);
-        //check that the field is present on all documents
-        boolean hasId = answerMeasurementSummary != null
-                && answerMeasurementSummary.getNumericResult() != null
-                && answerMeasurementSummary.getNumericResult().missing() == 0;
+        var idResult = QuestionObservationUtils.validateSingleAnswerObservation(
+                observationDataSummary,
+                LimeSurveyObservationFactory.MEASUREMENT_ID
+        );
 
         //(3) Adapt the validation result where necessary
-        if(!validationResult.invalid() && validationResult.state() == ObservationDataState.COMPLETE && !hasId) {
-            //The required field seed is missing in the results!
-            return new ObservationValidationResult(
-                    true,
-                    ObservationDataState.INCOMPLETE
-            );
-        } else if(validationResult.state() == ObservationDataState.MISSING && hasId){
-            //if seed is missing, but ID is present ... return INCOMPLETE instead of MISSING as result
-            return new ObservationValidationResult(validationResult.invalid(), ObservationDataState.INCOMPLETE);
-        } else { //just return the original validation format
-            return validationResult;
+        boolean invalid = idResult.invalid() || lastPageResult.invalid();
+        if(idResult.invalid() && lastPageResult.invalid()) {
+            return idResult;
+        } else if(invalid){
+            return new ObservationValidationResult(invalid, ObservationDataState.INCOMPLETE);
+        } else {
+            ObservationDataState state = ObservationDataState.values()[Math.min(
+                    idResult.state().ordinal(),
+                    lastPageResult.state().ordinal())];
+            return new ObservationValidationResult(invalid, state);
         }
     }
 

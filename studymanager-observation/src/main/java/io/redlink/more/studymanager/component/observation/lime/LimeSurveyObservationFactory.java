@@ -39,7 +39,7 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
     );
 
     public static String MEASUREMENT_ID = "id";
-    public static String MEASUREMENT_SEED = "seed";
+    public static String MEASUREMENT_LASTPAGE = "lastpage";
     /**
      * This measurementSet includes the id and seed of the LimeSurvey. All
      * survey specific information are stored under the survey keys. Those keys
@@ -48,7 +48,7 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
     private static MeasurementSet LIMESURVEY_METADATA = new MeasurementSet(
             "LIMESURVEY", Set.of(
             new Measurement(MEASUREMENT_ID, Measurement.Type.INTEGER),
-            new Measurement(MEASUREMENT_SEED, Measurement.Type.STRING))
+            new Measurement(MEASUREMENT_LASTPAGE, Measurement.Type.INTEGER))
     );
 
 
