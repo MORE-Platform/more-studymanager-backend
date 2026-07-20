@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ImportExportService {
@@ -39,6 +40,7 @@ public class ImportExportService {
     private final ObservationService observationService;
     private final InterventionService interventionService;
     private final StudyGroupService studyGroupService;
+    private final ObservationGroupService observationGroupService;
     private final IntegrationService integrationService;
 
     private final ElasticService elasticService;
@@ -46,6 +48,7 @@ public class ImportExportService {
 
     public ImportExportService(ParticipantService participantService, StudyService studyService, StudyStateService studyStateService,
                                ObservationService observationService, InterventionService interventionService, StudyGroupService studyGroupService,
+                               ObservationGroupService observationGroupService,
                                IntegrationService integrationService, ElasticService elasticService, GatewayProperties gatewayProperties) {
         this.participantService = participantService;
         this.studyService = studyService;
@@ -53,6 +56,7 @@ public class ImportExportService {
         this.observationService = observationService;
         this.interventionService = interventionService;
         this.studyGroupService = studyGroupService;
+        this.observationGroupService = observationGroupService;
         this.integrationService = integrationService;
         this.elasticService = elasticService;
         this.gatewayProperties = gatewayProperties;
@@ -95,6 +99,7 @@ public class ImportExportService {
                 .setStudy(studyService.getStudy(studyId, user)
                         .orElseThrow(() -> new NotFoundException("study", studyId)))
                 .setStudyGroups(studyGroupService.listStudyGroups(studyId))
+                .setObservationGroups(observationGroupService.listObservationGroups(studyId))
                 .setObservations(observationService.listObservations(studyId))
                 .setInterventions(interventionService.listInterventions(studyId))
                 .setActions(new HashMap<>())
@@ -105,7 +110,9 @@ public class ImportExportService {
         export.setParticipants(participantService.listParticipants(studyId)
                 .stream()
                 .sorted(Comparator.comparing(Participant::getParticipantId))
-                .map(participant -> new StudyImportExport.ParticipantInfo(participant.getStudyGroupId()))
+                .map(participant -> new StudyImportExport.ParticipantInfo(
+                        participant.getStudyGroupId(),
+                        participant.getObservationGroupIds()))
                 .toList()
         );
 
@@ -133,43 +140,58 @@ public class ImportExportService {
         final Long studyId = newStudy.getStudyId();
 
         studyImport.getStudyGroups().forEach(studyGroup ->
-                studyGroupService.importStudyGroup(studyId, studyGroup)
-        );
+                studyGroupService.importStudyGroup(studyId, studyGroup));
+
+        studyImport.getObservationGroups().forEach(observationGroup ->
+                observationGroupService.importObservationGroup(studyId, observationGroup));
+
         studyImport.getObservations().forEach(observation ->
-                observationService.importObservation(studyId, observation)
-        );
+                observationService.importObservation(studyId, observation));
+
         studyImport.getInterventions().forEach(intervention ->
                 interventionService.importIntervention(
                         studyId,
                         intervention,
                         studyImport.getTriggers().get(intervention.getInterventionId()),
-                        studyImport.getActions().getOrDefault(intervention.getInterventionId(), Collections.emptyList())
-                )
-        );
+                        studyImport.getActions().getOrDefault(intervention.getInterventionId(), Collections.emptyList())));
+
         studyImport.getParticipants().forEach(participant ->
                 participantService.createParticipant(
                         new Participant()
                                 .setStudyId(studyId)
                                 .setAlias("Participant")
                                 .setStudyGroupId(participant.groupId())
-                ));
+                                .setObservationGroupIds(participant.observationGroupIds())));
+
         studyImport.getIntegrations().forEach(integration ->
-                integrationService.addToken(studyId, integration.observationId(), integration.name())
-        );
+                integrationService.addToken(studyId, integration.observationId(), integration.name()));
 
         return newStudy;
     }
 
-    public void exportStudyData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
+    public void exportStudyData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> observationGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
         if (studyService.existsStudy(studyId).orElse(false)) {
-            exportStudyDataAsync(outputStream, studyId, studyGroupId, participantId, observationId, from, to);
+            Collection<Integer> selectedObservationIds;
+            if(observationGroupId != null && !observationGroupId.isEmpty()){
+                selectedObservationIds = observationService.listObservationsForGroup(studyId, null,observationGroupId)
+                        .stream().map(Observation::getObservationId).collect(Collectors.toSet());
+                LOGGER.debug("Selected observation ids for parsed ObservationGroups: {}", selectedObservationIds);
+                if(observationId != null){
+                    selectedObservationIds.addAll(observationId);
+                }
+            } else {
+                selectedObservationIds = observationId;
+            }
+            LOGGER.info("Export StudyData[study:{}, studyGroup: {}, participants: {}, observationIds: {}, from: {}, to: {}]",
+                    studyId, studyGroupId, participantId, selectedObservationIds, from, to);
+            exportStudyDataAsync(outputStream, studyId, studyGroupId, participantId, selectedObservationIds, from, to);
         } else {
             throw NotFoundException.Study(studyId);
         }
     }
 
     @Async
-    public void exportStudyDataAsync(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
+    public void exportStudyDataAsync(OutputStream outputStream, Long studyId, Collection<Integer> studyGroupId, Collection<Integer> participantId, Collection<Integer> observationId, Instant from, Instant to) {
         try (outputStream) {
             outputStream.write("[".getBytes(StandardCharsets.UTF_8));
             elasticService.exportData(outputStream, studyId, studyGroupId, participantId, observationId, from, to);

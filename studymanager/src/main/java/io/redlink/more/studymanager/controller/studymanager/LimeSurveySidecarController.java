@@ -8,9 +8,12 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
+import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.component.observation.lime.LimeSurveyObservationFactory;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.service.ObservationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value = "/api/v1")
 public class LimeSurveySidecarController {
+    private static final Logger LOG = LoggerFactory.getLogger(LimeSurveySidecarController.class);
 
     private final LimeSurveyObservationFactory factory;
 
@@ -34,14 +38,16 @@ public class LimeSurveySidecarController {
     }
 
     /**
-     * This is a temporary solution that should actually run as a sidecard and use an client credentials flow to access the limesurvey component api
+     * This is a temporary solution that should actually run as a sidecard and use a client credentials flow to access the limesurvey component api
+     *
      * @return a html response
      */
     @RequestMapping(
             method = RequestMethod.GET,
             value = "/components/observation/lime-survey-observation/end.html",
-            produces = { "text/html" }
+            produces = {"text/html"}
     )
+    @Audited
     public ResponseEntity<String> getLimeSurveyEndPageAndWriteResult(
             @RequestParam("studyId") Long studyId,
             @RequestParam("observationId") Integer observationId,
@@ -49,11 +55,12 @@ public class LimeSurveySidecarController {
             @RequestParam("surveyid") Integer surveyid,
             @RequestParam("savedid") Integer savedid
     ) {
+        LOG.info("Requesting LimeSurveyEndPage for studyID {}, observationID {}, token {}, surveyID: {}, saveId: {}", studyId, observationId, token, surveyid, savedid);
         return observationService.getObservation(studyId, observationId)
                 .map(o -> factory.create(sdk.scopedObservationSDK(o.getStudyId(), o.getStudyGroupId(), o.getObservationId()), o.getProperties()))
                 .map(obs -> obs.writeDataPoints(token, surveyid, savedid))
                 .map(r -> r ? true : null)
-                .map(r ->  ResponseEntity.ok("<h1>Survey submitted</h1>"))
+                .map(r -> ResponseEntity.ok("<h1>Survey submitted</h1>"))
                 .orElse(ResponseEntity.status(401).build());
     }
 

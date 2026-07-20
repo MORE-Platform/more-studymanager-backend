@@ -4,3 +4,8 @@ spring:
     store-type: none
   hikari:
     minimum-idle: 5
+
+more:
+  login-token:
+    encryption-key: "test-encryption-key"
+    salt-key: "test-salt-key"

@@ -12,16 +12,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.GatewayProperties;
+import io.redlink.more.studymanager.service.ApplicationAccessService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
+import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.EnumSet;
-import java.util.Random;
-import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,13 +32,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Stream;
+
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,8 +59,11 @@ class ParticipantControllerTest {
     @MockitoBean
     OAuth2AuthenticationService oAuth2AuthenticationService;
 
-    @Autowired
-    private GatewayProperties gatewayProperties;
+    @MockitoBean
+    OccurredObservationService occurredObservationService;
+
+    @MockitoBean
+    ApplicationAccessService applicationAccessService;
 
     @Autowired
     ObjectMapper mapper;
@@ -76,7 +81,7 @@ class ParticipantControllerTest {
     }
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         when(oAuth2AuthenticationService.getCurrentUser()).thenReturn(
                 new AuthenticatedUser(
                         UUID.randomUUID().toString(),
@@ -84,6 +89,7 @@ class ParticipantControllerTest {
                         EnumSet.allOf(PlatformRole.class)
                 )
         );
+        when(occurredObservationService.streamOccurredObservations(anyLong(), any(), any(), anyBoolean(), any())).thenReturn(Stream.of());
     }
 
     @Test
@@ -100,12 +106,14 @@ class ParticipantControllerTest {
                 .setStatus(Participant.Status.NEW)
                 .setCreated(Instant.ofEpochMilli(System.currentTimeMillis()))
                 .setModified(Instant.ofEpochMilli(System.currentTimeMillis()))
-                .setRegistrationToken("TEST123"));
+                .setRegistrationToken("TEST123")
+                .setObservationGroupIds(Set.of(1, 2)));
 
         ParticipantDTO participantRequest = new ParticipantDTO()
                 .studyId(studyId)
                 .alias("participant x")
-                .studyGroupId(1);
+                .studyGroupId(1)
+                .observationGroupIds(Set.of(1,2));
 
         ParticipantDTO[] participantDTOS = new ParticipantDTO[]{participantRequest};
 
@@ -118,7 +126,11 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$[0].participantId").value(1))
                 .andExpect(jsonPath("$[0].status").value("new"))
                 .andExpect(jsonPath("$[0].studyGroupId").value(participantRequest.getStudyGroupId()))
-                .andExpect(jsonPath("$[0].registrationToken").exists());
+                .andExpect(jsonPath("$[0].registrationToken").exists())
+                .andExpect(jsonPath("$[0].observationGroupIds").isArray())
+                //NOTE: use Json path to do some kind of contains in any order ...
+                .andExpect(jsonPath("$[0].observationGroupIds[?(@ == 1)]").exists())
+                .andExpect(jsonPath("$[0].observationGroupIds[?(@ == 2)]").exists());
     }
 
     @Test
@@ -250,5 +262,108 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$.created").exists())
                 .andExpect(jsonPath("$.registrationToken").isEmpty())
                 .andExpect(jsonPath("$.registrationUrl").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Create participant access data should return 201 when newly created")
+    void testCreateParticipantAccessData() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final String application = "test-app";
+
+        ParticipantApplicationAccess access = new ParticipantApplicationAccess()
+                .setNewlyCreated(true)
+                .setApplicationType(application)
+                .setAccessCode("code123")
+                .setApplicationUrl("http://app.url/1/uuid");
+
+        when(applicationAccessService.createApplicationAccess(studyId, participantId, application))
+                .thenReturn(java.util.Optional.of(access));
+
+        mvc.perform(put("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
+                        studyId, participantId, application))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.applicationType").value(application))
+                .andExpect(jsonPath("$.accessCode").value("code123"))
+                .andExpect(jsonPath("$.applicationUrl").value("http://app.url/1/uuid"));
+    }
+
+    @Test
+    @DisplayName("Create participant access data should return 409 when already exists")
+    void testCreateParticipantAccessDataAlreadyExists() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final String application = "test-app";
+
+        ParticipantApplicationAccess access = new ParticipantApplicationAccess()
+                .setNewlyCreated(false)
+                .setApplicationType(application)
+                .setAccessCode("code123")
+                .setApplicationUrl("http://app.url/1/uuid");
+
+        when(applicationAccessService.createApplicationAccess(studyId, participantId, application))
+                .thenReturn(java.util.Optional.of(access));
+
+        mvc.perform(put("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
+                        studyId, participantId, application))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("Get participant access data should return 200")
+    void testGetParticipantAccessData() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final String application = "test-app";
+
+        ParticipantApplicationAccess access = new ParticipantApplicationAccess()
+                .setApplicationType(application)
+                .setAccessCode("code123")
+                .setApplicationUrl("http://app.url/1/uuid");
+
+        when(applicationAccessService.getParticipantApplicationAccess(studyId, participantId, application))
+                .thenReturn(java.util.Optional.of(access));
+
+        mvc.perform(get("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
+                        studyId, participantId, application))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.applicationType").value(application))
+                .andExpect(jsonPath("$.accessCode").value("code123"))
+                .andExpect(jsonPath("$.applicationUrl").value("http://app.url/1/uuid"));
+    }
+
+    @Test
+    @DisplayName("Get participant access data should return 404 when not found")
+    void testGetParticipantAccessDataNotFound() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final String application = "test-app";
+
+        when(applicationAccessService.getParticipantApplicationAccess(studyId, participantId, application))
+                .thenReturn(java.util.Optional.empty());
+
+        mvc.perform(get("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
+                        studyId, participantId, application))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Delete participant access data should return 204")
+    void testDeleteParticipantAccessData() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final String application = "test-app";
+
+        mvc.perform(delete("/api/v1/studies/{studyId}/participants/{participantId}/application/{application}",
+                        studyId, participantId, application))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+
+        org.mockito.Mockito.verify(applicationAccessService).deleteParticipantApplicationAccess(studyId, participantId, application);
     }
 }

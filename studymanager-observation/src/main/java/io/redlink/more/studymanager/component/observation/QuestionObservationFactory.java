@@ -25,8 +25,10 @@ import java.util.Set;
 public class QuestionObservationFactory<C extends Observation<P>, P extends ObservationProperties>
         extends ObservationFactory<C, P> {
 
+    public static final String FIELD_ANSWER =  "answer";
+
     private static final MeasurementSet measurements = new MeasurementSet(
-            "SIMPLE_ANSWER", Set.of(new Measurement("answer", Measurement.Type.STRING))
+            "SIMPLE_ANSWER", Set.of(new Measurement(FIELD_ANSWER, Measurement.Type.STRING))
     );
 
     private static List<Value> properties = List.of(
@@ -36,7 +38,7 @@ public class QuestionObservationFactory<C extends Observation<P>, P extends Obse
                 .setRequired(true),
             new StringListValue("answers")
                     .setMinSize(2)
-                    .setMaxSize(5)
+                    .setMaxSize(10)
                     .setName("observation.factory.simpleQuestion.configProps.answerName")
                     .setDescription("observation.factory.simpleQuestion.configProps.answerDesc")
                     .setDefaultValue(List.of(

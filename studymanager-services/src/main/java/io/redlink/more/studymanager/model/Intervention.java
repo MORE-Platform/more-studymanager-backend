@@ -1,0 +1,109 @@
+/*
+ * Copyright LBI-DHP and/or licensed to LBI-DHP under one or more
+ * contributor license agreements (LBI-DHP: Ludwig Boltzmann Institute
+ * for Digital Health and Prevention -- A research institute of the
+ * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
+ * Förderung der wissenschaftlichen Forschung).
+ * Licensed under the Elastic License 2.0.
+ */
+package io.redlink.more.studymanager.model;
+
+import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
+
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
+
+public class Intervention {
+    private Long studyId;
+    private Integer interventionId;
+    private String title;
+    private String purpose;
+    private Integer studyGroupId;
+    private ScheduleEvent schedule;
+    private Instant created;
+    private Instant modified;
+    private Set<Integer> observationGroupIds;
+
+    public Long getStudyId() {
+        return studyId;
+    }
+
+    public Intervention setStudyId(Long studyId) {
+        this.studyId = studyId;
+        return this;
+    }
+
+    public Integer getInterventionId() {
+        return interventionId;
+    }
+
+    public Intervention setInterventionId(Integer interventionId) {
+        this.interventionId = interventionId;
+        return this;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public Intervention setTitle(String title) {
+        this.title = title;
+        return this;
+    }
+
+    public String getPurpose() {
+        return purpose;
+    }
+
+    public Intervention setPurpose(String purpose) {
+        this.purpose = purpose;
+        return this;
+    }
+
+    public Integer getStudyGroupId() {
+        return studyGroupId;
+    }
+
+    public Intervention setStudyGroupId(Integer studyGroupId) {
+        this.studyGroupId = studyGroupId;
+        return this;
+    }
+
+    public ScheduleEvent getSchedule() {
+        return schedule;
+    }
+
+    public Intervention setSchedule(ScheduleEvent schedule) {
+        this.schedule = schedule;
+        return this;
+    }
+
+    public Instant getCreated() {
+        return created;
+    }
+
+    public Intervention setCreated(Instant created) {
+        this.created = created;
+        return this;
+    }
+
+    public Instant getModified() {
+        return modified;
+    }
+
+    public Intervention setModified(Instant modified) {
+        this.modified = modified;
+        return this;
+    }
+
+    public Intervention setObservationGroupIds(Set<Integer> observationGroupIds) {
+        this.observationGroupIds = observationGroupIds == null ? new HashSet<>() : observationGroupIds;
+        return this;
+    }
+
+    public Set<Integer> getObservationGroupIds() {
+        return observationGroupIds;
+    }
+
+}

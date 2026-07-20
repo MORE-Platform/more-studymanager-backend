@@ -10,6 +10,7 @@ package io.redlink.more.studymanager.controller.studymanager;
 
 import io.redlink.more.studymanager.api.v1.model.StudyTimelineDTO;
 import io.redlink.more.studymanager.api.v1.webservices.CalendarApi;
+import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.TimelineTransformer;
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Set;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -38,6 +41,7 @@ public class CalendarApiV1Controller implements CalendarApi {
     }
 
     @Override
+    @Audited
     public ResponseEntity<String> getStudyCalendar(Long studyId) {
         return ResponseEntity
                 .status(301)
@@ -47,10 +51,14 @@ public class CalendarApiV1Controller implements CalendarApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
-    public ResponseEntity<StudyTimelineDTO> getStudyTimeline(Long studyId, Integer participant, Integer studyGroup, Instant referenceDate, LocalDate from, LocalDate to) {
+    @Audited
+    public ResponseEntity<StudyTimelineDTO> getStudyTimeline(Long studyId, Integer participant, Integer studyGroup, Integer observationGroup, Instant referenceDate, LocalDate from, LocalDate to) {
         return ResponseEntity.ok(
                 TimelineTransformer.toStudyTimelineDTO(
-                        service.getTimeline(studyId, participant, studyGroup, referenceDate, from, to)
+                        service.getTimeline(
+                                studyId, participant, studyGroup,
+                                observationGroup == null ? Collections.emptySet() : Set.of(observationGroup),
+                                referenceDate, from, to)
                 )
         );
     }

@@ -54,6 +54,9 @@ public class ImportExportServiceTest {
     @Spy
     private StudyGroupService studyGroupService = mock(StudyGroupService.class);
 
+    @Spy
+    private ObservationGroupService observationGroupService = mock(ObservationGroupService.class);
+
     @InjectMocks
     ImportExportService importExportService;
 
@@ -119,7 +122,8 @@ public class ImportExportServiceTest {
                                 .setType("gps-mobile-observation")
                                 .setStudyGroupId(3)
                                 .setProperties(new ObservationProperties())
-                                .setSchedule(new Event()),
+                                .setSchedule(new Event())
+                                .setObservationGroupIds(Set.of(1)),
                         new Observation()
                                 .setObservationId(3)
                                 .setTitle("observation Title")
@@ -128,7 +132,18 @@ public class ImportExportServiceTest {
                                 .setType("gps-mobile-observation")
                                 .setStudyGroupId(null)
                                 .setProperties(new ObservationProperties())
-                                .setSchedule(new Event())))
+                                .setSchedule(new Event())
+                                .setObservationGroupIds(Set.of(2)),
+                        new Observation()
+                                .setObservationId(4)
+                                .setTitle("observation Title")
+                                .setPurpose("observation purpose")
+                                .setParticipantInfo("observation info")
+                                .setType("gps-mobile-observation")
+                                .setStudyGroupId(null)
+                                .setProperties(new ObservationProperties())
+                                .setSchedule(new Event())
+                                .setObservationGroupIds(Set.of(1,2))))
                 .setStudyGroups(List.of(
                         new StudyGroup()
                                 .setStudyGroupId(2)
@@ -138,19 +153,37 @@ public class ImportExportServiceTest {
                                 .setStudyGroupId(3)
                                 .setTitle("group title2")
                                 .setPurpose("group purpose2")))
+                .setObservationGroups(List.of(
+                        new ObservationGroup()
+                                .setObservationGroupId(1)
+                                .setTitle("observation group title 1")
+                                .setPurpose("observation group purpose 1"),
+                        new ObservationGroup()
+                                .setObservationGroupId(2)
+                                .setTitle("observation group title 2")
+                                .setPurpose("observation group purpose 2")))
                 .setInterventions(List.of(
                         new Intervention()
                                 .setInterventionId(2)
                                 .setTitle("intervention title")
                                 .setPurpose("intervention purpose")
                                 .setStudyGroupId(2)
-                                .setSchedule(new Event()),
+                                .setSchedule(new Event())
+                                .setObservationGroupIds(Set.of(1)),
                         new Intervention()
                                 .setInterventionId(3)
                                 .setTitle("intervention title")
                                 .setPurpose("intervention purpose")
                                 .setStudyGroupId(3)
-                                .setSchedule(new Event())))
+                                .setSchedule(new Event())
+                                .setObservationGroupIds(Set.of(2)),
+                        new Intervention()
+                                .setInterventionId(4)
+                                .setTitle("intervention title")
+                                .setPurpose("intervention purpose")
+                                .setStudyGroupId(3)
+                                .setSchedule(new Event())
+                                .setObservationGroupIds(Set.of(1,2))))
                 .setTriggers(Map.of(3, new Trigger()
                         .setType("sth")
                         .setProperties(new TriggerProperties())))
@@ -158,14 +191,14 @@ public class ImportExportServiceTest {
                         .setType("sth")
                         .setProperties(new ActionProperties()))))
                 .setParticipants(List.of(
-                        new StudyImportExport.ParticipantInfo(0),
-                        new StudyImportExport.ParticipantInfo(0),
-                        new StudyImportExport.ParticipantInfo(0),
-                        new StudyImportExport.ParticipantInfo(2),
-                        new StudyImportExport.ParticipantInfo(2),
-                        new StudyImportExport.ParticipantInfo(2),
-                        new StudyImportExport.ParticipantInfo(4),
-                        new StudyImportExport.ParticipantInfo(4)
+                        new StudyImportExport.ParticipantInfo(0, null),
+                        new StudyImportExport.ParticipantInfo(0, Set.of(1)),
+                        new StudyImportExport.ParticipantInfo(0, Set.of(1,2)),
+                        new StudyImportExport.ParticipantInfo(2, Set.of()),
+                        new StudyImportExport.ParticipantInfo(2, Set.of(2)),
+                        new StudyImportExport.ParticipantInfo(2, Set.of(1,2)),
+                        new StudyImportExport.ParticipantInfo(4, Set.of(1)),
+                        new StudyImportExport.ParticipantInfo(4, Set.of(2))
                 ))
             .setIntegrations(List.of(
                     new IntegrationInfo("Integration 1", 1),
@@ -190,22 +223,52 @@ public class ImportExportServiceTest {
         assertThat(studyGroupCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(2);
         assertThat(studyGroupCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
 
-        verify(observationService, times(2)).importObservation(idLongCaptor.capture(), observationCaptor.capture());
-        verify(interventionService, times(2)).importIntervention(idLongCaptor.capture(), interventionCaptor.capture(), triggerCaptor.capture(), actionCaptor.capture());
+        ArgumentCaptor<ObservationGroup> observationGroupCaptor = ArgumentCaptor.forClass(ObservationGroup.class);
+        verify(observationGroupService, times(2)).importObservationGroup(idLongCaptor.capture(), observationGroupCaptor.capture());
+        assertThat(studyGroupCaptor.getAllValues()).hasSize(2);
+        assertThat(studyGroupCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(2);
+        assertThat(studyGroupCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
+
+
+        verify(observationService, times(3)).importObservation(idLongCaptor.capture(), observationCaptor.capture());
+        verify(interventionService, times(3)).importIntervention(idLongCaptor.capture(), interventionCaptor.capture(), triggerCaptor.capture(), actionCaptor.capture());
         verify(participantService, times(8)).createParticipant(participantsCaptor.capture());
         verify(integrationService, times(2)).addToken(idLongCaptor.capture(), idIntegerCaptor.capture(), aliasCaptor.capture());
 
         assertThat(observationCaptor.getAllValues().get(0).getObservationId()).isEqualTo(1);
         assertThat(observationCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(3);
+        assertThat(observationCaptor.getAllValues().get(0).getObservationGroupIds()).containsExactlyInAnyOrder(1);
         assertThat(observationCaptor.getAllValues().get(1).getObservationId()).isEqualTo(3);
-        assertThat(observationCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(null);
+        assertThat(observationCaptor.getAllValues().get(1).getStudyGroupId()).isNull();
+        assertThat(observationCaptor.getAllValues().get(1).getObservationGroupIds()).containsExactlyInAnyOrder(2);
+        assertThat(observationCaptor.getAllValues().get(2).getObservationId()).isEqualTo(4);
+        assertThat(observationCaptor.getAllValues().get(2).getStudyGroupId()).isNull();
+        assertThat(observationCaptor.getAllValues().get(2).getObservationGroupIds()).containsExactlyInAnyOrder(1, 2);
 
-        assertThat(interventionCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(2);
         assertThat(interventionCaptor.getAllValues().get(0).getInterventionId()).isEqualTo(2);
-        assertThat(interventionCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
+        assertThat(interventionCaptor.getAllValues().get(0).getStudyGroupId()).isEqualTo(2);
+        assertThat(interventionCaptor.getAllValues().get(0).getObservationGroupIds()).containsExactlyInAnyOrder(1);
         assertThat(interventionCaptor.getAllValues().get(1).getInterventionId()).isEqualTo(3);
+        assertThat(interventionCaptor.getAllValues().get(1).getStudyGroupId()).isEqualTo(3);
+        assertThat(interventionCaptor.getAllValues().get(1).getObservationGroupIds()).containsExactlyInAnyOrder(2);
+        assertThat(interventionCaptor.getAllValues().get(2).getInterventionId()).isEqualTo(4);
+        assertThat(interventionCaptor.getAllValues().get(2).getStudyGroupId()).isEqualTo(3);
+        assertThat(interventionCaptor.getAllValues().get(2).getObservationGroupIds()).containsExactlyInAnyOrder(1, 2);
 
         assertThat(idLongCaptor.getAllValues()).allMatch(Predicate.isEqual(1L));
+
+        assertThat(participantsCaptor.getAllValues().stream().map(Participant::getStudyId)).allMatch(Predicate.isEqual(1L));
+        assertThat(participantsCaptor.getAllValues().subList(0,3).stream().map(Participant::getStudyGroupId)).allMatch(Predicate.isEqual(0));
+        assertThat(participantsCaptor.getAllValues().subList(3,6).stream().map(Participant::getStudyGroupId)).allMatch(Predicate.isEqual(2));
+        assertThat(participantsCaptor.getAllValues().subList(6,8).stream().map(Participant::getStudyGroupId)).allMatch(Predicate.isEqual(4));
+        assertThat(participantsCaptor.getAllValues().get(0).getObservationGroupIds()).isEmpty();
+        assertThat(participantsCaptor.getAllValues().get(1).getObservationGroupIds()).containsExactlyInAnyOrder(1);
+        assertThat(participantsCaptor.getAllValues().get(2).getObservationGroupIds()).containsExactlyInAnyOrder(1, 2);
+        assertThat(participantsCaptor.getAllValues().get(3).getObservationGroupIds()).isEmpty();
+        assertThat(participantsCaptor.getAllValues().get(4).getObservationGroupIds()).containsExactlyInAnyOrder(2);
+        assertThat(participantsCaptor.getAllValues().get(5).getObservationGroupIds()).containsExactlyInAnyOrder(1, 2);
+        assertThat(participantsCaptor.getAllValues().get(6).getObservationGroupIds()).containsExactlyInAnyOrder(1);
+        assertThat(participantsCaptor.getAllValues().get(7).getObservationGroupIds()).containsExactlyInAnyOrder(2);
     }
 
 

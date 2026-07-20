@@ -1,0 +1,82 @@
+{
+  "took": 8,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 49,
+      "relation": "eq"
+    },
+    "max_score": null,
+    "hits": []
+  },
+  "aggregations": {
+    "sterms#data_activityType_counts": {
+      "doc_count_error_upper_bound": 0,
+      "sum_other_doc_count": 0,
+      "buckets": [
+        {
+          "key": "SEDENTARY",
+          "doc_count": 40
+        },
+        {
+          "key": "WALKING",
+          "doc_count": 8
+        },
+        {
+          "key": "GENERIC",
+          "doc_count": 1
+        }
+      ]
+    },
+    "missing#effective_time_frame_missing": {
+      "doc_count": 0
+    },
+    "max#max_effective_time_frame": {
+      "value": 1.7646336E12,
+      "value_as_string": "2025-12-02T00:00:00.000Z"
+    },
+    "missing#data_activeTimeInSeconds_missing": {
+      "doc_count": 0
+    },
+    "sterms#data_active_counts": {
+      "doc_count_error_upper_bound": 0,
+      "sum_other_doc_count": 0,
+      "buckets": [
+        {
+          "key": "missing",
+          "doc_count": 49
+        }
+      ]
+    },
+    "value_count#total_docs": {
+      "value": 49
+    },
+    "missing#data_maxMotionIntensity_missing": {
+      "doc_count": 0
+    },
+    "stats#data_activeTimeInSeconds_stats": {
+      "count": 49,
+      "min": 0.0,
+      "max": 900.0,
+      "avg": 657.2448979591836,
+      "sum": 32205.0
+    },
+    "stats#data_maxMotionIntensity_stats": {
+      "count": 49,
+      "min": 0.0,
+      "max": 6.0,
+      "avg": 3.0816326530612246,
+      "sum": 151.0
+    },
+    "min#min_effective_time_frame": {
+      "value": 1.7646048E12,
+      "value_as_string": "2025-12-01T16:00:00.000Z"
+    }
+  }
+}

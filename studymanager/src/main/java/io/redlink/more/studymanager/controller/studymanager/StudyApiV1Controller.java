@@ -8,15 +8,19 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
+import io.redlink.more.studymanager.api.v1.model.OccurredObservationDTO;
 import io.redlink.more.studymanager.api.v1.model.StatusChangeDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyDTO;
 import io.redlink.more.studymanager.api.v1.webservices.StudiesApi;
+import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.StudyTransformer;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.StudyService;
+
+import java.time.Instant;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +46,7 @@ public class StudyApiV1Controller implements StudiesApi {
     }
 
     @Override
+    @Audited
     public ResponseEntity<StudyDTO> createStudy(StudyDTO studyDTO) {
         final var currentUser = authService.getCurrentUser();
         Study study = service.createStudy(StudyTransformer.fromStudyDTO_V1(studyDTO), currentUser);
@@ -51,7 +56,7 @@ public class StudyApiV1Controller implements StudiesApi {
         );
     }
 
-    @Override
+    @Override //FIXME: This method does not work with AuditLog as it has no single Study as context
     public ResponseEntity<List<StudyDTO>> listStudies() {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.ok(
@@ -63,6 +68,7 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     @RequiresStudyRole
+    @Audited
     public ResponseEntity<StudyDTO> getStudy(Long studyId) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
@@ -73,6 +79,7 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<StudyDTO> updateStudy(Long studyId, StudyDTO studyDTO) {
         final var currentUser = authService.getCurrentUser();
         return ResponseEntity.of(
@@ -84,6 +91,7 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     @RequiresStudyRole(StudyRole.STUDY_ADMIN)
+    @Audited
     public ResponseEntity<Void> deleteStudy(Long studyId) {
         service.deleteStudy(studyId);
         return ResponseEntity.noContent().build();
@@ -91,6 +99,7 @@ public class StudyApiV1Controller implements StudiesApi {
 
     @Override
     @RequiresStudyRole(StudyRole.STUDY_ADMIN)
+    @Audited
     public ResponseEntity<StudyDTO> setStatus(Long studyId, StatusChangeDTO statusChangeDTO) {
         final var currentUser = authService.getCurrentUser();
 
@@ -99,4 +108,5 @@ public class StudyApiV1Controller implements StudiesApi {
                         .map(StudyTransformer::toStudyDTO_V1)
         );
     }
+
 }

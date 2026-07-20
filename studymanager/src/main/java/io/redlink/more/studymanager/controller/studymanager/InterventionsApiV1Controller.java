@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.api.v1.model.ActionDTO;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.api.v1.model.TriggerDTO;
 import io.redlink.more.studymanager.api.v1.webservices.InterventionsApi;
+import io.redlink.more.studymanager.audit.Audited;
 import io.redlink.more.studymanager.controller.RequiresStudyRole;
 import io.redlink.more.studymanager.model.StudyRole;
 import io.redlink.more.studymanager.model.transformer.ActionTransformer;
@@ -39,6 +40,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<InterventionDTO> addIntervention(Long studyId, InterventionDTO interventionDTO) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 InterventionTransformer.toInterventionDTO_V1(
@@ -51,6 +53,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<ActionDTO> createAction(Long studyId, Integer interventionId, ActionDTO actionDTO) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ActionTransformer.toActionDTO_V1(
@@ -64,6 +67,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<Void> deleteAction(Long studyId, Integer interventionId, Integer actionId) {
         service.deleteAction(studyId, interventionId, actionId);
         return ResponseEntity.noContent().build();
@@ -71,6 +75,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<Void> deleteIntervention(Long studyId, Integer interventionId) {
         service.deleteIntervention(studyId, interventionId);
         return ResponseEntity.noContent().build();
@@ -78,6 +83,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<ActionDTO> getAction(Long studyId, Integer interventionId, Integer actionId) {
         return ResponseEntity.ok(ActionTransformer.toActionDTO_V1(
                 service.getActionByIds(studyId, interventionId, actionId)
@@ -86,6 +92,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<InterventionDTO> getIntervention(Long studyId, Integer interventionId) {
         return ResponseEntity.status(HttpStatus.OK).body(InterventionTransformer.toInterventionDTO_V1(
                 service.getIntervention(studyId, interventionId)
@@ -94,6 +101,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<TriggerDTO> getTrigger(Long studyId, Integer interventionId) {
         return ResponseEntity.ok(TriggerTransformer.toTriggerDTO_V1(
                 service.getTriggerByIds(studyId, interventionId)
@@ -102,6 +110,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<List<ActionDTO>> listActions(Long studyId, Integer interventionId) {
         return ResponseEntity.ok(service.listActions(studyId, interventionId).stream()
                 .map(ActionTransformer::toActionDTO_V1)
@@ -111,6 +120,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<List<InterventionDTO>> listInterventions(Long studyId) {
         return ResponseEntity.ok(
                 service.listInterventions(studyId).stream()
@@ -121,6 +131,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<ActionDTO> updateAction(Long studyId, Integer interventionId, Integer actionId, ActionDTO actionDTO) {
         return ResponseEntity.ok(ActionTransformer.toActionDTO_V1(
                 service.updateAction(
@@ -132,6 +143,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<InterventionDTO> updateIntervention(Long studyId, Integer interventionId, InterventionDTO interventionDTO) {
         return ResponseEntity.ok(
                 InterventionTransformer.toInterventionDTO_V1(
@@ -144,6 +156,7 @@ public class InterventionsApiV1Controller implements InterventionsApi {
 
     @Override
     @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Audited
     public ResponseEntity<TriggerDTO> updateTrigger(Long studyId, Integer interventionId, TriggerDTO triggerDTO) {
         return ResponseEntity.ok(
                 TriggerTransformer.toTriggerDTO_V1(

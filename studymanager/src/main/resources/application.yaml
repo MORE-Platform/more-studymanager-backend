@@ -33,6 +33,12 @@ spring:
     name: ${POSTGRES_DBNAME:more}
     hikari:
       maximum-pool-size: 35
+      minimum-idle: 5
+      maxLifetime: 1800000
+      idleTimeout: 600000
+      keepaliveTime: 180000
+      connectionTimeout: 30000
+      validationTimeout: 5000
 
   quartz:
     job-store-type: memory
@@ -88,6 +94,9 @@ management:
 more:
   gateway:
     base-url: '${GATEWAY_BASE_URL:http://localhost:8085}'
+  application:
+    urls:
+      PARTICIPANT_PORTAL: '${PARTICIPANT_PORTAL_URL:http://localhost:3001}'
   components:
     lime-survey-observation:
       username: '${LIME_ADMIN_USER:more-admin}'
@@ -113,3 +122,19 @@ more:
       server: "${MORE_FE_KC_SERVER:https://auth.more.redlink.io/}"
       realm: "${MORE_FE_KC_REALM:Auth-Client-Test}"
       client-id: "${MORE_FE_KC_CLIENT_ID:oauth2-pkce-client}"
+
+  audit:
+    # the study.status to audit (fallback if not set: all)
+    study-states:
+      - active
+      - paused
+      - closed
+    details-byte-limit: 1000
+
+  login-token:
+    length: 8
+    use-numbers: true
+    use-letters: true
+    encryption-key: '${LOGIN_TOKEN_ENCRYPTION_KEY:}'
+    salt-key: '${LOGIN_TOKEN_SALT_KEY:}'
+    hash-algorithm: '${LOGIN_TOKEN_HASH_ALGORITHM:SHA-256}'

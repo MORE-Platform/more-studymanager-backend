@@ -11,7 +11,16 @@ package io.redlink.more.studymanager.service;
 import io.redlink.more.studymanager.model.AttributeMapClaimAccessor;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
 import io.redlink.more.studymanager.model.PlatformRole;
+import io.redlink.more.studymanager.model.RoutingInfoUserDetails;
 import io.redlink.more.studymanager.properties.MoreAuthProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.ClaimAccessor;
+import org.springframework.security.oauth2.core.oidc.IdTokenClaimAccessor;
+import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
+
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -22,13 +31,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.ClaimAccessor;
-import org.springframework.security.oauth2.core.oidc.IdTokenClaimAccessor;
-import org.springframework.security.oauth2.core.oidc.StandardClaimAccessor;
 
 public class OAuth2AuthenticationService {
 
@@ -72,6 +74,16 @@ public class OAuth2AuthenticationService {
     }
 
     public AuthenticatedUser getCurrentUser() {
+        Authentication authentication = getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof RoutingInfoUserDetails routingInfoUserDetails) {
+            return new AuthenticatedUser(
+                    routingInfoUserDetails.getUsername(),
+                    routingInfoUserDetails.getUsername(),
+                    null,
+                    null,
+                    EnumSet.noneOf(PlatformRole.class)
+            );
+        }
         return getAuthenticatedUser(getClaimAccessor());
     }
 
