@@ -34,7 +34,8 @@ public final class ObservationTransformer {
                 .setHidden(dto.getHidden())
                 .setNoSchedule(dto.getNoSchedule())
                 .setObservationGroupIds(dto.getObservationGroupIds())
-                .setReminder(dto.getReminder());
+                .setReminder(dto.getReminder())
+                .setMilestoneId(dto.getMilestoneId());
     }
 
     public static ObservationDTO toObservationDTO_V1(Observation observation) {
@@ -55,7 +56,8 @@ public final class ObservationTransformer {
                 .hidden(observation.getHidden())
                 .noSchedule(observation.getNoSchedule())
                 .observationGroupIds(observation.getObservationGroupIds())
-                .reminder(observation.getReminder());
+                .reminder(observation.getReminder())
+                .milestoneId(observation.getMilestoneId());
     }
 
 }

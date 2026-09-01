@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.ParticipantMilestone;
 import io.redlink.more.studymanager.model.ParticipantObservationSeed;
 import io.redlink.more.studymanager.model.ParticipantWithObservationProperties;
 import io.redlink.more.studymanager.model.Study;
@@ -46,13 +47,15 @@ public class CalendarService {
     private final ObservationService observationService;
     private final InterventionService interventionService;
     private final ParticipantService participantService;
+    private final ParticipantMilestoneService participantMilestoneService;
 
     public CalendarService(StudyService studyService, ObservationService observationService, InterventionService interventionService,
-                           ParticipantService participantService) {
+                           ParticipantService participantService, ParticipantMilestoneService participantMilestoneService) {
         this.studyService = studyService;
         this.observationService = observationService;
         this.interventionService = interventionService;
         this.participantService = participantService;
+        this.participantMilestoneService = participantMilestoneService;
     }
 
     public StudyTimeline getTimeline(Long studyId, Integer participantId, Integer studyGroupId, Collection<Integer> observationGroupIds, Instant referenceDate, LocalDate from, LocalDate to) {
@@ -161,6 +164,24 @@ public class CalendarService {
                 Range.of(firstDayInStudy, lastDayInStudy, LocalDate::compareTo),
                 observations.stream()
                         .flatMap(o -> {
+                            final Instant anchor;
+                            final boolean isMilestoneAnchor;
+                            if (o.getMilestoneId() != null) {
+                                Optional<ParticipantMilestone> participantMilestone = participant == null
+                                        ? Optional.empty()
+                                        : participantMilestoneService.findParticipantMilestone(
+                                                study.getStudyId(), participant.getParticipantId(), o.getMilestoneId());
+                                if (participantMilestone.isEmpty()) {
+                                    // participant hasn't reached this milestone yet: no occurrences
+                                    return Stream.empty();
+                                }
+                                anchor = participantMilestone.get().getDateTime();
+                                isMilestoneAnchor = true;
+                            } else {
+                                anchor = effectiveRange.getMinimum();
+                                isMilestoneAnchor = false;
+                            }
+
                             List<ParticipantObservationSeed> matchingSeeds = properties.stream()
                                     .filter(p -> Objects.equals(o.getObservationId(), p.observationId()))
                                     .toList();
@@ -173,7 +194,7 @@ public class CalendarService {
                                         .flatMap(seed ->
                                                 SchedulerUtils
                                                         .parseToObservationSchedules(
-                                                                seed, o.getSchedule(), effectiveRange.getMinimum(), effectiveRange.getMaximum()
+                                                                seed, o.getSchedule(), anchor, effectiveRange.getMaximum(), isMilestoneAnchor
                                                         )
                                                         .stream()
                                                         // Disabled client-side filter for now...

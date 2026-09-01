@@ -4,10 +4,11 @@
  * for Digital Health and Prevention -- A research institute of the
  * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
  * Förderung der wissenschaftlichen Forschung).
- * Licensed under the Elastic License 2.0.
+ * Licensed under the Apache License, Version 2.0.
  */
 package io.redlink.more.studymanager.exception;
 
+import io.micrometer.common.util.StringUtils;
 import io.redlink.more.studymanager.model.StudyRole;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -32,4 +33,25 @@ public class DataConstraintException extends RuntimeException {
                         .formatted(userId, StudyRole.STUDY_ADMIN, studyId)
         );
     }
+
+    public static DataConstraintException createWithMessage(long studyId, String item, String reason) {
+        var msg = "Unable to remove %s from study_%d".formatted(item, studyId);
+        return new DataConstraintException(
+                StringUtils.isNotBlank(reason) ? "%s (reason: %s)".formatted(msg, reason) : msg);
+    }
+
+    public static DataConstraintException createMilestoneInUseByActiveParticipant(long studyId, int milestoneId) {
+        return new DataConstraintException(
+                "Can't delete milestone_%d from study_%d: An active participant has this milestone set!"
+                        .formatted(milestoneId, studyId)
+        );
+    }
+
+    public static DataConstraintException createParticipantMilestoneAlreadyExists(long studyId, int participantId, int milestoneId) {
+        return new DataConstraintException(
+                "A participant milestone for milestone_%d already exists for participant_%d in study_%d"
+                        .formatted(milestoneId, participantId, studyId)
+        );
+    }
+
 }

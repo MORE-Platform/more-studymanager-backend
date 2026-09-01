@@ -43,13 +43,13 @@ import java.util.stream.Stream;
 
 public final class SchedulerUtils {
     public static List<Range<Instant>> parseToObservationSchedulesForRelativeEvent(
-            RelativeEvent event, Instant start, Instant maxEnd) {
+            RelativeEvent event, Instant start, Instant maxEnd, boolean isMilestoneAnchor) {
 
         final List<Range<Instant>> events = new ArrayList<>();
 
         Range<Instant> currentEvt = Range.of(
-                toInstantFrom(event.getDtstart(), start),
-                toInstantFrom(event.getDtend(), start)
+                toInstantFrom(event.getDtstart(), start, isMilestoneAnchor),
+                toInstantFrom(event.getDtend(), start, isMilestoneAnchor)
         );
 
         if (event.getRrrule() != null) {
@@ -70,12 +70,14 @@ public final class SchedulerUtils {
         return List.copyOf(events);
     }
 
-    private static Instant toInstantFrom(RelativeDate date, Instant start) {
+    private static Instant toInstantFrom(RelativeDate date, Instant start, boolean isMilestoneAnchor) {
+        // The "1-based, -1" day-offset correction only makes sense when counting forward from a
+        // participant's signup instant (first day: 1, second day: 2, ...). A milestone anchor is
+        // an exact instant an observer wants to offset from directly (which may also be negative,
+        // for "before the milestone"), so that correction must not apply there.
+        int offsetValue = isMilestoneAnchor ? date.getOffset().getValue() : date.getOffset().getValue() - 1;
         return start.atZone(ZoneId.systemDefault())
-                // FIXME: Hidden Offset-Correction
-                // Offset is 1-based, therefor we must "-1" here
-                // (fist day: 1, second day: 2, ... )
-                .plus(date.getOffset().getValue() - 1, date.getOffset().getUnit().toChronoUnit())
+                .plus(offsetValue, date.getOffset().getUnit().toChronoUnit())
                 .with(date.getTime())
                 .toInstant();
     }
@@ -98,19 +100,21 @@ public final class SchedulerUtils {
         return List.copyOf(observationSchedules);
     }
 
-    public static List<Range<Instant>> parseToObservationSchedules(ParticipantObservationSeed seed, ScheduleEvent scheduleEvent, Instant start, Instant end) {
+    public static List<Range<Instant>> parseToObservationSchedules(ParticipantObservationSeed seed, ScheduleEvent scheduleEvent, Instant start, Instant end, boolean isMilestoneAnchor) {
         if (scheduleEvent == null) return Collections.emptyList();
         List<Range<Instant>> ranges = Collections.emptyList();
         if (scheduleEvent instanceof Event event) {
             ranges = parseToObservationSchedulesForEvent(event, start, end);
         } else if (scheduleEvent instanceof RelativeEvent relativeEvent) {
-            ranges = parseToObservationSchedulesForRelativeEvent(relativeEvent, start, end);
+            ranges = parseToObservationSchedulesForRelativeEvent(relativeEvent, start, end, isMilestoneAnchor);
         }
         return randomSchedule(seed, scheduleEvent, ranges);
     }
 
     public static LocalDate alignStartDateToSignupInstant(final Instant signup, List<Observation> observations) {
         return LocalDate.ofInstant(observations.stream()
+                        // Only observations anchored to the participant's signup, not to a milestone
+                        .filter(o -> o.getMilestoneId() == null)
                         // All the observation-schedules
                         .map(Observation::getSchedule)
                         // ... the relative ones
@@ -122,7 +126,7 @@ public final class SchedulerUtils {
                         .min(Comparator.comparing(RelativeDate::getOffset, io.redlink.more.studymanager.model.scheduler.Duration.DURATION_COMPARATOR))
                         // Convert the relative schedule end to the actual instant
                         .map(rd -> LocalDate.ofInstant(
-                                                toInstantFrom(rd, signup), ZoneId.systemDefault()
+                                                toInstantFrom(rd, signup, false), ZoneId.systemDefault()
                                         )
                                         .atTime(rd.getTime())
                                         .atZone(ZoneId.systemDefault())
@@ -154,7 +158,8 @@ public final class SchedulerUtils {
                         new RelativeDate()
                                 .setTime(LocalTime.of(trigger.getProperties().getInt("hour"), 0))
                                 .setOffset(new Duration().setValue(trigger.getProperties().getInt("day")).setUnit(Duration.Unit.DAY)),
-                        start
+                        start,
+                        false
                 ))
                 .filter(i -> i.isBefore(end))
                 .toList();
@@ -181,6 +186,8 @@ public final class SchedulerUtils {
     public static Instant shiftStartIfObservationAlreadyEnded(Instant start, List<Observation> observations) {
         // returns start date, if now event ends before, otherwise start date + 1 day
         return observations.stream()
+                // Only observations anchored to the participant's signup, not to a milestone
+                .filter(o -> o.getMilestoneId() == null)
                 .map(Observation::getSchedule)
                 .filter(scheduleEvent -> scheduleEvent.getType().equals(RelativeEvent.TYPE))
                 .map(r -> ((RelativeEvent) r).getDtend())

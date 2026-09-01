@@ -31,6 +31,7 @@ public class Observation {
     private Boolean noSchedule = false;
     private Set<Integer> observationGroupIds;
     private Boolean reminder = false;
+    private Integer milestoneId;
 
     public Long getStudyId() {
         return studyId;
@@ -164,6 +165,15 @@ public class Observation {
 
     public Observation setReminder(Boolean reminder) {
         this.reminder = reminder;
+        return this;
+    }
+
+    public Integer getMilestoneId() {
+        return milestoneId;
+    }
+
+    public Observation setMilestoneId(Integer milestoneId) {
+        this.milestoneId = milestoneId;
         return this;
     }
 }
