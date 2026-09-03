@@ -29,6 +29,10 @@ public class MilestoneRepository {
                     :name,
                     (SELECT COALESCE(MAX(order_index),0)+1 FROM milestones WHERE study_id = :study_id))
             RETURNING *""";
+    private static final String IMPORT_MILESTONE = """
+            INSERT INTO milestones (study_id, milestone_id, name, order_index)
+            VALUES (:study_id, :milestone_id, :name, :order_index)
+            RETURNING *""";
     private static final String GET_MILESTONE_BY_IDS = "SELECT * FROM milestones WHERE study_id = ? AND milestone_id = ?";
     private static final String LIST_MILESTONES_ORDER_BY_ORDER_INDEX = "SELECT * FROM milestones WHERE study_id = ? ORDER BY order_index";
     private static final String UPDATE_MILESTONE = "UPDATE milestones SET name = :name WHERE study_id = :study_id AND milestone_id = :milestone_id";
@@ -47,6 +51,12 @@ public class MilestoneRepository {
             SELECT COUNT(*) FROM participant_milestones pm
             JOIN participants p ON p.study_id = pm.study_id AND p.participant_id = pm.participant_id
             WHERE pm.study_id = :study_id AND pm.milestone_id = :milestone_id AND p.status = 'active'""";
+    private static final String COUNT_OBSERVATIONS_USING_MILESTONE = """
+            SELECT COUNT(*) FROM observations
+            WHERE study_id = :study_id AND milestone_id = :milestone_id""";
+    private static final String COUNT_INTERVENTIONS_USING_MILESTONE = """
+            SELECT COUNT(*) FROM interventions
+            WHERE study_id = :study_id AND milestone_id = :milestone_id""";
     private static final String CLEAR_MILESTONES = "DELETE FROM milestones";
 
     private final JdbcTemplate template;
@@ -62,6 +72,24 @@ public class MilestoneRepository {
             return namedTemplate.queryForObject(INSERT_MILESTONE, toParams(milestone), getMilestoneRowMapper());
         } catch (DataIntegrityViolationException e) {
             throw new BadRequestException("Study " + milestone.getStudyId() + " does not exist");
+        }
+    }
+
+    public Milestone doImport(Long studyId, Milestone milestone) {
+        try {
+            return namedTemplate.queryForObject(
+                    IMPORT_MILESTONE,
+                    toParams(milestone)
+                            .addValue("study_id", studyId)
+                            .addValue("milestone_id", milestone.getMilestoneId())
+                            .addValue("order_index", milestone.getOrderIndex()),
+                    getMilestoneRowMapper()
+            );
+        } catch (DataIntegrityViolationException e) {
+            throw new BadRequestException(
+                    "Error during import of milestone " + milestone.getMilestoneId() +
+                            " for study " + studyId
+            );
         }
     }
 
@@ -128,6 +156,24 @@ public class MilestoneRepository {
     public int countActiveParticipantMilestones(long studyId, int milestoneId) {
         return namedTemplate.queryForObject(
                 COUNT_ACTIVE_PARTICIPANT_MILESTONES,
+                new MapSqlParameterSource()
+                        .addValue("study_id", studyId)
+                        .addValue("milestone_id", milestoneId),
+                Integer.class);
+    }
+
+    public int countObservationsUsingMilestone(long studyId, int milestoneId) {
+        return namedTemplate.queryForObject(
+                COUNT_OBSERVATIONS_USING_MILESTONE,
+                new MapSqlParameterSource()
+                        .addValue("study_id", studyId)
+                        .addValue("milestone_id", milestoneId),
+                Integer.class);
+    }
+
+    public int countInterventionsUsingMilestone(long studyId, int milestoneId) {
+        return namedTemplate.queryForObject(
+                COUNT_INTERVENTIONS_USING_MILESTONE,
                 new MapSqlParameterSource()
                         .addValue("study_id", studyId)
                         .addValue("milestone_id", milestoneId),

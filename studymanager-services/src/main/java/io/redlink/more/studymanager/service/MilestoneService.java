@@ -39,6 +39,10 @@ public class MilestoneService {
         return repository.insert(new Milestone().setStudyId(studyId).setName(name));
     }
 
+    public Milestone importMilestone(Long studyId, Milestone milestone) {
+        return repository.doImport(studyId, milestone);
+    }
+
     public Milestone getMilestone(long studyId, int milestoneId) {
         return Optional.ofNullable(repository.getByIds(studyId, milestoneId))
                 .orElseThrow(() -> NotFoundException.Milestone(studyId, milestoneId));
@@ -57,7 +61,7 @@ public class MilestoneService {
 
     private void reorder(long studyId, int milestoneId, int oldIndex, int requestedNewIndex) {
         int count = repository.countByStudyId(studyId);
-        int newIndex = Math.max(1, Math.min(requestedNewIndex, count));
+        int newIndex = Math.max(0, Math.min(requestedNewIndex, count - 1));
         if (newIndex == oldIndex) {
             return;
         }
@@ -77,6 +81,12 @@ public class MilestoneService {
         Milestone milestone = getMilestone(studyId, milestoneId);
         if (repository.countActiveParticipantMilestones(studyId, milestoneId) > 0) {
             throw DataConstraintException.createMilestoneInUseByActiveParticipant(studyId, milestoneId);
+        }
+        if (repository.countObservationsUsingMilestone(studyId, milestoneId) > 0) {
+            throw DataConstraintException.createMilestoneInUseByObservation(studyId, milestoneId);
+        }
+        if (repository.countInterventionsUsingMilestone(studyId, milestoneId) > 0) {
+            throw DataConstraintException.createMilestoneInUseByIntervention(studyId, milestoneId);
         }
         repository.deleteById(studyId, milestoneId);
         repository.decrementOrderIndexAbove(studyId, milestone.getOrderIndex());

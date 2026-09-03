@@ -4,14 +4,21 @@
  * for Digital Health and Prevention -- A research institute of the
  * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
  * Förderung der wissenschaftlichen Forschung).
- * Licensed under the Elastic License 2.0.
+ * Licensed under the Apache License, Version 2.0.
  */
 package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.configuration.JPAConfiguration;
 import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
-import io.redlink.more.studymanager.model.*;
+import io.redlink.more.studymanager.model.Action;
+import io.redlink.more.studymanager.model.Contact;
+import io.redlink.more.studymanager.model.Intervention;
+import io.redlink.more.studymanager.model.Milestone;
+import io.redlink.more.studymanager.model.ObservationGroup;
+import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.scheduler.RecurrenceRule;
 import io.redlink.more.studymanager.utils.MapperUtils;
@@ -24,8 +31,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Instant;
@@ -40,11 +45,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {
-    InterventionRepository.class, StudyRepository.class, StudyGroupRepository.class, ObservationGroupRepository.class,
-    JPAConfiguration.class
+        InterventionRepository.class, StudyRepository.class, StudyGroupRepository.class, ObservationGroupRepository.class,
+        MilestoneRepository.class, JPAConfiguration.class
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@ActiveProfiles("test-containers-flyway")
+@ActiveProfiles({"test", "test-containers-flyway"})
 class InterventionRepositoryTest {
 
     @Autowired
@@ -58,6 +63,9 @@ class InterventionRepositoryTest {
 
     @Autowired
     private ObservationGroupRepository observationGroupRepository;
+
+    @Autowired
+    private MilestoneRepository milestoneRepository;
 
     @BeforeEach
     void deleteAll() {
@@ -91,7 +99,7 @@ class InterventionRepositoryTest {
 
         assertThat(interventionResponse.getInterventionId()).isNotNull();
         assertThat(interventionResponse.getTitle()).isEqualTo(intervention.getTitle());
-        assertThat(((Event)interventionResponse.getSchedule()).getDateStart()).isEqualTo(startTime);
+        assertThat(((Event) interventionResponse.getSchedule()).getDateStart()).isEqualTo(startTime);
         assertThat(MapperUtils.writeValueAsString(interventionResponse.getSchedule()))
                 .isEqualTo(MapperUtils.writeValueAsString(intervention.getSchedule()));
         assertThat(interventionResponse.getObservationGroupIds()).containsExactlyInAnyOrder(observationGroupId1);
@@ -148,19 +156,19 @@ class InterventionRepositoryTest {
                 .containsExactlyInAnyOrder(observationGroupId1, observationGroupId2);
 
         //list interventions with no groups
-        assertThat(interventionRepository.listInterventionsForGroup(studyId,null, Set.of()))
+        assertThat(interventionRepository.listInterventionsForGroup(studyId, null, Set.of()))
                 .extracting(Intervention::getInterventionId)
                 .containsExactly(intervention2.getInterventionId()); //intervantion 2 is not part of any group
         //same for none existing group IDs
-        assertThat(interventionRepository.listInterventionsForGroup(studyId,-1, Set.of(-1)))
+        assertThat(interventionRepository.listInterventionsForGroup(studyId, -1, Set.of(-1)))
                 .extracting(Intervention::getInterventionId)
                 .containsExactly(intervention2.getInterventionId()); //intervantion 2 is not part of any group
         //list interventions in observation group 1 with no studyGroup (or no studyGroup)
-        assertThat(interventionRepository.listInterventionsForGroup(studyId,null, Set.of(observationGroupId1)))
+        assertThat(interventionRepository.listInterventionsForGroup(studyId, null, Set.of(observationGroupId1)))
                 .extracting(Intervention::getInterventionId)
                 .containsExactly(intervention2.getInterventionId(), intervention3a.getInterventionId(), intervention3c.getInterventionId());
         //same for none existing group
-        assertThat(interventionRepository.listInterventionsForGroup(studyId,-1, Set.of(observationGroupId1)))
+        assertThat(interventionRepository.listInterventionsForGroup(studyId, -1, Set.of(observationGroupId1)))
                 .extracting(Intervention::getInterventionId)
                 .containsExactly(intervention2.getInterventionId(), intervention3a.getInterventionId(), intervention3c.getInterventionId());
         //list interventions in study group 1 and observation group 1 with no studyGroup (or no studyGroup)
@@ -188,7 +196,8 @@ class InterventionRepositoryTest {
         //assert delete Observation Group sets property of Observation to null
         observationGroupRepository.deleteById(studyId, observationGroupId1);
         assertThat((interventionRepository.getByIds(studyId, intervention3a.getInterventionId()).getObservationGroupIds()))
-                .isEmpty();;
+                .isEmpty();
+        ;
         assertThat((interventionRepository.getByIds(studyId, intervention4a.getInterventionId()).getObservationGroupIds()))
                 .isEmpty();
 
@@ -236,12 +245,36 @@ class InterventionRepositoryTest {
     }
 
     @Test
+    @DisplayName("Interventions can be inserted, imported and updated with a milestoneId")
+    void testMilestoneIdRoundTrip() {
+        Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
+        Integer milestoneId = milestoneRepository.insert(new Milestone().setStudyId(studyId).setName("Baseline")).getMilestoneId();
+
+        Intervention inserted = interventionRepository.insert(new Intervention()
+                .setStudyId(studyId)
+                .setTitle("Milestone-anchored intervention")
+                .setMilestoneId(milestoneId));
+        assertThat(inserted.getMilestoneId()).isEqualTo(milestoneId);
+        assertThat(interventionRepository.getByIds(studyId, inserted.getInterventionId()).getMilestoneId()).isEqualTo(milestoneId);
+
+        Intervention updated = interventionRepository.updateIntervention(inserted.setMilestoneId(null));
+        assertThat(updated.getMilestoneId()).isNull();
+
+        Intervention imported = interventionRepository.importIntervention(studyId, new Intervention()
+                .setStudyId(studyId)
+                .setInterventionId(99)
+                .setTitle("Imported intervention")
+                .setMilestoneId(milestoneId));
+        assertThat(imported.getMilestoneId()).isEqualTo(milestoneId);
+    }
+
+    @Test
     @DisplayName("Triggers can be updated")
     public void testUpdateTrigger() {
         Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
         Integer studyGroupId = studyGroupRepository.insert(new StudyGroup().setStudyId(studyId)).getStudyGroupId();
         Integer interventionId = interventionRepository.insert(new Intervention().setStudyId(studyId)
-                        .setStudyGroupId(studyGroupId)).getInterventionId();
+                .setStudyGroupId(studyGroupId)).getInterventionId();
 
         Trigger trigger = new Trigger()
                 .setType("my-type")

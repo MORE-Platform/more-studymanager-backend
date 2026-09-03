@@ -49,6 +49,10 @@ public class ParticipantMilestoneService {
         return repository.listByParticipant(studyId, participantId);
     }
 
+    public List<ParticipantMilestone> listParticipantsForMilestone(long studyId, int milestoneId) {
+        return repository.listByMilestone(studyId, milestoneId);
+    }
+
     public ParticipantMilestone getParticipantMilestone(long studyId, int participantId, int milestoneId) {
         return findParticipantMilestone(studyId, participantId, milestoneId)
                 .orElseThrow(() -> NotFoundException.ParticipantMilestone(studyId, participantId, milestoneId));

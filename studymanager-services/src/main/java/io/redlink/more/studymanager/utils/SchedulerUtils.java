@@ -142,10 +142,10 @@ public final class SchedulerUtils {
         );
     }
 
-    public static List<Instant> parseToInterventionSchedules(Trigger trigger, Instant start, Instant end) {
+    public static List<Instant> parseToInterventionSchedules(Trigger trigger, Instant start, Instant end, boolean isMilestoneAnchor) {
         if (trigger == null) return Collections.emptyList();
         if (Objects.equals(trigger.getType(), "relative-time-trigger")) {
-            return parseToInterventionSchedulesForRelativeTrigger(trigger, start, end);
+            return parseToInterventionSchedulesForRelativeTrigger(trigger, start, end, isMilestoneAnchor);
         } else if (Objects.equals(trigger.getType(), "scheduled-trigger")) {
             return parseToInterventionSchedulesForScheduledTrigger(trigger, start, end);
         } else {
@@ -153,13 +153,13 @@ public final class SchedulerUtils {
         }
     }
 
-    private static List<Instant> parseToInterventionSchedulesForRelativeTrigger(Trigger trigger, Instant start, Instant end) {
+    private static List<Instant> parseToInterventionSchedulesForRelativeTrigger(Trigger trigger, Instant start, Instant end, boolean isMilestoneAnchor) {
         return Stream.of(toInstantFrom(
                         new RelativeDate()
                                 .setTime(LocalTime.of(trigger.getProperties().getInt("hour"), 0))
                                 .setOffset(new Duration().setValue(trigger.getProperties().getInt("day")).setUnit(Duration.Unit.DAY)),
                         start,
-                        false
+                        isMilestoneAnchor
                 ))
                 .filter(i -> i.isBefore(end))
                 .toList();

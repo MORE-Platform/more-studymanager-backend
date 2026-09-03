@@ -65,6 +65,33 @@ class MilestoneServiceTest {
     }
 
     @Test
+    void deleteMilestoneFailsWhenUsedByObservation() {
+        when(repository.getByIds(1L, 2))
+                .thenReturn(new Milestone().setStudyId(1L).setMilestoneId(2).setName("M2").setOrderIndex(3));
+        when(repository.countActiveParticipantMilestones(1L, 2)).thenReturn(0);
+        when(repository.countObservationsUsingMilestone(1L, 2)).thenReturn(1);
+
+        Assertions.assertThrows(DataConstraintException.class, () -> milestoneService.deleteMilestone(1L, 2));
+
+        verify(repository, never()).deleteById(anyLong(), anyInt());
+        verify(repository, never()).decrementOrderIndexAbove(anyLong(), anyInt());
+    }
+
+    @Test
+    void deleteMilestoneFailsWhenUsedByIntervention() {
+        when(repository.getByIds(1L, 2))
+                .thenReturn(new Milestone().setStudyId(1L).setMilestoneId(2).setName("M2").setOrderIndex(3));
+        when(repository.countActiveParticipantMilestones(1L, 2)).thenReturn(0);
+        when(repository.countObservationsUsingMilestone(1L, 2)).thenReturn(0);
+        when(repository.countInterventionsUsingMilestone(1L, 2)).thenReturn(1);
+
+        Assertions.assertThrows(DataConstraintException.class, () -> milestoneService.deleteMilestone(1L, 2));
+
+        verify(repository, never()).deleteById(anyLong(), anyInt());
+        verify(repository, never()).decrementOrderIndexAbove(anyLong(), anyInt());
+    }
+
+    @Test
     void deleteMilestoneFailsWhenMilestoneDoesNotExist() {
         when(repository.getByIds(1L, 99)).thenReturn(null);
 
@@ -135,12 +162,13 @@ class MilestoneServiceTest {
     @Test
     void updateMilestoneClampsRequestedOrderIndexToValidRange() {
         when(repository.getByIds(1L, 2))
-                .thenReturn(new Milestone().setStudyId(1L).setMilestoneId(2).setName("M2").setOrderIndex(2));
+                .thenReturn(new Milestone().setStudyId(1L).setMilestoneId(2).setName("M2").setOrderIndex(0));
         when(repository.countByStudyId(1L)).thenReturn(3);
 
         milestoneService.updateMilestone(1L, 2, "M2", 99);
 
-        verify(repository).shiftOrderIndexRange(1L, 3, 3, -1);
-        verify(repository).setOrderIndex(1L, 2, 3);
+        // orderIndex is 0-based, so with 3 milestones the highest valid index is 2
+        verify(repository).shiftOrderIndexRange(1L, 1, 2, -1);
+        verify(repository).setOrderIndex(1L, 2, 2);
     }
 }

@@ -8,23 +8,43 @@
  */
 package io.redlink.more.studymanager.sdk.scoped;
 
+import io.redlink.more.studymanager.core.io.SimpleParticipant;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
 import io.redlink.more.studymanager.core.sdk.schedule.Schedule;
+import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 
 public class MoreTriggerSDKImpl extends MorePlatformSDKImpl implements MoreTriggerSDK {
 
     private final int interventionId;
+    private final Integer milestoneId;
 
-    public MoreTriggerSDKImpl(MoreSDK sdk, long studyId, Integer studyGroupId, int interventionId) {
+    public MoreTriggerSDKImpl(MoreSDK sdk, long studyId, Integer studyGroupId, int interventionId, Integer milestoneId) {
         super(sdk, studyId, studyGroupId);
         this.interventionId = interventionId;
+        this.milestoneId = milestoneId;
+    }
+
+    @Override
+    public Set<SimpleParticipant> participants(ParticipantFilter filter) {
+        Set<Participant.Status> state =
+                (filter == ParticipantFilter.ACTIVE_ONLY ? Set.of(Participant.Status.ACTIVE) : null);
+        return sdk.listParticipants(studyId, studyGroupId, state, milestoneId);
+    }
+
+    @Override
+    public Optional<Instant> getMilestoneDateTime(Integer participantId) {
+        if (milestoneId == null) {
+            return Optional.empty();
+        }
+        return sdk.getParticipantMilestoneDateTime(studyId, participantId, milestoneId);
     }
 
     @Override

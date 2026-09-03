@@ -8,8 +8,8 @@
  */
 package io.redlink.more.studymanager.exception;
 
-import io.micrometer.common.util.StringUtils;
 import io.redlink.more.studymanager.model.StudyRole;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -51,6 +51,20 @@ public class DataConstraintException extends RuntimeException {
         return new DataConstraintException(
                 "A participant milestone for milestone_%d already exists for participant_%d in study_%d"
                         .formatted(milestoneId, participantId, studyId)
+        );
+    }
+
+    public static DataConstraintException createMilestoneInUseByObservation(long studyId, int milestoneId) {
+        return new DataConstraintException(
+                "Can't delete milestone_%d from study_%d: An observation still references this milestone!"
+                        .formatted(milestoneId, studyId)
+        );
+    }
+
+    public static DataConstraintException createMilestoneInUseByIntervention(long studyId, int milestoneId) {
+        return new DataConstraintException(
+                "Can't delete milestone_%d from study_%d: An intervention still references this milestone!"
+                        .formatted(milestoneId, studyId)
         );
     }
 

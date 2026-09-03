@@ -24,6 +24,7 @@ public class Intervention {
     private Instant created;
     private Instant modified;
     private Set<Integer> observationGroupIds;
+    private Integer milestoneId;
 
     public Long getStudyId() {
         return studyId;
@@ -104,6 +105,15 @@ public class Intervention {
 
     public Set<Integer> getObservationGroupIds() {
         return observationGroupIds;
+    }
+
+    public Integer getMilestoneId() {
+        return milestoneId;
+    }
+
+    public Intervention setMilestoneId(Integer milestoneId) {
+        this.milestoneId = milestoneId;
+        return this;
     }
 
 }

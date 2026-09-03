@@ -39,6 +39,12 @@ public class ParticipantMilestoneRepository {
                 JOIN milestones m ON m.study_id = pm.study_id AND m.milestone_id = pm.milestone_id
             WHERE pm.study_id = ? AND pm.participant_id = ?
             ORDER BY m.order_index""";
+    private static final String LIST_MILESTONE_PARTICIPANTS = """
+            SELECT pm.*, m.name AS milestone_name
+            FROM participant_milestones pm
+                JOIN milestones m ON m.study_id = pm.study_id AND m.milestone_id = pm.milestone_id
+            WHERE pm.study_id = ? AND pm.milestone_id = ?
+            ORDER BY pm.participant_id""";
     private static final String UPDATE_PARTICIPANT_MILESTONE = """
             UPDATE participant_milestones SET date_time = :date_time, modified = now()
             WHERE study_id = :study_id AND participant_id = :participant_id AND milestone_id = :milestone_id""";
@@ -80,6 +86,11 @@ public class ParticipantMilestoneRepository {
 
     public List<ParticipantMilestone> listByParticipant(long studyId, int participantId) {
         return template.query(LIST_PARTICIPANT_MILESTONES, getRowMapper(), studyId, participantId);
+    }
+
+
+    public List<ParticipantMilestone> listByMilestone(long studyId, int milestoneId) {
+        return template.query(LIST_MILESTONE_PARTICIPANTS, getRowMapper(), studyId, milestoneId);
     }
 
     public ParticipantMilestone update(ParticipantMilestone participantMilestone) {
