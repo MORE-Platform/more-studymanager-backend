@@ -101,6 +101,16 @@ public class PushNotificationService {
         );
     }
 
+    public void sendMilestoneUpdate(Participant participant) {
+        sendPushNotification(
+                participant.getStudyId(),
+                participant.getParticipantId(),
+                "Your Study has a new update",
+                "Your study schedule was updated. For more information, please launch the app!",
+                Map.of("key", "MILESTONE_UPDATED")
+        );
+    }
+
     private static String toAppState(Study.Status state) {
         // Translate the study-states to states the app also knows:
         return (switch (state) {

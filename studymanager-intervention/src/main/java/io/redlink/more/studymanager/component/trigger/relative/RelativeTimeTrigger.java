@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,10 +60,14 @@ public class RelativeTimeTrigger extends Trigger<TriggerProperties> {
     }
 
     protected boolean matchesDayAndHour(SimpleParticipant participant, Instant now) {
+        Optional<Instant> milestoneDateTime = sdk.getMilestoneDateTime(participant.getId());
+        boolean isMilestoneAnchor = milestoneDateTime.isPresent();
+        Instant anchor = milestoneDateTime.orElseGet(participant::getStart);
+
         long day = ChronoUnit.DAYS.between(
-                LocalDateTime.of(participant.getStart().atZone(HOME).toLocalDate(), LocalTime.MIDNIGHT),
+                LocalDateTime.of(anchor.atZone(HOME).toLocalDate(), LocalTime.MIDNIGHT),
                 LocalDateTime.of(now.atZone(HOME).toLocalDate(), LocalTime.MIDNIGHT)
-        ) + 1;
+        ) + (isMilestoneAnchor ? 0 : 1);
         int hour = now.atZone(HOME).getHour();
         return properties.getInt("hour") == hour && properties.getLong("day") == day;
     }

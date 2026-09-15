@@ -121,4 +121,9 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
     public MeasurementSet getMeasurementSet() {
         return LIMESURVEY_METADATA;
     }
+
+    @Override
+    public boolean isResyncable() {
+        return true;
+    }
 }

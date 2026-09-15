@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.core.exception.ApiCallException;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
+import io.redlink.more.studymanager.component.observation.QuestionObservationFactory;
 import io.redlink.more.studymanager.core.model.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -63,5 +64,13 @@ class LimeSurveyObservationFactoryTest {
         ApiCallException exception = Assertions.assertThrows(ApiCallException.class,
                 () -> factory.handleAPICall("surveys", new User("username"), mapper.readTree("{\"filter\":  \"some-filter\", \"size\": 0, \"start\":  0}")));
         Assertions.assertEquals(500, exception.getStatus());
+    }
+
+    @Test
+    void testIsResyncable() {
+        Assertions.assertTrue(new LimeSurveyObservationFactory<>().isResyncable(),
+                "LimeSurvey responses can be fetched again, so resync must be supported");
+        Assertions.assertFalse(new QuestionObservationFactory().isResyncable(),
+                "resync is opt-in, other observations must default to false");
     }
 }

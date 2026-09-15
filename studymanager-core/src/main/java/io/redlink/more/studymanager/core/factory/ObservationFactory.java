@@ -33,4 +33,8 @@ public abstract class ObservationFactory<C extends Observation<P>, P extends Obs
     public Visibility getVisibility() {
         return Visibility.DEFAULT;
     }
+
+    public boolean isResyncable() {
+        return false;
+    }
 }

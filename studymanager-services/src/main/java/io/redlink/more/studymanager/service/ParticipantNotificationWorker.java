@@ -1,5 +1,6 @@
 package io.redlink.more.studymanager.service;
 
+import io.redlink.more.studymanager.event.ParticipantMilestoneChangedEvent;
 import io.redlink.more.studymanager.event.StudyParticipantClosedEvent;
 import io.redlink.more.studymanager.event.StudyStateChangedEvent;
 import io.redlink.more.studymanager.model.Study;
@@ -41,5 +42,12 @@ public class ParticipantNotificationWorker {
         pushNotificationService.sendStudyStateUpdate(
                 event.getParticipant(), Study.Status.ACTIVE, Study.Status.CLOSED
         );
+    }
+
+    @EventListener
+    public void handleParticipantMilestoneChanged(ParticipantMilestoneChangedEvent event) {
+        log.info("Notifying participant[study={}, id={}] about a milestone update",
+                event.getParticipant().getStudyId(), event.getParticipant().getParticipantId());
+        pushNotificationService.sendMilestoneUpdate(event.getParticipant());
     }
 }

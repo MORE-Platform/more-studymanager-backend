@@ -11,11 +11,13 @@ package io.redlink.more.studymanager.controller.studymanager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.model.AuthenticatedUser;
+import io.redlink.more.studymanager.model.ObservationResyncRequest;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.ParticipantApplicationAccess;
 import io.redlink.more.studymanager.model.PlatformRole;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.ApplicationAccessService;
+import io.redlink.more.studymanager.service.ObservationResyncService;
 import io.redlink.more.studymanager.service.OAuth2AuthenticationService;
 import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
@@ -64,6 +66,9 @@ class ParticipantControllerTest {
 
     @MockitoBean
     ApplicationAccessService applicationAccessService;
+
+    @MockitoBean
+    ObservationResyncService observationResyncService;
 
     @Autowired
     ObjectMapper mapper;
@@ -365,5 +370,69 @@ class ParticipantControllerTest {
                 .andExpect(status().isNoContent());
 
         org.mockito.Mockito.verify(applicationAccessService).deleteParticipantApplicationAccess(studyId, participantId, application);
+    }
+
+    @Test
+    @DisplayName("Resync GET reports pending=false when no request has been triggered yet")
+    void testGetObservationResyncRequestNotPending() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final int observationId = 7;
+
+        when(observationResyncService.isResyncable(studyId, observationId)).thenReturn(true);
+        when(observationResyncService.find(studyId, participantId, observationId))
+                .thenReturn(java.util.Optional.empty());
+
+        mvc.perform(get("/api/v1/studies/{studyId}/participants/{participantId}/observations/{observationId}/resync",
+                        studyId, participantId, observationId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.studyId").value(studyId))
+                .andExpect(jsonPath("$.participantId").value(participantId))
+                .andExpect(jsonPath("$.observationId").value(observationId))
+                .andExpect(jsonPath("$.resyncable").value(true))
+                .andExpect(jsonPath("$.pending").value(false))
+                .andExpect(jsonPath("$.created").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("Resync GET reports pending=true with the request timestamp")
+    void testGetObservationResyncRequestPending() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final int observationId = 7;
+        final Instant created = Instant.parse("2026-09-14T09:00:00Z");
+
+        when(observationResyncService.isResyncable(studyId, observationId)).thenReturn(true);
+        when(observationResyncService.find(studyId, participantId, observationId))
+                .thenReturn(java.util.Optional.of(new ObservationResyncRequest(studyId, participantId, observationId, created)));
+
+        mvc.perform(get("/api/v1/studies/{studyId}/participants/{participantId}/observations/{observationId}/resync",
+                        studyId, participantId, observationId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pending").value(true))
+                .andExpect(jsonPath("$.created").value(created.toString()));
+    }
+
+    @Test
+    @DisplayName("Resync POST returns 201 with the created request")
+    void testCreateObservationResyncRequest() throws Exception {
+        final long studyId = 1L;
+        final int participantId = 100;
+        final int observationId = 7;
+        final Instant created = Instant.parse("2026-09-14T09:00:00Z");
+
+        when(observationResyncService.requestResync(studyId, participantId, observationId))
+                .thenReturn(new ObservationResyncRequest(studyId, participantId, observationId, created));
+
+        mvc.perform(post("/api/v1/studies/{studyId}/participants/{participantId}/observations/{observationId}/resync",
+                        studyId, participantId, observationId))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.observationId").value(observationId))
+                .andExpect(jsonPath("$.resyncable").value(true))
+                .andExpect(jsonPath("$.pending").value(true))
+                .andExpect(jsonPath("$.created").value(created.toString()));
     }
 }

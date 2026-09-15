@@ -8,6 +8,7 @@
  */
 package io.redlink.more.studymanager.controller.studymanager;
 
+import io.redlink.more.studymanager.api.v1.model.ObservationResyncRequestDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipantApplicationAccessDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipantDTO;
 import io.redlink.more.studymanager.api.v1.webservices.ParticipantsApi;
@@ -18,9 +19,11 @@ import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.OccurredObservation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.StudyRole;
+import io.redlink.more.studymanager.model.transformer.ObservationResyncRequestTransformer;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import io.redlink.more.studymanager.service.ApplicationAccessService;
+import io.redlink.more.studymanager.service.ObservationResyncService;
 import io.redlink.more.studymanager.service.OccurredObservationService;
 import io.redlink.more.studymanager.service.ParticipantService;
 import org.slf4j.Logger;
@@ -44,13 +47,15 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     private final OccurredObservationService occurredObservationService;
     private final GatewayProperties gatewayProperties;
     private final ApplicationAccessService applicationAccessService;
+    private final ObservationResyncService observationResyncService;
 
 
-    public ParticipantsApiV1Controller(ParticipantService service, OccurredObservationService occurredObservationService, GatewayProperties gatewayProperties, ApplicationAccessService applicationAccessService) {
+    public ParticipantsApiV1Controller(ParticipantService service, OccurredObservationService occurredObservationService, GatewayProperties gatewayProperties, ApplicationAccessService applicationAccessService, ObservationResyncService observationResyncService) {
         this.service = service;
         this.occurredObservationService = occurredObservationService;
         this.gatewayProperties = gatewayProperties;
         this.applicationAccessService = applicationAccessService;
+        this.observationResyncService = observationResyncService;
     }
 
     private ParticipantDTO toParticipantDTO(Participant p) {
@@ -195,5 +200,27 @@ public class ParticipantsApiV1Controller implements ParticipantsApi {
     public ResponseEntity<Void> deleteParticipantApplicationAccessData(Long studyId, Integer participantId, String application, Boolean includeData) {
         applicationAccessService.deleteParticipantApplicationAccess(studyId, participantId, application);
         return ResponseEntity.noContent().build();
+    }
+
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Override
+    @Audited
+    public ResponseEntity<ObservationResyncRequestDTO> getObservationResyncRequest(Long studyId, Integer participantId, Integer observationId) {
+        boolean resyncable = observationResyncService.isResyncable(studyId, observationId);
+        return ResponseEntity.ok(
+                observationResyncService.find(studyId, participantId, observationId)
+                        .map(it -> ObservationResyncRequestTransformer.toObservationResyncRequestDTO_V1(it, resyncable))
+                        .orElseGet(() -> ObservationResyncRequestTransformer.toPendingFalseDTO_V1(studyId, participantId, observationId, resyncable))
+        );
+    }
+
+    @RequiresStudyRole({StudyRole.STUDY_ADMIN, StudyRole.STUDY_OPERATOR})
+    @Override
+    @Audited
+    public ResponseEntity<ObservationResyncRequestDTO> createObservationResyncRequest(Long studyId, Integer participantId, Integer observationId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ObservationResyncRequestTransformer.toObservationResyncRequestDTO_V1(
+                        observationResyncService.requestResync(studyId, participantId, observationId), true)
+        );
     }
 }

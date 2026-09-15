@@ -30,8 +30,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Map;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.context.ApplicationContext;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class InterventionServiceTest {
     @Mock
-    Map<String, TriggerFactory> triggerFactories;
+    ApplicationContext applicationContext;
     @Mock
     StudyStateService studyStateService;
     @Mock
@@ -60,6 +60,9 @@ class InterventionServiceTest {
 
     @Test
     void testNotFoundValidation() {
+        when(applicationContext.getBean("my-trigger", TriggerFactory.class))
+                .thenThrow(new NoSuchBeanDefinitionException("my-trigger"));
+
         NotFoundException notFoundException = Assertions.assertThrows(NotFoundException.class, () ->
                 interventionService.updateTrigger(1L, 1, new Trigger().setType("my-trigger"))
         );
@@ -70,8 +73,7 @@ class InterventionServiceTest {
     void testBadRequestValidation() {
         TriggerFactory factory = mock(TriggerFactory.class);
         when(factory.validate(any())).thenThrow(new ConfigurationValidationException(ConfigurationValidationReport.init().error("My error")));
-        when(triggerFactories.get("my-trigger")).thenReturn(factory);
-        when(triggerFactories.containsKey("my-trigger")).thenReturn(true);
+        when(applicationContext.getBean("my-trigger", TriggerFactory.class)).thenReturn(factory);
 
         Assertions.assertThrows(BadRequestException.class, () ->
                 interventionService.updateTrigger(1L, 1, new Trigger().setType("my-trigger"))

@@ -4,7 +4,7 @@
  * for Digital Health and Prevention -- A research institute of the
  * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
  * Förderung der wissenschaftlichen Forschung).
- * Licensed under the Elastic License 2.0.
+ * Licensed under the Apache License, Version 2.0.
  */
 package io.redlink.more.studymanager.repository;
 
@@ -12,9 +12,9 @@ import io.redlink.more.studymanager.core.properties.ActionProperties;
 import io.redlink.more.studymanager.core.properties.TriggerProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.Action;
-import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Trigger;
+import io.redlink.more.studymanager.model.scheduler.Event;
 import io.redlink.more.studymanager.utils.MapperUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -37,39 +37,39 @@ import static io.redlink.more.studymanager.repository.RepositoryUtils.getValidNu
 @Component
 public class InterventionRepository {
 
-    private static final String INSERT_INTERVENTION = "INSERT INTO interventions(study_id,intervention_id,title,purpose,study_group_id,schedule) VALUES (:study_id,(SELECT COALESCE(MAX(intervention_id),0)+1 FROM interventions WHERE study_id = :study_id),:title,:purpose,:study_group_id,:schedule::jsonb)";
-    private static final String IMPORT_INTERVENTION = "INSERT INTO interventions(study_id,intervention_id,title,purpose,study_group_id,schedule) VALUES (:study_id,:intervention_id,:title,:purpose,:study_group_id,:schedule::jsonb)";
+    private static final String INSERT_INTERVENTION = "INSERT INTO interventions(study_id,intervention_id,title,purpose,study_group_id,schedule,milestone_id) VALUES (:study_id,(SELECT COALESCE(MAX(intervention_id),0)+1 FROM interventions WHERE study_id = :study_id),:title,:purpose,:study_group_id,:schedule::jsonb,:milestone_id)";
+    private static final String IMPORT_INTERVENTION = "INSERT INTO interventions(study_id,intervention_id,title,purpose,study_group_id,schedule,milestone_id) VALUES (:study_id,:intervention_id,:title,:purpose,:study_group_id,:schedule::jsonb,:milestone_id)";
     private static final String GET_INTERVENTION_BY_IDS = """
-        SELECT i.*, ARRAY_AGG(iog.observation_group_id) FILTER (WHERE iog.observation_group_id IS NOT NULL) AS observation_group_ids
-        FROM interventions i
-            LEFT JOIN intervention_observation_groups iog ON i.study_id = iog.study_id AND i.intervention_id = iog.intervention_id
-        WHERE i.study_id = ? AND i.intervention_id = ?
-        GROUP BY i.study_id, i.intervention_id""";
+            SELECT i.*, ARRAY_AGG(iog.observation_group_id) FILTER (WHERE iog.observation_group_id IS NOT NULL) AS observation_group_ids
+            FROM interventions i
+                LEFT JOIN intervention_observation_groups iog ON i.study_id = iog.study_id AND i.intervention_id = iog.intervention_id
+            WHERE i.study_id = ? AND i.intervention_id = ?
+            GROUP BY i.study_id, i.intervention_id""";
     private static final String LIST_INTERVENTIONS = """
-        SELECT i.*, ARRAY_AGG(iog.observation_group_id) FILTER (WHERE iog.observation_group_id IS NOT NULL) AS observation_group_ids
-        FROM interventions i
-            LEFT JOIN intervention_observation_groups iog ON i.study_id = iog.study_id AND i.intervention_id = iog.intervention_id
-        WHERE i.study_id = ?
-        GROUP BY i.study_id, i.intervention_id""";
+            SELECT i.*, ARRAY_AGG(iog.observation_group_id) FILTER (WHERE iog.observation_group_id IS NOT NULL) AS observation_group_ids
+            FROM interventions i
+                LEFT JOIN intervention_observation_groups iog ON i.study_id = iog.study_id AND i.intervention_id = iog.intervention_id
+            WHERE i.study_id = ?
+            GROUP BY i.study_id, i.intervention_id""";
     private static final String LIST_INTERVENTIONS_FOR_GROUP = """
-        SELECT i.*, ARRAY_AGG(iog.observation_group_id) FILTER (WHERE iog.observation_group_id IS NOT NULL) AS observation_group_ids
-        FROM interventions i
-            LEFT JOIN intervention_observation_groups iog ON i.study_id = iog.study_id AND i.intervention_id = iog.intervention_id
-        WHERE i.study_id = :study_id
-          AND (i.study_group_id IS NULL OR i.study_group_id = :study_group_id)
-          AND (NOT EXISTS (
-            SELECT 1 FROM intervention_observation_groups iog3
-            WHERE iog3.study_id = i.study_id
-              AND iog3.intervention_id = i.intervention_id
-            ) OR EXISTS (
-            SELECT 1 FROM intervention_observation_groups iog2
-            WHERE iog2.study_id = i.study_id
-              AND iog2.intervention_id = i.intervention_id
-              AND iog2.observation_group_id = ANY(:observation_group_ids)))
-        GROUP BY i.study_id, i.intervention_id""";
+            SELECT i.*, ARRAY_AGG(iog.observation_group_id) FILTER (WHERE iog.observation_group_id IS NOT NULL) AS observation_group_ids
+            FROM interventions i
+                LEFT JOIN intervention_observation_groups iog ON i.study_id = iog.study_id AND i.intervention_id = iog.intervention_id
+            WHERE i.study_id = :study_id
+              AND (i.study_group_id IS NULL OR i.study_group_id = :study_group_id)
+              AND (NOT EXISTS (
+                SELECT 1 FROM intervention_observation_groups iog3
+                WHERE iog3.study_id = i.study_id
+                  AND iog3.intervention_id = i.intervention_id
+                ) OR EXISTS (
+                SELECT 1 FROM intervention_observation_groups iog2
+                WHERE iog2.study_id = i.study_id
+                  AND iog2.intervention_id = i.intervention_id
+                  AND iog2.observation_group_id = ANY(:observation_group_ids)))
+            GROUP BY i.study_id, i.intervention_id""";
     private static final String DELETE_INTERVENTION_BY_IDS = "DELETE FROM interventions WHERE study_id = ? AND intervention_id = ?";
     private static final String DELETE_ALL = "DELETE FROM interventions";
-    private static final String UPDATE_INTERVENTION = "UPDATE interventions SET title=:title, study_group_id=:study_group_id, purpose=:purpose, schedule=:schedule::jsonb WHERE study_id=:study_id AND intervention_id=:intervention_id";
+    private static final String UPDATE_INTERVENTION = "UPDATE interventions SET title=:title, study_group_id=:study_group_id, purpose=:purpose, schedule=:schedule::jsonb, milestone_id=:milestone_id WHERE study_id=:study_id AND intervention_id=:intervention_id";
     private static final String CREATE_ACTION = "INSERT INTO actions(study_id,intervention_id,action_id,type,properties) VALUES (:study_id,:intervention_id,(SELECT COALESCE(MAX(action_id),0)+1 FROM actions WHERE study_id = :study_id AND intervention_id=:intervention_id),:type,:properties::jsonb) RETURNING *";
     private static final String IMPORT_ACTION = "INSERT INTO actions(study_id,intervention_id,action_id,type,properties) VALUES (:study_id,:intervention_id,:action_id,:type,:properties::jsonb) RETURNING *";
     private static final String GET_ACTION_BY_IDS = "SELECT * FROM actions WHERE study_id=? AND intervention_id=? AND action_id=?";
@@ -106,7 +106,7 @@ public class InterventionRepository {
         } catch (DataIntegrityViolationException e) {
             throw new BadRequestException(
                     "Unable to insert Invervention because it refers an study group " + intervention.getStudyGroupId() +
-                    "that does not exist for study " + intervention.getStudyId());
+                            "that does not exist for study " + intervention.getStudyId());
         }
         Integer interventionId = keyHolder.getKey().intValue();
         setInverventionObservationGroupIds(intervention.getStudyId(), interventionId, intervention.getObservationGroupIds());
@@ -125,7 +125,7 @@ public class InterventionRepository {
         } catch (DataIntegrityViolationException e) {
             throw new BadRequestException(
                     "Error during import of intervention " + intervention.getInterventionId() + "for study " +
-                    intervention.getStudyId() + "(" + e.getClass().getSimpleName() + ": " + e.getMessage() + ")");
+                            intervention.getStudyId() + "(" + e.getClass().getSimpleName() + ": " + e.getMessage() + ")");
         }
         Integer interventionId = keyHolder.getKey().intValue();
         setInverventionObservationGroupIds(studyId, interventionId, intervention.getObservationGroupIds());
@@ -136,9 +136,10 @@ public class InterventionRepository {
         return template.query(LIST_INTERVENTIONS, getInterventionRowMapper(), studyId);
     }
 
-    public List<Intervention> listInterventionsForGroup(Long studyId, Integer groupId){
+    public List<Intervention> listInterventionsForGroup(Long studyId, Integer groupId) {
         return listInterventionsForGroup(studyId, groupId, Collections.emptyList());
     }
+
     public List<Intervention> listInterventionsForGroup(Long studyId, Integer groupId, Collection<Integer> observationGroupIds) {
         return namedTemplate.query(LIST_INTERVENTIONS_FOR_GROUP,
                 new MapSqlParameterSource("study_id", studyId)
@@ -253,13 +254,13 @@ public class InterventionRepository {
     }
 
 
-
     private static MapSqlParameterSource interventionToParams(Intervention intervention) {
         return toParams(intervention.getStudyId())
                 .addValue("title", intervention.getTitle())
                 .addValue("purpose", intervention.getPurpose())
                 .addValue("study_group_id", intervention.getStudyGroupId())
-                .addValue("schedule", MapperUtils.writeValueAsString(intervention.getSchedule()));
+                .addValue("schedule", MapperUtils.writeValueAsString(intervention.getSchedule()))
+                .addValue("milestone_id", intervention.getMilestoneId());
     }
 
     private static MapSqlParameterSource triggerToParams(Long studyId, Integer interventionId, Trigger trigger) {
@@ -280,8 +281,8 @@ public class InterventionRepository {
         return (rs, rowNum) -> new Trigger()
                 .setProperties(MapperUtils.readValue(rs.getObject("properties").toString(), TriggerProperties.class))
                 .setType(rs.getString("type"))
-                .setCreated(RepositoryUtils.readInstant(rs,"created"))
-                .setModified(RepositoryUtils.readInstant(rs,"modified"));
+                .setCreated(RepositoryUtils.readInstant(rs, "created"))
+                .setModified(RepositoryUtils.readInstant(rs, "modified"));
     }
 
     private static RowMapper<Action> getActionRowMapper() {
@@ -289,8 +290,8 @@ public class InterventionRepository {
                 .setActionId(rs.getInt("action_id"))
                 .setType(rs.getString("type"))
                 .setProperties(MapperUtils.readValue(rs.getObject("properties"), ActionProperties.class))
-                .setModified(RepositoryUtils.readInstant(rs,"modified"))
-                .setCreated(RepositoryUtils.readInstant(rs,"created"));
+                .setModified(RepositoryUtils.readInstant(rs, "modified"))
+                .setCreated(RepositoryUtils.readInstant(rs, "created"));
     }
 
     private static RowMapper<Intervention> getInterventionRowMapper() {
@@ -301,10 +302,11 @@ public class InterventionRepository {
                 .setPurpose(rs.getString("purpose"))
                 .setSchedule(MapperUtils.readValue(rs.getString("schedule"), Event.class))
                 .setStudyGroupId(getValidNullableIntegerValue(rs, "study_group_id"))
-                .setCreated(RepositoryUtils.readInstant(rs,"created"))
-                .setModified(RepositoryUtils.readInstant(rs,"modified"))
-                .setObservationGroupIds(RepositoryUtils.readSet(rs, "observation_group_ids", Integer.class));
-        }
+                .setCreated(RepositoryUtils.readInstant(rs, "created"))
+                .setModified(RepositoryUtils.readInstant(rs, "modified"))
+                .setObservationGroupIds(RepositoryUtils.readSet(rs, "observation_group_ids", Integer.class))
+                .setMilestoneId(getValidNullableIntegerValue(rs, "milestone_id"));
+    }
 
     private void setInverventionObservationGroupIds(Long studyId, Integer interventionId, Set<Integer> observationGroupIds) {
         final var params = toParams(studyId, interventionId);

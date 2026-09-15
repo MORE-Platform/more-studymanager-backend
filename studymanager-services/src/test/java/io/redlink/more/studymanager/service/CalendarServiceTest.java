@@ -5,6 +5,7 @@ import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.Participant;
+import io.redlink.more.studymanager.model.ParticipantMilestone;
 import io.redlink.more.studymanager.model.Study;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Duration;
@@ -26,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -48,6 +50,9 @@ class CalendarServiceTest {
 
     @Mock
     ParticipantService participantService;
+
+    @Mock
+    ParticipantMilestoneService participantMilestoneService;
 
     @InjectMocks
     CalendarService calendarService;
@@ -191,6 +196,236 @@ class CalendarServiceTest {
 
         assertEquals(7, timeline.observationTimelineEvents().size());
         assertEquals(6, timeline.interventionTimelineEvents().size());
+    }
+
+    private static Observation milestoneAnchoredObservation() {
+        return new Observation()
+                .setObservationId(10)
+                .setTitle("milestone-title")
+                .setPurpose("purpose")
+                .setType("survey")
+                .setMilestoneId(5)
+                .setSchedule(new RelativeEvent()
+                        .setDtstart(new RelativeDate()
+                                .setTime(LocalTime.parse("09:00"))
+                                .setOffset(new Duration().setValue(0).setUnit(Duration.Unit.DAY)))
+                        .setDtend(new RelativeDate()
+                                .setTime(LocalTime.parse("10:00"))
+                                .setOffset(new Duration().setValue(0).setUnit(Duration.Unit.DAY))))
+                .setHidden(false);
+    }
+
+    @Test
+    void testGetTimelineMilestoneAnchoredObservationForSingleParticipant() {
+        Study study = new Study()
+                .setStudyId(1L)
+                .setPlannedStartDate(LocalDate.of(2024, 5, 9))
+                .setPlannedEndDate(LocalDate.of(2024, 5, 20))
+                .setDuration(new Duration().setUnit(Duration.Unit.DAY).setValue(10));
+
+        Participant participant = new Participant().setParticipantId(1).setStudyGroupId(2).setObservationGroupIds(Set.of());
+
+        Instant milestoneDateTime = LocalDate.of(2024, 5, 12).atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant();
+
+        when(studyService.getStudy(any(), any())).thenReturn(Optional.of(study));
+        when(participantService.getParticipant(any(), any())).thenReturn(participant);
+        when(studyService.getStudyDuration(any(), any())).thenReturn(Optional.of(new Duration().setValue(10).setUnit(Duration.Unit.DAY)));
+        when(observationService.listObservationsForGroup(any(), any(), any())).thenReturn(List.of(milestoneAnchoredObservation()));
+        when(interventionService.listInterventionsForGroup(any(), any(), any())).thenReturn(List.of());
+        when(observationService.getParticipantObservationProperties(any())).thenReturn(List.of());
+        when(participantMilestoneService.findParticipantMilestone(1L, 1, 5)).thenReturn(Optional.of(
+                new ParticipantMilestone().setStudyId(1L).setParticipantId(1).setMilestoneId(5).setDateTime(milestoneDateTime)));
+
+        StudyTimeline timeline = calendarService.getTimeline(
+                1L, 1, null, Set.of(),
+                LocalDate.of(2024, 5, 11).atTime(10, 0).atZone(ZoneId.systemDefault()).toInstant(),
+                LocalDate.of(2024, 5, 9), LocalDate.of(2024, 5, 20));
+
+        assertEquals(1, timeline.observationTimelineEvents().size());
+    }
+
+    @Test
+    void testGetTimelineMilestoneAnchoredObservationSkippedWhenParticipantHasNotReachedMilestone() {
+        Study study = new Study()
+                .setStudyId(1L)
+                .setPlannedStartDate(LocalDate.of(2024, 5, 9))
+                .setPlannedEndDate(LocalDate.of(2024, 5, 20))
+                .setDuration(new Duration().setUnit(Duration.Unit.DAY).setValue(10));
+
+        Participant participant = new Participant().setParticipantId(1).setStudyGroupId(2).setObservationGroupIds(Set.of());
+
+        when(studyService.getStudy(any(), any())).thenReturn(Optional.of(study));
+        when(participantService.getParticipant(any(), any())).thenReturn(participant);
+        when(studyService.getStudyDuration(any(), any())).thenReturn(Optional.of(new Duration().setValue(10).setUnit(Duration.Unit.DAY)));
+        when(observationService.listObservationsForGroup(any(), any(), any())).thenReturn(List.of(milestoneAnchoredObservation()));
+        when(interventionService.listInterventionsForGroup(any(), any(), any())).thenReturn(List.of());
+        when(observationService.getParticipantObservationProperties(any())).thenReturn(List.of());
+        when(participantMilestoneService.findParticipantMilestone(1L, 1, 5)).thenReturn(Optional.empty());
+
+        StudyTimeline timeline = calendarService.getTimeline(
+                1L, 1, null, Set.of(),
+                LocalDate.of(2024, 5, 11).atTime(10, 0).atZone(ZoneId.systemDefault()).toInstant(),
+                LocalDate.of(2024, 5, 9), LocalDate.of(2024, 5, 20));
+
+        assertEquals(0, timeline.observationTimelineEvents().size());
+    }
+
+    @Test
+    void testGetTimelineMilestoneAnchoredObservationForAllParticipants() {
+        Study study = new Study()
+                .setStudyId(1L)
+                .setPlannedStartDate(LocalDate.of(2024, 5, 9))
+                .setPlannedEndDate(LocalDate.of(2024, 5, 20))
+                .setDuration(new Duration().setUnit(Duration.Unit.DAY).setValue(10));
+
+        Instant milestoneDateTimeParticipant1 = LocalDate.of(2024, 5, 12).atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant();
+        Instant milestoneDateTimeParticipant2 = LocalDate.of(2024, 5, 14).atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant();
+
+        when(studyService.getStudy(any(), any())).thenReturn(Optional.of(study));
+        when(observationService.listObservationsForGroup(any(), any(), any())).thenReturn(List.of(milestoneAnchoredObservation()));
+        when(interventionService.listInterventionsForGroup(any(), any(), any())).thenReturn(List.of());
+        when(observationService.getParticipantObservationProperties(any())).thenReturn(List.of());
+        when(participantMilestoneService.listParticipantsForMilestone(1L, 5)).thenReturn(List.of(
+                new ParticipantMilestone().setStudyId(1L).setParticipantId(1).setMilestoneId(5).setDateTime(milestoneDateTimeParticipant1),
+                new ParticipantMilestone().setStudyId(1L).setParticipantId(2).setMilestoneId(5).setDateTime(milestoneDateTimeParticipant2)));
+
+        StudyTimeline timeline = calendarService.getTimeline(
+                1L, null, null, Set.of(),
+                LocalDate.of(2024, 5, 11).atTime(10, 0).atZone(ZoneId.systemDefault()).toInstant(),
+                LocalDate.of(2024, 5, 9), LocalDate.of(2024, 5, 20));
+
+        assertEquals(2, timeline.observationTimelineEvents().size());
+    }
+
+    private static Intervention milestoneAnchoredIntervention() {
+        return new Intervention()
+                .setInterventionId(20)
+                .setTitle("milestone-intervention")
+                .setPurpose("purpose")
+                .setMilestoneId(5);
+    }
+
+    private static Trigger relativeTimeTrigger(int day, int hour) {
+        return new Trigger()
+                .setType("relative-time-trigger")
+                .setProperties(new TriggerProperties(Map.of("day", day, "hour", hour)));
+    }
+
+    @Test
+    void testGetTimelineMilestoneAnchoredInterventionForSingleParticipant() {
+        Study study = new Study()
+                .setStudyId(1L)
+                .setPlannedStartDate(LocalDate.of(2024, 5, 9))
+                .setPlannedEndDate(LocalDate.of(2024, 5, 20))
+                .setDuration(new Duration().setUnit(Duration.Unit.DAY).setValue(10));
+
+        Participant participant = new Participant().setParticipantId(1).setStudyGroupId(2).setObservationGroupIds(Set.of());
+
+        Instant milestoneDateTime = LocalDate.of(2024, 5, 12).atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant();
+
+        when(studyService.getStudy(any(), any())).thenReturn(Optional.of(study));
+        when(participantService.getParticipant(any(), any())).thenReturn(participant);
+        when(studyService.getStudyDuration(any(), any())).thenReturn(Optional.of(new Duration().setValue(10).setUnit(Duration.Unit.DAY)));
+        when(observationService.listObservationsForGroup(any(), any(), any())).thenReturn(List.of());
+        when(observationService.getParticipantObservationProperties(any())).thenReturn(List.of());
+        when(interventionService.listInterventionsForGroup(any(), any(), any())).thenReturn(List.of(milestoneAnchoredIntervention()));
+        when(interventionService.getTriggerByIds(any(), eq(20))).thenReturn(relativeTimeTrigger(0, 9));
+        when(participantMilestoneService.findParticipantMilestone(1L, 1, 5)).thenReturn(Optional.of(
+                new ParticipantMilestone().setStudyId(1L).setParticipantId(1).setMilestoneId(5).setDateTime(milestoneDateTime)));
+
+        StudyTimeline timeline = calendarService.getTimeline(
+                1L, 1, null, Set.of(),
+                LocalDate.of(2024, 5, 11).atTime(10, 0).atZone(ZoneId.systemDefault()).toInstant(),
+                LocalDate.of(2024, 5, 9), LocalDate.of(2024, 5, 20));
+
+        assertEquals(1, timeline.interventionTimelineEvents().size());
+    }
+
+    @Test
+    void testGetTimelineMilestoneAnchoredInterventionSkippedWhenParticipantHasNotReachedMilestone() {
+        Study study = new Study()
+                .setStudyId(1L)
+                .setPlannedStartDate(LocalDate.of(2024, 5, 9))
+                .setPlannedEndDate(LocalDate.of(2024, 5, 20))
+                .setDuration(new Duration().setUnit(Duration.Unit.DAY).setValue(10));
+
+        Participant participant = new Participant().setParticipantId(1).setStudyGroupId(2).setObservationGroupIds(Set.of());
+
+        when(studyService.getStudy(any(), any())).thenReturn(Optional.of(study));
+        when(participantService.getParticipant(any(), any())).thenReturn(participant);
+        when(studyService.getStudyDuration(any(), any())).thenReturn(Optional.of(new Duration().setValue(10).setUnit(Duration.Unit.DAY)));
+        when(observationService.listObservationsForGroup(any(), any(), any())).thenReturn(List.of());
+        when(observationService.getParticipantObservationProperties(any())).thenReturn(List.of());
+        when(interventionService.listInterventionsForGroup(any(), any(), any())).thenReturn(List.of(milestoneAnchoredIntervention()));
+        when(interventionService.getTriggerByIds(any(), eq(20))).thenReturn(relativeTimeTrigger(0, 9));
+        when(participantMilestoneService.findParticipantMilestone(1L, 1, 5)).thenReturn(Optional.empty());
+
+        StudyTimeline timeline = calendarService.getTimeline(
+                1L, 1, null, Set.of(),
+                LocalDate.of(2024, 5, 11).atTime(10, 0).atZone(ZoneId.systemDefault()).toInstant(),
+                LocalDate.of(2024, 5, 9), LocalDate.of(2024, 5, 20));
+
+        assertEquals(0, timeline.interventionTimelineEvents().size());
+    }
+
+    @Test
+    void testGetTimelineMilestoneAnchoredInterventionForAllParticipants() {
+        Study study = new Study()
+                .setStudyId(1L)
+                .setPlannedStartDate(LocalDate.of(2024, 5, 9))
+                .setPlannedEndDate(LocalDate.of(2024, 5, 20))
+                .setDuration(new Duration().setUnit(Duration.Unit.DAY).setValue(10));
+
+        Instant milestoneDateTimeParticipant1 = LocalDate.of(2024, 5, 12).atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant();
+        Instant milestoneDateTimeParticipant2 = LocalDate.of(2024, 5, 14).atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant();
+
+        when(studyService.getStudy(any(), any())).thenReturn(Optional.of(study));
+        when(observationService.listObservationsForGroup(any(), any(), any())).thenReturn(List.of());
+        when(observationService.getParticipantObservationProperties(any())).thenReturn(List.of());
+        when(interventionService.listInterventionsForGroup(any(), any(), any())).thenReturn(List.of(milestoneAnchoredIntervention()));
+        when(interventionService.getTriggerByIds(any(), eq(20))).thenReturn(relativeTimeTrigger(0, 9));
+        when(participantMilestoneService.listParticipantsForMilestone(1L, 5)).thenReturn(List.of(
+                new ParticipantMilestone().setStudyId(1L).setParticipantId(1).setMilestoneId(5).setDateTime(milestoneDateTimeParticipant1),
+                new ParticipantMilestone().setStudyId(1L).setParticipantId(2).setMilestoneId(5).setDateTime(milestoneDateTimeParticipant2)));
+
+        StudyTimeline timeline = calendarService.getTimeline(
+                1L, null, null, Set.of(),
+                LocalDate.of(2024, 5, 11).atTime(10, 0).atZone(ZoneId.systemDefault()).toInstant(),
+                LocalDate.of(2024, 5, 9), LocalDate.of(2024, 5, 20));
+
+        assertEquals(2, timeline.interventionTimelineEvents().size());
+    }
+
+    @Test
+    void testGetTimelineInterventionMilestoneIdIgnoredForNonRelativeTrigger() {
+        Study study = new Study()
+                .setStudyId(1L)
+                .setPlannedStartDate(LocalDate.of(2024, 5, 9))
+                .setPlannedEndDate(LocalDate.of(2024, 5, 20))
+                .setDuration(new Duration().setUnit(Duration.Unit.DAY).setValue(10));
+
+        Participant participant = new Participant().setParticipantId(1).setStudyGroupId(2).setObservationGroupIds(Set.of());
+
+        TriggerProperties cronProperties = new TriggerProperties();
+        cronProperties.put("cronSchedule", "0 0 9 * * ?");
+        Trigger scheduledTrigger = new Trigger().setType("scheduled-trigger").setProperties(cronProperties);
+
+        when(studyService.getStudy(any(), any())).thenReturn(Optional.of(study));
+        when(participantService.getParticipant(any(), any())).thenReturn(participant);
+        when(studyService.getStudyDuration(any(), any())).thenReturn(Optional.of(new Duration().setValue(10).setUnit(Duration.Unit.DAY)));
+        when(observationService.listObservationsForGroup(any(), any(), any())).thenReturn(List.of());
+        when(observationService.getParticipantObservationProperties(any())).thenReturn(List.of());
+        // milestoneId is set on the intervention, but its trigger is not relative-time-trigger,
+        // so the milestone must be ignored and participant-milestone lookups must never happen.
+        when(interventionService.listInterventionsForGroup(any(), any(), any())).thenReturn(List.of(milestoneAnchoredIntervention()));
+        when(interventionService.getTriggerByIds(any(), eq(20))).thenReturn(scheduledTrigger);
+
+        StudyTimeline timeline = calendarService.getTimeline(
+                1L, 1, null, Set.of(),
+                LocalDate.of(2024, 5, 11).atTime(10, 0).atZone(ZoneId.systemDefault()).toInstant(),
+                LocalDate.of(2024, 5, 9), LocalDate.of(2024, 5, 20));
+
+        assertEquals(10, timeline.interventionTimelineEvents().size());
     }
 
 }

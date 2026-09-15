@@ -4,7 +4,7 @@
  * for Digital Health and Prevention -- A research institute of the
  * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
  * Förderung der wissenschaftlichen Forschung).
- * Licensed under the Elastic License 2.0.
+ * Licensed under the Apache License, Version 2.0.
  */
 package io.redlink.more.studymanager.scheduling;
 
@@ -14,36 +14,40 @@ import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.io.Parameters;
 import io.redlink.more.studymanager.core.io.TriggerResult;
 import io.redlink.more.studymanager.core.sdk.MoreTriggerSDK;
+import io.redlink.more.studymanager.model.Intervention;
 import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.service.InterventionService;
 import io.redlink.more.studymanager.utils.LoggingUtils;
-import java.util.Map;
-import java.util.Optional;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.BeanNotOfRequiredTypeException;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.context.ApplicationContext;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 public class TriggerJob implements Job {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TriggerJob.class);
 
     private final MoreSDK moreSDK;
-    private final Map<String, TriggerFactory> triggerFactories;
+    private final ApplicationContext applicationContext;
     private final InterventionService interventionService;
     private final ActionService actionService;
 
     public TriggerJob(
             MoreSDK moreSDK,
-            Map<String, TriggerFactory> triggerFactories,
             InterventionService interventionService,
-            ActionService actionService
-    ) {
+            ActionService actionService,
+            ApplicationContext applicationContext) {
         this.moreSDK = moreSDK;
-        this.triggerFactories = triggerFactories;
+        this.applicationContext = applicationContext;
         this.interventionService = interventionService;
         this.actionService = actionService;
     }
@@ -66,16 +70,20 @@ public class TriggerJob implements Job {
                     new SchedulingException(String.format("Cannot find trigger: sid:%s, iid:%s", studyId, interventionId))
             );
 
-            TriggerFactory factory = Optional.ofNullable(
-                    triggerFactories.get(trigger.getType())
-            ).orElseThrow(() -> new SchedulingException("Cannot find triggerType " + trigger.getType()));
+            TriggerFactory factory = factory(trigger)
+                    .orElseThrow(() -> new SchedulingException("Cannot find triggerType " + trigger.getType()));
 
-            MoreTriggerSDK sdk = moreSDK.scopedTriggerSDK(studyId, studyGroupId, interventionId);
+            Intervention intervention = interventionService.getIntervention(studyId, interventionId);
+            Integer milestoneId = Objects.equals(trigger.getType(), "relative-time-trigger")
+                    ? intervention.getMilestoneId()
+                    : null;
+
+            MoreTriggerSDK sdk = moreSDK.scopedTriggerSDK(studyId, studyGroupId, interventionId, milestoneId);
             Parameters parameters = new Parameters(Map.of("triggerTime", context.getFireTime()));
 
             TriggerResult result = factory.create(sdk, trigger.getProperties()).execute(parameters);
 
-            if(result.proceed()) {
+            if (result.proceed()) {
                 actionService.execute(studyId, studyGroupId, interventionId, result.getActionParameters());
             } else {
                 LOGGER.debug("Skipping Action execution, trigger did not fire");
@@ -85,4 +93,13 @@ public class TriggerJob implements Job {
         }
 
     }
+
+    private Optional<TriggerFactory> factory(Trigger trigger) {
+        try {
+            return Optional.of(applicationContext.getBean(trigger.getType(), TriggerFactory.class));
+        } catch (NoSuchBeanDefinitionException | BeanNotOfRequiredTypeException e) {
+            return Optional.empty();
+        }
+    }
+
 }
