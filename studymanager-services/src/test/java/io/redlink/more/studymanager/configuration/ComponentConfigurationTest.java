@@ -9,6 +9,9 @@
 package io.redlink.more.studymanager.configuration;
 
 import io.redlink.more.studymanager.component.observation.lime.LimeSurveyObservationFactory;
+import io.redlink.more.studymanager.core.factory.ActionFactory;
+import io.redlink.more.studymanager.core.factory.ObservationFactory;
+import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,5 +36,19 @@ public class ComponentConfigurationTest {
         Assertions.assertEquals(factory.componentProperties.get("username"), "testUsername");
         Assertions.assertEquals(factory.componentProperties.get("password"), "testPassword");
         Assertions.assertEquals(factory.componentProperties.get("url"), "https://testurl");
+    }
+
+    /**
+     * The services look up component factories by their id (see e.g.
+     * {@code InterventionService.factory(Trigger)}), so every factory must be registered
+     * as a singleton under its id - not only the observation and action factories.
+     */
+    @Test
+    public void testFactoriesAreRegisteredById() {
+        Assertions.assertNotNull(context.getBean("relative-time-trigger", TriggerFactory.class));
+        Assertions.assertNotNull(context.getBean("scheduled-trigger", TriggerFactory.class));
+        Assertions.assertNotNull(context.getBean("scheduled-datacheck-trigger", TriggerFactory.class));
+        Assertions.assertNotNull(context.getBean("lime-survey-observation", ObservationFactory.class));
+        Assertions.assertNotNull(context.getBean("push-notification-action", ActionFactory.class));
     }
 }

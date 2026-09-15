@@ -70,11 +70,12 @@ public class ComponentFactoriesConfiguration implements BeanFactoryAware {
                 }
         );
 
-        /*
         Set<Class<? extends TriggerFactory>> triggerFactories = reflections.getSubTypesOf(TriggerFactory.class);
-        triggerFactories.stream().map(this::instantiate).forEach(m ->
-                configurableBeanFactory.registerSingleton(m.getId(), m)
-        );*/
+        triggerFactories.stream().map(this::instantiate).forEach(m -> {
+                    logger.trace("Registering trigger factory: {}[class:{}]", m.getId(), m.getClass().getName());
+                    configurableBeanFactory.registerSingleton(m.getId(), m);
+                }
+        );
 
         Set<Class<? extends ActionFactory>> actionFactories = reflections.getSubTypesOf(ActionFactory.class);
         actionFactories.stream().map(this::instantiate).forEach(m ->
