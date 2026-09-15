@@ -11,19 +11,21 @@ package io.redlink.more.studymanager.model.transformer;
 import io.redlink.more.studymanager.api.v1.model.IntegrationInfoDTO;
 import io.redlink.more.studymanager.api.v1.model.InterventionDTO;
 import io.redlink.more.studymanager.api.v1.model.ParticipantInfoDTO;
+import io.redlink.more.studymanager.api.v1.model.ParticipantMilestoneInfoDTO;
 import io.redlink.more.studymanager.api.v1.model.StudyImportExportDTO;
 import io.redlink.more.studymanager.model.IntegrationInfo;
+import io.redlink.more.studymanager.model.ParticipantMilestoneInfo;
 import io.redlink.more.studymanager.model.StudyImportExport;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class ImportExportTransformer {
 
-    private ImportExportTransformer() {}
+    private ImportExportTransformer() {
+    }
 
     public static StudyImportExport fromStudyImportExportDTO_V1(StudyImportExportDTO dto) {
         return new StudyImportExport()
@@ -32,6 +34,7 @@ public final class ImportExportTransformer {
                 .setObservationGroups(transform(dto.getObservationGroups(), ObservationGroupTransformer::fromObservationGroupDTO_V1))
                 .setObservations(transform(dto.getObservations(), ObservationTransformer::fromObservationDTO_V1))
                 .setInterventions(transform(dto.getInterventions(), InterventionTransformer::fromInterventionDTO_V1))
+                .setMilestones(transform(dto.getMilestones(), MilestoneTransformer::fromMilestoneDTO_V1))
                 .setTriggers(
                         dto.getInterventions().stream().collect(Collectors.toMap(
                                 InterventionDTO::getInterventionId,
@@ -57,19 +60,20 @@ public final class ImportExportTransformer {
                 .observationGroups(transform(studyImportExport.getObservationGroups(), ObservationGroupTransformer::toObservationGroupDTO_V1))
                 .observations(transform(studyImportExport.getObservations(), ObservationTransformer::toObservationDTO_V1))
                 .interventions(transform(studyImportExport.getInterventions(), intervention ->
-                    InterventionTransformer.toInterventionDTO_V1(intervention)
-                            .trigger(
-                                    TriggerTransformer.toTriggerDTO_V1(
-                                            studyImportExport.getTriggers().get(intervention.getInterventionId())
-                                    )
-                            )
-                            .actions(
-                                    transform(
-                                            studyImportExport.getActions().get(intervention.getInterventionId()),
-                                            ActionTransformer::toActionDTO_V1
-                                    )
-                            )
+                        InterventionTransformer.toInterventionDTO_V1(intervention)
+                                .trigger(
+                                        TriggerTransformer.toTriggerDTO_V1(
+                                                studyImportExport.getTriggers().get(intervention.getInterventionId())
+                                        )
+                                )
+                                .actions(
+                                        transform(
+                                                studyImportExport.getActions().get(intervention.getInterventionId()),
+                                                ActionTransformer::toActionDTO_V1
+                                        )
+                                )
                 ))
+                .milestones(transform(studyImportExport.getMilestones(), MilestoneTransformer::toMilestoneDTO_V1))
                 .participants(transform(studyImportExport.getParticipants(), ImportExportTransformer::toParticipantDTO_V1))
                 .integrations(transform(studyImportExport.getIntegrations(), ImportExportTransformer::toIntegrationInfoDTO_V1));
     }
@@ -77,17 +81,31 @@ public final class ImportExportTransformer {
     private static ParticipantInfoDTO toParticipantDTO_V1(StudyImportExport.ParticipantInfo participant) {
         return new ParticipantInfoDTO()
                 .studyGroup(participant.groupId())
-                .observationGroups(participant.observationGroupIds());
+                .observationGroups(participant.observationGroupIds())
+                .milestones(transform(participant.milestones(), ImportExportTransformer::toParticipantMilestoneInfoDTO_V1));
     }
 
     private static StudyImportExport.ParticipantInfo fromParticipantDTO_V1(ParticipantInfoDTO participant) {
         return new StudyImportExport.ParticipantInfo(
                 participant.getStudyGroup(),
-                participant.getObservationGroups() == null ? Collections.emptySet() : participant.getObservationGroups());
+                participant.getObservationGroups() == null ? Collections.emptySet() : participant.getObservationGroups(),
+                transform(participant.getMilestones(), ImportExportTransformer::fromParticipantMilestoneInfoDTO_V1));
+    }
+
+    private static ParticipantMilestoneInfoDTO toParticipantMilestoneInfoDTO_V1(ParticipantMilestoneInfo milestone) {
+        return new ParticipantMilestoneInfoDTO()
+                .milestoneId(milestone.milestoneId())
+                .dateTime(milestone.dateTime());
+    }
+
+    private static ParticipantMilestoneInfo fromParticipantMilestoneInfoDTO_V1(ParticipantMilestoneInfoDTO milestone) {
+        return new ParticipantMilestoneInfo(milestone.getMilestoneId(), milestone.getDateTime());
     }
 
     private static <S, T> List<T> transform(List<S> list, Function<S, T> transformer) {
-        if (list == null) { return List.of(); }
+        if (list == null) {
+            return List.of();
+        }
         return list.stream().map(transformer).toList();
     }
 

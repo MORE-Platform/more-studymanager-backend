@@ -2574,6 +2574,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Intervention'
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Milestone'
         participants:
           type: array
           items:
@@ -2593,6 +2597,22 @@ components:
           items:
             type: integer
           uniqueItems: true
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipantMilestoneInfo'
+
+    ParticipantMilestoneInfo:
+      type: object
+      properties:
+        milestoneId:
+          $ref: '#/components/schemas/Id'
+        dateTime:
+          type: string
+          format: date-time
+      required:
+        - milestoneId
+        - dateTime
 
     IntegrationInfo:
       type: object

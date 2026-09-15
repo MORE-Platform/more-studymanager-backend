@@ -33,3 +33,5 @@ build/
 ### VS Code ###
 .vscode/
 /firebase-settings.json
+
+graphify-out/cache

@@ -25,4 +25,12 @@ public final class MilestoneTransformer {
                 .orderIndex(milestone.getOrderIndex());
     }
 
+    public static Milestone fromMilestoneDTO_V1(MilestoneDTO dto) {
+        return new Milestone()
+                .setStudyId(dto.getStudyId())
+                .setMilestoneId(dto.getMilestoneId())
+                .setName(dto.getName())
+                .setOrderIndex(dto.getOrderIndex());
+    }
+
 }
