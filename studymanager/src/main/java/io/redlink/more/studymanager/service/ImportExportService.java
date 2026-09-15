@@ -4,7 +4,7 @@
  * for Digital Health and Prevention -- A research institute of the
  * Ludwig Boltzmann Gesellschaft, Österreichische Vereinigung zur
  * Förderung der wissenschaftlichen Forschung).
- * Licensed under the Elastic License 2.0.
+ * Licensed under the Apache License, Version 2.0.
  */
 package io.redlink.more.studymanager.service;
 
@@ -14,6 +14,7 @@ import io.redlink.more.studymanager.model.*;
 import io.redlink.more.studymanager.model.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.properties.GatewayProperties;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
@@ -27,7 +28,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,6 +50,8 @@ public class ImportExportService {
     private final StudyGroupService studyGroupService;
     private final ObservationGroupService observationGroupService;
     private final IntegrationService integrationService;
+    private final MilestoneService milestoneService;
+    private final ParticipantMilestoneService participantMilestoneService;
 
     private final ElasticService elasticService;
     private final GatewayProperties gatewayProperties;
@@ -49,7 +59,10 @@ public class ImportExportService {
     public ImportExportService(ParticipantService participantService, StudyService studyService, StudyStateService studyStateService,
                                ObservationService observationService, InterventionService interventionService, StudyGroupService studyGroupService,
                                ObservationGroupService observationGroupService,
-                               IntegrationService integrationService, ElasticService elasticService, GatewayProperties gatewayProperties) {
+                               IntegrationService integrationService,
+                               MilestoneService milestoneService,
+                               ParticipantMilestoneService participantMilestoneService,
+                               ElasticService elasticService, GatewayProperties gatewayProperties) {
         this.participantService = participantService;
         this.studyService = studyService;
         this.studyStateService = studyStateService;
@@ -58,6 +71,8 @@ public class ImportExportService {
         this.studyGroupService = studyGroupService;
         this.observationGroupService = observationGroupService;
         this.integrationService = integrationService;
+        this.milestoneService = milestoneService;
+        this.participantMilestoneService = participantMilestoneService;
         this.elasticService = elasticService;
         this.gatewayProperties = gatewayProperties;
     }
@@ -102,6 +117,7 @@ public class ImportExportService {
                 .setObservationGroups(observationGroupService.listObservationGroups(studyId))
                 .setObservations(observationService.listObservations(studyId))
                 .setInterventions(interventionService.listInterventions(studyId))
+                .setMilestones(milestoneService.listMilestones(studyId))
                 .setActions(new HashMap<>())
                 .setTriggers(new HashMap<>())
                 .setParticipants(new ArrayList<>())
@@ -112,7 +128,11 @@ public class ImportExportService {
                 .sorted(Comparator.comparing(Participant::getParticipantId))
                 .map(participant -> new StudyImportExport.ParticipantInfo(
                         participant.getStudyGroupId(),
-                        participant.getObservationGroupIds()))
+                        participant.getObservationGroupIds(),
+                        participantMilestoneService.listParticipantMilestones(studyId, participant.getParticipantId())
+                                .stream()
+                                .map(pm -> new ParticipantMilestoneInfo(pm.getMilestoneId(), pm.getDateTime()))
+                                .toList()))
                 .toList()
         );
 
@@ -131,6 +151,7 @@ public class ImportExportService {
             export.getTriggers()
                     .put(interventionId, interventionService.getTriggerByIds(studyId, interventionId));
         }
+        
         return export;
     }
 
@@ -141,6 +162,9 @@ public class ImportExportService {
 
         studyImport.getStudyGroups().forEach(studyGroup ->
                 studyGroupService.importStudyGroup(studyId, studyGroup));
+
+        studyImport.getMilestones().forEach(milestone ->
+                milestoneService.importMilestone(studyId, milestone));
 
         studyImport.getObservationGroups().forEach(observationGroup ->
                 observationGroupService.importObservationGroup(studyId, observationGroup));
@@ -155,13 +179,17 @@ public class ImportExportService {
                         studyImport.getTriggers().get(intervention.getInterventionId()),
                         studyImport.getActions().getOrDefault(intervention.getInterventionId(), Collections.emptyList())));
 
-        studyImport.getParticipants().forEach(participant ->
-                participantService.createParticipant(
-                        new Participant()
-                                .setStudyId(studyId)
-                                .setAlias("Participant")
-                                .setStudyGroupId(participant.groupId())
-                                .setObservationGroupIds(participant.observationGroupIds())));
+        studyImport.getParticipants().forEach(participant -> {
+            Participant newParticipant = participantService.createParticipant(
+                    new Participant()
+                            .setStudyId(studyId)
+                            .setAlias("Participant")
+                            .setStudyGroupId(participant.groupId())
+                            .setObservationGroupIds(participant.observationGroupIds()));
+            participant.milestones().forEach(milestone ->
+                    participantMilestoneService.createParticipantMilestone(
+                            studyId, newParticipant.getParticipantId(), milestone.milestoneId(), milestone.dateTime()));
+        });
 
         studyImport.getIntegrations().forEach(integration ->
                 integrationService.addToken(studyId, integration.observationId(), integration.name()));
@@ -172,11 +200,11 @@ public class ImportExportService {
     public void exportStudyData(OutputStream outputStream, Long studyId, List<Integer> studyGroupId, List<Integer> observationGroupId, List<Integer> participantId, List<Integer> observationId, Instant from, Instant to) {
         if (studyService.existsStudy(studyId).orElse(false)) {
             Collection<Integer> selectedObservationIds;
-            if(observationGroupId != null && !observationGroupId.isEmpty()){
-                selectedObservationIds = observationService.listObservationsForGroup(studyId, null,observationGroupId)
+            if (observationGroupId != null && !observationGroupId.isEmpty()) {
+                selectedObservationIds = observationService.listObservationsForGroup(studyId, null, observationGroupId)
                         .stream().map(Observation::getObservationId).collect(Collectors.toSet());
                 LOGGER.debug("Selected observation ids for parsed ObservationGroups: {}", selectedObservationIds);
-                if(observationId != null){
+                if (observationId != null) {
                     selectedObservationIds.addAll(observationId);
                 }
             } else {
