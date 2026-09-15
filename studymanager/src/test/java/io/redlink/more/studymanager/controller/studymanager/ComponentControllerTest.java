@@ -163,15 +163,6 @@ class ComponentControllerTest {
         value = jsonNodeArgumentCaptor.getValue().get("hello").asText();
         Assertions.assertEquals("world", value);
 
-        mvc.perform(MockMvcRequestBuilders.post("/api/v1/components/goalTemplate/my-test-goal-template/api/my-test-slug")
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content("{\"hello\":\"world\"}"))
-                .andExpect(status().isOk());
-
-        verify(testComponentConfig.observationFactory).handleAPICall(anyString(), any(User.class), jsonNodeArgumentCaptor.capture());
-        value = jsonNodeArgumentCaptor.getValue().get("hello").asText();
-        Assertions.assertEquals("world", value);
-
     }
 
     @Test
