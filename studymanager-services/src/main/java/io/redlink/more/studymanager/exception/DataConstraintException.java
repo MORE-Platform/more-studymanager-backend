@@ -54,6 +54,13 @@ public class DataConstraintException extends RuntimeException {
         );
     }
 
+    public static DataConstraintException createObservationResyncRequestAlreadyExists(long studyId, int participantId, int observationId) {
+        return new DataConstraintException(
+                "A resync request for observation_%d is already pending for participant_%d in study_%d"
+                        .formatted(observationId, participantId, studyId)
+        );
+    }
+
     public static DataConstraintException createMilestoneInUseByObservation(long studyId, int milestoneId) {
         return new DataConstraintException(
                 "Can't delete milestone_%d from study_%d: An observation still references this milestone!"
