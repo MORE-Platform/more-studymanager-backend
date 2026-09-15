@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.redlink.more.studymanager.core.factory.ActionFactory;
-import io.redlink.more.studymanager.core.factory.GoalTemplateFactory;
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.factory.TriggerFactory;
 import io.redlink.more.studymanager.core.io.Visibility;
@@ -20,8 +19,6 @@ import io.redlink.more.studymanager.core.measurement.MeasurementSet;
 import io.redlink.more.studymanager.core.model.User;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.core.properties.model.BooleanValue;
-import io.redlink.more.studymanager.core.properties.model.IntegerRange;
-import io.redlink.more.studymanager.core.properties.model.IntegerRangeValue;
 import io.redlink.more.studymanager.core.properties.model.IntegerValue;
 import io.redlink.more.studymanager.core.properties.model.StringTextValue;
 import io.redlink.more.studymanager.core.properties.model.StringValue;
@@ -71,7 +68,6 @@ class ComponentControllerTest {
         ObservationFactory observationFactory;
         TriggerFactory triggerFactory;
         ActionFactory actionFactory;
-        GoalTemplateFactory goalTemplateFactory;
 
         public TestComponentConfig() {
             this.observationFactory = mock(ObservationFactory.class);
@@ -97,14 +93,7 @@ class ComponentControllerTest {
                             .setName("Text Value Test")
                             .setRequired(true)
                             .setImmutable(false)
-                            .setDefaultValue("default\nmultiline"),
-                    new IntegerRangeValue("test-range")
-                            .setMin(0)
-                            .setMax(100)
-                            .setName("Range Value Test")
-                            .setRequired(true)
-                            .setImmutable(false)
-                            .setDefaultValue(new IntegerRange(1, 50))
+                            .setDefaultValue("default\nmultiline")
             ));
 
             when(observationFactory.getMeasurementSet()).thenReturn(new MeasurementSet("TEST", Set.of()));
@@ -117,8 +106,6 @@ class ComponentControllerTest {
             this.actionFactory = mock(ActionFactory.class);
             when(actionFactory.getId()).thenReturn("my-test-action");
 
-            this.goalTemplateFactory = mock(GoalTemplateFactory.class);
-            when(goalTemplateFactory.getId()).thenReturn("my-test-goal-template");
         }
 
         @Bean("my-test-observation")
@@ -134,11 +121,6 @@ class ComponentControllerTest {
         @Bean("my-test-action")
         public ActionFactory getActionFactory() {
             return actionFactory;
-        }
-
-        @Bean("my-test-goal-template")
-        public GoalTemplateFactory getGoalTemplateFactory() {
-            return goalTemplateFactory;
         }
     }
 
