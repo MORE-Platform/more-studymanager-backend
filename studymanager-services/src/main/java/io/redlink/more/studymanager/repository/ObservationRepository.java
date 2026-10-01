@@ -307,7 +307,9 @@ public class ObservationRepository {
                 .addValue("type", observation.getType())
                 .addValue("study_group_id", observation.getStudyGroupId())
                 .addValue("properties", MapperUtils.writeValueAsString(observation.getProperties()))
-                .addValue("schedule", MapperUtils.writeValueAsString(observation.getSchedule()))
+                .addValue("schedule", observation.getSchedule() == null
+                        ? null
+                        : MapperUtils.writeValueAsString(observation.getSchedule()))
                 .addValue("hidden", observation.getHidden())
                 .addValue("no_schedule", observation.getNoSchedule())
                 .addValue("reminder", observation.getReminder())

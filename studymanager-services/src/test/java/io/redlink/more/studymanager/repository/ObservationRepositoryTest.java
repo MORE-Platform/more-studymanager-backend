@@ -66,6 +66,44 @@ class ObservationRepositoryTest {
     }
 
     @Test
+    @DisplayName("A study-wide schedule round-trips through the jsonb column")
+    public void testInsertAndReadStudyWideObservation() {
+        Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
+
+        Observation inserted = observationRepository.insert(new Observation()
+                .setStudyId(studyId)
+                .setType("app-usage-observation")
+                .setTitle("app usage")
+                .setHidden(true)
+                .setNoSchedule(false)
+                .setSchedule(new StudyWideEvent()));
+
+        assertThat(inserted.getSchedule()).isInstanceOf(StudyWideEvent.class);
+        assertThat(observationRepository.getById(studyId, inserted.getObservationId()).getSchedule())
+                .isInstanceOf(StudyWideEvent.class);
+
+        Observation updated = observationRepository.updateObservation(inserted.setTitle("app usage 2"));
+        assertThat(updated.getSchedule()).isInstanceOf(StudyWideEvent.class);
+    }
+
+    @Test
+    @DisplayName("Observations without any schedule round-trip as SQL NULL")
+    public void testInsertAndReadObservationWithoutSchedule() {
+        Long studyId = studyRepository.insert(new Study().setContact(new Contact().setPerson("test").setEmail("test"))).getStudyId();
+
+        Observation inserted = observationRepository.insert(new Observation()
+                .setStudyId(studyId)
+                .setType("gps")
+                .setTitle("no schedule")
+                .setHidden(true)
+                .setNoSchedule(true)
+                .setSchedule(null));
+
+        assertThat(inserted.getSchedule()).isNull();
+        assertThat(observationRepository.getById(studyId, inserted.getObservationId()).getSchedule()).isNull();
+    }
+
+    @Test
     @DisplayName("Observations are inserted, updated, listed and deleted from database")
     public void testInsertListUpdateDelete() {
         String type = "accelerometer";

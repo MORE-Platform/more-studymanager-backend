@@ -14,6 +14,8 @@ import io.redlink.more.studymanager.model.scheduler.RecurrenceRule;
 import io.redlink.more.studymanager.model.scheduler.RelativeDate;
 import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
 import io.redlink.more.studymanager.model.scheduler.RelativeRecurrenceRule;
+import io.redlink.more.studymanager.model.scheduler.StudyWideEvent;
+import io.redlink.more.studymanager.model.timeline.ObservationTimelineEvent;
 import io.redlink.more.studymanager.model.timeline.StudyTimeline;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +36,8 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -196,6 +200,102 @@ class CalendarServiceTest {
 
         assertEquals(7, timeline.observationTimelineEvents().size());
         assertEquals(6, timeline.interventionTimelineEvents().size());
+    }
+
+    @Test
+    void testStudyWideObservationSpansTheWholeStudy() {
+        StudyTimeline timeline = timelineWith(studyWideObservation());
+
+        assertEquals(1, timeline.observationTimelineEvents().size());
+        ObservationTimelineEvent event = timeline.observationTimelineEvents().get(0);
+        assertEquals(
+                LocalDate.of(2024, 5, 11).atTime(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant(),
+                event.start());
+        assertEquals(
+                LocalDate.of(2024, 5, 15).atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant(),
+                event.end());
+        assertEquals(StudyWideEvent.TYPE, event.scheduleType());
+    }
+
+    @Test
+    void testStudyWideObservationAnchoredToAMilestoneStartsThere() {
+        Instant milestoneReached = LocalDate.of(2024, 5, 13).atTime(8, 0)
+                .atZone(ZoneId.systemDefault()).toInstant();
+        when(participantMilestoneService.findParticipantMilestone(anyLong(), anyInt(), eq(7)))
+                .thenReturn(Optional.of(new ParticipantMilestone()
+                        .setStudyId(1L).setParticipantId(1).setMilestoneId(7).setDateTime(milestoneReached)));
+
+        StudyTimeline timeline = timelineWith(studyWideObservation().setMilestoneId(7));
+
+        assertEquals(1, timeline.observationTimelineEvents().size());
+        assertEquals(milestoneReached, timeline.observationTimelineEvents().get(0).start());
+    }
+
+    @Test
+    void testStudyWideObservationAnchoredToAnUnreachedMilestoneProducesNothing() {
+        when(participantMilestoneService.findParticipantMilestone(anyLong(), anyInt(), eq(7)))
+                .thenReturn(Optional.empty());
+
+        StudyTimeline timeline = timelineWith(studyWideObservation().setMilestoneId(7));
+
+        assertEquals(0, timeline.observationTimelineEvents().size());
+    }
+
+    @Test
+    void testStudyWideObservationCoexistsWithScheduledOnes() {
+        Observation scheduled = new Observation()
+                .setObservationId(2)
+                .setType("accelerometer")
+                .setHidden(false)
+                .setSchedule(new Event()
+                        .setDateStart(LocalDate.of(2024, 5, 11).atTime(16, 10).atZone(ZoneId.systemDefault()).toInstant())
+                        .setDateEnd(LocalDate.of(2024, 5, 11).atTime(18, 10).atZone(ZoneId.systemDefault()).toInstant()));
+
+        StudyTimeline timeline = timelineWith(studyWideObservation(), scheduled);
+
+        assertEquals(2, timeline.observationTimelineEvents().size());
+        assertEquals(1, timeline.observationTimelineEvents().stream()
+                .filter(e -> Event.TYPE.equals(e.scheduleType())).count());
+    }
+
+    private Observation studyWideObservation() {
+        return new Observation()
+                .setObservationId(1)
+                .setTitle("app usage")
+                .setPurpose("purpose")
+                .setType("app-usage-observation")
+                .setHidden(true)
+                .setSchedule(new StudyWideEvent());
+    }
+
+    private StudyTimeline timelineWith(Observation... observations) {
+        Study study = new Study()
+                .setStudyId(1L)
+                .setPlannedStartDate(LocalDate.of(2024, 5, 9))
+                .setStartDate(LocalDate.of(2024, 5, 10))
+                .setPlannedEndDate(LocalDate.of(2024, 5, 14))
+                .setDuration(new Duration().setUnit(Duration.Unit.DAY).setValue(5));
+
+        Participant participant = new Participant().setParticipantId(1).setStudyGroupId(2).setObservationGroupIds(Set.of(1, 2));
+
+        when(studyService.getStudy(any(), any())).thenReturn(Optional.of(study));
+        when(participantService.getParticipant(any(), any())).thenReturn(participant);
+        when(studyService.getStudyDuration(any(), any()))
+                .thenReturn(Optional.of(new Duration().setValue(5).setUnit(Duration.Unit.DAY)));
+        when(observationService.listObservationsForGroup(any(), any(), any())).thenReturn(List.of(observations));
+        when(observationService.getParticipantObservationProperties(any())).thenReturn(List.of());
+        when(interventionService.listInterventionsForGroup(any(), any(), any())).thenReturn(List.of());
+
+        return calendarService.getTimeline(
+                1L,
+                1,
+                null,
+                Set.of(),
+                LocalDateTime.of(LocalDate.of(2024, 5, 11), LocalTime.of(10, 10, 10))
+                        .atZone(ZoneId.systemDefault()).toInstant(),
+                null,
+                null
+        );
     }
 
     private static Observation milestoneAnchoredObservation() {

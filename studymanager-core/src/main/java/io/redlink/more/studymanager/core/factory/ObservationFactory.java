@@ -37,4 +37,12 @@ public abstract class ObservationFactory<C extends Observation<P>, P extends Obs
     public boolean isResyncable() {
         return false;
     }
+
+    /**
+     * Study-wide observations have no configurable schedule: they are simply on or off
+     * and run for the whole study (effective study start .. effective study end).
+     */
+    public boolean isStudyWide() {
+        return false;
+    }
 }

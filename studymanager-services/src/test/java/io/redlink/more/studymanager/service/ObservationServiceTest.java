@@ -26,6 +26,8 @@ import io.redlink.more.studymanager.core.validation.ConfigurationValidationRepor
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.scheduler.Event;
+import io.redlink.more.studymanager.model.scheduler.StudyWideEvent;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import org.junit.jupiter.api.Assertions;
@@ -141,6 +143,54 @@ class ObservationServiceTest {
         assertThat(garminSleepFactory.getVisibility().isHiddenByDefault()).isFalse();
         assertThat(garminStepsFactory.getVisibility().isHiddenByDefault()).isFalse();
         assertThat(appUsageFactory.getVisibility().isHiddenByDefault()).isTrue();
+    }
+
+    @Test
+    void testStudyWideObservationsAreStoredWithAStudyWideSchedule() {
+        ObservationFactory studyWideFactory = mock(ObservationFactory.class);
+        when(studyWideFactory.isStudyWide()).thenReturn(true);
+        when(applicationContext.getBean("study-wide-observation", ObservationFactory.class)).thenReturn(studyWideFactory);
+        when(repository.insert(any())).thenAnswer(i -> i.getArgument(0));
+        when(repository.updateObservation(any())).thenAnswer(i -> i.getArgument(0));
+
+        Observation added = observationService.addObservation(new Observation()
+                .setStudyId(1L).setObservationId(1).setType("study-wide-observation")
+                .setSchedule(new Event()));
+        assertThat(added.getSchedule()).isInstanceOf(StudyWideEvent.class);
+
+        Observation updated = observationService.updateObservation(new Observation()
+                .setStudyId(1L).setObservationId(1).setType("study-wide-observation")
+                .setSchedule(new Event()));
+        assertThat(updated.getSchedule()).isInstanceOf(StudyWideEvent.class);
+    }
+
+    @Test
+    void testStudyWideObservationsAreImportedWithAStudyWideSchedule() {
+        ObservationFactory studyWideFactory = mock(ObservationFactory.class);
+        when(studyWideFactory.isStudyWide()).thenReturn(true);
+        when(studyWideFactory.preImport(any())).thenAnswer(i -> i.getArgument(0));
+        when(applicationContext.getBean("study-wide-observation", ObservationFactory.class)).thenReturn(studyWideFactory);
+        when(repository.doImport(any(), any())).thenAnswer(i -> i.getArgument(1));
+
+        Observation imported = observationService.importObservation(1L, new Observation()
+                .setStudyId(1L).setObservationId(1).setType("study-wide-observation")
+                .setSchedule(new Event()));
+
+        assertThat(imported.getSchedule()).isInstanceOf(StudyWideEvent.class);
+    }
+
+    @Test
+    void testScheduleOfRegularObservationsIsKept() {
+        Event schedule = new Event();
+        ObservationFactory factory = mock(ObservationFactory.class);
+        when(applicationContext.getBean("my-observation", ObservationFactory.class)).thenReturn(factory);
+        when(repository.insert(any())).thenAnswer(i -> i.getArgument(0));
+
+        Observation added = observationService.addObservation(new Observation()
+                .setStudyId(1L).setObservationId(1).setType("my-observation")
+                .setSchedule(schedule));
+
+        assertThat(added.getSchedule()).isSameAs(schedule);
     }
 
     @Test

@@ -150,6 +150,7 @@ public class ComponentApiV1Controller implements ComponentsApi {
             c.hidden(((ObservationFactory) factory).getHidden());
             c.visibility(toVisibilityDTO(((ObservationFactory) factory).getVisibility()));
             c.resyncable(((ObservationFactory) factory).isResyncable());
+            c.studyWide(((ObservationFactory) factory).isStudyWide());
         }
         return c;
     }

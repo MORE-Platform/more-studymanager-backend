@@ -141,6 +141,11 @@ public class Observation {
         return this;
     }
 
+    /**
+     * Operator-set flag on this individual observation. Not to be confused with
+     * {@code ObservationFactory#isStudyWide()}, which is a code-defined capability of the
+     * observation <em>type</em> and is what drives schedule handling in the backend.
+     */
     public Boolean getNoSchedule() {
         return noSchedule;
     }

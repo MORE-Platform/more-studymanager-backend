@@ -1924,6 +1924,8 @@ components:
           $ref: '#/components/schemas/Visibility'
         resyncable:
           type: boolean
+        studyWide:
+          type: boolean
 
     Visibility:
       type: object
