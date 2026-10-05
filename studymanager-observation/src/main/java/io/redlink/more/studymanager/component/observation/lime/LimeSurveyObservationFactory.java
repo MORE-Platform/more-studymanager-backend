@@ -38,6 +38,7 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
             limeSurveyId
     );
 
+    public static final String COMPONENT_ID = "lime-survey-observation";
     public static String MEASUREMENT_ID = "id";
     public static String MEASUREMENT_LASTPAGE = "lastpage";
     /**
@@ -72,7 +73,21 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
 
     @Override
     public String getId() {
-        return "lime-survey-observation";
+        return COMPONENT_ID;
+    }
+
+    /**
+     * The LimeSurvey remote-control client this factory configured during {@link #init}. Exposed so services
+     * outside this package can query survey structure and responses without re-reading the component
+     * configuration.
+     *
+     * @throws IllegalStateException if the factory has not been initialised yet
+     */
+    public LimeSurveyRequestService getRequestService() {
+        if (limeSurveyRequestService == null) {
+            throw new IllegalStateException("LimeSurveyObservationFactory has not been initialised");
+        }
+        return limeSurveyRequestService;
     }
 
     @Override

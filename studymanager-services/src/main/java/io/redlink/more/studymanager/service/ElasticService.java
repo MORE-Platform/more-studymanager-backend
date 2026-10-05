@@ -453,7 +453,7 @@ public class ElasticService {
         return filters;
     }
 
-    private Map<String, Object> toData(Map<String, Object> source) {
+    static Map<String, Object> toData(Map<String, Object> source) {
         Map<String, Object> result = new HashMap<>();
         source.keySet().stream()
                 .filter(k -> k.startsWith("data_"))

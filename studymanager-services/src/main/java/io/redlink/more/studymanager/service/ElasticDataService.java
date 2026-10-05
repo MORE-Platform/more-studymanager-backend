@@ -10,11 +10,14 @@ package io.redlink.more.studymanager.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.util.ObjectBuilder;
+import io.redlink.more.studymanager.component.observation.lime.LimeSurveyObservationFactory;
 import io.redlink.more.studymanager.core.datavalidity.ArrayMeasurementSummary;
 import io.redlink.more.studymanager.core.datavalidity.BooleanFieldValue;
 import io.redlink.more.studymanager.core.datavalidity.BooleanMeasurementSummary;
@@ -27,22 +30,26 @@ import io.redlink.more.studymanager.core.datavalidity.StringMeasurementSummary;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.measurement.Measurement;
 import io.redlink.more.studymanager.core.measurement.MeasurementSet;
+import io.redlink.more.studymanager.core.survey.ResponseSelection;
 import io.redlink.more.studymanager.core.ui.DataViewData;
 import io.redlink.more.studymanager.core.ui.DataViewRow;
 import io.redlink.more.studymanager.core.ui.ViewConfig;
 import io.redlink.more.studymanager.model.StudyGroup;
+import io.redlink.more.studymanager.model.data.StoredSurveyResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -59,6 +66,7 @@ public class ElasticDataService {
     private static final String AGG_NAME_ROWS = "rows";
     private static final String AGG_NAME_VALUES = "values";
     private static final String NO_GROUP_KEY = "no_group";
+    static final int MAX_SURVEY_RESPONSES = 100;
 
     private final ElasticsearchClient client;
 
@@ -86,6 +94,87 @@ public class ElasticDataService {
             return processDataPreviewResponse(viewConfig, searchResponse, studyId);
         } catch (IOException | ElasticsearchException e) {
             return ElasticService.handleIndexNotFoundException(e, () -> null, IOException::new);
+        }
+    }
+
+    /**
+     * The LimeSurvey responses stored for one participant, newest first. Unlike the other queries on this
+     * service this returns the indexed documents themselves, because a survey answer only exists as the
+     * flattened {@code data_*} fields of its data point.
+     *
+     * @param selection whether to return all stored responses, only the latest, or one specific response
+     * @return the matching responses, or an empty list if the study has no index or no matching data
+     */
+    public List<StoredSurveyResponse> listSurveyResponses(
+            long studyId, Integer studyGroupId, int observationId, int participantId, ResponseSelection selection
+    ) throws IOException {
+        final List<Query> filters = new ArrayList<>(getFilters(
+                studyId, observationId, studyGroupId, participantId,
+                LimeSurveyObservationFactory.COMPONENT_ID, null));
+
+        if (selection.isBySavedId()) {
+            filters.add(Query.of(q -> q.term(t -> t.field("data_id").value(selection.savedId()))));
+        }
+
+        final SearchRequest request = new SearchRequest.Builder()
+                .index(getStudyIdString(studyId))
+                .query(q -> q.bool(b -> b.filter(filters)))
+                .sort(s -> s.field(f -> f.field("effective_time_frame").order(SortOrder.Desc)))
+                .size(selection.isLatest() ? 1 : MAX_SURVEY_RESPONSES)
+                .build();
+
+        try {
+            final SearchResponse<Map> searchResponse = client.search(request, Map.class);
+            return searchResponse.hits().hits().stream()
+                    .map(ElasticDataService::toSurveyResponse)
+                    .filter(Objects::nonNull)
+                    .toList();
+        } catch (IOException | ElasticsearchException e) {
+            return ElasticService.handleIndexNotFoundException(e, List::of, IOException::new);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static StoredSurveyResponse toSurveyResponse(Hit<Map> hit) {
+        final Map<String, Object> source = hit.source();
+        if (source == null) {
+            return null;
+        }
+        final Map<String, Object> values = ElasticService.toData(source);
+        return new StoredSurveyResponse(
+                asString(source.get("datapoint_id")),
+                asInteger(values.get(LimeSurveyObservationFactory.MEASUREMENT_ID)),
+                asString(values.get(LimeSurveyObservationFactory.MEASUREMENT_SEED)),
+                asInstant(source.get("effective_time_frame")),
+                asInstant(source.get("storage_date")),
+                values
+        );
+    }
+
+    private static String asString(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private static Integer asInteger(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        try {
+            return value == null ? null : Integer.valueOf(String.valueOf(value).trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static Instant asInstant(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Instant.parse(String.valueOf(value));
+        } catch (DateTimeParseException e) {
+            LOG.debug("Could not parse '{}' as a timestamp", value);
+            return null;
         }
     }
 
