@@ -16,6 +16,7 @@ import io.redlink.more.studymanager.component.observation.lime.model.QuestionDat
 import io.redlink.more.studymanager.component.observation.lime.model.QuestionGroupData;
 import io.redlink.more.studymanager.component.observation.lime.model.SubQuestionData;
 import io.redlink.more.studymanager.component.observation.lime.model.SurveyStructure;
+import io.redlink.more.studymanager.component.observation.lime.model.UploadedFile;
 import io.redlink.more.studymanager.core.survey.ResponseSelection;
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.exception.NotFoundException;
@@ -27,6 +28,9 @@ import io.redlink.more.studymanager.model.survey.AnsweredQuestion;
 import io.redlink.more.studymanager.model.survey.ParticipantSurveyResponses;
 import io.redlink.more.studymanager.model.survey.SurveyResponse;
 import io.redlink.more.studymanager.sdk.MoreSDK;
+import io.redlink.more.studymanager.utils.MapperUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -59,6 +63,10 @@ public class LimeSurveyResponseService {
     private static final String LIME_RESPONSE_ID_KEY = "id";
     private static final String LIME_SEED_KEY = "seed";
     private static final String LIME_SUBMIT_DATE_KEY = "submitdate";
+    private static final String COMMENT_SUFFIX = "comment";
+    private static final String FILE_COUNT_CODE = "filecount";
+    /** LimeSurvey's question type for file uploads. */
+    private static final String FILE_UPLOAD_TYPE = "|";
 
     private final ObservationService observationService;
     private final ElasticDataService elasticDataService;
@@ -86,18 +94,8 @@ public class LimeSurveyResponseService {
     public ParticipantSurveyResponses getParticipantResponses(
             long studyId, int observationId, int participantId, ResponseSelection selection) throws IOException {
 
-        Observation observation = observationService.getObservation(studyId, observationId)
-                .orElseThrow(() -> NotFoundException.Observation(studyId, observationId));
-
-        if (!LimeSurveyObservationFactory.COMPONENT_ID.equals(observation.getType())) {
-            throw new BadRequestException(
-                    "Observation %d of study %d is of type '%s', not '%s'".formatted(
-                            observationId, studyId, observation.getType(), LimeSurveyObservationFactory.COMPONENT_ID));
-        }
-
-        String surveyId = resolveSurveyId(observation)
-                .orElseThrow(() -> new BadRequestException(
-                        "Observation %d of study %d has no LimeSurvey assigned".formatted(observationId, studyId)));
+        Observation observation = requireLimeSurveyObservation(studyId, observationId);
+        String surveyId = requireSurveyId(observation);
 
         LimeSurveyRequestService requestService = limeSurveyObservationFactory.getObject().getRequestService();
         SurveyStructure structure = requestService.getSurveyStructure(surveyId);
@@ -124,6 +122,31 @@ public class LimeSurveyResponseService {
     }
 
     /**
+     * One LimeSurvey observation of a study.
+     *
+     * @throws NotFoundException   if the observation does not exist in the study
+     * @throws BadRequestException if the observation is not a LimeSurvey observation
+     */
+    private Observation requireLimeSurveyObservation(long studyId, int observationId) {
+        Observation observation = observationService.getObservation(studyId, observationId)
+                .orElseThrow(() -> NotFoundException.Observation(studyId, observationId));
+
+        if (!LimeSurveyObservationFactory.COMPONENT_ID.equals(observation.getType())) {
+            throw new BadRequestException(
+                    "Observation %d of study %d is of type '%s', not '%s'".formatted(
+                            observationId, studyId, observation.getType(), LimeSurveyObservationFactory.COMPONENT_ID));
+        }
+        return observation;
+    }
+
+    private String requireSurveyId(Observation observation) {
+        return resolveSurveyId(observation)
+                .orElseThrow(() -> new BadRequestException(
+                        "Observation %d of study %d has no LimeSurvey assigned".formatted(
+                                observation.getObservationId(), observation.getStudyId())));
+    }
+
+    /**
      * The survey configured on the observation, falling back to the one stored when the observation was
      * activated - the same resolution order the observation component itself uses.
      */
@@ -144,26 +167,56 @@ public class LimeSurveyResponseService {
             LimeSurveyRequestService requestService,
             long studyId, int observationId, int participantId, String surveyId, ResponseSelection selection) {
 
-        Optional<String> token = sdk.getPropertiesForParticipant(studyId, participantId, observationId)
-                .map(properties -> properties.getString(LimeSurveyObservation.LIME_SURVEY_TOKEN_KEY))
-                .filter(value -> !value.isBlank());
-
-        if (token.isEmpty()) {
-            LOG.info("Participant {} has no LimeSurvey token for observation {}", participantId, observationId);
-            return List.of();
-        }
-
-        int numericSurveyId;
-        try {
-            numericSurveyId = Integer.parseInt(surveyId.trim());
-        } catch (NumberFormatException e) {
-            LOG.warn("LimeSurvey id '{}' of observation {} is not numeric", surveyId, observationId);
+        Optional<String> token = participantToken(studyId, observationId, participantId);
+        Integer numericSurveyId = numericSurveyId(surveyId, observationId);
+        if (token.isEmpty() || numericSurveyId == null) {
             return List.of();
         }
 
         return requestService.getAnswers(token.get(), numericSurveyId, selection).stream()
                 .map(LimeSurveyResponseService::toStoredResponse)
                 .toList();
+    }
+
+    /**
+     * The files a participant uploaded with one response. Uploads are not archived with the response, so
+     * they are read from LimeSurvey on demand and are only available while the survey still lives there.
+     * LimeSurvey hands out every file of the response at once, content included.
+     *
+     * @throws NotFoundException   if the observation does not exist in the study
+     * @throws BadRequestException if the observation is not a LimeSurvey observation or has no survey assigned
+     */
+    public List<UploadedFile> getUploadedFiles(long studyId, int observationId, int participantId, Integer responseId) {
+        Observation observation = requireLimeSurveyObservation(studyId, observationId);
+        String surveyId = requireSurveyId(observation);
+
+        Optional<String> token = participantToken(studyId, observationId, participantId);
+        Integer numericSurveyId = numericSurveyId(surveyId, observationId);
+        if (token.isEmpty() || numericSurveyId == null) {
+            return List.of();
+        }
+
+        LimeSurveyRequestService requestService = limeSurveyObservationFactory.getObject().getRequestService();
+        return requestService.getUploadedFiles(numericSurveyId, token.get(), responseId);
+    }
+
+    private Optional<String> participantToken(long studyId, int observationId, int participantId) {
+        Optional<String> token = sdk.getPropertiesForParticipant(studyId, participantId, observationId)
+                .map(properties -> properties.getString(LimeSurveyObservation.LIME_SURVEY_TOKEN_KEY))
+                .filter(value -> !value.isBlank());
+        if (token.isEmpty()) {
+            LOG.info("Participant {} has no LimeSurvey token for observation {}", participantId, observationId);
+        }
+        return token;
+    }
+
+    private static Integer numericSurveyId(String surveyId, int observationId) {
+        try {
+            return Integer.valueOf(surveyId.trim());
+        } catch (NumberFormatException e) {
+            LOG.warn("LimeSurvey id '{}' of observation {} is not numeric", surveyId, observationId);
+            return null;
+        }
     }
 
     private static StoredSurveyResponse toStoredResponse(Map<String, Object> answer) {
@@ -235,6 +288,10 @@ public class LimeSurveyResponseService {
                 } else {
                     continue;
                 }
+                if (FILE_UPLOAD_TYPE.equals(question.type()) && FILE_COUNT_CODE.equals(subQuestionCode)) {
+                    //the file list itself already says how many files there are
+                    break;
+                }
                 answersByQuestion.computeIfAbsent(code, k -> new ArrayList<>())
                         .add(toAnswer(question, subQuestionCode, value.getValue()));
                 break;
@@ -244,13 +301,43 @@ public class LimeSurveyResponseService {
     }
 
     private Answer toAnswer(QuestionData question, String subQuestionCode, Object value) {
-        String subQuestionText = subQuestionCode == null ? null : question.subQuestions().stream()
+        if (FILE_UPLOAD_TYPE.equals(question.type())) {
+            return new Answer(subQuestionCode, null, false, parseUploadedFiles(value), null);
+        }
+        if (subQuestionCode == null) {
+            return new Answer(null, null, false, value, resolveLabel(question, value));
+        }
+        String text = subQuestionText(question, subQuestionCode);
+        if (text == null && subQuestionCode.endsWith(COMMENT_SUFFIX)) {
+            String commented = subQuestionCode.substring(0, subQuestionCode.length() - COMMENT_SUFFIX.length());
+            return new Answer(commented, subQuestionText(question, commented), true, value, null);
+        }
+        return new Answer(subQuestionCode, text, false, value, resolveLabel(question, value));
+    }
+
+    private String subQuestionText(QuestionData question, String subQuestionCode) {
+        return question.subQuestions().stream()
                 .filter(subQuestion -> subQuestionCode.equals(subQuestion.code()))
                 .map(SubQuestionData::text)
                 .findFirst()
                 .orElse(null);
+    }
 
-        return new Answer(subQuestionCode, subQuestionText, value, resolveLabel(question, value));
+    /**
+     * A file-upload question stores its files as a JSON array of metadata ({@code name}, {@code filename},
+     * {@code ext}, {@code size}); hand that out as a list rather than as an opaque string, so a client can
+     * ask {@link #getUploadedFiles} for the file behind a {@code filename}.
+     */
+    private Object parseUploadedFiles(Object value) {
+        if (!(value instanceof String text) || text.isBlank()) {
+            return value;
+        }
+        try {
+            return MapperUtils.MAPPER.readValue(text, new TypeReference<List<Map<String, Object>>>() {});
+        } catch (JsonProcessingException e) {
+            LOG.debug("Could not read '{}' as a LimeSurvey file-upload answer", text);
+            return value;
+        }
     }
 
     /** The answer option's text for a submitted code, or {@code null} for free text and unknown codes. */
@@ -266,17 +353,20 @@ public class LimeSurveyResponseService {
                 .orElse(null);
     }
 
-    /** Keeps the cells of an array question in the order LimeSurvey lists its subquestions. */
+    /**
+     * Keeps the cells of an array question in the order LimeSurvey lists its subquestions, each comment
+     * directly after the subquestion it comments on.
+     */
     private List<Answer> sortAnswers(QuestionData question, List<Answer> answers) {
         if (answers.size() < 2) {
             return answers;
         }
         List<String> order = question.subQuestions().stream().map(SubQuestionData::code).toList();
         return answers.stream()
-                .sorted(Comparator.comparingInt(answer -> {
+                .sorted(Comparator.comparingInt((Answer answer) -> {
                     int index = answer.subQuestionCode() == null ? -1 : order.indexOf(answer.subQuestionCode());
                     return index < 0 ? Integer.MAX_VALUE : index;
-                }))
+                }).thenComparing(Answer::comment))
                 .toList();
     }
 

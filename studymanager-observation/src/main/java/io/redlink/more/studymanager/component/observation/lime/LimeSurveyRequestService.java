@@ -30,6 +30,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class LimeSurveyRequestService {
@@ -40,6 +42,8 @@ public class LimeSurveyRequestService {
     private static final List<String> QUESTION_PROPERTIES =
             List.of("title", "question", "type", "question_order", "mandatory", "answeroptions", "subquestions");
     private static final DateTimeFormatter LIME_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    /** A {@code src}/{@code href} pointing at the LimeSurvey host's root, but not a protocol-relative one. */
+    private static final Pattern ROOT_RELATIVE_URL = Pattern.compile("(?i)((?:src|href)=[\"'])/(?!/)");
 
     private final ObjectMapper mapper = new ObjectMapper();
     private static final Logger LOGGER = LoggerFactory.getLogger(LimeSurveyRequestService.class);
@@ -719,7 +723,7 @@ public class LimeSurveyRequestService {
                 groups.add(new QuestionGroupData(
                         groupId,
                         readText(groupNode, "group_name"),
-                        readText(groupNode, "description"),
+                        html(readText(groupNode, "description")),
                         readInt(groupNode, "group_order"),
                         sorted(questionsByGroup.remove(groupId), QuestionData::order)
                 ));
@@ -754,7 +758,7 @@ public class LimeSurveyRequestService {
                 questionId,
                 readInt(questionNode, "gid"),
                 firstNonBlank(readText(properties, "title"), readText(questionNode, "title")),
-                firstNonBlank(readText(properties, "question"), readText(questionNode, "question")),
+                html(firstNonBlank(readText(properties, "question"), readText(questionNode, "question"))),
                 firstNonBlank(readText(properties, "type"), readText(questionNode, "type")),
                 Optional.ofNullable(readInt(properties, "question_order")).orElseGet(() -> readInt(questionNode, "question_order")),
                 "Y".equalsIgnoreCase(firstNonBlank(readText(properties, "mandatory"), readText(questionNode, "mandatory"))),
@@ -777,7 +781,7 @@ public class LimeSurveyRequestService {
             if (option == null || !option.isObject()) {
                 continue;
             }
-            options.add(new AnswerOptionData(entry.getKey(), readText(option, "answer"), readInt(option, "order")));
+            options.add(new AnswerOptionData(entry.getKey(), html(readText(option, "answer")), readInt(option, "order")));
         }
         return sorted(options, AnswerOptionData::order);
     }
@@ -799,9 +803,83 @@ public class LimeSurveyRequestService {
             if (code == null || code.isBlank()) {
                 continue;
             }
-            subQuestions.add(new SubQuestionData(code, readText(subQuestion, "question"), readInt(subQuestion, "question_order")));
+            subQuestions.add(new SubQuestionData(code, html(readText(subQuestion, "question")), readInt(subQuestion, "question_order")));
         }
         return sorted(subQuestions, SubQuestionData::order);
+    }
+
+    /**
+     * Questions, subquestions and answer options are authored in LimeSurvey's HTML editor, which stores
+     * images and links host-relative ({@code <img src="/upload/surveys/1/images/x.png">}). Resolve them
+     * against the configured base url so a client on another origin can load them; without a base url the
+     * markup is handed out unchanged.
+     * <p>
+     * LimeSurvey's own {@code {ASSETSURL}}-style placeholders are not expanded by remote control and stay
+     * literal.
+     */
+    private String html(String text) {
+        String base = getBaseUrl();
+        if (text == null || base == null || base.isBlank()) {
+            return text;
+        }
+        String root = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+        return ROOT_RELATIVE_URL.matcher(text).replaceAll("$1" + Matcher.quoteReplacement(root) + "/");
+    }
+
+    /**
+     * The files a participant uploaded, content included. LimeSurvey only hands them out through
+     * {@code get_uploaded_files}, all at once, base64-encoded and keyed by the stored name that the
+     * response's file-upload answer lists.
+     *
+     * @param responseId the response to read, or {@code null} for every response of the token
+     */
+    public List<UploadedFile> getUploadedFiles(int surveyId, String token, Integer responseId) {
+        if (surveyId < 1 || token == null || token.isBlank()) {
+            LOGGER.debug("Not reading uploaded files without a survey id and a token");
+            return List.of();
+        }
+
+        String sessionKey = null;
+        try {
+            sessionKey = getSessionKey();
+            JsonNode result = requestResult("get_uploaded_files",
+                    Arrays.asList(sessionKey, surveyId, token, responseId == null ? null : String.valueOf(responseId)),
+                    "survey " + surveyId);
+            if (!result.isObject()) {
+                LOGGER.debug("LimeSurvey get_uploaded_files returned no files for survey {}: {}", surveyId, result);
+                return List.of();
+            }
+
+            List<UploadedFile> files = new ArrayList<>();
+            for (Map.Entry<String, JsonNode> entry : result.properties()) {
+                String content = entry.getValue().isObject() ? readText(entry.getValue(), "content") : null;
+                if (content == null) {
+                    //"No files found" and other status objects come back in the same shape
+                    continue;
+                }
+                JsonNode meta = entry.getValue().path("meta");
+                files.add(new UploadedFile(
+                        readText(meta.path("question"), "title"),
+                        entry.getKey(),
+                        readText(meta, "name"),
+                        readText(meta, "ext"),
+                        //MIME decoder: LimeSurvey wraps long payloads in newlines
+                        Base64.getMimeDecoder().decode(content)));
+            }
+            return files;
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn("LimeSurvey returned an unreadable upload payload for survey {}", surveyId, e);
+            return List.of();
+        } catch (IOException e) {
+            LOGGER.error("Error reading uploaded files of survey {}", surveyId, e);
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.error("Interrupted while reading uploaded files of survey {}", surveyId, e);
+            throw new RuntimeException(e);
+        } finally {
+            releaseSessionKeyQuietly(sessionKey);
+        }
     }
 
     private List<JsonNode> requestArrayResult(String method, List<Object> params, String context) throws IOException, InterruptedException {

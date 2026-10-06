@@ -43,6 +43,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
+import static org.assertj.core.api.InstanceOfAssertFactories.MAP;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -114,9 +117,9 @@ class LimeSurveyResponseServiceTest {
         assertThat(multipleChoice.answers())
                 .extracting(Answer::subQuestionCode, Answer::subQuestionText, Answer::value, Answer::label)
                 .containsExactly(
-                        tuple3("SQ001", "First", "Y", "Yes"),
-                        tuple3("SQ002", "Second", "Y", "Yes"),
-                        tuple3("other", null, "something else", null));
+                        tuple("SQ001", "First", "Y", "Yes"),
+                        tuple("SQ002", "Second", "Y", "Yes"),
+                        tuple("other", null, "something else", null));
 
         AnsweredQuestion freeText = question(response, "G01Q02");
         assertThat(freeText.answers()).hasSize(1);
@@ -125,6 +128,52 @@ class LimeSurveyResponseServiceTest {
         assertThat(freeText.answers().get(0).label())
                 .as("free text has no answer option to resolve")
                 .isNull();
+    }
+
+    @Test
+    @DisplayName("a comment cell is reported on the subquestion it comments on")
+    void matchesCommentsToTheirSubQuestion() throws IOException {
+        givenObservation();
+        givenStructure(structure());
+        givenStoredResponse(1, "seed", values(
+                "Q00[SQ002]", "Y",
+                "Q00[SQ002comment]", "because",
+                "Q00[SQ001]", "Y",
+                "Q00[SQ001comment]", "why not",
+                "Q00[othercomment]", "no idea"));
+
+        SurveyResponse response = service.getParticipantResponses(
+                STUDY_ID, OBSERVATION_ID, PARTICIPANT_ID, ResponseSelection.all()).responses().get(0);
+
+        assertThat(question(response, "Q00").answers())
+                .extracting(Answer::subQuestionCode, Answer::subQuestionText, Answer::comment, Answer::value)
+                .containsExactly(
+                        tuple("SQ001", "First", false, "Y"),
+                        tuple("SQ001", "First", true, "why not"),
+                        tuple("SQ002", "Second", false, "Y"),
+                        tuple("SQ002", "Second", true, "because"),
+                        tuple("other", null, true, "no idea"));
+    }
+
+    @Test
+    @DisplayName("a file-upload answer is handed out as a file list, without the filecount cell")
+    void readsFileUploadAnswers() throws IOException {
+        givenObservation();
+        givenStructure(new SurveyStructure(SURVEY_ID, "en", List.of(
+                new QuestionGroupData(1, "Group", null, 1, List.of(
+                        new QuestionData(20, 1, "Q07", "Upload a photo", "|", 1, false, List.of(), List.of()))))));
+        givenStoredResponse(1, "seed", values(
+                "Q07", "[{\"title\":\"\",\"size\":\"124.5\",\"name\":\"photo.jpg\",\"filename\":\"fu_abc\",\"ext\":\"jpg\"}]",
+                "Q07[filecount]", "1"));
+
+        SurveyResponse response = service.getParticipantResponses(
+                STUDY_ID, OBSERVATION_ID, PARTICIPANT_ID, ResponseSelection.all()).responses().get(0);
+
+        assertThat(question(response, "Q07").answers()).singleElement()
+                .extracting(Answer::value).asInstanceOf(LIST)
+                .singleElement().asInstanceOf(MAP)
+                .containsEntry("name", "photo.jpg")
+                .containsEntry("filename", "fu_abc");
     }
 
     @Test
@@ -355,9 +404,5 @@ class LimeSurveyResponseServiceTest {
             values.put(String.valueOf(keysAndValues[i]), keysAndValues[i + 1]);
         }
         return values;
-    }
-
-    private static org.assertj.core.groups.Tuple tuple3(String a, String b, Object c, String d) {
-        return org.assertj.core.api.Assertions.tuple(a, b, c, d);
     }
 }

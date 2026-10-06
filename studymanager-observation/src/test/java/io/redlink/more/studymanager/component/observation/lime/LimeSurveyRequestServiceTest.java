@@ -15,6 +15,7 @@ import io.redlink.more.studymanager.component.observation.lime.model.QuestionDat
 import io.redlink.more.studymanager.component.observation.lime.model.QuestionGroupData;
 import io.redlink.more.studymanager.component.observation.lime.model.SubQuestionData;
 import io.redlink.more.studymanager.component.observation.lime.model.SurveyStructure;
+import io.redlink.more.studymanager.component.observation.lime.model.UploadedFile;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
 import io.redlink.more.studymanager.core.survey.ResponseSelection;
 import org.junit.jupiter.api.Assertions;
@@ -52,6 +53,7 @@ public class LimeSurveyRequestServiceTest {
         properties.put("username", "more-admin");
         properties.put("password", "more-admin");
         properties.put("remoteUrl", "https://lime.example.org/admin/remotecontrol");
+        properties.put("baseUrl", "https://lime.example.org");
         return properties;
     }
 
@@ -149,6 +151,67 @@ public class LimeSurveyRequestServiceTest {
         QuestionData list = structure.groups().get(1).questions().get(0);
         Assertions.assertEquals(List.of("Y", "N"), list.answerOptions().stream().map(AnswerOptionData::code).toList());
         Assertions.assertEquals(List.of("Yes", "No"), list.answerOptions().stream().map(AnswerOptionData::label).toList());
+    }
+
+    @Test
+    void getSurveyStructureResolvesRelativeImageUrls() throws IOException, InterruptedException {
+        stubLimeSurvey(Map.of(
+                "list_groups", """
+                        {"id":1,"error":null,"result":[{"gid":1,"group_name":"First","description":"<img src=\\"/upload/g.png\\">","group_order":1}]}""",
+                "list_questions", """
+                        {"id":1,"error":null,"result":[
+                          {"qid":10,"gid":1,"title":"Q00","question":"q","type":"L","question_order":1,"parent_qid":"0","mandatory":"N"}]}""",
+                "get_question_properties:10", """
+                        {"id":1,"error":null,"result":{"title":"Q00","type":"L","question_order":1,"mandatory":"N",
+                          "question":"Which one? <img src=\\"/upload/surveys/1/images/x.png\\"> and <img src=\\"https://cdn.example.org/y.png\\">",
+                          "answeroptions":{"Y":{"answer":"<img src='/upload/yes.png'>Yes","order":1}},
+                          "subquestions":{"6":{"title":"SQ001","question":"<img src=\\"/upload/sq.png\\">","question_order":1}}}}"""
+        ));
+
+        QuestionData question = service.getSurveyStructure("976294").groups().get(0).questions().get(0);
+
+        Assertions.assertEquals(
+                "Which one? <img src=\"https://lime.example.org/upload/surveys/1/images/x.png\"> "
+                        + "and <img src=\"https://cdn.example.org/y.png\">",
+                question.text(),
+                "host-relative images become absolute, absolute ones stay untouched");
+        Assertions.assertEquals("<img src='https://lime.example.org/upload/yes.png'>Yes",
+                question.answerOptions().get(0).label());
+        Assertions.assertEquals("<img src=\"https://lime.example.org/upload/sq.png\">",
+                question.subQuestions().get(0).text());
+        Assertions.assertEquals("<img src=\"https://lime.example.org/upload/g.png\">",
+                service.getSurveyStructure("976294").groups().get(0).description());
+    }
+
+    // --- uploaded files ---------------------------------------------------------------------------------
+
+    @Test
+    void getUploadedFilesDecodesTheBase64Content() throws IOException, InterruptedException {
+        String content = Base64.getEncoder().encodeToString("an image".getBytes(StandardCharsets.UTF_8));
+        stubLimeSurvey(Map.of("get_uploaded_files", """
+                {"id":1,"error":null,"result":{"fu_abc123":{
+                  "meta":{"name":"photo.jpg","ext":"jpg","size":"124.5","question":{"title":"Q07","qid":7}},
+                  "content":"%s"}}}""".formatted(content)));
+
+        List<UploadedFile> files = service.getUploadedFiles(976294, "token", 3);
+
+        Assertions.assertEquals(1, files.size());
+        UploadedFile file = files.get(0);
+        Assertions.assertEquals("fu_abc123", file.filename());
+        Assertions.assertEquals("photo.jpg", file.name());
+        Assertions.assertEquals("jpg", file.extension());
+        Assertions.assertEquals("Q07", file.questionCode());
+        Assertions.assertEquals("an image", new String(file.content(), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void getUploadedFilesTreatsNoFilesFoundAsEmpty() throws IOException, InterruptedException {
+        stubLimeSurvey(Map.of("get_uploaded_files", """
+                {"id":1,"error":null,"result":{"status":"No files found"}}"""));
+
+        Assertions.assertTrue(service.getUploadedFiles(976294, "token", 3).isEmpty());
+        Assertions.assertTrue(service.getUploadedFiles(976294, " ", 3).isEmpty(), "no token, no call");
+        Assertions.assertTrue(service.getUploadedFiles(0, "token", 3).isEmpty());
     }
 
     @Test
