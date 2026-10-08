@@ -144,7 +144,7 @@ public class ElasticDataService {
         return new StoredSurveyResponse(
                 asString(source.get("datapoint_id")),
                 asInteger(values.get(LimeSurveyObservationFactory.MEASUREMENT_ID)),
-                asString(values.get(LimeSurveyObservationFactory.MEASUREMENT_SEED)),
+                asString(values.get("seed")),
                 asInstant(source.get("effective_time_frame")),
                 asInstant(source.get("storage_date")),
                 values
