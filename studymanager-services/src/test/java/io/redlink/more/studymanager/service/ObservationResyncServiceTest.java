@@ -10,7 +10,6 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.exception.BadRequestException;
-import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.ObservationResyncRequest;
@@ -85,20 +84,8 @@ class ObservationResyncServiceTest {
     }
 
     @Test
-    void requestFailsWhenAlreadyPending() {
+    void requestInsertsWhenResyncable() {
         givenObservationWithFactory(true);
-        when(repository.find(STUDY_ID, PARTICIPANT_ID, OBSERVATION_ID)).thenReturn(Optional.of(request()));
-
-        assertThatThrownBy(() -> service.requestResync(STUDY_ID, PARTICIPANT_ID, OBSERVATION_ID))
-                .isInstanceOf(DataConstraintException.class);
-
-        verify(repository, never()).insert(STUDY_ID, PARTICIPANT_ID, OBSERVATION_ID);
-    }
-
-    @Test
-    void requestInsertsWhenResyncableAndNotYetPending() {
-        givenObservationWithFactory(true);
-        when(repository.find(STUDY_ID, PARTICIPANT_ID, OBSERVATION_ID)).thenReturn(Optional.empty());
         when(repository.insert(STUDY_ID, PARTICIPANT_ID, OBSERVATION_ID)).thenReturn(request());
 
         assertThat(service.requestResync(STUDY_ID, PARTICIPANT_ID, OBSERVATION_ID)).isEqualTo(request());

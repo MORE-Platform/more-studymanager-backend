@@ -935,8 +935,6 @@ paths:
           description: the observation does not support resync
         '404':
           description: study, participant or observation not found
-        '409':
-          description: a resync request is already pending
 
   /studies/{studyId}/occurredObservations:
     get:

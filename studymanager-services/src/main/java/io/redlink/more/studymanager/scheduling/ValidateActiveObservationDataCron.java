@@ -5,9 +5,11 @@ import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.core.io.TimeRange;
 import io.redlink.more.studymanager.core.io.Timeframe;
 import io.redlink.more.studymanager.model.Observation;
+import io.redlink.more.studymanager.model.ObservationResyncRequest;
 import io.redlink.more.studymanager.model.OccurredObservation;
 import io.redlink.more.studymanager.model.Participant;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.repository.ObservationResyncRequestRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.service.ObservationService;
 import io.redlink.more.studymanager.service.OccurredObservationService;
@@ -36,6 +38,7 @@ public class ValidateActiveObservationDataCron {
     private final OccurredObservationService occurredObservationService;
     private final ObservationService observationService;
     private final MoreSDK sdk;
+    private final ObservationResyncRequestRepository resyncRequestRepository;
 
 
     public ValidateActiveObservationDataCron(
@@ -43,13 +46,52 @@ public class ValidateActiveObservationDataCron {
             ParticipantService participantService,
             OccurredObservationService occurredObservationService,
             ObservationService observationService,
-            MoreSDK sdk
+            MoreSDK sdk,
+            ObservationResyncRequestRepository resyncRequestRepository
     ) {
         this.studyService = studyService;
         this.participantService = participantService;
         this.occurredObservationService = occurredObservationService;
         this.observationService = observationService;
         this.sdk = sdk;
+        this.resyncRequestRepository = resyncRequestRepository;
+    }
+
+    //TODO: Make schedules configureable
+    @Scheduled(cron = "45 */5 * * * ?")
+    public void validateSyncedResyncRequests() {
+        for (ObservationResyncRequest request : resyncRequestRepository.listSynced()) {
+            try {
+                studyService.getStudy(request.studyId(), null).ifPresentOrElse(
+                        study -> validateParticipantObservation(study, request.participantId(), request.observationId()),
+                        () -> log.warn("Study of synced resync request {} not found", request));
+            } catch (RuntimeException e) {
+                log.error("Could not validate the data of synced resync request {}", request, e);
+            } finally {
+                resyncRequestRepository.deleteSynced(request.studyId(), request.participantId(), request.observationId());
+            }
+        }
+    }
+
+    void validateParticipantObservation(Study study, int participantId, int observationId) {
+        log.debug("Validating observation {} of participant {} of study {}", observationId, participantId, study.getStudyId());
+        final Instant now = Instant.now();
+        Map<String, ObservationFactory> observationFactories = new HashMap<>();
+        Map<Integer, Observation> observationCache = new HashMap<>();
+        Map<Integer, Participant> participantCache = new HashMap<>();
+        Map<Integer, io.redlink.more.studymanager.core.component.Observation> observationComponentCache = new HashMap<>();
+        try (var ooStream = occurredObservationService.streamOccurredObservations(
+                study.getStudyId(), participantId, observationId, true, EnumSet.allOf(ObservationDataState.class))) {
+            ooStream
+                    .filter(oo -> !now.isBefore(oo.start()))
+                    .forEach(occurredObservation -> validateOccurrence(
+                            study,
+                            occurredObservation,
+                            observationCache,
+                            observationFactories,
+                            observationComponentCache,
+                            participantCache));
+        }
     }
 
 
