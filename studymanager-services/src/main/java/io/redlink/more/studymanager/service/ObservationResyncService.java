@@ -10,7 +10,6 @@ package io.redlink.more.studymanager.service;
 
 import io.redlink.more.studymanager.core.factory.ObservationFactory;
 import io.redlink.more.studymanager.exception.BadRequestException;
-import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.ObservationResyncRequest;
@@ -22,8 +21,8 @@ import java.util.Optional;
 
 /**
  * Manages requests to re-collect observation data that is missing or incomplete. A request is a row that
- * the storage gateway picks up and deletes once it has synced the data, so the presence of a row means
- * "resync pending".
+ * the storage gateway retries until its end and marks synced once it has collected the data, so the
+ * presence of a row means "resync pending".
  */
 @Service
 public class ObservationResyncService {
@@ -67,9 +66,6 @@ public class ObservationResyncService {
             throw new BadRequestException(
                     "Observation %d of type '%s' in study %d does not support resync"
                             .formatted(observationId, observation.getType(), studyId));
-        }
-        if (repository.find(studyId, participantId, observationId).isPresent()) {
-            throw DataConstraintException.createObservationResyncRequestAlreadyExists(studyId, participantId, observationId);
         }
         return repository.insert(studyId, participantId, observationId);
     }

@@ -11,15 +11,10 @@ package io.redlink.more.studymanager.component.observation.lime;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.redlink.more.studymanager.component.observation.lime.model.LimeSurveyListSurveyResponse;
-import io.redlink.more.studymanager.component.observation.lime.model.LimeSurveyObjectResponse;
-import io.redlink.more.studymanager.component.observation.lime.model.LimeSurveyParticipantCreationResponse;
-import io.redlink.more.studymanager.component.observation.lime.model.LimeSurveyRequest;
-import io.redlink.more.studymanager.component.observation.lime.model.ParticipantCreationData;
-import io.redlink.more.studymanager.component.observation.lime.model.ParticipantData;
-import io.redlink.more.studymanager.component.observation.lime.model.SurveyData;
+import io.redlink.more.studymanager.component.observation.lime.model.*;
 import io.redlink.more.studymanager.component.observation.lime.transformer.ParticipantTransformer;
 import io.redlink.more.studymanager.core.factory.ComponentFactoryProperties;
+import io.redlink.more.studymanager.core.survey.ResponseSelection;
 import io.redlink.more.studymanager.core.ui.OptionValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,15 +28,10 @@ import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class LimeSurveyRequestService {
@@ -49,7 +39,11 @@ public class LimeSurveyRequestService {
     private final ComponentFactoryProperties properties;
     private final HttpClient client;
     private static final String LIME_NULL_DATE = "1980-01-01 00:00:00";
+    private static final List<String> QUESTION_PROPERTIES =
+            List.of("title", "question", "type", "question_order", "mandatory", "answeroptions", "subquestions");
     private static final DateTimeFormatter LIME_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    /** A {@code src}/{@code href} pointing at the LimeSurvey host's root, but not a protocol-relative one. */
+    private static final Pattern ROOT_RELATIVE_URL = Pattern.compile("(?i)((?:src|href)=[\"'])/(?!/)");
 
     private final ObjectMapper mapper = new ObjectMapper();
     private static final Logger LOGGER = LoggerFactory.getLogger(LimeSurveyRequestService.class);
@@ -537,9 +531,53 @@ public class LimeSurveyRequestService {
     }
 
     private Optional<Map<String, Object>> getAnswer(String token, int surveyId, int savedId, String headingType, String responseType) {
-        if (token == null || token.isBlank() || surveyId <= 0 || savedId <= 0) {
+        if (savedId <= 0) {
             LOGGER.warn("Invalid answer query parameters: surveyId={}, savedId={}", surveyId, savedId);
             return Optional.empty();
+        }
+
+        List<Map<String, Object>> responses = fetchResponses(token, surveyId, headingType, responseType);
+        return responses.stream()
+                .filter(answer -> matchesSavedId(answer, savedId))
+                .findFirst()
+                //NOTE: a survey with a single response is accepted even if its id does not match the savedId
+                .or(() -> responses.size() == 1 ? Optional.of(responses.get(0)) : Optional.empty());
+    }
+
+    /**
+     * Every response the given participant token submitted for a survey, ordered oldest first.
+     *
+     * @param selection whether to return all responses, only the latest, or one specific response
+     */
+    public List<Map<String, Object>> getAnswers(String token, int surveyId, ResponseSelection selection) {
+        Objects.requireNonNull(selection, "selection must not be null");
+
+        List<Map<String, Object>> responses = fetchResponses(token, surveyId, "code", "short");
+        if (responses.isEmpty()) {
+            return List.of();
+        }
+
+        return switch (selection.mode()) {
+            case ALL -> responses;
+            case LATEST -> List.of(responses.get(responses.size() - 1));
+            case BY_SAVED_ID -> responses.stream()
+                    .filter(answer -> matchesSavedId(answer, selection.savedId()))
+                    .findFirst()
+                    .map(List::of)
+                    .orElseGet(List::of);
+        };
+    }
+
+    /**
+     * Exports every response of a participant token and sanitizes each one. Returns an empty list instead of
+     * throwing, because a missing or unreadable export must not break the caller.
+     *
+     * @return the sanitized responses, ordered oldest first
+     */
+    private List<Map<String, Object>> fetchResponses(String token, int surveyId, String headingType, String responseType) {
+        if (token == null || token.isBlank() || surveyId <= 0) {
+            LOGGER.warn("Invalid answer query parameters: surveyId={}", surveyId);
+            return List.of();
         }
 
         String sessionKey = null;
@@ -555,58 +593,361 @@ public class LimeSurveyRequestService {
             JsonNode responseNode = mapper.readTree(responseBody);
             JsonNode errorNode = responseNode.path("error");
             if (!errorNode.isMissingNode() && !errorNode.isNull() && !errorNode.asText("").isBlank()) {
-                LOGGER.warn("LimeSurvey returned an error for survey {} and savedId {}: {}", surveyId, savedId, errorNode.asText());
-                return Optional.empty();
+                LOGGER.warn("LimeSurvey returned an error for survey {}: {}", surveyId, errorNode.asText());
+                return List.of();
             }
 
             JsonNode resultNode = responseNode.path("result");
             if (!resultNode.isTextual() || resultNode.asText().isBlank()) {
-                return Optional.empty();
+                return List.of();
             }
 
             JsonNode result = mapper.readTree(Base64.getDecoder().decode(resultNode.asText()));
             JsonNode responsesNode = result.path("responses");
             if (!responsesNode.isArray()) {
-                return Optional.empty();
+                return List.of();
             }
 
+            List<Map<String, Object>> answers = new ArrayList<>();
             Iterator<JsonNode> responses = responsesNode.elements();
             while (responses.hasNext()) {
                 JsonNode response = responses.next();
                 if (response == null || !response.isObject()) {
                     continue;
                 }
-
-                Map<String, Object> answer = mapper.convertValue(response, Map.class);
-                //NOTE: Do not store the survey token
-                answer.remove("token");
-                answer.values().removeIf(obj -> Objects.isNull(obj) || obj.equals(token));
-
-                fixNullDate(answer);
-
-                Object responseId = answer.get("Response ID");
-                Object id = answer.get("id");
-                boolean matchesSavedId = Objects.equals(String.valueOf(savedId), String.valueOf(responseId))
-                        || Objects.equals(String.valueOf(savedId), String.valueOf(id));
-
-                if (matchesSavedId || responsesNode.size() == 1) {
-                    return Optional.of(new HashMap<>(answer));
-                }
+                answers.add(sanitize(response, token));
             }
-            return Optional.empty();
+            answers.sort(RESPONSE_ORDER);
+            return answers;
         } catch (IllegalArgumentException e) {
-            LOGGER.error("Could not decode LimeSurvey response payload for survey {} and savedId {}", surveyId, savedId, e);
-            return Optional.empty();
+            LOGGER.error("Could not decode LimeSurvey response payload for survey {}", surveyId, e);
+            return List.of();
         } catch (IOException e) {
             LOGGER.error("Error reading results for {}", surveyId, e);
-            return Optional.empty();
+            return List.of();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.error("Interrupted while reading results for {}", surveyId, e);
-            return Optional.empty();
+            return List.of();
         } finally {
             releaseSessionKeyQuietly(sessionKey);
         }
+    }
+
+    private Map<String, Object> sanitize(JsonNode response, String token) {
+        Map<String, Object> answer = mapper.convertValue(response, Map.class);
+        //NOTE: Do not store the survey token
+        answer.remove("token");
+        answer.values().removeIf(obj -> Objects.isNull(obj) || obj.equals(token));
+
+        fixNullDate(answer);
+        return new HashMap<>(answer);
+    }
+
+    /**
+     * Oldest response first, by LimeSurvey response id and - where ids are missing - by submit date.
+     */
+    private static final Comparator<Map<String, Object>> RESPONSE_ORDER =
+            Comparator.comparing(
+                            LimeSurveyRequestService::readResponseId, Comparator.nullsFirst(Comparator.naturalOrder()))
+                    .thenComparing(LimeSurveyRequestService::readSubmitDate, Comparator.nullsFirst(Comparator.naturalOrder()));
+
+    private static boolean matchesSavedId(Map<String, Object> answer, int savedId) {
+        String wanted = String.valueOf(savedId);
+        return wanted.equals(String.valueOf(answer.get("Response ID")))
+                || wanted.equals(String.valueOf(answer.get("id")));
+    }
+
+    /**
+     * The response id, named {@code id} with {@code code} headings and {@code Response ID} with {@code full} ones.
+     */
+    private static Integer readResponseId(Map<String, Object> answer) {
+        Object raw = Optional.ofNullable(answer.get("id")).orElseGet(() -> answer.get("Response ID"));
+        if (raw == null) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(String.valueOf(raw).trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * The submit date in LimeSurvey's {@code yyyy-MM-dd HH:mm:ss} form, which sorts lexicographically.
+     */
+    private static String readSubmitDate(Map<String, Object> answer) {
+        Object raw = Optional.ofNullable(answer.get("submitdate")).orElseGet(() -> answer.get("Date submitted"));
+        return raw == null ? null : String.valueOf(raw);
+    }
+
+    /**
+     * The question structure of a survey: its groups, their questions, each question's subquestions and its
+     * selectable answer options, resolved for the survey's base language and sorted in display order.
+     * <p>
+     * This issues {@code 3 + n} remote calls for {@code n} questions, because LimeSurvey only exposes answer
+     * options and subquestions through {@code get_question_properties}, one question at a time.
+     *
+     * @throws RuntimeException if the survey structure cannot be read
+     */
+    public SurveyStructure getSurveyStructure(String surveyId) {
+        if (surveyId == null || surveyId.isBlank()) {
+            throw new IllegalArgumentException("surveyId must not be blank");
+        }
+
+        String sessionKey = null;
+        try {
+            sessionKey = getSessionKey();
+            String lang = getLanguage(surveyId, sessionKey);
+
+            List<JsonNode> groupNodes = requestArrayResult(
+                    "list_groups", List.of(sessionKey, surveyId, lang), "survey " + surveyId);
+            //NOTE: a null group id makes LimeSurvey return the questions of every group in one call
+            List<JsonNode> questionNodes = requestArrayResult(
+                    "list_questions", Arrays.asList(sessionKey, surveyId, null, lang), "survey " + surveyId);
+
+            Map<Integer, List<QuestionData>> questionsByGroup = new LinkedHashMap<>();
+            for (JsonNode questionNode : questionNodes) {
+                //subquestions are read per question via get_question_properties, so skip them here
+                Integer parentQuestionId = readInt(questionNode, "parent_qid");
+                if (parentQuestionId != null && parentQuestionId != 0) {
+                    continue;
+                }
+                QuestionData question = toQuestion(questionNode, sessionKey, lang);
+                questionsByGroup.computeIfAbsent(question.groupId(), k -> new ArrayList<>()).add(question);
+            }
+
+            List<QuestionGroupData> groups = new ArrayList<>();
+            for (JsonNode groupNode : groupNodes) {
+                Integer groupId = readInt(groupNode, "gid");
+                groups.add(new QuestionGroupData(
+                        groupId,
+                        readText(groupNode, "group_name"),
+                        html(readText(groupNode, "description")),
+                        readInt(groupNode, "group_order"),
+                        sorted(questionsByGroup.remove(groupId), QuestionData::order)
+                ));
+            }
+            //keep questions whose group list_groups did not report, so no answer can silently disappear
+            questionsByGroup.forEach((groupId, questions) -> {
+                LOGGER.warn("LimeSurvey survey {} has questions in unlisted group {}", surveyId, groupId);
+                groups.add(new QuestionGroupData(groupId, null, null, null, sorted(questions, QuestionData::order)));
+            });
+
+            return new SurveyStructure(surveyId, lang, sorted(groups, QuestionGroupData::order));
+        } catch (IOException e) {
+            LOGGER.error("Error reading survey structure for survey {}", surveyId, e);
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.error("Interrupted while reading survey structure for survey {}", surveyId, e);
+            throw new RuntimeException(e);
+        } finally {
+            releaseSessionKeyQuietly(sessionKey);
+        }
+    }
+
+    private QuestionData toQuestion(JsonNode questionNode, String sessionKey, String lang) throws IOException, InterruptedException {
+        Integer questionId = readInt(questionNode, "qid");
+        JsonNode properties = questionId == null
+                ? mapper.createObjectNode()
+                : requestObjectResult("get_question_properties",
+                List.of(sessionKey, questionId, QUESTION_PROPERTIES, lang), "question " + questionId);
+
+        return new QuestionData(
+                questionId,
+                readInt(questionNode, "gid"),
+                firstNonBlank(readText(properties, "title"), readText(questionNode, "title")),
+                html(firstNonBlank(readText(properties, "question"), readText(questionNode, "question"))),
+                firstNonBlank(readText(properties, "type"), readText(questionNode, "type")),
+                Optional.ofNullable(readInt(properties, "question_order")).orElseGet(() -> readInt(questionNode, "question_order")),
+                "Y".equalsIgnoreCase(firstNonBlank(readText(properties, "mandatory"), readText(questionNode, "mandatory"))),
+                toSubQuestions(properties.path("subquestions")),
+                toAnswerOptions(properties.path("answeroptions"))
+        );
+    }
+
+    /**
+     * LimeSurvey keys answer options by their code and reports "no options" as a plain string rather than an
+     * empty object, so anything that is not an object of objects yields an empty list.
+     */
+    private List<AnswerOptionData> toAnswerOptions(JsonNode node) {
+        if (node == null || !node.isObject()) {
+            return List.of();
+        }
+        List<AnswerOptionData> options = new ArrayList<>();
+        for (Map.Entry<String, JsonNode> entry : node.properties()) {
+            JsonNode option = entry.getValue();
+            if (option == null || !option.isObject()) {
+                continue;
+            }
+            options.add(new AnswerOptionData(entry.getKey(), html(readText(option, "answer")), readInt(option, "order")));
+        }
+        return sorted(options, AnswerOptionData::order);
+    }
+
+    /**
+     * Subquestions are keyed by their internal id; the {@code title} is the code used in exported responses.
+     */
+    private List<SubQuestionData> toSubQuestions(JsonNode node) {
+        if (node == null || !node.isObject()) {
+            return List.of();
+        }
+        List<SubQuestionData> subQuestions = new ArrayList<>();
+        for (Map.Entry<String, JsonNode> entry : node.properties()) {
+            JsonNode subQuestion = entry.getValue();
+            if (subQuestion == null || !subQuestion.isObject()) {
+                continue;
+            }
+            String code = readText(subQuestion, "title");
+            if (code == null || code.isBlank()) {
+                continue;
+            }
+            subQuestions.add(new SubQuestionData(code, html(readText(subQuestion, "question")), readInt(subQuestion, "question_order")));
+        }
+        return sorted(subQuestions, SubQuestionData::order);
+    }
+
+    /**
+     * Questions, subquestions and answer options are authored in LimeSurvey's HTML editor, which stores
+     * images and links host-relative ({@code <img src="/upload/surveys/1/images/x.png">}). Resolve them
+     * against the configured base url so a client on another origin can load them; without a base url the
+     * markup is handed out unchanged.
+     * <p>
+     * LimeSurvey's own {@code {ASSETSURL}}-style placeholders are not expanded by remote control and stay
+     * literal.
+     */
+    private String html(String text) {
+        String base = getBaseUrl();
+        if (text == null || base == null || base.isBlank()) {
+            return text;
+        }
+        String root = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+        return ROOT_RELATIVE_URL.matcher(text).replaceAll("$1" + Matcher.quoteReplacement(root) + "/");
+    }
+
+    /**
+     * The files a participant uploaded, content included. LimeSurvey only hands them out through
+     * {@code get_uploaded_files}, all at once, base64-encoded and keyed by the stored name that the
+     * response's file-upload answer lists.
+     *
+     * @param responseId the response to read, or {@code null} for every response of the token
+     */
+    public List<UploadedFile> getUploadedFiles(int surveyId, String token, Integer responseId) {
+        if (surveyId < 1 || token == null || token.isBlank()) {
+            LOGGER.debug("Not reading uploaded files without a survey id and a token");
+            return List.of();
+        }
+
+        String sessionKey = null;
+        try {
+            sessionKey = getSessionKey();
+            JsonNode result = requestResult("get_uploaded_files",
+                    Arrays.asList(sessionKey, surveyId, token, responseId == null ? null : String.valueOf(responseId)),
+                    "survey " + surveyId);
+            if (!result.isObject()) {
+                LOGGER.debug("LimeSurvey get_uploaded_files returned no files for survey {}: {}", surveyId, result);
+                return List.of();
+            }
+
+            List<UploadedFile> files = new ArrayList<>();
+            for (Map.Entry<String, JsonNode> entry : result.properties()) {
+                String content = entry.getValue().isObject() ? readText(entry.getValue(), "content") : null;
+                if (content == null) {
+                    //"No files found" and other status objects come back in the same shape
+                    continue;
+                }
+                JsonNode meta = entry.getValue().path("meta");
+                files.add(new UploadedFile(
+                        readText(meta.path("question"), "title"),
+                        entry.getKey(),
+                        readText(meta, "name"),
+                        readText(meta, "ext"),
+                        //MIME decoder: LimeSurvey wraps long payloads in newlines
+                        Base64.getMimeDecoder().decode(content)));
+            }
+            return files;
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn("LimeSurvey returned an unreadable upload payload for survey {}", surveyId, e);
+            return List.of();
+        } catch (IOException e) {
+            LOGGER.error("Error reading uploaded files of survey {}", surveyId, e);
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.error("Interrupted while reading uploaded files of survey {}", surveyId, e);
+            throw new RuntimeException(e);
+        } finally {
+            releaseSessionKeyQuietly(sessionKey);
+        }
+    }
+
+    private List<JsonNode> requestArrayResult(String method, List<Object> params, String context) throws IOException, InterruptedException {
+        JsonNode resultNode = requestResult(method, params, context);
+        if (!resultNode.isArray()) {
+            //LimeSurvey answers "no groups/questions found" with a status object instead of an error
+            LOGGER.debug("LimeSurvey {} returned no list for {}: {}", method, context, resultNode);
+            return List.of();
+        }
+
+        List<JsonNode> elements = new ArrayList<>();
+        Iterator<JsonNode> iterator = resultNode.elements();
+        while (iterator.hasNext()) {
+            JsonNode element = iterator.next();
+            if (element != null && element.isObject()) {
+                elements.add(element);
+            }
+        }
+        return elements;
+    }
+
+    private JsonNode requestObjectResult(String method, List<Object> params, String context) throws IOException, InterruptedException {
+        JsonNode resultNode = requestResult(method, params, context);
+        return resultNode.isObject() ? resultNode : mapper.createObjectNode();
+    }
+
+    private JsonNode requestResult(String method, List<Object> params, String context) throws IOException, InterruptedException {
+        HttpRequest request = createHttpRequest(parseRequest(method, params));
+        JsonNode rootNode = mapper.readTree(client.send(request, HttpResponse.BodyHandlers.ofString()).body());
+
+        JsonNode errorNode = rootNode.path("error");
+        if (!errorNode.isMissingNode() && !errorNode.isNull() && !errorNode.asText("").isBlank()) {
+            throw new RuntimeException("LimeSurvey " + method + " failed for " + context + ": " + errorNode.asText());
+        }
+        return rootNode.path("result");
+    }
+
+    private static <T> List<T> sorted(List<T> values, Function<T, Integer> order) {
+        if (values == null || values.isEmpty()) {
+            return List.of();
+        }
+        return values.stream()
+                .sorted(Comparator.comparing(order, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+    }
+
+    private static String readText(JsonNode node, String field) {
+        JsonNode value = node.path(field);
+        return value.isMissingNode() || value.isNull() ? null : value.asText();
+    }
+
+    private static Integer readInt(JsonNode node, String field) {
+        JsonNode value = node.path(field);
+        if (value.isMissingNode() || value.isNull()) {
+            return null;
+        }
+        if (value.isNumber()) {
+            return value.asInt();
+        }
+        try {
+            return Integer.valueOf(value.asText().trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static String firstNonBlank(String first, String second) {
+        return first != null && !first.isBlank() ? first : second;
     }
 
     protected void fixNullDate(Map<String, Object> answer) {

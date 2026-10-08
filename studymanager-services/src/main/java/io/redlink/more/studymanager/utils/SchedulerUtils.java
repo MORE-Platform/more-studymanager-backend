@@ -23,6 +23,7 @@ import io.redlink.more.studymanager.model.scheduler.RelativeDate;
 import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
 import io.redlink.more.studymanager.model.scheduler.RelativeRecurrenceRule;
 import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
+import io.redlink.more.studymanager.model.scheduler.StudyWideEvent;
 import org.apache.commons.lang3.Range;
 import org.quartz.CronExpression;
 
@@ -102,6 +103,7 @@ public final class SchedulerUtils {
 
     public static List<Range<Instant>> parseToObservationSchedules(ParticipantObservationSeed seed, ScheduleEvent scheduleEvent, Instant start, Instant end, boolean isMilestoneAnchor) {
         if (scheduleEvent == null) return Collections.emptyList();
+        if (scheduleEvent instanceof StudyWideEvent) return List.of(Range.of(start, end));
         List<Range<Instant>> ranges = Collections.emptyList();
         if (scheduleEvent instanceof Event event) {
             ranges = parseToObservationSchedulesForEvent(event, start, end);
@@ -117,6 +119,8 @@ public final class SchedulerUtils {
                         .filter(o -> o.getMilestoneId() == null)
                         // All the observation-schedules
                         .map(Observation::getSchedule)
+                        // ... skipping study-wide observations, which have none
+                        .filter(Objects::nonNull)
                         // ... the relative ones
                         .filter(e -> RelativeEvent.TYPE.equals(e.getType()))
                         .map(e -> (RelativeEvent) e)
@@ -189,6 +193,8 @@ public final class SchedulerUtils {
                 // Only observations anchored to the participant's signup, not to a milestone
                 .filter(o -> o.getMilestoneId() == null)
                 .map(Observation::getSchedule)
+                // study-wide observations have no schedule
+                .filter(Objects::nonNull)
                 .filter(scheduleEvent -> scheduleEvent.getType().equals(RelativeEvent.TYPE))
                 .map(r -> ((RelativeEvent) r).getDtend())
                 .filter(relativeDate -> relativeDate.getOffset().getValue() == 1)

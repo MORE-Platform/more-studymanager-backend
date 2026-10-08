@@ -17,6 +17,7 @@ import io.redlink.more.studymanager.model.scheduler.RelativeDate;
 import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
 import io.redlink.more.studymanager.model.scheduler.RelativeRecurrenceRule;
 import io.redlink.more.studymanager.model.scheduler.ScheduleEvent;
+import io.redlink.more.studymanager.model.scheduler.StudyWideEvent;
 
 import java.time.Instant;
 
@@ -57,7 +58,9 @@ public final class EventTransformer {
 
     public static ObservationScheduleDTO toObservationScheduleDTO_V1(ScheduleEvent event) {
         if (event != null)
-            if (event.getType() == null || Event.TYPE.equals(event.getType())) {
+            if (StudyWideEvent.TYPE.equals(event.getType())) {
+                return null;
+            } else if (event.getType() == null || Event.TYPE.equals(event.getType())) {
                 Event e = (Event) event;
                 Instant instant = e.getDateEnd();
                 Instant instant1 = e.getDateStart();

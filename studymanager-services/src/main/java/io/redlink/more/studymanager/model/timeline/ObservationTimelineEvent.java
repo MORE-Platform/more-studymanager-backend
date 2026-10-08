@@ -32,7 +32,7 @@ public record ObservationTimelineEvent(
                 start,
                 end,
                 observation.getHidden(),
-                observation.getSchedule().getType()
+                observation.getSchedule() == null ? null : observation.getSchedule().getType()
         );
     }
 }

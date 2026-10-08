@@ -22,6 +22,7 @@ import io.redlink.more.studymanager.exception.NotFoundException;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.ParticipantWithObservationProperties;
 import io.redlink.more.studymanager.model.Study;
+import io.redlink.more.studymanager.model.scheduler.StudyWideEvent;
 import io.redlink.more.studymanager.repository.ObservationRepository;
 import io.redlink.more.studymanager.sdk.MoreSDK;
 import io.redlink.more.studymanager.utils.RandomSchedulerUtils;
@@ -62,7 +63,7 @@ public class ObservationService {
 
     public Observation addObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
-        return repository.insert(validate(observation));
+        return repository.insert(normalize(validate(observation)));
     }
 
     public Observation importObservation(Long studyId, Observation observation) {
@@ -72,6 +73,9 @@ public class ObservationService {
         }
         ObservationProperties props = (ObservationProperties) factory.preImport(observation.getProperties());
         observation.setProperties(props);
+        if (factory.isStudyWide()) {
+            observation.setSchedule(new StudyWideEvent());
+        }
         return repository.doImport(studyId, observation);
     }
 
@@ -98,7 +102,7 @@ public class ObservationService {
 
     public Observation updateObservation(Observation observation) {
         studyStateService.assertStudyNotInState(observation.getStudyId(), Study.Status.CLOSED);
-        Observation updatedObservation = repository.updateObservation(validate(observation));
+        Observation updatedObservation = repository.updateObservation(normalize(validate(observation)));
         repository.removeParticipantsPropertyKey(observation.getStudyId(), observation.getObservationId(), RandomSchedulerUtils.OBSERVATION_SCHEDULE_SEED_KEY);
         return updatedObservation;
     }
@@ -184,6 +188,20 @@ public class ObservationService {
         return getObservationFactory(observation)
                 .orElseThrow(() -> new NotFoundException(String.format("ObservationFactory for Observation[study: %s, id:%s, type: %s]",
                         observation.getStudyId(), observation.getObservationId(), observation.getType())));
+    }
+
+    /**
+     * Study-wide observations have no configurable schedule, so any schedule that still
+     * reaches us (stale frontend state, imported study definition) is replaced by a
+     * {@link StudyWideEvent}. Storing that marker rather than nothing at all is what lets
+     * services that only read the database - the data-gateway above all - expand the
+     * observation over the complete study.
+     */
+    private Observation normalize(Observation observation) {
+        if (getObservationFactory(observation).map(ObservationFactory::isStudyWide).orElse(false)) {
+            observation.setSchedule(new StudyWideEvent());
+        }
+        return observation;
     }
 
     private Observation validate(Observation observation) {

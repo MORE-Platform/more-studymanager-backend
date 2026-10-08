@@ -11,7 +11,6 @@ package io.redlink.more.studymanager.repository;
 import io.redlink.more.studymanager.configuration.JPAConfiguration;
 import io.redlink.more.studymanager.core.properties.ObservationProperties;
 import io.redlink.more.studymanager.exception.BadRequestException;
-import io.redlink.more.studymanager.exception.DataConstraintException;
 import io.redlink.more.studymanager.model.Contact;
 import io.redlink.more.studymanager.model.Observation;
 import io.redlink.more.studymanager.model.ObservationResyncRequest;
@@ -23,10 +22,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -54,6 +56,9 @@ class ObservationResyncRequestRepositoryTest {
 
     @Autowired
     private ObservationRepository observationRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
     void deleteAll() {
@@ -91,16 +96,56 @@ class ObservationResyncRequestRepositoryTest {
     }
 
     @Test
-    @DisplayName("Inserting a second request for the same participant and observation is reported as a conflict")
-    void testDuplicateInsert() {
+    @DisplayName("A request is retried with high priority for one hour; a second request merges into the existing one")
+    void testInsertMerges() {
         Long studyId = newStudy();
         int participantId = newParticipant(studyId, "P1");
         int observationId = newObservation(studyId, "Survey 1");
 
         repository.insert(studyId, participantId, observationId);
+        assertThat(cycle(studyId, participantId, observationId))
+                .containsEntry("resync_interval", "high")
+                .containsEntry("one_hour", true)
+                .containsEntry("synced", false);
 
-        assertThatThrownBy(() -> repository.insert(studyId, participantId, observationId))
-                .isInstanceOf(DataConstraintException.class);
+        // a running normal request (e.g. opened in the participant portal) for the next 24 hours, already synced
+        jdbcTemplate.update("""
+                UPDATE observation_resync_requests
+                SET resync_interval = 'normal', resync_end = now() + interval '24 hours', synced = TRUE
+                WHERE study_id = ? AND participant_id = ? AND observation_id = ?""",
+                studyId, participantId, observationId);
+
+        repository.insert(studyId, participantId, observationId);
+        assertThat(cycle(studyId, participantId, observationId))
+                .containsEntry("resync_interval", "high")
+                .containsEntry("one_hour", false)
+                .containsEntry("synced", false);
+        assertThat(repository.listByParticipant(studyId, participantId)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Only synced requests are listed and deleted for the data health check")
+    void testListAndDeleteSynced() {
+        Long studyId = newStudy();
+        int participantId = newParticipant(studyId, "P1");
+        int observationId = newObservation(studyId, "Survey 1");
+        int otherObservationId = newObservation(studyId, "Survey 2");
+
+        repository.insert(studyId, participantId, observationId);
+        repository.insert(studyId, participantId, otherObservationId);
+        jdbcTemplate.update(
+                "UPDATE observation_resync_requests SET synced = TRUE WHERE study_id = ? AND participant_id = ? AND observation_id = ?",
+                studyId, participantId, observationId);
+
+        assertThat(repository.listSynced())
+                .extracting(ObservationResyncRequest::observationId)
+                .containsExactly(observationId);
+
+        repository.deleteSynced(studyId, participantId, otherObservationId);
+        assertThat(repository.find(studyId, participantId, otherObservationId)).isPresent();
+
+        repository.deleteSynced(studyId, participantId, observationId);
+        assertThat(repository.find(studyId, participantId, observationId)).isEmpty();
     }
 
     @Test
@@ -129,6 +174,14 @@ class ObservationResyncRequestRepositoryTest {
         participantRepository.deleteParticipant(studyId, participantId);
 
         assertThat(repository.find(studyId, participantId, observationId)).isEmpty();
+    }
+
+    private Map<String, Object> cycle(Long studyId, int participantId, int observationId) {
+        return jdbcTemplate.queryForMap("""
+                SELECT resync_interval, resync_end - resync_start = interval '1 hour' AS one_hour, synced
+                FROM observation_resync_requests
+                WHERE study_id = ? AND participant_id = ? AND observation_id = ?""",
+                studyId, participantId, observationId);
     }
 
     private Long newStudy() {

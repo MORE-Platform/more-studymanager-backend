@@ -47,4 +47,9 @@ public class AppUsageObservationFactory<C extends Observation<P>, P extends Obse
     public Visibility getVisibility() {
         return new Visibility(false, true);
     }
+
+    @Override
+    public boolean isStudyWide() {
+        return true;
+    }
 }

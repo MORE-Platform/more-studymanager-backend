@@ -6,6 +6,7 @@ import io.redlink.more.studymanager.model.Trigger;
 import io.redlink.more.studymanager.model.scheduler.Duration;
 import io.redlink.more.studymanager.model.scheduler.RelativeDate;
 import io.redlink.more.studymanager.model.scheduler.RelativeEvent;
+import io.redlink.more.studymanager.model.scheduler.StudyWideEvent;
 import org.apache.commons.lang3.Range;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,61 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SchedulerUtilsTest {
+    @Test
+    void studyWideEventSpansTheWholeRange() {
+        final Instant start = Instant.parse("2024-05-10T00:00:00Z");
+        final Instant end = Instant.parse("2024-05-15T23:59:59Z");
+
+        assertThat(SchedulerUtils.parseToObservationSchedules(null, new StudyWideEvent(), start, end, false))
+                .containsExactly(Range.of(start, end));
+    }
+
+    @Test
+    void alignStartDateToSignupInstantIgnoresObservationsWithoutSchedule() {
+        // study-wide observations are persisted without a schedule
+        final Observation studyWide = new Observation()
+                .setObservationId(1)
+                .setTitle("App Usage")
+                .setSchedule(null);
+
+        final Observation relative = new Observation()
+                .setObservationId(2)
+                .setTitle("Early Test Observation")
+                .setSchedule(new RelativeEvent()
+                        .setDtstart(new RelativeDate()
+                                .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
+                                .setTime(LocalTime.parse("08:00")))
+                        .setDtend(new RelativeDate()
+                                .setOffset(new Duration().setValue(1).setUnit(Duration.Unit.DAY))
+                                .setTime(LocalTime.parse("09:00"))));
+
+        final LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        final Instant afterObservation = today
+                .atTime(LocalTime.parse("09:30"))
+                .atZone(ZoneId.systemDefault())
+                .toInstant();
+
+        assertThat(SchedulerUtils.alignStartDateToSignupInstant(afterObservation, List.of(studyWide, relative)))
+                .as("an observation without a schedule must not affect the alignment")
+                .isEqualTo(SchedulerUtils.alignStartDateToSignupInstant(afterObservation, List.of(relative)));
+
+        assertThat(SchedulerUtils.alignStartDateToSignupInstant(afterObservation, List.of(studyWide)))
+                .as("without any relative schedule we start on the signup date")
+                .isEqualTo(today);
+    }
+
+    @Test
+    void shiftStartIfObservationAlreadyEndedIgnoresObservationsWithoutSchedule() {
+        final Instant signup = LocalDate.now(ZoneId.systemDefault())
+                .atTime(LocalTime.parse("09:30"))
+                .atZone(ZoneId.systemDefault())
+                .toInstant();
+
+        assertThat(SchedulerUtils.shiftStartIfObservationAlreadyEnded(
+                signup, List.of(new Observation().setObservationId(1).setSchedule(null))))
+                .isEqualTo(signup);
+    }
+
     @Test
     void alignStartDateToSignupInstant() {
         final Observation observation = new Observation()

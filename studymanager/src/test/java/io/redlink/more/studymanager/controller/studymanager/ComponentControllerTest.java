@@ -99,6 +99,7 @@ class ComponentControllerTest {
             when(observationFactory.getMeasurementSet()).thenReturn(new MeasurementSet("TEST", Set.of()));
             when(observationFactory.getVisibility()).thenReturn(Visibility.DEFAULT);
             when(observationFactory.isResyncable()).thenReturn(true);
+            when(observationFactory.isStudyWide()).thenReturn(true);
 
             this.triggerFactory = mock(TriggerFactory.class);
             when(triggerFactory.getId()).thenReturn("my-test-trigger");
@@ -166,11 +167,12 @@ class ComponentControllerTest {
     }
 
     @Test
-    void testListObservationComponentsExposesResyncable() throws Exception {
+    void testListObservationComponentsExposesFactoryFlags() throws Exception {
         mvc.perform(MockMvcRequestBuilders.get("/api/v1/components/observation"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].componentId").value("my-test-observation"))
                 .andExpect(jsonPath("$[0].resyncable").value(true))
+                .andExpect(jsonPath("$[0].studyWide").value(true))
                 .andExpect(jsonPath("$[0].visibility.changeable").value(true));
     }
 

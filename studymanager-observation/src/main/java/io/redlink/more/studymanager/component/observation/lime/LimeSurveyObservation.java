@@ -39,7 +39,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     private static final String LIME_SURVEY_USER_TEMPLATE = "study_%s-observation_%s-participant_%s";
 
     public static final String LIME_SURVEY_ID = "limeSurveyId";
-    private static final String LIME_SURVEY_TOKEN_KEY = "token";
+    public static final String LIME_SURVEY_TOKEN_KEY = "token";
     private static final String LIME_SURVEY_URL_KEY = "limeUrl";
     private final LimeSurveyRequestService limeSurveyRequestService;
     private static final Logger LOGGER = LoggerFactory.getLogger(LimeSurveyObservation.class);
