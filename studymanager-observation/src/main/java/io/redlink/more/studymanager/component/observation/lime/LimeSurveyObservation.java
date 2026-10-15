@@ -12,6 +12,7 @@ import io.redlink.more.studymanager.component.observation.QuestionObservationFac
 import io.redlink.more.studymanager.component.observation.lime.model.ParticipantData;
 import io.redlink.more.studymanager.component.observation.utils.QuestionObservationUtils;
 import io.redlink.more.studymanager.core.component.Observation;
+import io.redlink.more.studymanager.core.datavalidity.FieldValue;
 import io.redlink.more.studymanager.core.datavalidity.MeasurementSummary;
 import io.redlink.more.studymanager.core.datavalidity.ObservationDataState;
 import io.redlink.more.studymanager.core.datavalidity.ObservationDataSummary;
@@ -222,17 +223,68 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
         );
 
         //(3) Adapt the validation result where necessary
+        ObservationValidationResult result;
         boolean invalid = idResult.invalid() || lastPageResult.invalid();
         if(idResult.invalid() && lastPageResult.invalid()) {
-            return idResult;
+            result = idResult;
         } else if(invalid){
-            return new ObservationValidationResult(invalid, ObservationDataState.INCOMPLETE);
+            result = new ObservationValidationResult(invalid, ObservationDataState.INCOMPLETE);
         } else {
             ObservationDataState state = ObservationDataState.values()[Math.min(
                     idResult.state().ordinal(),
                     lastPageResult.state().ordinal())];
-            return new ObservationValidationResult(invalid, state);
+            result = new ObservationValidationResult(invalid, state);
         }
+        if (result.state() == ObservationDataState.COMPLETE) {
+            //(4) only a submitted survey is complete - one closed early is stored without submitdate
+            MeasurementSummary idSummary = observationDataSummary.measurements().stream()
+                    .filter(it -> LimeSurveyObservationFactory.MEASUREMENT_ID.equals(it.getMeasurement().getId()))
+                    .findFirst().orElse(null);
+            return validateSubmission(observationDataSummary, result.invalid(), idSummary);
+        }
+        return result;
+    }
+
+    /** Resync property: the stored answer has no submitdate */
+    public static final String RESYNC_MISSING_SUBMIT_DATE = "missingSubmitDate";
+    /** Resync property: the {@code data_id} (LimeSurvey response id) of the stored answer without submitdate */
+    public static final String RESYNC_DATA_ID = "dataId";
+
+    private static ObservationValidationResult validateSubmission(
+            ObservationDataSummary summary, boolean invalid, MeasurementSummary idSummary) {
+        List<FieldValue<String>> submitted = stringValues(summary, LimeSurveyObservationFactory.MEASUREMENT_SUBMITTED);
+        boolean hasSubmitDate = stringValues(summary, LimeSurveyObservationFactory.MEASUREMENT_SUBMIT_DATE).stream()
+                .anyMatch(it -> it.value() != null);
+        boolean hasMarker = submitted.stream().anyMatch(it -> it.value() != null);
+        if (!hasMarker) {
+            //stored before the gateway added the marker: re-collect it from LimeSurvey to get the marker stored
+            return new ObservationValidationResult(
+                    invalid,
+                    hasSubmitDate ? ObservationDataState.COMPLETE : ObservationDataState.INCOMPLETE,
+                    hasSubmitDate ? Map.of() : missingSubmitDateResync(idSummary));
+        }
+        boolean isSubmitted = hasSubmitDate && submitted.stream().anyMatch(it -> "true".equals(it.value()));
+        return new ObservationValidationResult(
+                invalid, isSubmitted ? ObservationDataState.COMPLETE : ObservationDataState.INCOMPLETE);
+    }
+
+    private static Map<String, Object> missingSubmitDateResync(MeasurementSummary idSummary) {
+        var numeric = idSummary == null ? null : idSummary.getNumericResult();
+        //NOTE: the summary only holds min/max of data_id, so the id is known for a single answer only
+        //      (the usual case - several answers per occurrence are flagged invalid anyway)
+        if (numeric != null && numeric.missing() == 0 && numeric.min() == numeric.max()) {
+            return Map.of(RESYNC_MISSING_SUBMIT_DATE, true, RESYNC_DATA_ID, (long) numeric.min());
+        }
+        return Map.of(RESYNC_MISSING_SUBMIT_DATE, true);
+    }
+
+    private static List<FieldValue<String>> stringValues(ObservationDataSummary summary, String measurementId) {
+        return summary.measurements().stream()
+                .filter(it -> measurementId.equals(it.getMeasurement().getId()))
+                .map(MeasurementSummary::getStringResult)
+                .filter(Objects::nonNull)
+                .flatMap(it -> it.values().stream())
+                .toList();
     }
 
     private void updateParticipants(ParticipantData participant) {

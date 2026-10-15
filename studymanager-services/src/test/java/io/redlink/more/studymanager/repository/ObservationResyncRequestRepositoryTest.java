@@ -82,6 +82,7 @@ class ObservationResyncRequestRepositoryTest {
         assertThat(inserted.participantId()).isEqualTo(participantId);
         assertThat(inserted.observationId()).isEqualTo(observationId);
         assertThat(inserted.created()).isNotNull();
+        assertThat(inserted.properties()).isEmpty();
 
         assertThat(repository.find(studyId, participantId, observationId)).contains(inserted);
 
@@ -93,6 +94,19 @@ class ObservationResyncRequestRepositoryTest {
         repository.deleteByIds(studyId, participantId, observationId);
         assertThat(repository.find(studyId, participantId, observationId)).isEmpty();
         assertThat(repository.listByParticipant(studyId, participantId)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Properties are stored and merged into an existing request")
+    void testInsertProperties() {
+        Long studyId = newStudy();
+        int participantId = newParticipant(studyId, "P1");
+        int observationId = newObservation(studyId, "Survey 1");
+
+        assertThat(repository.insert(studyId, participantId, observationId, Map.of("missingSubmitDate", true)).properties())
+                .isEqualTo(Map.of("missingSubmitDate", true));
+        assertThat(repository.insert(studyId, participantId, observationId).properties())
+                .isEqualTo(Map.of("missingSubmitDate", true));
     }
 
     @Test

@@ -10,6 +10,7 @@ package io.redlink.more.studymanager.repository;
 
 import io.redlink.more.studymanager.exception.BadRequestException;
 import io.redlink.more.studymanager.model.ObservationResyncRequest;
+import io.redlink.more.studymanager.utils.MapperUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -18,6 +19,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -25,12 +27,12 @@ public class ObservationResyncRequestRepository {
 
     /**
      * An operator request is retried with high priority (every 5 minutes) for the next hour. If a request already exists it is merged:
-     * it restarts now, keeps the later end and the faster interval of a still running request.
+     * it restarts now, keeps the later end and the faster interval of a still running request, and merges the properties.
      */
     private static final String UPSERT_RESYNC_REQUEST = """
             INSERT INTO observation_resync_requests AS r
-                (study_id, participant_id, observation_id, resync_interval, resync_start, resync_end)
-            VALUES (:study_id, :participant_id, :observation_id, 'high', now(), now() + interval '1 hour')
+                (study_id, participant_id, observation_id, resync_interval, resync_start, resync_end, properties)
+            VALUES (:study_id, :participant_id, :observation_id, 'high', now(), now() + interval '1 hour', :properties::jsonb)
             ON CONFLICT (study_id, participant_id, observation_id) DO UPDATE SET
                 resync_start = now(),
                 resync_end = GREATEST(r.resync_end, EXCLUDED.resync_end),
@@ -38,7 +40,8 @@ public class ObservationResyncRequestRepository {
                         AND array_position(ARRAY['urgent','high','normal','low'], r.resync_interval)
                           < array_position(ARRAY['urgent','high','normal','low'], EXCLUDED.resync_interval)
                     THEN r.resync_interval ELSE EXCLUDED.resync_interval END,
-                synced = FALSE
+                synced = FALSE,
+                properties = r.properties || EXCLUDED.properties
             RETURNING *""";
     private static final String GET_RESYNC_REQUEST_BY_IDS = """
             SELECT * FROM observation_resync_requests
@@ -66,13 +69,18 @@ public class ObservationResyncRequestRepository {
     }
 
     public ObservationResyncRequest insert(long studyId, int participantId, int observationId) {
+        return insert(studyId, participantId, observationId, Map.of());
+    }
+
+    public ObservationResyncRequest insert(long studyId, int participantId, int observationId, Map<String, Object> properties) {
         try {
             return namedTemplate.queryForObject(
                     UPSERT_RESYNC_REQUEST,
                     new MapSqlParameterSource()
                             .addValue("study_id", studyId)
                             .addValue("participant_id", participantId)
-                            .addValue("observation_id", observationId),
+                            .addValue("observation_id", observationId)
+                            .addValue("properties", MapperUtils.writeValueAsString(properties)),
                     getRowMapper());
         } catch (DataIntegrityViolationException e) {
             throw new BadRequestException(
@@ -113,7 +121,8 @@ public class ObservationResyncRequestRepository {
                 rs.getLong("study_id"),
                 rs.getInt("participant_id"),
                 rs.getInt("observation_id"),
-                RepositoryUtils.readInstant(rs, "created"));
+                RepositoryUtils.readInstant(rs, "created"),
+                MapperUtils.readValue(rs.getString("properties"), Map.class));
     }
 
     // for testing purpose only
