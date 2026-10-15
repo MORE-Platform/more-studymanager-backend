@@ -41,6 +41,10 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
     public static final String COMPONENT_ID = "lime-survey-observation";
     public static String MEASUREMENT_ID = "id";
     public static String MEASUREMENT_LASTPAGE = "lastpage";
+    /** Only set if the participant submitted the survey, missing if it was closed early */
+    public static String MEASUREMENT_SUBMIT_DATE = "submitdate";
+    /** {@code "true"} or {@code "false"}, set by the gateway. Missing on answers stored before the marker existed */
+    public static String MEASUREMENT_SUBMITTED = "submitted";
     /**
      * This measurementSet includes the id and seed of the LimeSurvey. All
      * survey specific information are stored under the survey keys. Those keys
@@ -49,7 +53,9 @@ public class LimeSurveyObservationFactory<C extends LimeSurveyObservation<P>, P 
     private static MeasurementSet LIMESURVEY_METADATA = new MeasurementSet(
             "LIMESURVEY", Set.of(
             new Measurement(MEASUREMENT_ID, Measurement.Type.INTEGER),
-            new Measurement(MEASUREMENT_LASTPAGE, Measurement.Type.INTEGER))
+            new Measurement(MEASUREMENT_LASTPAGE, Measurement.Type.INTEGER),
+            new Measurement(MEASUREMENT_SUBMIT_DATE, Measurement.Type.STRING),
+            new Measurement(MEASUREMENT_SUBMITTED, Measurement.Type.STRING))
     );
 
 

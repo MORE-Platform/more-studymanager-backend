@@ -25,6 +25,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.AbstractMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -160,23 +161,62 @@ public class LimeSurveyObservationTest {
         var idMs = new MeasurementSummary(
                 new Measurement(LimeSurveyObservationFactory.MEASUREMENT_ID, Measurement.Type.INTEGER));
         idMs.setNumericResult(new NumericMeasurementSummary(1.0,1.0, 1.0, 1.0, 0));
+        var submitDateMs = stringSummary(LimeSurveyObservationFactory.MEASUREMENT_SUBMIT_DATE, "2026-10-03 11:22:33");
+        var submittedMs = stringSummary(LimeSurveyObservationFactory.MEASUREMENT_SUBMITTED, "true");
         ObservationDataSummary validSummary = new ObservationDataSummary(
                 1,
                 new DateMeasurementSummary(stored, stored, 0L),
-                List.of(idMs, lastPageSummary)
+                List.of(idMs, lastPageSummary, submitDateMs, submittedMs)
         );
         var result = questionObservation.validateData(start, end, validSummary);
         Assertions.assertFalse(result.invalid());
         Assertions.assertEquals(ObservationDataState.COMPLETE, result.state());
+        Assertions.assertNull(result.resync());
 
         ObservationDataSummary invalidMultipleAnswersSummary = new ObservationDataSummary(
                 2,
                 new DateMeasurementSummary(stored, stored, 0L),
-                List.of(idMs, lastPageSummary)
+                List.of(idMs, lastPageSummary, submitDateMs, submittedMs)
         );
         result = questionObservation.validateData(start, end, invalidMultipleAnswersSummary);
         Assertions.assertTrue(result.invalid());
         Assertions.assertEquals(ObservationDataState.COMPLETE, result.state());
+
+        //closed early: no submitdate, submitted=false
+        ObservationDataSummary closedEarlySummary = new ObservationDataSummary(
+                1,
+                new DateMeasurementSummary(stored, stored, 0L),
+                List.of(idMs, lastPageSummary,
+                        stringSummary(LimeSurveyObservationFactory.MEASUREMENT_SUBMIT_DATE, null),
+                        stringSummary(LimeSurveyObservationFactory.MEASUREMENT_SUBMITTED, "false"))
+        );
+        result = questionObservation.validateData(start, end, closedEarlySummary);
+        Assertions.assertEquals(ObservationDataState.INCOMPLETE, result.state());
+        Assertions.assertNull(result.resync());
+
+        //stored before the marker existed: state from submitdate, re-collect to get the marker
+        ObservationDataSummary legacySubmittedSummary = new ObservationDataSummary(
+                1,
+                new DateMeasurementSummary(stored, stored, 0L),
+                List.of(idMs, lastPageSummary, submitDateMs,
+                        stringSummary(LimeSurveyObservationFactory.MEASUREMENT_SUBMITTED, null))
+        );
+        result = questionObservation.validateData(start, end, legacySubmittedSummary);
+        Assertions.assertEquals(ObservationDataState.COMPLETE, result.state());
+        Assertions.assertEquals(Map.of(), result.resync());
+
+        ObservationDataSummary legacyClosedEarlySummary = new ObservationDataSummary(
+                1,
+                new DateMeasurementSummary(stored, stored, 0L),
+                List.of(idMs, lastPageSummary,
+                        stringSummary(LimeSurveyObservationFactory.MEASUREMENT_SUBMIT_DATE, null),
+                        stringSummary(LimeSurveyObservationFactory.MEASUREMENT_SUBMITTED, null))
+        );
+        result = questionObservation.validateData(start, end, legacyClosedEarlySummary);
+        Assertions.assertEquals(ObservationDataState.INCOMPLETE, result.state());
+        Assertions.assertEquals(
+                Map.of(LimeSurveyObservation.RESYNC_MISSING_SUBMIT_DATE, true, LimeSurveyObservation.RESYNC_DATA_ID, 1L),
+                result.resync());
 
         ObservationDataSummary noAnswersSummary = new ObservationDataSummary(
                 0,
@@ -212,4 +252,11 @@ public class LimeSurveyObservationTest {
         Assertions.assertEquals(ObservationDataState.INCOMPLETE, result.state());
 
 
-    }}
+    }
+
+    private static MeasurementSummary stringSummary(String id, String value) {
+        var summary = new MeasurementSummary(new Measurement(id, Measurement.Type.STRING));
+        summary.setStringResult(new StringMeasurementSummary(List.of(new FieldValue<>(value, 1))));
+        return summary;
+    }
+}

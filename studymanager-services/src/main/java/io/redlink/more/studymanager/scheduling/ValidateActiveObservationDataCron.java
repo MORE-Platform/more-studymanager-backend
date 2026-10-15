@@ -172,6 +172,9 @@ public class ValidateActiveObservationDataCron {
         if (validationResults != null) {
             var validationResult = ctx.observationComponent.validateData(ctx.occurrence.start(), ctx.occurrence.end(), validationResults);
             log.debug("validated {}: results: {}, state: {}", ctx.occurrence, validationResults, validationResult);
+            if (validationResult.resync() != null) {
+                requestResync(ctx, validationResult.resync());
+            }
             updatedOccurredObservation = new OccurredObservation(
                     ctx.occurrence.studyId(),
                     ctx.occurrence.observationId(),
@@ -196,6 +199,17 @@ public class ValidateActiveObservationDataCron {
             );
         }
         occurredObservationService.update(updatedOccurredObservation);
+    }
+
+    /**
+     * Lets the gateway re-collect outdated data. A pending request is kept as is, so repeated validations
+     * do not restart it.
+     */
+    private void requestResync(ValidateionContext ctx, Map<String, Object> properties) {
+        if (resyncRequestRepository.find(ctx.getStudyId(), ctx.getParticipantId(), ctx.getObservationId()).isEmpty()) {
+            log.info("Requesting resync of outdated data for {}", ctx.occurrence);
+            resyncRequestRepository.insert(ctx.getStudyId(), ctx.getParticipantId(), ctx.getObservationId(), properties);
+        }
     }
 
 
