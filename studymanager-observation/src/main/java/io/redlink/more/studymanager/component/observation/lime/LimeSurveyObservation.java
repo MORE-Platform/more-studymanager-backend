@@ -214,7 +214,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
         //(1) Use the default single Answer utility method
         var lastPageResult = QuestionObservationUtils.validateSingleAnswerObservation(
                 observationDataSummary,
-                LimeSurveyObservationFactory.MEASUREMENT_LASTPAGE //NOTE: This utility method only works with STRING fields!!
+                LimeSurveyObservationFactory.MEASUREMENT_LASTPAGE
         );
         //(2) Check of the ID property is present
         var idResult = QuestionObservationUtils.validateSingleAnswerObservation(
@@ -253,8 +253,10 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
     private static ObservationValidationResult validateSubmission(
             ObservationDataSummary summary, boolean invalid, MeasurementSummary idSummary) {
         List<FieldValue<String>> submitted = stringValues(summary, LimeSurveyObservationFactory.MEASUREMENT_SUBMITTED);
-        boolean hasSubmitDate = stringValues(summary, LimeSurveyObservationFactory.MEASUREMENT_SUBMIT_DATE).stream()
-                .anyMatch(it -> it.value() != null);
+        boolean hasSubmitDate = summary.measurements().stream()
+                .filter(it -> LimeSurveyObservationFactory.MEASUREMENT_SUBMIT_DATE.equals(it.getMeasurement().getId()))
+                .map(MeasurementSummary::getDateResult)
+                .anyMatch(it -> it != null && it.max() != null);
         boolean hasMarker = submitted.stream().anyMatch(it -> it.value() != null);
         if (!hasMarker) {
             //stored before the gateway added the marker: re-collect it from LimeSurvey to get the marker stored
