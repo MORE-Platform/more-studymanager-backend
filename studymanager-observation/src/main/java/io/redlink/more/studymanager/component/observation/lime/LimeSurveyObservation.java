@@ -217,10 +217,18 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
                 LimeSurveyObservationFactory.MEASUREMENT_LASTPAGE
         );
         //(2) Check of the ID property is present
-        var idResult = QuestionObservationUtils.validateSingleAnswerObservation(
-                observationDataSummary,
-                LimeSurveyObservationFactory.MEASUREMENT_ID
-        );
+        MeasurementSummary answerMeasurementSummary = observationDataSummary.measurements().stream()
+                .filter(it -> LimeSurveyObservationFactory.MEASUREMENT_ID.equals(it.getMeasurement().getId()))
+                .findFirst()
+                .orElse(null);
+        if (observationDataSummary.numDocs() > 1) {
+            //several answers (e.g. closed early and answered again) are valid - complete if one was submitted
+            return validateSubmission(observationDataSummary, false, answerMeasurementSummary);
+        }
+        //check that the field is present on all documents
+        boolean hasId = answerMeasurementSummary != null
+                && answerMeasurementSummary.getNumericResult() != null
+                && answerMeasurementSummary.getNumericResult().missing() == 0;
 
         //(3) Adapt the validation result where necessary
         ObservationValidationResult result;

@@ -173,14 +173,33 @@ public class LimeSurveyObservationTest {
         Assertions.assertEquals(ObservationDataState.COMPLETE, result.state());
         Assertions.assertNull(result.resync());
 
-        ObservationDataSummary invalidMultipleAnswersSummary = new ObservationDataSummary(
+        //multiple answers: one closed early, one submitted
+        var multiSubmitDateMs = new MeasurementSummary(new Measurement(LimeSurveyObservationFactory.MEASUREMENT_SUBMIT_DATE, Measurement.Type.STRING));
+        multiSubmitDateMs.setStringResult(new StringMeasurementSummary(List.of(
+                new FieldValue<>(null, 1), new FieldValue<>("2026-10-03 11:22:33", 1))));
+        var multiSubmittedMs = new MeasurementSummary(new Measurement(LimeSurveyObservationFactory.MEASUREMENT_SUBMITTED, Measurement.Type.STRING));
+        multiSubmittedMs.setStringResult(new StringMeasurementSummary(List.of(
+                new FieldValue<>("false", 1), new FieldValue<>("true", 1))));
+        ObservationDataSummary multipleAnswersSummary = new ObservationDataSummary(
                 2,
                 new DateMeasurementSummary(stored, stored, 0L),
-                List.of(idMs, lastPageSummary, submitDateMs, submittedMs)
+                List.of(idMs, seedSuseedSummarymmary, multiSubmitDateMs, multiSubmittedMs)
         );
-        result = questionObservation.validateData(start, end, invalidMultipleAnswersSummary);
-        Assertions.assertTrue(result.invalid());
+        result = questionObservation.validateData(start, end, multipleAnswersSummary);
+        Assertions.assertFalse(result.invalid());
         Assertions.assertEquals(ObservationDataState.COMPLETE, result.state());
+
+        //multiple answers, none submitted
+        ObservationDataSummary multipleUnsubmittedSummary = new ObservationDataSummary(
+                2,
+                new DateMeasurementSummary(stored, stored, 0L),
+                List.of(idMs, seedSummary,
+                        stringSummary(LimeSurveyObservationFactory.MEASUREMENT_SUBMIT_DATE, null),
+                        stringSummary(LimeSurveyObservationFactory.MEASUREMENT_SUBMITTED, "false"))
+        );
+        result = questionObservation.validateData(start, end, multipleUnsubmittedSummary);
+        Assertions.assertFalse(result.invalid());
+        Assertions.assertEquals(ObservationDataState.INCOMPLETE, result.state());
 
         //closed early: no submitdate, submitted=false
         ObservationDataSummary closedEarlySummary = new ObservationDataSummary(
