@@ -225,10 +225,10 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
             //several answers (e.g. closed early and answered again) are valid - complete if one was submitted
             return validateSubmission(observationDataSummary, false, answerMeasurementSummary);
         }
-        //check that the field is present on all documents
-        boolean hasId = answerMeasurementSummary != null
-                && answerMeasurementSummary.getNumericResult() != null
-                && answerMeasurementSummary.getNumericResult().missing() == 0;
+        var idResult = QuestionObservationUtils.validateSingleAnswerObservation(
+                observationDataSummary,
+                LimeSurveyObservationFactory.MEASUREMENT_ID
+        );
 
         //(3) Adapt the validation result where necessary
         ObservationValidationResult result;
@@ -245,10 +245,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
         }
         if (result.state() == ObservationDataState.COMPLETE) {
             //(4) only a submitted survey is complete - one closed early is stored without submitdate
-            MeasurementSummary idSummary = observationDataSummary.measurements().stream()
-                    .filter(it -> LimeSurveyObservationFactory.MEASUREMENT_ID.equals(it.getMeasurement().getId()))
-                    .findFirst().orElse(null);
-            return validateSubmission(observationDataSummary, result.invalid(), idSummary);
+            return validateSubmission(observationDataSummary, result.invalid(), answerMeasurementSummary);
         }
         return result;
     }

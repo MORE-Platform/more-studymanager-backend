@@ -174,16 +174,15 @@ public class LimeSurveyObservationTest {
         Assertions.assertNull(result.resync());
 
         //multiple answers: one closed early, one submitted
-        var multiSubmitDateMs = new MeasurementSummary(new Measurement(LimeSurveyObservationFactory.MEASUREMENT_SUBMIT_DATE, Measurement.Type.STRING));
-        multiSubmitDateMs.setStringResult(new StringMeasurementSummary(List.of(
-                new FieldValue<>(null, 1), new FieldValue<>("2026-10-03 11:22:33", 1))));
+        var multiSubmitDateMs = submitDateSummary(stored);
+        multiSubmitDateMs.setDateResult(new DateMeasurementSummary(stored, stored, 1));
         var multiSubmittedMs = new MeasurementSummary(new Measurement(LimeSurveyObservationFactory.MEASUREMENT_SUBMITTED, Measurement.Type.STRING));
         multiSubmittedMs.setStringResult(new StringMeasurementSummary(List.of(
                 new FieldValue<>("false", 1), new FieldValue<>("true", 1))));
         ObservationDataSummary multipleAnswersSummary = new ObservationDataSummary(
                 2,
                 new DateMeasurementSummary(stored, stored, 0L),
-                List.of(idMs, seedSuseedSummarymmary, multiSubmitDateMs, multiSubmittedMs)
+                List.of(idMs, lastPageSummary, multiSubmitDateMs, multiSubmittedMs)
         );
         result = questionObservation.validateData(start, end, multipleAnswersSummary);
         Assertions.assertFalse(result.invalid());
@@ -193,8 +192,8 @@ public class LimeSurveyObservationTest {
         ObservationDataSummary multipleUnsubmittedSummary = new ObservationDataSummary(
                 2,
                 new DateMeasurementSummary(stored, stored, 0L),
-                List.of(idMs, seedSummary,
-                        stringSummary(LimeSurveyObservationFactory.MEASUREMENT_SUBMIT_DATE, null),
+                List.of(idMs, lastPageSummary,
+                        submitDateSummary(null),
                         stringSummary(LimeSurveyObservationFactory.MEASUREMENT_SUBMITTED, "false"))
         );
         result = questionObservation.validateData(start, end, multipleUnsubmittedSummary);
