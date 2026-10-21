@@ -217,6 +217,14 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
                 LimeSurveyObservationFactory.MEASUREMENT_LASTPAGE
         );
         //(2) Check of the ID property is present
+        MeasurementSummary answerMeasurementSummary = observationDataSummary.measurements().stream()
+                .filter(it -> LimeSurveyObservationFactory.MEASUREMENT_ID.equals(it.getMeasurement().getId()))
+                .findFirst()
+                .orElse(null);
+        if (observationDataSummary.numDocs() > 1) {
+            //several answers (e.g. closed early and answered again) are valid - complete if one was submitted
+            return validateSubmission(observationDataSummary, false, answerMeasurementSummary);
+        }
         var idResult = QuestionObservationUtils.validateSingleAnswerObservation(
                 observationDataSummary,
                 LimeSurveyObservationFactory.MEASUREMENT_ID
@@ -237,10 +245,7 @@ public class LimeSurveyObservation<C extends ObservationProperties> extends Obse
         }
         if (result.state() == ObservationDataState.COMPLETE) {
             //(4) only a submitted survey is complete - one closed early is stored without submitdate
-            MeasurementSummary idSummary = observationDataSummary.measurements().stream()
-                    .filter(it -> LimeSurveyObservationFactory.MEASUREMENT_ID.equals(it.getMeasurement().getId()))
-                    .findFirst().orElse(null);
-            return validateSubmission(observationDataSummary, result.invalid(), idSummary);
+            return validateSubmission(observationDataSummary, result.invalid(), answerMeasurementSummary);
         }
         return result;
     }
